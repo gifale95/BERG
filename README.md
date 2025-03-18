@@ -10,7 +10,7 @@ For additional information on the Neural Encoding Dataset you can check out the 
 
 ## 🤝 Contribute to expanding the Neural Encoding Simulation Toolkit
 
-Do you have encoding models with higher prediction accuracies than the ones currently available in the Neural Encoding Simulation Toolkit, and would like to make them available to the community? Or encoding models for new neural datasets, data modalities (e.g., MEG/ECoG/animal), or stimulus types (e.g., videos, language) that you would like to share? Or perhaps you have suggestions for improving the Neural Encoding Simulation Toolkit? Then please get in touch with Ale (alessandro.gifford@gmail.com): all feedback and help is strongly appreciated!
+Do you have encoding models with higher prediction accuracies than the ones currently available in the Neural Encoding Simulation Toolkit, and would like to make them available to the community? Or encoding models for new neural datasets, data modalities (e.g., MEG/ECoG/animal), or stimulus types (e.g., videos, language) that you would like to share? Or perhaps you have suggestions for improving the Neural Encoding Simulation Toolkit? Then please send an email to (brain.nest.contact@gmail.com): all feedback and help is strongly appreciated!
 
 
 
