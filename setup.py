@@ -10,7 +10,7 @@ with open('README.md', encoding='utf-8') as readmefile:
 
 setup(
     name='NEST',
-    version='0.3.6',
+    version='0.3.7',
     description='Neural Encoding Simulation Toolkit',
     url='https://github.com/gifale95/NEST',
     long_description=long_description,

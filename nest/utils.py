@@ -70,13 +70,13 @@ def get_model_fmri_nsd_fwrf(nest_dir, subject, roi, device):
 
 	# Load the model
 	if roi in ['lateral', 'ventral']:
-		trained_model_1 = torch.load(model_dir_1,
+		trained_model_1 = torch.load(model_dir_1, weights_only=False,
 			map_location=torch.device('cpu'))
-		trained_model_2 = torch.load(model_dir_2,
+		trained_model_2 = torch.load(model_dir_2, weights_only=False,
 			map_location=torch.device('cpu'))
 		stim_mean = trained_model_1['stim_mean']
 	else:
-		trained_model = torch.load(model_dir,
+		trained_model = torch.load(model_dir, weights_only=False,
 			map_location=torch.device('cpu'))
 		stim_mean = trained_model['stim_mean']
 
