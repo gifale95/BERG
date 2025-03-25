@@ -77,7 +77,7 @@ def get_model_fmri_nsd_fwrf(nest_dir, subject, roi, device):
 		stim_mean = trained_model_1['stim_mean']
 	else:
 		trained_model = torch.load(model_dir,
-			map_location=torch.device('cpu'))
+			map_location=torch.device('cpu'), weights_only=False)
 		stim_mean = trained_model['stim_mean']
 
 	### Model instantiation ###
@@ -228,14 +228,12 @@ def encode_fmri_nsd_fwrf(encoding_model, images, device):
 
 	### Generate the in silico fMRI responses to images ###
 	# Empty in silico fMRI responses variables of shape: (Images x Voxels)
-	if roi in ['lateral', 'ventral']:
-		insilico_fmri_responses = np.zeros((len(images),
-			encoding_model['nnv_1'][subject]), dtype=np.float32)
-		insilico_fmri_responses = np.zeros((len(images),
-			encoding_model['nnv_2'][subject]), dtype=np.float32)
-	else:
-		insilico_fmri_responses = np.zeros((len(images),
-			encoding_model['nnv'][subject]), dtype=np.float32)
+	# if roi in ['lateral', 'ventral']:
+	# 	insilico_fmri_responses = np.zeros((len(images),encoding_model['nnv_1'][subject]), dtype=np.float32)
+	# 	insilico_fmri_responses = np.zeros((len(images),encoding_model['nnv_2'][subject]), dtype=np.float32)
+	# else:
+	# 	insilico_fmri_responses = np.zeros((len(images),
+	# 		encoding_model['nnv'][subject]), dtype=np.float32)
 
 	# Preprocess the images
 	transform = trn.Compose([
