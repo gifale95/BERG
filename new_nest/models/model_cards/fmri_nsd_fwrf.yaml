@@ -1,0 +1,52 @@
+model_id: fmri_nsd_fwrf
+version: 1.0.0
+modality: fmri
+dataset: NSD
+
+repeats: x
+features: x
+subject_level: x
+
+supported_parameters:
+  subject:
+    type: int
+    required: true
+    valid_values: [1, 2, 3, 4, 5, 6, 7, 8]
+    example: 1
+    description: "Subject ID from the NSD dataset"
+
+  roi:
+    type: str
+    required: true
+    valid_values:
+      - V1
+      - V2
+      - V3
+      - hV4
+      - EBA
+      - FBA-2
+      - OFA
+      - FFA-1
+      - FFA-2
+      - PPA
+      - RSC
+      - OPA
+      - OWFA
+      - VWFA-1
+      - VWFA-2
+      - mfs-words
+      - early
+      - midventral
+      - midlateral
+      - midparietal
+      - parietal
+      - lateral
+      - ventral
+    example: "V1"
+    description: "Region of Interest (ROI) for voxel prediction"
+
+  nest_dir:
+    type: str
+    required: false
+    example: "./"
+    description: "Root directory of the NEST repository (optional if default paths are set)"

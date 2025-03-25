@@ -8,3 +8,5 @@ scikit-learn
 torch
 torchvision
 tqdm
+semver
+pyyaml
