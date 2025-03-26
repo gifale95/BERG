@@ -65,19 +65,24 @@ class NEST:
         except Exception as e:
             raise
     
-    def encode(self, model: BaseModelInterface, stimulus: np.ndarray, **kwargs):
+    def encode(self, model: BaseModelInterface, stimulus: np.ndarray, return_metadata: bool = False, **kwargs):
         """
         Generate in silico neural responses.
         
         Args:
             model: Model instance
             stimulus: Input stimulus array
+            return_metadata: If it should also return model metadata
             **kwargs: Additional parameters for response generation
         
         Returns:
             Neural responses
         """
-        return model.generate_response(stimulus, **kwargs)
+        
+        if return_metadata:
+            return model.generate_response(stimulus, **kwargs), model.get_metadata()
+        else:
+            return model.generate_response(stimulus, **kwargs)
     
     def get_model_info(self, model_id: str, version: str = "latest") -> Dict[str, Any]:
         """

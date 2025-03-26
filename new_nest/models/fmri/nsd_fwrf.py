@@ -249,9 +249,29 @@ class FMRIEncodingModel(BaseModelInterface):
 
             ### Output ###
             return insilico_fmri_responses
-                
         
-    
+        
+    def get_metadata(self) -> Dict[str, Any]:
+        """
+        Retrieve metadata from file
+        
+        Returns:
+            Dict with Metadata"""
+        
+        file_name = os.path.join(self.nest_dir, 
+                                 'encoding_models', 
+                                 'modality-fmri',
+                                 'train_dataset-nsd', 
+                                 'model-fwrf', 
+                                 'metadata',
+                                 'metadata_sub-' + format(self.subject,'02') + '_roi-' + self.roi + '.npy')
+        
+
+        metadata = np.load(file_name, allow_pickle=True).item()
+        
+        return metadata
+          
+
     @classmethod
     def get_model_id(cls) -> str:
         """

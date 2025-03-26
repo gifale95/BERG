@@ -69,6 +69,11 @@ class BaseModelInterface(ABC):
         """Release resources (e.g., free GPU memory, close sessions)."""
         pass
     
+    @abstractmethod
+    def get_metadata(self) -> Dict[str, Any]:
+        "Retrieve Metadata from each of the models"
+        pass
+    
     @staticmethod
     def describe(model_id: str) -> Dict[str, Any]:
         """

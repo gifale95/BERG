@@ -1,0 +1,22 @@
+model_id: eeg_things_eeg_2_vit_b_32
+version: 1.0.0
+modality: eeg
+dataset: things_eeg_2
+
+repeats: multi
+features: vision_transformer
+subject_level: x
+
+supported_parameters:
+  subject:
+    type: int
+    required: true
+    valid_values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    example: 1
+    description: "Subject ID from the things_eeg_2 dataset"
+
+  nest_dir:
+    type: str
+    required: false
+    example: "./"
+    description: "Root directory of the NEST repository (optional if default paths are set)"
