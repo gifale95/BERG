@@ -5,13 +5,13 @@ import yaml
 from torchvision import transforms as trn
 from typing import Dict, Any, List, Optional, Callable
 
-from new_nest.interfaces.base_model import BaseModelInterface
-from new_nest.core.model_registry import register_model
-from new_nest.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
-from nest.models.fwrf.torch_gnet import Encoder
-from nest.models.fwrf.torch_mpf import Torch_LayerwiseFWRF
-from nest.models.fwrf.load_nsd import image_feature_fn
-from nest.models.fwrf.torch_joint_training_unpacked_sequences import *
+from nest.interfaces.base_model import BaseModelInterface
+from nest.core.model_registry import register_model
+from nest.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
+from nest.models.fmri.fwrf.torch_gnet import Encoder
+from nest.models.fmri.fwrf.torch_mpf import Torch_LayerwiseFWRF
+from nest.models.fmri.fwrf.load_nsd import image_feature_fn
+from nest.models.fmri.fwrf.torch_joint_training_unpacked_sequences import *
 
 # Load model metadata from YAML
 def load_model_metadata():
@@ -26,7 +26,7 @@ metadata = load_model_metadata()
 register_model(
     model_id=metadata["model_id"],
     version=metadata["version"],
-    module_path="new_nest.models.fmri.nsd_fwrf",
+    module_path="nest.models.fmri.nsd_fwrf",
     class_name="FMRIEncodingModel",
     modality=metadata.get("modality", "unknown"),
     yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri_nsd_fwrf.yaml")

@@ -11,9 +11,9 @@ from sklearn.linear_model import LinearRegression
 from tqdm import tqdm
 from typing import Dict, Any, List, Optional, Callable
 
-from new_nest.interfaces.base_model import BaseModelInterface
-from new_nest.core.model_registry import register_model
-from new_nest.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
+from nest.interfaces.base_model import BaseModelInterface
+from nest.core.model_registry import register_model
+from nest.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
 
 # Load model metadata from YAML
 def load_model_metadata():
@@ -28,7 +28,7 @@ metadata = load_model_metadata()
 register_model(
     model_id=metadata["model_id"],
     version=metadata["version"],
-    module_path="new_nest.models.eeg.things_eeg",
+    module_path="nest.models.eeg.things_eeg",
     class_name="EEGEncodingModel",
     modality=metadata.get("modality", "eeg"),
     yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg_things_eeg_2_vit_b_32.yaml")

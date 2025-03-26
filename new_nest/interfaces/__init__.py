@@ -1,1 +1,0 @@
-from new_nest.interfaces.base_model import BaseModelInterface

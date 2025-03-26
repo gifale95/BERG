@@ -2,10 +2,10 @@ from typing import Dict, Any, List, Optional, Union
 import numpy as np
 import os
 
-from new_nest.core.model_registry import get_model_class, get_available_models, get_model_versions
-from new_nest.core.exceptions import ModelNotFoundError
-from new_nest.interfaces.base_model import BaseModelInterface
-from new_nest.core.model_registry import MODEL_REGISTRY
+from nest.core.model_registry import get_model_class, get_available_models, get_model_versions
+from nest.core.exceptions import ModelNotFoundError
+from nest.interfaces.base_model import BaseModelInterface
+from nest.core.model_registry import MODEL_REGISTRY
 
 
 class NEST:

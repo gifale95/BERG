@@ -6,7 +6,7 @@ import textwrap
 from tqdm import tqdm
 import os
 import yaml
-from new_nest.core.model_registry import MODEL_REGISTRY
+from nest.core.model_registry import MODEL_REGISTRY
 
 class BaseModelInterface(ABC):
     @abstractmethod
