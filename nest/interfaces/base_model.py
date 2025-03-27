@@ -1,12 +1,12 @@
 
-from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional, Union, Callable
-import numpy as np
-import textwrap
-from tqdm import tqdm
 import os
+import textwrap
+from abc import ABC, abstractmethod
+from typing import Any, Dict
+import numpy as np
 import yaml
 from nest.core.model_registry import MODEL_REGISTRY
+
 
 class BaseModelInterface(ABC):
     """
@@ -89,7 +89,7 @@ class BaseModelInterface(ABC):
         pass
     
     @staticmethod
-    def describe(model_id: str) -> Dict[str, Any]:
+    def describe_from_id(model_id: str) -> Dict[str, Any]:
         """
         Print and return a detailed description of a registered model.
 
@@ -167,6 +167,15 @@ class BaseModelInterface(ABC):
             "supported_parameters": parameters,
             "example_usage": example_code.strip()
         }
+        
+    def describe(self) -> Dict[str, Any]:
+        """
+        Print and return a detailed description of this model instance.
+
+        Returns:
+            Dict[str, Any]: Model metadata and usage example.
+        """
+        return self.__class__.describe_from_id(self.get_model_id())
 
             
     def __enter__(self):

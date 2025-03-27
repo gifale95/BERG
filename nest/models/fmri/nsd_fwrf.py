@@ -3,8 +3,7 @@ import numpy as np
 import torch
 import yaml
 from torchvision import transforms as trn
-from typing import Dict, Any, List, Optional, Callable
-
+from typing import Dict, Any, Optional
 from nest.interfaces.base_model import BaseModelInterface
 from nest.core.model_registry import register_model
 from nest.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError

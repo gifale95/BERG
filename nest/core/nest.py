@@ -1,11 +1,13 @@
-from typing import Dict, Any, List, Optional, Union
+from typing import Any, Dict, List
 import numpy as np
-import os
-
-from nest.core.model_registry import get_model_class, get_available_models, get_model_versions
 from nest.core.exceptions import ModelNotFoundError
+from nest.core.model_registry import (
+    MODEL_REGISTRY,
+    get_available_models,
+    get_model_class,
+    get_model_versions,
+)
 from nest.interfaces.base_model import BaseModelInterface
-from nest.core.model_registry import MODEL_REGISTRY
 
 
 class NEST:
@@ -84,7 +86,7 @@ class NEST:
         else:
             return model.generate_response(stimulus, **kwargs)
     
-    def get_model_info(self, model_id: str, version: str = "latest") -> Dict[str, Any]:
+    def describe(self, model_id: str, version: str = "latest") -> Dict[str, Any]:
         """
         Retrieve metadata and usage info for a specified model.
 
@@ -99,7 +101,7 @@ class NEST:
             raise ModelNotFoundError(f"Model '{model_id}' not found in registry.")
 
         try:
-            return BaseModelInterface.describe(model_id)
+            return BaseModelInterface.describe_from_id(model_id)
         except Exception as e:
             raise ModelNotFoundError(f"Failed to load model description for '{model_id}': {str(e)}")
         

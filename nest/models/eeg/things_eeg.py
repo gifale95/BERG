@@ -1,19 +1,23 @@
 import os
+from copy import deepcopy
+from typing import Any, Dict, Optional
 import numpy as np
 import torch
-import yaml
-from copy import deepcopy
 import torchvision
-from torchvision.models.feature_extraction import create_feature_extractor
-from sklearn.preprocessing import StandardScaler
+import yaml
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
+from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
-from typing import Dict, Any, List, Optional, Callable
-
-from nest.interfaces.base_model import BaseModelInterface
+from nest.core.exceptions import (
+    InvalidParameterError,
+    ModelLoadError,
+    StimulusError,
+)
 from nest.core.model_registry import register_model
-from nest.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
+from nest.interfaces.base_model import BaseModelInterface
+
 
 # Load model metadata from YAML
 def load_model_metadata():
@@ -86,7 +90,6 @@ class EEGEncodingModel(BaseModelInterface):
                 'metadata', f'metadata_sub-{self.subject:02d}.npy'
             )
             metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
-            print(metadata_dict)
             self.ch_names = metadata_dict['eeg']['ch_names']
             self.times = metadata_dict['eeg']['times']
 

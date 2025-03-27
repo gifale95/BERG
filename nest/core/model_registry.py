@@ -1,5 +1,5 @@
 import importlib
-from typing import Dict, Type, Optional
+from typing import Dict, Optional
 import semver
 
 # Maps model ID → {version: {"module_path": path, "class_name": name}}
