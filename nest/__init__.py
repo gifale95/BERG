@@ -1,4 +1,3 @@
 from nest.core.nest import NEST
 from nest.models import *
-
-__version__ = "0.1.0"
+from nest._version import __version__
