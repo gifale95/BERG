@@ -37,8 +37,8 @@ register_model(
 
 class EEGEncodingModel(BaseModelInterface):
     """
-    EEG encoding model using a vision-transformer-based (Dosovitskiy et al., 2020) 
-    linearizing approach for the THINGS-EEG-2 dataset.
+    EEG encoding model using a vision transformer backbone to generate
+    in silico EEG responses for the THINGS-EEG-2 dataset.
     """
     
     MODEL_ID = metadata["model_id"]
@@ -47,10 +47,10 @@ class EEGEncodingModel(BaseModelInterface):
     def __init__(self, subject: int, nest_dir: Optional[str] = None):
         """
         Initialize the EEG encoding model.
-        
+
         Args:
-            subject: Subject number
-            nest_dir: Path to NEST directory (optional)
+            subject (int): Subject number from the THINGS-EEG-2 dataset.
+            nest_dir (Optional[str]): Root path to the NEST directory.
         """
         self.subject = subject
         self.nest_dir = nest_dir
@@ -58,7 +58,9 @@ class EEGEncodingModel(BaseModelInterface):
         self._validate_parameters()
         
     def _validate_parameters(self):
-        """Validate model parameters."""
+        """
+        Validate user-provided parameters against supported metadata.
+        """
         if self.subject not in self.VALID_SUBJECTS:
             raise InvalidParameterError(
                 f"Subject must be one of {self.VALID_SUBJECTS}, got {self.subject}"
@@ -66,10 +68,10 @@ class EEGEncodingModel(BaseModelInterface):
 
     def load_model(self, device: str = "auto") -> None:
         """
-        Load the model weights and prepare for inference.
-        
+        Load model weights, preprocessing pipeline, and regression layers.
+
         Args:
-            device: Target device ("cpu", "cuda", or "auto")
+            device (str): Target device ("cpu", "cuda", or "auto").
         """
         try:
             # Select device
@@ -106,7 +108,15 @@ class EEGEncodingModel(BaseModelInterface):
             raise ModelLoadError(f"Failed to load model: {str(e)}")
     
     def _load_feature_extractor(self, device):
-        """Load the vision transformer feature extractor."""
+        """
+        Load the ViT feature extractor for selected intermediate layers.
+
+        Args:
+            device (str): Computation device ("cpu" or "cuda").
+
+        Returns:
+            torch.nn.Module: Torch feature extractor model in eval mode.
+        """
         model = torchvision.models.vit_b_32(weights='DEFAULT')
         
         # Select the used layers for feature extraction
@@ -131,7 +141,12 @@ class EEGEncodingModel(BaseModelInterface):
         return feature_extractor
     
     def _load_scaler_and_pca(self):
-        """Load the scaler and PCA models."""
+        """
+        Load pretrained scaler and PCA transformation parameters.
+
+        Returns:
+            Tuple[StandardScaler, PCA]: Fitted scaler and PCA models.
+        """
         # Scaler
         weights_dir = os.path.join(
             self.nest_dir, 'encoding_models', 'modality-eeg',
@@ -167,7 +182,12 @@ class EEGEncodingModel(BaseModelInterface):
         return scaler, pca
     
     def _load_regression_weights(self):
-        """Load the trained regression weights."""
+        """
+        Load trained linear regression models for each EEG repetition.
+
+        Returns:
+            List[LinearRegression]: List of scikit-learn regression models.
+        """
         weights_dir = os.path.join(
             self.nest_dir, 'encoding_models', 'modality-eeg',
             'train_dataset-things_eeg_2', 'model-vit_b_32',
@@ -190,15 +210,18 @@ class EEGEncodingModel(BaseModelInterface):
             stimulus: np.ndarray,
             show_progress: bool = True) -> np.ndarray:
         """
-        Generate in silico EEG responses for the given stimulus.
-        
+        Generate in silico EEG responses for a batch of visual stimuli.
+
         Args:
-            stimulus: Input stimulus array of shape (B, C, H, W)
-            show_progress: Whether to show a progress bar
-            
+            stimulus (np.ndarray): Input stimulus of shape (B, C, H, W).
+            show_progress (bool): Whether to display a progress bar.
+
         Returns:
-            EEG responses as numpy array of shape (B, R, C, T) where
-            B is batch size, R is repetitions, C is channels, and T is time points
+            np.ndarray: EEG response array of shape (B, R, C, T), where:
+                B = batch size,
+                R = number of repetitions,
+                C = number of EEG channels,
+                T = number of time points.
         """
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -279,11 +302,12 @@ class EEGEncodingModel(BaseModelInterface):
     
     def get_metadata(self) -> Dict[str, Any]:
         """
-        Retrieve metadata from file
-        
+        Load and return EEG metadata for the current subject.
+
         Returns:
-            Dict with Metadata"""
-        
+            Dict[str, Any]: EEG metadata dictionary (e.g., channel names, time points).
+        """
+
         file_name = os.path.join(self.nest_dir, 
                                  'encoding_models', 
                                  'modality-eeg',
@@ -299,15 +323,17 @@ class EEGEncodingModel(BaseModelInterface):
     @classmethod
     def get_model_id(cls) -> str:
         """
-        Return the unique identifier for this model.
-        
+        Return the model's unique string identifier.
+
         Returns:
-            Model ID string
+            str: Model ID.
         """
         return cls.MODEL_ID
     
     def cleanup(self) -> None:
-        """Release resources."""
+        """
+        Release GPU memory and unload the feature extractor.
+        """
         if hasattr(self, 'feature_extractor'):
             # Free GPU memory if using CUDA
             if hasattr(self.feature_extractor, 'to'):

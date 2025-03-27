@@ -9,12 +9,18 @@ import yaml
 from nest.core.model_registry import MODEL_REGISTRY
 
 class BaseModelInterface(ABC):
+    """
+    Abstract base class for all NEST encoding models.
+    Defines required methods for loading, running, and describing models.
+    """
+    
     @abstractmethod
     def load_model(self, device:str) -> None:
         """
-        Load the model weights and prepare for inference
+        Load model weights and prepare for inference.
+
         Args:
-            device: Target device ("cpu", "cuda")
+            device (str): Target device for computation ("cpu", "cuda", or "auto").
         """
         pass
     
@@ -24,22 +30,23 @@ class BaseModelInterface(ABC):
         self, 
         stimulus: np.ndarray) -> np.ndarray:
         """
-        Generate in silico neural responses for the given stimulus.
-        
+        Generate in silico neural responses for a given stimulus.
+
         Args:
-            stimulus: Input stimulus array
+            stimulus (np.ndarray): Input stimulus array.
+
         Returns:
-            Neural responses as numpy array
+            np.ndarray: Simulated neural responses.
         """
         pass
     
     
     def get_supported_parameters(self) -> Dict[str, Dict[str, Any]]:
         """
-        Return information about supported parameters.
-        
+        Get supported input parameters defined in the model's YAML file.
+
         Returns:
-            Dict mapping parameter names to parameter metadata
+            Dict[str, Dict[str, Any]]: Parameter names mapped to metadata.
         """
         model_id = self.get_model_id()
         
@@ -57,34 +64,40 @@ class BaseModelInterface(ABC):
     @abstractmethod
     def get_model_id(cls) -> str:
         """
-        Return the unique identifier for this model.
-        
+        Return the model's unique identifier.
+
         Returns:
-            Model ID string
+            str: Model ID.
         """
         pass
     
     @abstractmethod
     def cleanup(self) -> None:
-        """Release resources (e.g., free GPU memory, close sessions)."""
+        """
+        Release resources, such as GPU memory or open sessions.
+        """
         pass
     
     @abstractmethod
     def get_metadata(self) -> Dict[str, Any]:
-        "Retrieve Metadata from each of the models"
+        """
+        Retrieve metadata for the model instance.
+
+        Returns:
+            Dict[str, Any]: Metadata dictionary.
+        """
         pass
     
     @staticmethod
     def describe(model_id: str) -> Dict[str, Any]:
         """
-        Return a detailed, human-readable description of the model
-        using only the YAML metadata registered under model_id.
-        
+        Print and return a detailed description of a registered model.
+
         Args:
-            model_id: Unique model ID registered via register_model()
-        
+            model_id (str): ID of the model as registered in the registry.
+
         Returns:
-            Dict containing metadata and example usage
+            Dict[str, Any]: Metadata, supported parameters, and example usage.
         """
         if model_id not in MODEL_REGISTRY:
             raise ValueError(f"Model '{model_id}' is not registered.")
@@ -157,7 +170,16 @@ class BaseModelInterface(ABC):
 
             
     def __enter__(self):
+        """
+        Enable use of the model in a context manager (`with` statement).
+        
+        Returns:
+            BaseModelInterface: The current model instance.
+        """
         return self
         
     def __exit__(self):
+        """
+        Automatically clean up resources when leaving a context.
+        """
         self.cleanup()

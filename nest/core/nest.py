@@ -11,19 +11,19 @@ from nest.core.model_registry import MODEL_REGISTRY
 class NEST:
     def __init__(self, nest_dir: str):
         """
-        Initialize NEST.
-        
+        Initialize the NEST toolkit.
+
         Args:
-            nest_dir: Path to the NEST directory containing models
+            nest_dir (str): Path to the NEST directory containing model files.
         """
         self.nest_dir = nest_dir
         
     def which_modalities(self) -> List[str]:
         """
-        Return available neural data modalities.
-        
+        Get the list of available neural data modalities.
+
         Returns:
-            List of modality names
+            List[str]: Names of supported modalities (e.g., 'fmri', 'eeg').
         """
         # Derive from model registry metadata
         modalities = set()
@@ -45,15 +45,15 @@ class NEST:
     
     def get_encoding_model(self, model_id: str, version: str = "latest", **kwargs):
         """
-        Create and return an instance of the specified model.
-        
+        Load and return a specific encoding model instance.
+
         Args:
-            model_id: Unique identifier for the model
-            version: Specific version or "latest" for the most recent
-            **kwargs: Model-specific parameters
-        
+            model_id (str): Unique identifier of the model.
+            version (str, optional): Model version to load, or 'latest'. Defaults to "latest".
+            **kwargs: Additional model-specific initialization parameters.
+
         Returns:
-            Instantiated model
+            BaseModelInterface: Instantiated encoding model.
         """
         try:
             model_class = get_model_class(model_id, version)
@@ -67,16 +67,16 @@ class NEST:
     
     def encode(self, model: BaseModelInterface, stimulus: np.ndarray, return_metadata: bool = False, **kwargs):
         """
-        Generate in silico neural responses.
-        
+        Generate in silico neural responses using the given model.
+
         Args:
-            model: Model instance
-            stimulus: Input stimulus array
-            return_metadata: If it should also return model metadata
-            **kwargs: Additional parameters for response generation
-        
+            model (BaseModelInterface): An instantiated model.
+            stimulus (np.ndarray): Input stimulus array.
+            return_metadata (bool, optional): Whether to return metadata. Defaults to False.
+            **kwargs: Additional arguments for response generation.
+
         Returns:
-            Neural responses
+            Simulated neural responses, optionally with model metadata.
         """
         
         if return_metadata:
@@ -86,14 +86,14 @@ class NEST:
     
     def get_model_info(self, model_id: str, version: str = "latest") -> Dict[str, Any]:
         """
-        Get information about a model based on its YAML metadata.
+        Retrieve metadata and usage info for a specified model.
 
         Args:
-            model_id: Unique identifier for the model
-            version: Reserved for future use (currently ignored)
+            model_id (str): Unique identifier of the model.
+            version (str, optional): Reserved for future use. Defaults to "latest".
 
         Returns:
-            Dict containing model metadata and usage example
+            Dict[str, Any]: Model metadata and usage example.
         """
         if model_id not in MODEL_REGISTRY:
             raise ModelNotFoundError(f"Model '{model_id}' not found in registry.")
@@ -106,10 +106,10 @@ class NEST:
         
     def list_models(self) -> Dict[str, List[str]]:
         """
-        List all available models and their versions.
-        
+        List all registered models with their available versions.
+
         Returns:
-            Dict mapping model IDs to lists of available versions
+            Dict[str, List[str]]: Mapping of model IDs to version lists.
         """
         result = {}
         for model_id in get_available_models():

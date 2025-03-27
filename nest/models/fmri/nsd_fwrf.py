@@ -46,12 +46,12 @@ class FMRIEncodingModel(BaseModelInterface):
     
     def __init__(self, subject: int, roi: str, nest_dir: Optional[str] = None):
         """
-        Initialize the fMRI encoding model.
-        
+        Initialize the fMRI encoding model for a specific subject and ROI.
+
         Args:
-            subject: Subject number (1-8)
-            roi: Region of Interest
-            nest_dir: Path to NEST directory (optional)
+            subject (int): Subject number (1–8).
+            roi (str): Region of interest (e.g., "V1", "FFA", "lateral").
+            nest_dir (Optional[str]): Path to the NEST directory.
         """
         self.img_chan = 3
         self.resize_px = 227
@@ -62,7 +62,9 @@ class FMRIEncodingModel(BaseModelInterface):
         self._validate_parameters()
         
     def _validate_parameters(self):
-        """Validate model parameters."""
+        """
+        Validate the subject and ROI values against the metadata.
+        """
         if self.subject not in self.VALID_SUBJECTS:
             raise InvalidParameterError(
                 f"Subject must be one of {self.VALID_SUBJECTS}, got {self.subject}"
@@ -75,10 +77,10 @@ class FMRIEncodingModel(BaseModelInterface):
 
     def load_model(self, device: str = "auto") -> None:
         """
-        Load the model weights and prepare for inference.
-        
+        Load model weights and prepare the encoder and fwrf components.
+
         Args:
-            device: Target device ("cpu", "cuda", or "auto")
+            device (str): Target device ("cpu", "cuda", or "auto").
         """
         try:
             # Select device
@@ -122,8 +124,8 @@ class FMRIEncodingModel(BaseModelInterface):
         and ensures models are in evaluation mode.
 
         Args:
-            trained_models (list): List of loaded model weight dictionaries.
-            stim_mean (torch.Tensor): Mean stimulus for input normalization.
+            trained_models (List[dict]): List of loaded weight checkpoints.
+            stim_mean (torch.Tensor): Mean image used for input normalization.
 
         Steps:
         1. Create dummy input images to initialize the encoder.
@@ -182,16 +184,15 @@ class FMRIEncodingModel(BaseModelInterface):
             self, 
             stimulus: np.ndarray) -> np.ndarray:
             """
-            Generate in silico fMRI responses for the given stimulus.
-            
+            Generate in silico fMRI responses for a batch of visual stimuli.
+
             Args:
-                stimulus: Input stimulus array of shape (B, C, H, W)
-                show_progress: Whether to show a progress bar
-                progress_callback: Optional callback function(current, total)
-                
+                stimulus (np.ndarray): Input array of shape (B, C, H, W).
+
             Returns:
-                fMRI responses as numpy array of shape (B, V) where
-                B is batch size and V is number of voxels
+                np.ndarray: fMRI responses of shape (B, V), where:
+                    B = batch size,
+                    V = number of predicted voxels.
             """
             # Validate stimulus
             if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -253,10 +254,11 @@ class FMRIEncodingModel(BaseModelInterface):
         
     def get_metadata(self) -> Dict[str, Any]:
         """
-        Retrieve metadata from file
-        
+        Retrieve metadata for the current subject and ROI.
+
         Returns:
-            Dict with Metadata"""
+            Dict[str, Any]: Metadata dictionary (e.g., voxel indices, ROI info).
+        """
         
         file_name = os.path.join(self.nest_dir, 
                                  'encoding_models', 
@@ -275,15 +277,17 @@ class FMRIEncodingModel(BaseModelInterface):
     @classmethod
     def get_model_id(cls) -> str:
         """
-        Return the unique identifier for this model.
-        
+        Return the model's unique string identifier.
+
         Returns:
-            Model ID string
+            str: Model ID.
         """
         return cls.MODEL_ID
     
     def cleanup(self) -> None:
-        """Release resources."""
+        """
+        Release memory and resources associated with the model.
+        """
         if hasattr(self, 'model') and self.model is not None:
             # Free GPU memory if using CUDA
             if hasattr(self.model, 'to'):
