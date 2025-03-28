@@ -59,7 +59,7 @@ class NEST:
         """
         try:
             model_class = get_model_class(model_id, version)
-            model = model_class(**kwargs)
+            model = model_class(nest_dir=self.nest_dir, **kwargs)
             model.load_model()
             return model
         except ValueError as e:
