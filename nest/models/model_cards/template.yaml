@@ -3,7 +3,6 @@
 
 # Basic metadata
 model_id: [modality]_[dataset]_[model_type]  # e.g., fmri_nsd_fwrf
-version: 1.0.0
 modality: [modality]  # e.g., fmri, eeg, meg, ecog
 dataset: [dataset_name]
 features: [feature_extraction_method]
