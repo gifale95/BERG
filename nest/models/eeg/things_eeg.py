@@ -28,13 +28,12 @@ def load_model_metadata():
 # Load metadata once at the top
 metadata = load_model_metadata()
 
-# Register this model with the registry using metadata
 register_model(
     model_id=metadata["model_id"],
-    version=metadata["version"],
     module_path="nest.models.eeg.things_eeg",
     class_name="EEGEncodingModel",
     modality=metadata.get("modality", "eeg"),
+    dataset=metadata.get("dataset", "things_eeg_2"),
     yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg_things_eeg_2_vit_b_32.yaml")
 )
 
@@ -46,9 +45,9 @@ class EEGEncodingModel(BaseModelInterface):
     """
     
     MODEL_ID = metadata["model_id"]
-    VALID_SUBJECTS = metadata["supported_parameters"]["subject"]["valid_values"]
+    VALID_SUBJECTS = metadata["parameters"]["subject"]["valid_values"]
     
-    def __init__(self, subject: int, nest_dir: Optional[str] = None):
+    def __init__(self, subject: int, device:str = "auto", nest_dir: Optional[str] = None):
         """
         Initialize the EEG encoding model.
 
@@ -61,6 +60,11 @@ class EEGEncodingModel(BaseModelInterface):
         self.model = None
         self._validate_parameters()
         
+        # Select device
+        if device == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
+        
     def _validate_parameters(self):
         """
         Validate user-provided parameters against supported metadata.
@@ -70,7 +74,7 @@ class EEGEncodingModel(BaseModelInterface):
                 f"Subject must be one of {self.VALID_SUBJECTS}, got {self.subject}"
             )
 
-    def load_model(self, device: str = "auto") -> None:
+    def load_model(self) -> None:
         """
         Load model weights, preprocessing pipeline, and regression layers.
 
@@ -78,11 +82,6 @@ class EEGEncodingModel(BaseModelInterface):
             device (str): Target device ("cpu", "cuda", or "auto").
         """
         try:
-            # Select device
-            if device == "auto":
-                device = "cuda" if torch.cuda.is_available() else "cpu"
-            self.device = device
-            
             # Get the EEG channels and time points dimensions
             metadata_dir = os.path.join(
                 self.nest_dir, 'encoding_models', 'modality-eeg',
@@ -94,7 +93,7 @@ class EEGEncodingModel(BaseModelInterface):
             self.times = metadata_dict['eeg']['times']
 
             # Load the vision transformer
-            self.feature_extractor = self._load_feature_extractor(device)
+            self.feature_extractor = self._load_feature_extractor(self.device)
             
             # Load the scaler and PCA weights
             self.scaler, self.pca = self._load_scaler_and_pca()

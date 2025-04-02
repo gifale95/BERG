@@ -24,10 +24,10 @@ metadata = load_model_metadata()
 # Register this model with the registry using metadata
 register_model(
     model_id=metadata["model_id"],
-    version=metadata["version"],
     module_path="nest.models.fmri.nsd_fwrf",
     class_name="FMRIEncodingModel",
-    modality=metadata.get("modality", "unknown"),
+    modality=metadata.get("modality", "fmri"),
+    dataset=metadata.get("dataset", "nsd"),
     yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri_nsd_fwrf.yaml")
 )
 
@@ -38,12 +38,14 @@ class FMRIEncodingModel(BaseModelInterface):
     for the Natural Scenes Dataset (NSD).
     """
     
+    print(metadata)
+    
     MODEL_ID = metadata["model_id"]
-    VALID_SUBJECTS = metadata["supported_parameters"]["subject"]["valid_values"]
-    VALID_ROIS = metadata["supported_parameters"]["roi"]["valid_values"]
+    VALID_SUBJECTS = metadata["parameters"]["subject"]["valid_values"]
+    VALID_ROIS = metadata["parameters"]["roi"]["valid_values"]
     
     
-    def __init__(self, subject: int, roi: str, nest_dir: Optional[str] = None):
+    def __init__(self, subject: int, roi: str, device:str="auto", nest_dir: Optional[str] = None):
         """
         Initialize the fMRI encoding model for a specific subject and ROI.
 
@@ -59,6 +61,11 @@ class FMRIEncodingModel(BaseModelInterface):
         self.nest_dir = nest_dir
         self.model = None
         self._validate_parameters()
+        
+        # Select device
+        if device == "auto":
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = device
         
     def _validate_parameters(self):
         """
@@ -82,10 +89,7 @@ class FMRIEncodingModel(BaseModelInterface):
             device (str): Target device ("cpu", "cuda", or "auto").
         """
         try:
-            # Select device
-            if device == "auto":
-                device = "cuda" if torch.cuda.is_available() else "cpu"
-            self.device = device
+            
             
             
             # Build model weight paths
@@ -211,9 +215,12 @@ class FMRIEncodingModel(BaseModelInterface):
             
             ### Model functions ###
             def _model_fn(_ext, _con, _x):
-                """model consists of an extractor (_ext) and a connection model (_con)"""
                 _y, _fm, _h = _ext(_x)
-                return _con(_fm)
+                if isinstance(_con, dict):
+                    return torch.cat([model(_fm) for model in _con.values()], dim=-1)
+                else:
+                    return _con(_fm)
+
             def _pred_fn(_ext, _con, xb):
                 xb = torch.from_numpy(xb).to(self.device)
                 return _model_fn(_ext, _con, xb)
