@@ -12,22 +12,22 @@ from nest.models.fmri.fwrf.torch_mpf import Torch_LayerwiseFWRF
 from nest.models.fmri.fwrf.load_nsd import image_feature_fn
 from nest.models.fmri.fwrf.torch_joint_training_unpacked_sequences import *
 
-# Load model metadata from YAML
-def load_model_metadata():
+# Load model model_info from YAML
+def load_model_info():
     yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri_nsd_fwrf.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
-# Load metadata once at the top
-metadata = load_model_metadata()
+# Load model_info once at the top
+model_info = load_model_info()
 
-# Register this model with the registry using metadata
+# Register this model with the registry using model_info
 register_model(
-    model_id=metadata["model_id"],
+    model_id=model_info["model_id"],
     module_path="nest.models.fmri.nsd_fwrf",
     class_name="FMRIEncodingModel",
-    modality=metadata.get("modality", "fmri"),
-    dataset=metadata.get("dataset", "nsd"),
+    modality=model_info.get("modality", "fmri"),
+    dataset=model_info.get("dataset", "nsd"),
     yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri_nsd_fwrf.yaml")
 )
 
@@ -38,21 +38,27 @@ class FMRIEncodingModel(BaseModelInterface):
     for the Natural Scenes Dataset (NSD).
     """
     
-    print(metadata)
-    
-    MODEL_ID = metadata["model_id"]
-    VALID_SUBJECTS = metadata["parameters"]["subject"]["valid_values"]
-    VALID_ROIS = metadata["parameters"]["roi"]["valid_values"]
+    MODEL_ID = model_info["model_id"]
+    VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
+    VALID_ROIS = model_info["parameters"]["roi"]["valid_values"]
     
     
     def __init__(self, subject: int, roi: str, device:str="auto", nest_dir: Optional[str] = None):
         """
         Initialize the fMRI encoding model for a specific subject and ROI.
-
-        Args:
-            subject (int): Subject number (1–8).
-            roi (str): Region of interest (e.g., "V1", "FFA", "lateral").
-            nest_dir (Optional[str]): Path to the NEST directory.
+        
+        Parameters
+        ----------
+        subject : int
+            Subject number from the NSD dataset (1-8).
+        roi : str
+            Region of interest (e.g., "V1", "FFA-1", "lateral").
+            Must be one of the valid ROIs defined in the model yaml.
+        device : str, default="auto"
+            Target device for computation. Options are "cpu", "cuda", or "auto".
+            If "auto", will use GPU if available, otherwise CPU.
+        nest_dir : str, optional
+            Path to the NEST directory containing model files and weights.
         """
         self.img_chan = 3
         self.resize_px = 227
@@ -69,7 +75,10 @@ class FMRIEncodingModel(BaseModelInterface):
         
     def _validate_parameters(self):
         """
-        Validate the subject and ROI values against the metadata.
+        Validate the subject and ROI values against the model info.
+        
+        Verifies that the provided subject ID and ROI name are among
+        the supported values defined in the model's modelinfo.
         """
         if self.subject not in self.VALID_SUBJECTS:
             raise InvalidParameterError(
@@ -84,9 +93,12 @@ class FMRIEncodingModel(BaseModelInterface):
     def load_model(self, device: str = "auto") -> None:
         """
         Load model weights and prepare the encoder and fwrf components.
-
-        Args:
-            device (str): Target device ("cpu", "cuda", or "auto").
+        
+        Parameters
+        ----------
+        device : str, default="auto"
+            Target device for computation. Options are "cpu", "cuda", or "auto".
+            If "auto", will use GPU if available, otherwise CPU.
         """
         try:
             
@@ -121,24 +133,23 @@ class FMRIEncodingModel(BaseModelInterface):
     def _initialize_models(self, trained_models, stim_mean):
         """
         Initializes the fMRI encoding model components.
-
-        This function sets up the shared encoder model and the subject-specific 
-        feature-weighted receptive field (fwrf) models, loads trained weights, 
-        and ensures models are in evaluation mode.
-
-        Args:
-            trained_models (List[dict]): List of loaded weight checkpoints.
-            stim_mean (torch.Tensor): Mean image used for input normalization.
-
-        Steps:
-        1. Create dummy input images to initialize the encoder.
-        2. Instantiate a shared encoder model to extract feature maps.
-        3. Pass dummy images through the encoder to obtain feature maps.
-        4. Initialize subject-specific fwrf models to map features to voxel responses.
-        5. Load pre-trained weights for the encoder and fwrf models.
-        6. Set all models to evaluation mode for inference.
+        
+        Parameters
+        ----------
+        trained_models : list
+            List of loaded weight checkpoints containing model parameters.
+        stim_mean : torch.Tensor
+            Mean image used for input normalization.
+        
+        Notes
+        -----
+        This function:
+        1. Creates dummy input images to initialize the encoder
+        2. Instantiates shared encoder models to extract feature maps
+        3. Initializes subject-specific fwrf models to map features to voxel responses
+        4. Loads pre-trained weights for both encoder and fwrf components
+        5. Sets all models to evaluation mode for inference
         """
-
 
         # Dummy images for model initialization for proper setup
         dummy_images = np.random.randint(0, 255, (20, self.img_chan, self.resize_px, self.resize_px))
@@ -184,86 +195,92 @@ class FMRIEncodingModel(BaseModelInterface):
 
 
     def generate_response(
-            self, 
-            stimulus: np.ndarray) -> np.ndarray:
-            """
-            Generate in silico fMRI responses for a batch of visual stimuli.
-
-            Args:
-                stimulus (np.ndarray): Input array of shape (B, C, H, W).
-
-            Returns:
-                np.ndarray: fMRI responses of shape (B, V), where:
-                    B = batch size,
-                    V = number of predicted voxels.
-            """
-            # Validate stimulus
-            if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
-                raise StimulusError(
-                    "Stimulus must be a 4D numpy array (batch, channels, height, width)"
-                )
-                
-                
-            # Preprocess images
-            transform = trn.Compose([
-                trn.Resize((self.resize_px,self.resize_px))
-            ])
-            images = torch.from_numpy(stimulus)
-            images = transform(images)
-            images = np.asarray(images)
-            images = image_feature_fn(images)
+        self, 
+        stimulus: np.ndarray) -> np.ndarray:
+        """
+        Generate in silico fMRI responses for a batch of visual stimuli.
+        
+        Parameters
+        ----------
+        stimulus : np.ndarray
+            Input image array with shape (batch_size, channels, height, width).
+            Should contain RGB images with pixel values in range [0, 255].
+        
+        Returns
+        -------
+        np.ndarray
+            Predicted fMRI responses with shape (batch_size, n_voxels).
+            The number of voxels varies by ROI and subject.
+        """
+        # Validate stimulus
+        if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
+            raise StimulusError(
+                "Stimulus must be a 4D numpy array (batch, channels, height, width)"
+            )
             
-            ### Model functions ###
-            def _model_fn(_ext, _con, _x):
-                _y, _fm, _h = _ext(_x)
-                if isinstance(_con, dict):
-                    return torch.cat([model(_fm) for model in _con.values()], dim=-1)
-                else:
-                    return _con(_fm)
-
-            def _pred_fn(_ext, _con, xb):
-                xb = torch.from_numpy(xb).to(self.device)
-                return _model_fn(_ext, _con, xb)
-
             
-            # Generate the in silico fMRI responses
-            with torch.no_grad():
-                if self.roi in ['lateral', 'ventral']:
-                    insilico_fmri_responses_1 = subject_pred_pass(
-                        _pred_fn, 
-                        self.shared_model[0],
-                        self.subject_fwrfs[0], 
-                        images,
-                        batch_size=100)
-                    insilico_fmri_responses_2 = subject_pred_pass(
-                        _pred_fn, 
-                        self.shared_model[1],
-                        self.subject_fwrfs[1], 
-                        images,
-                        batch_size=100)
-                    
-                    insilico_fmri_responses = np.append(insilico_fmri_responses_1,
-                        insilico_fmri_responses_2, 1)
-                else:
-                    insilico_fmri_responses = subject_pred_pass(_pred_fn,
-                        self.shared_model[0],
-                        self.subject_fwrfs[0][self.subject], 
-                        images,
-                        batch_size=100)
-                    
-            # Convert the in silico fMRI responses to float 32
-            insilico_fmri_responses = insilico_fmri_responses.astype(np.float32)
+        # Preprocess images
+        transform = trn.Compose([
+            trn.Resize((self.resize_px,self.resize_px))
+        ])
+        images = torch.from_numpy(stimulus)
+        images = transform(images)
+        images = np.asarray(images)
+        images = image_feature_fn(images)
+        
+        ### Model functions ###
+        def _model_fn(_ext, _con, _x):
+            _y, _fm, _h = _ext(_x)
+            if isinstance(_con, dict):
+                return torch.cat([model(_fm) for model in _con.values()], dim=-1)
+            else:
+                return _con(_fm)
 
-            ### Output ###
-            return insilico_fmri_responses
+        def _pred_fn(_ext, _con, xb):
+            xb = torch.from_numpy(xb).to(self.device)
+            return _model_fn(_ext, _con, xb)
+
+        
+        # Generate the in silico fMRI responses
+        with torch.no_grad():
+            if self.roi in ['lateral', 'ventral']:
+                insilico_fmri_responses_1 = subject_pred_pass(
+                    _pred_fn, 
+                    self.shared_model[0],
+                    self.subject_fwrfs[0], 
+                    images,
+                    batch_size=100)
+                insilico_fmri_responses_2 = subject_pred_pass(
+                    _pred_fn, 
+                    self.shared_model[1],
+                    self.subject_fwrfs[1], 
+                    images,
+                    batch_size=100)
+                
+                insilico_fmri_responses = np.append(insilico_fmri_responses_1,
+                    insilico_fmri_responses_2, 1)
+            else:
+                insilico_fmri_responses = subject_pred_pass(_pred_fn,
+                    self.shared_model[0],
+                    self.subject_fwrfs[0][self.subject], 
+                    images,
+                    batch_size=100)
+                
+        # Convert the in silico fMRI responses to float 32
+        insilico_fmri_responses = insilico_fmri_responses.astype(np.float32)
+
+        ### Output ###
+        return insilico_fmri_responses
         
         
     def get_metadata(self) -> Dict[str, Any]:
         """
         Retrieve metadata for the current subject and ROI.
-
-        Returns:
-            Dict[str, Any]: Metadata dictionary (e.g., voxel indices, ROI info).
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Metadata dictionary.
         """
         
         file_name = os.path.join(self.nest_dir, 
@@ -284,15 +301,21 @@ class FMRIEncodingModel(BaseModelInterface):
     def get_model_id(cls) -> str:
         """
         Return the model's unique string identifier.
-
-        Returns:
-            str: Model ID.
+        
+        Returns
+        -------
+        str
+            Model ID string that identifies this model in the registry.
         """
         return cls.MODEL_ID
     
     def cleanup(self) -> None:
         """
         Release memory and resources associated with the model.
+        
+        Frees GPU memory by moving models to CPU and clearing CUDA cache
+        if available, preventing memory leaks when working with multiple
+        models.
         """
         if hasattr(self, 'model') and self.model is not None:
             # Free GPU memory if using CUDA

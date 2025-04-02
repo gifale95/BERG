@@ -18,18 +18,26 @@ class BaseModelInterface(ABC):
     def load_model(self, device:str) -> None:
         """
         Load model weights and prepare for inference.
-
-        Args:
-            device (str): Target device for computation ("cpu", "cuda", or "auto").
+        
+        Parameters
+        ----------
+        device : str
+            Target device for computation ("cpu", "cuda", or "auto").
+            If "auto", the system will use GPU acceleration if available,
+            otherwise fall back to CPU.
         """
         pass
     
     def get_supported_parameters(self) -> Dict[str, Dict[str, Any]]:
         """
         Get supported input parameters defined in the model's YAML file.
-
-        Returns:
-            Dict[str, Dict[str, Any]]: Parameter names mapped to model_info.
+    
+        Returns
+        -------
+        Dict[str, Dict[str, Any]]
+            Dictionary mapping parameter names to their model info.
+            Each parameter entry contains information such as type,
+            valid values, default values, and descriptions.
         """
         model_id = self.get_model_id()
         yaml_path = MODEL_REGISTRY[model_id]["yaml_path"]
@@ -45,9 +53,12 @@ class BaseModelInterface(ABC):
     def get_model_id(cls) -> str:
         """
         Return the model's unique identifier.
-
-        Returns:
-            str: Model ID.
+        
+        Returns
+        -------
+        str
+            The unique string identifier for this model as registered
+            in the model registry.
         """
         pass
         
@@ -56,9 +67,13 @@ class BaseModelInterface(ABC):
     def get_metadata(self) -> Dict[str, Any]:
         """
         Retrieve metadata for the model instance.
-
-        Returns:
-            Dict[str, Any]: Metadata dictionary.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Dictionary containing model metadata such as voxel indices,
+            channel information, region details, or other model-specific
+            information.
         """
         pass
     
@@ -69,12 +84,17 @@ class BaseModelInterface(ABC):
         stimulus: np.ndarray) -> np.ndarray:
         """
         Generate in silico neural responses for a given stimulus.
-
-        Args:
-            stimulus (np.ndarray): Input stimulus array.
-
-        Returns:
-            np.ndarray: Simulated neural responses.
+        
+        Parameters
+        ----------
+        stimulus : np.ndarray
+            Input stimulus array - requirements vary by model.
+            See model's YAML model info for specific input constraints.
+        
+        Returns
+        -------
+        np.ndarray
+            Simulated neural responses. Shape varies by modality
         """
         pass
 
@@ -84,11 +104,15 @@ class BaseModelInterface(ABC):
         """
         Print and return a detailed description of a registered model.
         
-        Args:
-            model_id (str): ID of the model as registered in the registry.
-            
-        Returns:
-            Dict[str, Any]: Model Info, supported parameters, and example usage.
+        Parameters
+        ----------
+        model_id : str
+            ID of the model as registered in the registry.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Comprehensive model information
         """
         if model_id not in MODEL_REGISTRY:
             raise ValueError(f"Model '{model_id}' is not registered.")
@@ -253,9 +277,11 @@ class BaseModelInterface(ABC):
     def describe(self) -> Dict[str, Any]:
         """
         Print and return a detailed description of this model instance.
-
-        Returns:
-            Dict[str, Any]: Model model_info and usage example.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Comprehensive model information.
         """
         return self.__class__.describe_from_id(self.get_model_id())
     

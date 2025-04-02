@@ -16,13 +16,20 @@ def register_model(
     """
     Register a model with a given ID and module path.
     
-    Args:
-        model_id (str): Unique identifier for the model.
-        module_path (str): Dotted import path to the model module.
-        class_name (Optional[str]): Name of the model class (defaults to model_id).
-        modality (Optional[str]): Associated data modality (e.g., 'fmri', 'eeg').
-        dataset (Optional[str]): Dataset on which the model was trained.
-        yaml_path (Optional[str]): Path to the YAML metadata file.
+    Parameters
+    ----------
+    model_id : str
+        Unique identifier for the model. Used as the key in the model registry.
+    module_path : str
+        Dotted import path to the model module (e.g., 'nest.models.fmri.nsd_fwrf').
+    class_name : str, optional
+        Name of the model class. If not provided, defaults to model_id.
+    modality : str, optional
+        Associated data modality (e.g., 'fmri', 'eeg').
+    dataset : str, optional
+        Dataset on which the model was trained (e.g., 'NSD', 'THINGS_EEG_2').
+    yaml_path : str, optional
+        Path to the YAML metadata file that describes the model.
     """
     MODEL_REGISTRY[model_id] = {
         "module_path": module_path,
@@ -36,12 +43,16 @@ def register_model(
 def get_model_class(model_id: str):
     """
     Dynamically import and return a model class by ID.
-
-    Args:
-        model_id (str): Unique identifier for the model.
-
-    Returns:
-        Type: The model class.
+    
+    Parameters
+    ----------
+    model_id : str
+        Unique identifier for the model to import.
+    
+    Returns
+    -------
+    Type
+        The model class that can be instantiated to create a model object.
     """
     if model_id not in MODEL_REGISTRY:
         raise ValueError(f"Model '{model_id}' not found in registry")
@@ -53,8 +64,11 @@ def get_model_class(model_id: str):
 def get_available_models():
     """
     List all registered model IDs.
-
-    Returns:
-        list: A list of registered model IDs.
+    
+    Returns
+    -------
+    list
+        A list of registered model IDs that can be used with get_model_class()
+        or passed to NEST.get_encoding_model().
     """
     return list(MODEL_REGISTRY.keys())

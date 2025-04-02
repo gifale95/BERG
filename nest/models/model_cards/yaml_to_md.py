@@ -9,6 +9,21 @@ import argparse
 from collections import defaultdict
 
 def yaml_to_markdown(yaml_path, save_path):
+    """
+    Convert a YAML model model_info file to a formatted Markdown document.
+    
+    Parameters
+    ----------
+    yaml_path : str
+        Path to the YAML file containing model model_info.
+        The file should follow the NEST model model_info schema with sections
+        for model_id, description, input/output specifications, parameters,
+        and performance metrics.
+    
+    save_path : str
+        Path where the generated Markdown file will be saved.
+        Parent directories will be created if they don't exist. 
+    """
     with open(yaml_path, 'r') as f:
         data = yaml.safe_load(f)
 
@@ -19,7 +34,7 @@ def yaml_to_markdown(yaml_path, save_path):
     lines.append(f"# {model_id}")
     lines.append("")
 
-    # Metadata Summary Table
+    # model_info Summary Table
     summary_keys = ["modality", "dataset", "features", "repeats", "subject_level"]
     lines.append("## Model Summary")
     lines.append("")
@@ -133,7 +148,7 @@ def yaml_to_markdown(yaml_path, save_path):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Convert YAML model metadata to Markdown.")
+    parser = argparse.ArgumentParser(description="Convert YAML model model_info to Markdown.")
     parser.add_argument("yaml_path", type=str, help="Path to the YAML file")
     parser.add_argument("save_path", type=str, help="Path to save the generated Markdown file")
     args = parser.parse_args()

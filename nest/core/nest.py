@@ -13,9 +13,13 @@ class NEST:
     def __init__(self, nest_dir: str):
         """
         Initialize the NEST toolkit.
-
-        Args:
-            nest_dir (str): Path to the NEST directory containing model files.
+        
+        Parameters
+        ----------
+        nest_dir : str
+            Path to the NEST directory containing model files and weights.
+            This directory should contain the organized structure of encoding
+            models by modality and dataset.
         """
         self.nest_dir = nest_dir
         
@@ -23,11 +27,16 @@ class NEST:
         """
         Get a catalog of available models organized by modality and dataset.
         
-        Args:
-            print_format (bool): If True, print a formatted catalog.
-            
-        Returns:
-            Dict[str, List[str]]: Mapping from modalities to lists of datasets.
+        Parameters
+        ----------
+        print_format : bool, default=False
+            If True, print a formatted hierarchical catalog to the console.
+        
+        Returns
+        -------
+        Dict[str, List[str]]
+            Dictionary mapping modalities (e.g., 'fmri', 'eeg') to lists of 
+            available datasets for each modality.
         """
         
         # Organize models by modality and dataset
@@ -71,10 +80,13 @@ class NEST:
         
     def list_models(self) -> Dict[str, List[str]]:
         """
-        List all registered models.
-
-        Returns:
-            Dict[str, List[str]]: Mapping of model IDs.
+        List all registered models in the NEST registry.
+        
+        Returns
+        -------
+        Dict[str, List[str]]
+            Dictionary containing information about all registered models,
+            including their IDs and associated model_info.
         """
         return get_available_models()
         
@@ -82,13 +94,24 @@ class NEST:
     def get_encoding_model(self, model_id: str, device:str="auto", **kwargs):
         """
         Load and return a specific encoding model instance.
-
-        Args:
-            model_id (str): Unique identifier of the model.
-            **kwargs: Additional model-specific initialization parameters.
-
-        Returns:
-            BaseModelInterface: Instantiated encoding model.
+        
+        Parameters
+        ----------
+        model_id : str
+            Unique identifier of the model to load.
+        device : str, default="auto"
+            Target device for computation ("cpu", "cuda", or "auto").
+            If "auto", the system will use GPU acceleration if available.
+        **kwargs
+            Additional model-specific initialization parameters.
+            These vary by model and are documented in each model's
+            YAML configuration file.
+        
+        Returns
+        -------
+        BaseModelInterface
+            Instantiated and loaded encoding model ready for generating
+            neural responses.
         """
         try:
             model_class = get_model_class(model_id)
@@ -103,15 +126,29 @@ class NEST:
     def encode(self, model: BaseModelInterface, stimulus: np.ndarray, return_metadata: bool = False, **kwargs):
         """
         Generate in silico neural responses using the given model.
-
-        Args:
-            model (BaseModelInterface): An instantiated model.
-            stimulus (np.ndarray): Input stimulus array.
-            return_metadata (bool, optional): Whether to return metadata. Defaults to False.
-            **kwargs: Additional arguments for response generation.
-
-        Returns:
-            Simulated neural responses, optionally with model metadata.
+        
+        Parameters
+        ----------
+        model : BaseModelInterface
+            An instantiated and loaded encoding model.
+        stimulus : np.ndarray
+            Input stimulus array. Typically has shape (batch_size, channels, height, width)
+            for image stimuli, but exact requirements vary by model.
+        return_metadata : bool, default=False
+            Whether to return model metadata along with the responses.
+        **kwargs
+            Additional arguments for response generation that are specific
+            to the model being used.
+        
+        Returns
+        -------
+        np.ndarray or tuple
+            If return_metadata is False:
+                Simulated neural responses only.
+            If return_metadata is True:
+                A tuple of (responses, metadata), where responses is the simulated
+                neural activity and metadata is a dictionary of model-specific
+                information.
         """
         
         if return_metadata:
@@ -121,13 +158,17 @@ class NEST:
     
     def describe(self, model_id: str) -> Dict[str, Any]:
         """
-        Retrieve metadata and usage info for a specified model.
-
-        Args:
-            model_id (str): Unique identifier of the model.
-
-        Returns:
-            Dict[str, Any]: Model metadata and usage example.
+        Retrieve model info and usage information for a specified model.
+        
+        Parameters
+        ----------
+        model_id : str
+            Unique identifier of the model to describe.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Comprehensive model information.
         """
         if model_id not in MODEL_REGISTRY:
             raise ModelNotFoundError(f"Model '{model_id}' not found in registry.")
