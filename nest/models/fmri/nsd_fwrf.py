@@ -203,8 +203,11 @@ class FMRIEncodingModel(BaseModelInterface):
         Parameters
         ----------
         stimulus : np.ndarray
-            Input image array with shape (batch_size, channels, height, width).
-            Should contain RGB images with pixel values in range [0, 255].
+            Images for which the in silico neural responses are generated. Must be
+            a 4-D numpy array of shape (Batch size x 3 RGB Channels x Width x
+            Height) consisting of integer values in the range [0, 255].
+            Furthermore, the images must be of square size (i.e., equal width and
+            height).
         
         Returns
         -------
