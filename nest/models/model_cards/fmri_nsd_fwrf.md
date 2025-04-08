@@ -8,7 +8,7 @@
 | `dataset` | `NSD` |
 | `features` | `feature-weighted receptive fields (fwrf)` |
 | `repeats` | `single` |
-| `subject_level` | `True` |
+| `subject_specific` | `True` |
 
 ## Description
 

@@ -3,7 +3,7 @@ modality: fmri
 dataset: NSD
 features: feature-weighted receptive fields (fwrf)
 repeats: single
-subject_level: true
+subject_specific: true
 
 # General description of the model
 description: |

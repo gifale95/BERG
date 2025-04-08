@@ -8,7 +8,7 @@
 | `dataset` | `things_eeg_2` |
 | `features` | `vision transformer (ViT-B/32)` |
 | `repeats` | `multi` |
-| `subject_level` | `True` |
+| `subject_specific` | `True` |
 
 ## Description
 

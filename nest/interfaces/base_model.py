@@ -169,7 +169,7 @@ class BaseModelInterface(ABC):
         print()
         
         # Print basic model_info
-        for key in ["modality", "dataset", "features", "repeats", "subject_level"]:
+        for key in ["modality", "dataset", "features", "repeats", "subject_specific"]:
             if key in model_info:
                 label = key.replace("_", " ").capitalize()
                 print(f"{label}: {model_info[key]}")
@@ -264,7 +264,7 @@ class BaseModelInterface(ABC):
         # Return structured information
         return {
             "model_id": model_id,
-            "model_info": {k: model_info.get(k) for k in ["modality", "dataset", "features", "repeats", "subject_level"]},
+            "model_info": {k: model_info.get(k) for k in ["modality", "dataset", "features", "repeats", "subject_specific"]},
             "description": model_info.get("description", ""),
             "input": model_info.get("input", {}),
             "output": model_info.get("output", {}),

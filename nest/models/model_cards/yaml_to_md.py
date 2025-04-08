@@ -35,7 +35,7 @@ def yaml_to_markdown(yaml_path, save_path):
     lines.append("")
 
     # model_info Summary Table
-    summary_keys = ["modality", "dataset", "features", "repeats", "subject_level"]
+    summary_keys = ["modality", "dataset", "features", "repeats", "subject_specific"]
     lines.append("## Model Summary")
     lines.append("")
     lines.append("| Key | Value |")
