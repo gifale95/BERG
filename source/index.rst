@@ -1,7 +1,7 @@
 Welcome to NEST Documentation
 ============================
 
-.. image:: _static/nest_logo.png
+.. .. image:: static/nest_logo.png
    :width: 300
    :alt: NEST Logo
 
@@ -11,58 +11,40 @@ In silico neural responses from encoding models increasingly resemble in vivo re
 
 Novel findings from large-scale in silico experimentation can be validated through targeted small-scale in vivo data collection, optimizing research resources. This approach scales beyond what is possible with in vivo data alone and democratizes research across groups with diverse data collection infrastructure and resources.
 
+----
 
 Contents
 -------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Getting Started
-   
+
    installation
-   basic_usage
-   architecture
-   
+   Quickstart
+
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Tutorials
    
    tutorials/Adding_New_Models_to_Nest
-   tutorials/Quickstart
-   tutorials/fmri_encoding
-   tutorials/eeg_encoding
-   
+
 .. toctree::
    :maxdepth: 2
    :caption: Models
    
    models/overview
-   models/fmri/index
-   models/eeg/index
-   
-.. toctree::
-   :maxdepth: 2
-   :caption: Developer Guide
-   
-   dev/adding_models
-   dev/contributing
-   dev/code_standards
-   
-.. toctree::
-   :maxdepth: 2
-   :caption: API Reference
-   
-   api/nest
-   api/interfaces
-   api/models
+   models/fmri_nsd_fwrf.rst
+   models/eeg_things_eeg_2_vit_b_32.rst
 
 .. toctree::
    :maxdepth: 1
    :caption: About
    
-   about/license
+   about/terms_and_conditions
    about/citation
-   about/team
+
+----
 
 Quick Start
 ----------

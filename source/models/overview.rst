@@ -6,19 +6,22 @@ NEST provides a collection of pre-trained neural encoding models for different b
 
 
 fMRI Models
------------
+----------
 
 fMRI (functional Magnetic Resonance Imaging) models in NEST generate simulated brain activity patterns in response to visual stimuli, with responses mapped to specific brain regions (ROIs).
 
 .. list-table::
    :header-rows: 1
-   :widths: 25 50 25
+   :widths: 20 55 15
+   :class: wrap-table
 
    * - Model ID
      - Description
      - Subjects
-   * - :doc:`fmri_nsd_fwrf`
-     - Feature-weighted receptive field model trained on the Natural Scenes Dataset (NSD). Predicts fMRI responses across multiple visual regions of interest.
+   * - :doc:`model_cards/fmri_nsd_fwrf`
+     - Feature-weighted receptive field model trained on the Natural 
+       Scenes Dataset (NSD). Predicts fMRI responses across multiple 
+       visual regions of interest.
      - 1-8
 
 EEG Models
@@ -28,14 +31,26 @@ EEG (Electroencephalography) models in NEST generate simulated electrical brain 
 
 .. list-table::
    :header-rows: 1
-   :widths: 25 50 25
+   :widths: 20 55 15
+   :class: wrap-table
 
    * - Model ID
      - Description
      - Subjects
-   * - :doc:`eeg_things_eeg_2_vit_b_32`
-     - Vision Transformer (ViT-B/32) model trained on the THINGS-EEG-2 dataset. Predicts EEG responses across all channels and time points.
+   * - :doc:`model_cards/eeg_things_eeg_2_vit_b_32`
+     - Vision Transformer (ViT-B/32) model trained on the THINGS-EEG-2 
+       dataset. Predicts EEG responses across all channels and time 
+       points.
      - 1-4
+
+.. raw:: html
+
+   <style>
+   .wrap-table td {
+     white-space: normal !important;
+     word-wrap: break-word !important;
+   }
+   </style>
 
 Model Naming Convention
 ----------------------
