@@ -160,3 +160,5 @@ cython_debug/
 #.idea/
 /neural_encoding_simulation_toolkit
 /tutorial_images
+/encoding_models
+*.DS_Store
