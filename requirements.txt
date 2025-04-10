@@ -9,3 +9,4 @@ torch
 torchvision
 tqdm
 sphinx-rtd-theme
+pyyaml

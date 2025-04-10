@@ -1,0 +1,138 @@
+model_id: fmri_nsd_fwrf
+modality: fmri
+dataset: NSD
+features: feature-weighted receptive fields (fwrf)
+repeats: single
+subject_specific: true
+
+# General description of the model
+description: |
+  This model generates in silico fMRI responses to visual stimuli using feature-weighted receptive fields (fwrf).
+  It was trained on the Natural Scenes Dataset (NSD), a large-scale 7T fMRI dataset of subjects viewing natural images.
+  The model extracts visual features using a convolutional neural network and maps these features to brain activity 
+  patterns across multiple visual regions of interest (ROIs).
+  
+  The model takes as input a batch of RGB images in the shape [batch_size, 3, height, width], with pixel values ranging from 0 to 255 and square dimensions (e.g., 224×224).
+
+# Input stimulus information
+input:
+  type: "numpy.ndarray"
+  shape: [batch_size, 3, height, width]
+  description: "The input should be a batch of RGB images."
+  constraints:
+    - "Image values should be integers in range [0, 255]"
+    - "Image dimensions (height, width) should be equal (square)"
+    - "Minimum recommended image size: 224x224 pixels"
+
+# Output information
+output:
+  type: "numpy.ndarray"
+  shape: [batch_size, n_voxels]
+  description: |
+    The output is a 2D array containing predicted fMRI responses.
+    The second dimension (n_voxels) corresponds to the number of voxels in the selected ROI,
+    which varies by ROI and subject. For subject 1, the number of voxels per ROI is as follows:
+    
+      - V1: 1350
+      - V2: 1433
+      - V3: 1187
+      - hV4: 687
+      - EBA: 2971
+      - FBA-2: 430
+      - OFA: 355
+      - FFA-1: 484
+      - FFA-2: 310
+      - PPA: 1033
+      - RSC: 566
+      - OPA: 1611
+      - OWFA: 464
+      - VWFA-1: 773
+      - VWFA-2: 505
+      - mfs-words: 165
+      - early: 5917
+      - midventral: 986
+      - midlateral: 834
+      - midparietal: 950
+      - parietal: 3548
+      - lateral: 7799
+      - ventral: 7604
+  dimensions:
+    - name: "batch_size"
+      description: "Number of stimuli in the batch"
+    - name: "n_voxels"
+      description: "Number of voxels in the selected ROI, varies by ROI and subject"
+
+# Model parameters and their usage
+parameters:
+  subject:
+    type: int
+    required: true
+    valid_values: [1, 2, 3, 4, 5, 6, 7, 8]
+    example: 1
+    description: "Subject ID from the NSD dataset (1-8)"
+    function: "get_encoding_model"
+  
+  roi:
+    type: str
+    required: true
+    valid_values:
+      - V1
+      - V2
+      - V3
+      - hV4
+      - EBA
+      - FBA-2
+      - OFA
+      - FFA-1
+      - FFA-2
+      - PPA
+      - RSC
+      - OPA
+      - OWFA
+      - VWFA-1
+      - VWFA-2
+      - mfs-words
+      - early
+      - midventral
+      - midlateral
+      - midparietal
+      - parietal
+      - lateral
+      - ventral
+    example: "V1"
+    description: "Region of Interest (ROI) for voxel prediction. Early visual areas (V1-V3), category-selective regions (EBA, FFA, etc.), or composite regions (lateral, ventral)."
+    function: "get_encoding_model"
+  
+  nest_dir:
+    type: str
+    required: false
+    example: "./"
+    description: "Root directory of the NEST repository (optional if default paths are set)"
+    function: "get_encoding_model"
+
+  stimulus:
+    type: numpy.ndarray
+    required: true
+    shape: [batch_size, 3, height, width]
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
+    example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+    function: "encode"
+
+    
+  device:
+    type: str
+    required: false
+    valid_values: ["cpu", "cuda", "auto"]
+    default: "auto"
+    example: "auto"
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "encode"
+
+# Performance metrics and references
+performance:
+
+  accuracy_plots: 
+    - "neural_encoding_simulation_toolkit/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy"
+  
+references:
+    - x
