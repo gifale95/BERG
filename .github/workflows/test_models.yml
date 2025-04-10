@@ -4,10 +4,11 @@ name: Test NEST Models
 
 on:
   push:
-    branches: [ main, development ]
+    branches: [ '**' ]  # Match all branches
   pull_request:
-    branches: [ main, development ]
+    branches: [ '**' ]
   workflow_dispatch:
+
 
 jobs:
   test-nest-models:
