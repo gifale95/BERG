@@ -8,3 +8,4 @@ scikit-learn
 torch
 torchvision
 tqdm
+sphinx-rtd-theme
