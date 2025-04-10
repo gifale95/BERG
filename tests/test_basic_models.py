@@ -4,7 +4,7 @@ import pytest
 from nest import NEST
 
 def test_describe_models():
-    nest = NEST()
+    nest = NEST("./")
     model_ids = nest.available_models()
     assert len(model_ids) > 0, "No models found."
 
