@@ -113,10 +113,10 @@ This will output detailed information about the model, including the required pa
 
 Both methods return the same comprehensive information. Always refer to the Parameters section to understand what inputs each function requires.
 
-Working with fMRI Models
+Example: Working with the feature-weighted receptive field (fwRF) Model
 -----------------------
 
-To use an fMRI encoding model:
+This is an example on how to use the fwRF model with NEST. For more information on this model, please see the :doc:`Model Overview </models/overview>`.
 
 .. code-block:: python
 
@@ -139,40 +139,5 @@ To use an fMRI encoding model:
     metadata = fwrf_model.get_metadata()
 
 The output shape for the fMRI model will be `(batch_size, n_voxels)` where `n_voxels` depends on the selected ROI.
-
-Working with EEG Models
----------------------
-
-Similarly, you can work with EEG encoding models. The EEG models take different parameters than fMRI models, which you can discover using the `describe` function:
-
-.. code-block:: python
-
-    # Get parameters for EEG model
-    nest.describe("eeg_things_eeg_2_vit_b_32")
-    
-    # Output will include parameters specific to EEG models, such as:
-    # 
-    # Parameters for get_encoding_model():
-    # • subject (int, required)
-    #   ↳ Subject ID from the THINGS-EEG-2 dataset (1-4)
-    #   ↳ Valid values: [1, 2, 3, 4]
-    # 
-    # ... (other parameters)
-
-Example usage of an EEG model:
-
-.. code-block:: python
-
-    # Load the EEG encoding model
-    eeg_model = nest.get_encoding_model("eeg_things_eeg_2_vit_b_32", 
-                                        subject=1,
-                                        device="auto")
-    
-    # Generate EEG responses
-    eeg_silico = nest.encode(eeg_model, images)
-    
-    # To get both responses and metadata
-    eeg_silico, eeg_metadata = nest.encode(eeg_model, images, return_metadata=True)
-    
 
 Always refer to the `describe` method to understand the specific parameters and requirements of each model type before using it.

@@ -74,9 +74,9 @@ You can get detailed information about any model using:
     from nest import NEST
     
     nest = NEST()
+
+    # List all available models
+    all_models = nest.list_models()
     
     # Get detailed model information
     model_info = nest.describe("fmri_nsd_fwrf")
-    
-    # List all available models
-    all_models = nest.list_models()

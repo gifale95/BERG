@@ -97,59 +97,49 @@ Parameters used in ``get_encoding_model``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table::
-   :widths: 15 10 10 40 15 10
-   :header-rows: 1
+   :widths: 20 80
+   :header-rows: 0
 
-   * - Name
-     - Type
-     - Required
-     - Description
-     - Example
-     - Valid Values
-   * - subject
-     - int
-     - True
-     - Subject ID from the NSD dataset (1-8)
-     - 1
-     - 1, 2, 3, 4, 5, 6, 7, 8
-   * - roi
-     - str
-     - True
-     - Region of Interest (ROI) for voxel prediction. Early visual areas (V1-V3), category-selective regions (EBA, FFA, etc.), or composite regions (lateral, ventral).
-     - V1
-     - V1, V2, V3, hV4, EBA, FBA-2, OFA, FFA-1, FFA-2, PPA, RSC, OPA, OWFA, VWFA-1, VWFA-2, mfs-words, early, midventral, midlateral, midparietal, parietal, lateral, ventral
-   * - nest_dir
-     - str
-     - False
-     - Root directory of the NEST repository (optional if default paths are set)
-     - ./
-     - -
+   * - **subject**
+     - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the NSD dataset (1-8)
+       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
+       | **Example:** 1
+   * - **roi**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Region of Interest (ROI) for voxel prediction
+       | **Valid Values:** V1, V2, V3, hV4, EBA, FBA-2, OFA, FFA-1, FFA-2, 
+       |                  PPA, RSC, OPA, OWFA, VWFA-1, VWFA-2, mfs-words, 
+       |                  early, midventral, midlateral, midparietal, parietal,
+       |                  lateral, ventral
+       | **Example:** V1
+   * - **nest_dir**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Root directory of the NEST repository (optional if default paths are set)
+       | **Example:** ./
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table::
-   :widths: 15 10 10 40 15 10
-   :header-rows: 1
+   :widths: 20 80
+   :header-rows: 0
 
-   * - Name
-     - Type
-     - Required
-     - Description
-     - Example
-     - Valid Values
-   * - stimulus
-     - numpy.ndarray
-     - True
-     - A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
-     - An array of shape [100, 3, 224, 224] representing 100 RGB images.
-     - -
-   * - device
-     - str
-     - False
-     - Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-     - auto
-     - cpu, cuda, auto
+   * - **stimulus**
+     - | **Type:** numpy.ndarray
+       | **Required:** Yes
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer 
+       |                format with values in the range [0, 255], and square dimensions.
+       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
+   * - **device**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Valid Values:** cpu, cuda, auto
+       | **Example:** auto
 
 Performance
 ----------

@@ -76,59 +76,45 @@ Parameters used in ``get_encoding_model``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table::
-   :widths: 15 10 10 40 15 10
-   :header-rows: 1
+   :widths: 20 80
+   :header-rows: 0
 
-   * - Name
-     - Type
-     - Required
-     - Description
-     - Example
-     - Valid Values
-   * - subject
-     - int
-     - True
-     - Subject ID from the THINGS-EEG-2 dataset (1-4)
-     - 1
-     - 1, 2, 3, 4
-   * - nest_dir
-     - str
-     - False
-     - Root directory of the NEST repository (optional if default paths are set)
-     - ./
-     - -
+   * - **subject**
+     - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the THINGS-EEG-2 dataset (1-4)
+       | **Valid Values:** 1, 2, 3, 4
+       | **Example:** 1
+   * - **nest_dir**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Root directory of the NEST repository (optional if default paths are set)
+       | **Example:** ./
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table::
-   :widths: 15 10 10 40 15 10
-   :header-rows: 1
+   :widths: 20 80
+   :header-rows: 0
 
-   * - Name
-     - Type
-     - Required
-     - Description
-     - Example
-     - Valid Values
-   * - stimulus
-     - numpy.ndarray
-     - True
-     - A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
-     - An array of shape [100, 3, 224, 224] representing 100 RGB images.
-     - -
-   * - device
-     - str
-     - False
-     - Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-     - auto
-     - cpu, cuda, auto
-   * - show_progress
-     - bool
-     - False
-     - Whether to show a progress bar during encoding (for large batches)
-     - True
-     - -
+   * - **stimulus**
+     - | **Type:** numpy.ndarray
+       | **Required:** Yes
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer 
+       |                format with values in the range [0, 255], and square dimensions.
+       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
+   * - **device**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Valid Values:** cpu, cuda, auto
+       | **Example:** auto
+   * - **show_progress**
+     - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to show a progress bar during encoding (for large batches)
+       | **Example:** True
 
 Performance
 ----------
