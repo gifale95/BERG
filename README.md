@@ -111,8 +111,6 @@ For more detailed information on how to use these functions and which parameters
 
 ### 💻 Tutorials
 
-### 💻 Tutorials
-
 We provide several tutorials to help you get started with NEST:
 
 **Using NEST:**
