@@ -1,16 +1,30 @@
 # Neural Encoding Simulation Toolkit (NEST)
 
-The `NEST` Python package provides utility functions and tutorials for the [**Neural Encoding Simulation Toolkit**][nest_website]: trained encoding models of the brain that you can use to generate accurate in silico neural responses to stimuli of your choice.
+**Neural Encoding Simulation Toolkit (NEST)** is a Python package that provides trained encoding models of the brain that you can use to generate accurate *in silico* neural responses to arbitrary stimuli with just a few lines of code.
 
-_In silico_ neural responses from encoding models increasingly resemble _in vivo_ responses recorded from real brains, enabling the novel research paradigm of in silico neuroscience. In silico neural responses are quick and cheap to generate, allowing researchers to explore and test scientific hypotheses across vastly larger solution spaces than possible in vivo. Novel findings from large-scale in silico experimentation are then validated through targeted small-scale in vivo data collection, in this way optimizing research resources. Thus, in silico neuroscience scales beyond what is possible with in vivo data, and democratizes research across groups with diverse data collection infrastructure and resources. To promote this emerging research paradigm, here we release the Neural Encoding Simulation Toolkit (NEST). NEST consists of trained encoding models of the brain, accompanied with a Python package, to facilitate the generation of in silico neural responses to arbitrary stimuli.
+*In silico* neural responses from encoding models increasingly resemble *in vivo* responses recorded from real brains, enabling the novel research paradigm of *in silico* neuroscience. These simulated responses are fast and cost-effective to generate, allowing researchers to explore and test scientific hypotheses across vastly larger solution spaces than possible with traditional *in vivo* methods.
 
-For additional information on the Neural Encoding Dataset you can check out the [website][nest_website].
+Novel findings from large-scale *in silico* experimentation can be validated through targeted small-scale *in vivo* data collection, optimizing research resources. This approach scales beyond what is possible with *in vivo* data alone and democratizes research across groups with diverse data collection infrastructure and resources.
+
+NEST includes a growing, well-documented library of encoding models trained on different neural data acquisition modalities (including fMRI and EEG), datasets, subjects, stimulation types, and brain areas, offering broad versatility for addressing a wide range of research questions through *in silico* neuroscience.
+
+
+For additional information on the Neural Encoding Dataset you can check out our [documentation][nest_website].
 
 
 
-## 🤝 Contribute to expanding the Neural Encoding Simulation Toolkit
 
-Do you have encoding models with higher prediction accuracies than the ones currently available in the Neural Encoding Simulation Toolkit, and would like to make them available to the community? Or encoding models for new neural datasets, data modalities (e.g., MEG/ECoG/animal), or stimulus types (e.g., videos, language) that you would like to share? Or perhaps you have suggestions for improving the Neural Encoding Simulation Toolkit? Then please send an email to (brain.nest.contact@gmail.com): all feedback and help is strongly appreciated!
+## 🤝 Contribute to Expanding NEST
+
+We welcome contributions to expand NEST! If you have:
+- Encoding models with higher prediction accuracies
+- Models for new neural datasets, data modalities (e.g., MEG/ECoG/animal), or stimulus types (e.g., videos, language)
+- Suggestions for improving NEST
+
+For more information on how to contribute please refer to [How to Contribute][nest_website]. 
+
+Please contact us at brain.nest.contact@gmail.com. All feedback and help is strongly appreciated!
+
 
 
 
@@ -30,26 +44,23 @@ You will additionally need to install the Python dependencies found in [requirem
 
 ### 🧰 Download the Neural Encoding Simulation Toolkit encoding models
 
-To use `NEST` you first need to download the Neural Encoding Simulation Toolkit trained encoding models from [here][nest_data]. Depending on how you want to use the Neural Encoding Simulation Toolkit, you might need to download all of it, or only parts of it. For this please refer to the [data manual][data_manual], which describes how the Neural Encoding Simulation Toolkit is structured.
 
-The trained encoding models are stored in a Google Drive folder called `neural_encoding_simulation_toolkit`. We recommend downloading the folder directly from Google Drive via terminal using [Rclone][rclone]. [Here][guide] is a step-by-step guide for how to install and use Rclone to move files to and from your Google Drive. Before downloading NEST via terminal you need to add a shortcut of the `neural_encoding_simulation_toolkit` folder to your Google Drive. You can do this by right-clicking on the `neural_encoding_simulation_toolkit` folder, and selecting `Organise` → `Add shortcut`. This will create a shortcut (without copying or taking space) of the folder to a desired path in your Google Drive, from which you can download its content.
+To use `NEST`, you first need to download the trained encoding models from [here][nest_data]. Depending on your needs, you might download all or only parts of the toolkit. Please refer to the [documentation][nest_structure] to understand how NEST is structured.
+We recommend downloading the folder directly from Google Drive via terminal using [Rclone][rclone]. [Here][guide] is a step-by-step guide for using Rclone. Before downloading, add a shortcut of the `neural_encoding_simulation_toolkit` folder to your Google Drive by right-clicking on the folder and selecting `Organise` → `Add shortcut`.
+
+
+
 
 ### 🧠 Available encoding models
 
-Following is a table with the encoding models available in the Neural Encoding Simulation Toolkit. Each row corresponds to a different encoding model, and the columns indicate their *attributes*:
-
-* **modality:** the neural data modality on which the encoding model was trained.
-* **train_dataset:** the neural dataset on which the encoding model was trained.
-* **model:** the type of encoding model used.
-* **subject:** independent subjects on which encoding models were trained (a separate encoding model is trained for each subject).
-* **roi:** independent Regions of Interest (ROIs) on which encoding models were trained (a separate encoding model is trained for each ROI). This only applies to fMRI neural data modality.
+The following table shows the encoding models currently available in NEST. For more details on these models feel free to check out the [model cards][model_cards] in our documentation page.
 
 | modality | train_dataset | model | subject | roi |
 |-------------|-----------------------|----------| ----------| ----|
 | fmri | nsd | fwrf | 1, 2, 3, 4, 5, 6, 7, 8 | V1, V2, V3, hV4, EBA, FBA-2, OFA, FFA-1, FFA-2, PPA, RSC, OPA, OWFA, VWFA-1, VWFA-2, mfs-words, early, midventral, midlateral, midparietal, parietal, lateral, ventral|
 | eeg | things_eeg_2 | vit_b_32 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10| – |
  
-For more information on the encoding model's *attributes* (e.g., training dataset or model type) please see the [data manual][data_manual]. These *attributes* are required inputs when using `NEST`'s functions (i.e., to select the encoding model you actually want to use).
+
 
 ### ✨ NEST functions
 
@@ -58,127 +69,63 @@ For more information on the encoding model's *attributes* (e.g., training datase
 To use `NEST`'s functions you need to import `NEST` and create a `nest_object`.
 
 ```python
-from nest.nest import NEST
+from nest import NEST
 
-# The NEST object requires as input the directory to the Neural Encoding Simulation Toolkit
-nest_dir = '../neural_encoding_simulation_toolkit/'
-
-# Create the NEST object
-nest_object = NEST(nest_dir)
+# Initialize NEST with the path to the toolkit
+nest = NEST(nest_dir="path/to/neural_encoding_simulation_toolkit")
 ```
-#### 🔹 Generate in silico neural responses to any image of your choice
+#### 🔹 Generate in silico neural responses to the stimuli of your choice
 
-Generating in silico neural responses for images involves two steps. You first need to load the neural encoding model of your choice using the [`get_encoding_model`][get_encoding_model] method.
+Step 1: Load an encoding model
 
 ```python
-"""
-Load the encoding model of interest.
+# Load an example fMRI encoding model
+fmri_model = nest.get_encoding_model("fmri_nsd_fwrf", 
+                                     subject=1, 
+                                     roi="V1",
+                                     device="cpu")
 
-Parameters
-----------
-modality : str
-	Neural data modality.
-train_dataset : str
-	Name of the neural dataset used to train the encoding models.
-model : str
-	Encoding model type used to generate the in silico neural
-	responses.
-subject : int
-	Subject number for which the encoding model was trained.
-roi : str
-	Only required if modality=='fmri'. Name of the Region of Interest
-	(ROI) for which the fMRI encoding model was trained.
-device : str
-	Whether the encoding model is stored on the 'cpu' or 'cuda'. If
-	'auto', the code will use GPU if available, and otherwise CPU.
 
-Returns
--------
-encoding_model : dict
-	Neural encoding model.
-"""
-
-# Load the fMRI encoding model
-fmri_encoding_model = nest_object.get_encoding_model(
-	modality='fmri', # required
-	train_dataset='nsd', # required
-	model='fwrf', # required
-	subject=1, # required
-	roi='V1', # default is None, only required if modality=='fmri'
-	device='auto' # default is 'auto'
-	)
-
-# Load the EEG encoding model
-eeg_encoding_model = nest_object.get_encoding_model(
-	modality='eeg', # required
-	train_dataset='things_eeg_2', # required
-	model='vit_b_32', # required
-	subject=1, # required
-	roi=None, # default is None, only required if modality=='fmri'
-	device='auto' # default is 'auto'
-	)
+# Load an example EEG encoding model
+eeg_model = nest.get_encoding_model("eeg_things_eeg_2_vit_b_32", 
+                                    subject=1,
+                                    device="auto")
 
 ```
 
-Next, with the [`encode`][encode] method you can generate in silico fMRI or EEG responses to any image of your choice, and optionally return the corresponding metadata (i.e., information on the neural data used to train the encoding models such as the amount of fMRI voxels or EEG time points, and on the trained encoding models, such as which data was used to train and test the models, or the models accuracy scores).
+Step 2: Generate responses for your images
 
 ```python
-"""
-Generate in silico neural responses for arbitrary stimulus images, and
-optionally return the in silico neural responses metadata.
+# Encode fMRI responses to images with metadata
+insilico_fmri, insilico_fmri_metadata = nest.encode(fwrf_model, 
+													images,
+													return_metadata=True)  # if you want to return metadata as well
 
-Parameters
-----------
-encoding_model : list
-	Neural encoding model.
-images : int
-	Images for which the in silico neural responses are generated. Must
-	be a 4-D numpy array of shape (Batch size x 3 RGB Channels x Width
-	x Height) consisting of integer values in the range [0, 255].
-	Furthermore, the images must be of square size (i.e., equal width
-	and height).
-return_metadata : bool
-	If True, return medatata along with the in silico neural responses.
-device : str
-	Whether to work on the 'cpu' or 'cuda'. If 'auto', the code will
-	use GPU if available, and otherwise CPU.
-
-Returns
--------
-insilico_neural_responses : float
-	In silico neural responses for the input stimulus images.
-	If modality=='fmri', the neural response will be of shape:
-	(Images x Voxels).
-	If modality=='eeg', the neural response will be of shape:
-	(Images x Repetitions x Channels x Time points) if
-metadata : dict
-	In silico neural responses metadata.
-"""
-
-# Encode fMRI responses to images
-insilico_fmri, insilico_fmri_metadata = nest_object.encode(
-	encoding_model, # required
-	images, # required
-	return_metadata=True, # default is True
-	device='auto' # default is 'auto'
-	)
-
-# Encode EEG responses to images
-insilico_eeg, insilico_eeg_metadata = nest_object.encode(
-	encoding_model, # required
-	images, # required
-	return_metadata=True, # default is True
-	device='auto' # default is 'auto'
-	)
+# Encode EEG responses to images without metadata
+insilico_eeg = nest.encode(eeg_model, 
+						   images)
 ```
 
+For more detailed information on how to use these functions and which parameters are available, please refer to the **Tutorials** below ⬇️.
 
 
 ### 💻 Tutorials
 
-To familiarize with the Neural Encoding Simulation Toolkit we created tutorials for both fMRI and EEG modalities. In these tutorial you will learn how to use `NEST`'s functions, for example to generate in silico fMRI and EEG responses for images of your choice. These tutorials are available on either Google Colab ([fMRI tutorial][fmri_tutorial_colab], [EEG tutorial][eeg_tutorial_colab]) or Jupyter Notebook ([fMRI tutorial][fmri_tutorial_jupyter], [EEG tutorial][eeg_tutorial_jupyter]).
+### 💻 Tutorials
 
-[Relational Neural Control (RNC)](https://github.com/gifale95/RNC) is an example of performing in silico neuroscience research using NEST. RNC generates and explores in silico functional magnetic resonance imaging (fMRI) responses for large amounts of images, finding controlling images that align or disentangle responses across regions of interest (ROIs) over visual cortex, thus indicating their shared or unique representational content. We created interactive tutorials where you can learn how to use univariate and and multivariate RNC. These tutorials are available on either Google Colab ([univariate RNC][uni_rnc_colab], [multivariate RNC][multi_rnc_colab]) or Jupyter Notebook ([univariate RNC][uni_rnc_jupyter], [multivariate RNC][multi_rnc_jupyter]).
+We provide several tutorials to help you get started with NEST:
+
+**Using NEST:**
+- [fMRI Tutorial](https://colab.research.google.com/drive/1W9Sroz2Y0eTYfyhVrAJwe50GGHHAGBdE?usp=drive_link) - Learn how to generate in silico fMRI responses 
+- [EEG Tutorial](https://colab.research.google.com/drive/10NSRBrJ390vuaPyRWq5fDBIA4NNAUlTk?usp=drive_link) - Explore how to generate time-resolved EEG responses 
+- [Adding New Models](https://github.com/gifale95/NEST/blob/main/tutorials/NEST_Adding_Models_Tutorial.ipynb) - Guide on how to implement and contribute your own encoding models to NEST
+
+**Example Application - Relational Neural Control (RNC):**
+
+[RNC](https://github.com/gifale95/RNC) is an example application using NEST to find images that selectively activate specific brain regions:
+
+- [Univariate RNC Tutorial](https://colab.research.google.com/drive/1QpMSlvKZMLrDNeESdch6AlQ3qKsM1isO?usp=sharing) 
+- [Multivariate RNC Tutorial](https://colab.research.google.com/drive/1bEKCzkjNfM-jzxRj-JX2zxB17XBouw23?usp=sharing) 
 
 
 
@@ -206,7 +153,9 @@ If you use the Neural Encoding Simulation Toolkit, please cite:
 > *Gifford AT, Bersch D, Roig G, Cichy RM. 2025. The Neural Encoding Simulation Toolkit. In preparation. https://github.com/gifale95/NEST*
 
 
-[nest_website]: https://www.alegifford.com/projects/nest/
+[nest_website]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/
+[nest_structure]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/data_storage.html#
+[model_cards]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/overview.html
 [imagenet]: https://www.image-net.org/challenges/LSVRC/2012/index.php
 [russakovsky]: https://link.springer.com/article/10.1007/s11263-015-0816-y
 [things]: https://things-initiative.org/
