@@ -21,7 +21,7 @@ We welcome contributions to expand NEST! If you have:
 - Models for new neural datasets, data modalities (e.g., MEG/ECoG/animal), or stimulus types (e.g., videos, language)
 - Suggestions for improving NEST
 
-For more information on how to contribute please refer to [How to Contribute][nest_website]. 
+For more information on how to contribute please refer to [How to Contribute][nest_contribute]. 
 
 Please contact us at brain.nest.contact@gmail.com. All feedback and help is strongly appreciated!
 
@@ -153,6 +153,7 @@ If you use the Neural Encoding Simulation Toolkit, please cite:
 [nest_website]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/
 [nest_structure]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/data_storage.html#
 [model_cards]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/overview.html
+[nest_contribute]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/contribution.html
 [imagenet]: https://www.image-net.org/challenges/LSVRC/2012/index.php
 [russakovsky]: https://link.springer.com/article/10.1007/s11263-015-0816-y
 [things]: https://things-initiative.org/
