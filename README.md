@@ -81,13 +81,12 @@ Step 1: Load an encoding model
 ```python
 # Load an example fMRI encoding model
 fmri_model = nest.get_encoding_model("fmri_nsd_fwrf", 
-                                     subject=1, 
+                                     subject=1,
                                      roi="V1",
                                      device="cpu")
 
-
 # Load an example EEG encoding model
-eeg_model = nest.get_encoding_model("eeg_things_eeg_2_vit_b_32", 
+eeg_model = nest.get_encoding_model("eeg_things_eeg_2_vit_b_32",
                                     subject=1,
                                     device="auto")
 
@@ -97,13 +96,13 @@ Step 2: Generate responses for your images
 
 ```python
 # Encode fMRI responses to images with metadata
-insilico_fmri, insilico_fmri_metadata = nest.encode(fwrf_model, 
-													images,
-													return_metadata=True)  # if you want to return metadata as well
+insilico_fmri, insilico_fmri_metadata = nest.encode(fmri_model,
+                                                   images,
+                                                   return_metadata=True)  # if you want to return metadata as well
 
 # Encode EEG responses to images without metadata
-insilico_eeg = nest.encode(eeg_model, 
-						   images)
+insilico_eeg = nest.encode(eeg_model,
+                          images)
 ```
 
 For more detailed information on how to use these functions and which parameters are available, please refer to the **Tutorials** below ⬇️.
