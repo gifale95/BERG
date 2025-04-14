@@ -8,7 +8,7 @@ Data Sharing and Usage Agreement
 
 Before I download NEST, I agree to the following terms and conditions:
 
-1. Prior to downloading this dataset, I must have filled the NESTD Data Access Agreement at [this link](https://forms.gle/ZKxEcjBmdYL6zdrg9).
+1. Prior to downloading this dataset, I must have filled the NEST's Data Access Agreement at `this link <https://forms.gle/ZKxEcjBmdYL6zdrg9>`_.
 
 2. I agree that all presentations and publications resulting from any use of this dataset must cite the relevant work.
 
