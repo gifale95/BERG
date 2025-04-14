@@ -326,17 +326,24 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Convert YAML model specification to RST format')
     parser.add_argument('yaml_file', help='Input YAML file path')
-    parser.add_argument('-o', '--output', help='Output RST file path (default: input filename with .rst extension)')
+    parser.add_argument('output_file', nargs='?', help='Output RST file path (default: input filename with .rst extension)')
     
     args = parser.parse_args()
     
-    output_file = args.output
+    output_file = args.output_file
     if not output_file:
         output_file = os.path.splitext(args.yaml_file)[0] + '.rst'
     
     yaml_to_rst(args.yaml_file, output_file)
     print(f"Converted {args.yaml_file} to {output_file}")
-    
+
+# Example usage from console:
+# 
+# 1. Convert a YAML file to RST (output has same name with .rst extension):
+#    python yaml_to_rst.py fmri_nsd_fwrf.yaml
+#
+# 2. Convert a YAML file to RST with specific output path:
+#    python yaml_to_rst.py fmri_nsd_fwrf.yaml docs/model_cards/fmri_nsd_fwrf.rst
     
 # python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/fmri_nsd_fwrf.yaml -o nest/models/model_cards/fmri_nsd_fwrf.rst
 # python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/eeg_things_eeg_2_vit_b_32.yaml -o nest/models/model_cards/eeg_things_eeg_2_vit_b_32.rst
