@@ -81,21 +81,32 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     rst_content.append(f'**Shape**: ``{output_data.get("shape", "")}``  ')
     rst_content.append('**Description**:  ')
     
-    # Handle multiline output description with special formatting for ROIs list
+    # Handle multiline output description, preserving bullet points
     output_description = output_data.get('description', '').strip()
+    
     if '\n' in output_description:
         output_lines = output_description.split('\n')
-        for i, line in enumerate(output_lines):
+        
+        in_bullet_list = False
+        
+        for line in output_lines:
             line = line.strip()
-            if line:
-                # Preserve list formatting that may be in the description
-                if 'ROI' in line and i > 0 and any(roi in line for roi in ['V1:', 'V2:', 'V3:']):
-                    # Assuming this is a list of ROIs
-                    for roi_line in output_lines[i:]:
-                        if roi_line.strip():
-                            rst_content.append(f'* {roi_line.strip()}')
-                else:
-                    rst_content.append(line)
+            if not line:
+                # Add empty lines as is
+                rst_content.append('')
+                continue
+                
+            # Check if the line is a bullet point (starts with - or *)
+            if line.startswith('-') or line.startswith('*'):
+                # This is a bullet point line
+                in_bullet_list = True
+                # Convert to RST bullet format (*)
+                if line.startswith('-'):
+                    line = '* ' + line[1:].strip()
+                rst_content.append(line)
+            else:
+                in_bullet_list = False
+                rst_content.append(line)
     else:
         rst_content.append(output_description)
     
@@ -345,5 +356,5 @@ if __name__ == "__main__":
 # 2. Convert a YAML file to RST with specific output path:
 #    python yaml_to_rst.py fmri_nsd_fwrf.yaml docs/model_cards/fmri_nsd_fwrf.rst
     
-# python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/fmri_nsd_fwrf.yaml -o nest/models/model_cards/fmri_nsd_fwrf.rst
-# python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/eeg_things_eeg_2_vit_b_32.yaml -o nest/models/model_cards/eeg_things_eeg_2_vit_b_32.rst
+# python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/fmri_nsd_fwrf.yaml nest/models/model_cards/fmri_nsd_fwrf.rst
+# python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/eeg_things_eeg_2_vit_b_32.yaml nest/models/model_cards/eeg_things_eeg_2_vit_b_32.rst

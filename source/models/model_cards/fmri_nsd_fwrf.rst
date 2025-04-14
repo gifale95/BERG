@@ -50,29 +50,30 @@ Output
 The output is a 2D array containing predicted fMRI responses.
 The second dimension (n_voxels) corresponds to the number of voxels in the selected ROI,
 which varies by ROI and subject. For subject 1, the number of voxels per ROI is as follows:
-- V1: 1350
-- V2: 1433
-- V3: 1187
-- hV4: 687
-- EBA: 2971
-- FBA-2: 430
-- OFA: 355
-- FFA-1: 484
-- FFA-2: 310
-- PPA: 1033
-- RSC: 566
-- OPA: 1611
-- OWFA: 464
-- VWFA-1: 773
-- VWFA-2: 505
-- mfs-words: 165
-- early: 5917
-- midventral: 986
-- midlateral: 834
-- midparietal: 950
-- parietal: 3548
-- lateral: 7799
-- ventral: 7604
+
+* V1: 1350
+* V2: 1433
+* V3: 1187
+* hV4: 687
+* EBA: 2971
+* FBA-2: 430
+* OFA: 355
+* FFA-1: 484
+* FFA-2: 310
+* PPA: 1033
+* RSC: 566
+* OPA: 1611
+* OWFA: 464
+* VWFA-1: 773
+* VWFA-2: 505
+* mfs-words: 165
+* early: 5917
+* midventral: 986
+* midlateral: 834
+* midparietal: 950
+* parietal: 3548
+* lateral: 7799
+* ventral: 7604
 
 **Dimensions:**
 
