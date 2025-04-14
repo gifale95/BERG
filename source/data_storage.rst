@@ -79,6 +79,6 @@ Each model directory contains three subdirectories:
 
 **metadata/**
 
-* This directory contains important metadata of the trained encoidng models models.
+* This directory contains important metadata relative to the encoding models and to the neural data used to train them.
 
 The NEST Python package automatically handles access to these files based on your requested parameters, making it easy to use without managing these paths directly.
