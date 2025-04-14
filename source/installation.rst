@@ -1,7 +1,7 @@
 Installation
 ============
 
-This guide covers how to install the Neural Encoding Simulation Toolkit (NEST) and its dependencies.
+This guide covers how to install the Neural Encoding Simulation Toolkit (NEST) `Python package <https://github.com/gifale95/NEST>`_ and its dependencies.
 
 
 Installing NEST from PyPI
@@ -35,7 +35,7 @@ You should see a list of available models in the output.
 
 Quick Example
 ------------
-Here's a simple example of how to generate in-silico neural responses using NEST:
+Here's a simple example of how to generate in silico neural responses using NEST:
 
 .. code-block:: python
 
