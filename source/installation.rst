@@ -24,7 +24,7 @@ To verify that NEST is correctly installed, run:
    from nest import NEST
    
    # Initialize NEST with default data directory
-   nest = NEST("/path/to/nest_dir")
+   nest = NEST("/path/to/neural_encoding_simulation_toolkit")
    
    # List available models
    models = nest.list_models()
@@ -43,7 +43,7 @@ Here's a simple example of how to generate in-silico neural responses using NEST
    import numpy as np
    
    # Initialize NEST
-   nest = NEST("/path/to/nest_dir")
+   nest = NEST("/path/to/neural_encoding_simulation_toolkit")
    
    # Get an encoding model
    model = nest.get_encoding_model("fmri-nsd-fwrf", subject=1, roi="V1")
