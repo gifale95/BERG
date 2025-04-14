@@ -69,10 +69,16 @@ Contents of Model Directories
 
 Each model directory contains three subdirectories:
 
-**encoding_models_accuracy/** => This directory contains plots of the encoding models' prediction accuracy.
+**encoding_models_accuracy/**
 
-**encoding_models_weights/** => This directory contains the trained model weights used to generate the in silico neural responses.
+* This directory contains plots of the encoding models' prediction accuracy.
 
-**metadata/** => This directory contains important metadata of the trained encoidng models models.
+**encoding_models_weights/**
+
+* This directory contains the trained model weights used to generate the in silico neural responses.
+
+**metadata/**
+
+* This directory contains important metadata of the trained encoidng models models.
 
 The NEST Python package automatically handles access to these files based on your requested parameters, making it easy to use without managing these paths directly.
