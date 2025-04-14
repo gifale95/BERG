@@ -69,7 +69,7 @@ Generate in silico fMRI responses:
    import numpy as np
    
    # Initialize NEST
-   nest = NEST("/path/to/nest_dir")
+   nest = NEST("/path/to/neural_encoding_simulation_toolkit")
    
    # Get an encoding model
    model = nest.get_encoding_model("fmri-nsd-fwrf", subject=1, roi="V1")
