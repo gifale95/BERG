@@ -42,8 +42,8 @@ Contents
    :caption: Models
    
    models/overview
-   models/fmri_nsd_fwrf.rst
-   models/eeg_things_eeg_2_vit_b_32.rst
+   models/fmri-nsd-fwrf.rst
+   models/eeg-things_eeg_2-vit_b_32.rst
 
 .. toctree::
    :maxdepth: 1
@@ -74,7 +74,7 @@ Generate in silico fMRI responses:
    nest = NEST("/path/to/nest_dir")
    
    # Get an encoding model
-   model = nest.get_encoding_model("fmri_nsd_fwrf", subject=1, roi="V1")
+   model = nest.get_encoding_model("fmri-nsd-fwrf", subject=1, roi="V1")
    
    # Generate responses to stimuli
    stimuli = np.random.randint(0, 255, (10, 3, 224, 224), dtype=np.uint8)

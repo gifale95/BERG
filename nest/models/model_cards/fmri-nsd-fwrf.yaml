@@ -1,4 +1,4 @@
-model_id: fmri_nsd_fwrf
+model_id: fmri-nsd-fwrf
 modality: fmri
 training_dataset: NSD
 model_architecture: feature-weighted receptive fields (fwrf)
@@ -134,4 +134,5 @@ performance:
     - "neural_encoding_simulation_toolkit/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy"
   
 references:
-    - x
+    - https://doi.org/10.1016/j.neuroimage.2017.06.035
+    - https://doi.org/10.1038/s41593-021-00962-x

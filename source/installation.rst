@@ -46,7 +46,7 @@ Here's a simple example of how to generate in-silico neural responses using NEST
    nest = NEST("/path/to/nest_dir")
    
    # Get an encoding model
-   model = nest.get_encoding_model("fmri_nsd_fwrf", subject=1, roi="V1")
+   model = nest.get_encoding_model("fmri-nsd-fwrf", subject=1, roi="V1")
    
    # Generate responses to stimuli
    stimuli = np.random.randint(0, 255, (10, 3, 224, 224), dtype=np.uint8)

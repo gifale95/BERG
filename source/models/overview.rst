@@ -18,7 +18,7 @@ fMRI (functional Magnetic Resonance Imaging) models in NEST generate simulated b
    * - Model ID
      - Description
      - Subjects
-   * - :doc:`model_cards/fmri_nsd_fwrf`
+   * - :doc:`model_cards/fmri-nsd-fwrf`
      - Feature-weighted receptive field model trained on the Natural 
        Scenes Dataset (NSD). Predicts fMRI responses across multiple 
        visual regions of interest.
@@ -37,7 +37,7 @@ EEG (Electroencephalography) models in NEST generate simulated electrical brain 
    * - Model ID
      - Description
      - Subjects
-   * - :doc:`model_cards/eeg_things_eeg_2_vit_b_32`
+   * - :doc:`model_cards/eeg-things_eeg_2-vit_b_32`
      - Vision Transformer (ViT-B/32) model trained on the THINGS-EEG-2 
        dataset. Predicts EEG responses across all channels and time 
        points.
@@ -57,12 +57,12 @@ Model Naming Convention
 
 NEST models follow a consistent naming convention:
 
-``{modality}_{dataset}_{model_architecture}``
+``{modality}-{dataset}-{model_architecture}``
 
 For example:
 
-- ``fmri_nsd_fwrf``: An fMRI model trained on the NSD dataset using feature-weighted receptive fields
-- ``eeg_things_eeg_2_vit_b_32``: An EEG model trained on the THINGS-EEG-2 dataset using ViT-B/32 architecture
+- ``fmri-nsd-fwrf``: An fMRI model trained on the NSD dataset using feature-weighted receptive fields
+- ``eeg-things_eeg_2-vit_b_32``: An EEG model trained on the THINGS-EEG-2 dataset using ViT-B/32 architecture
 
 Getting Model Information
 ------------------------
@@ -79,4 +79,4 @@ You can get detailed information about any model using:
     all_models = nest.list_models()
     
     # Get detailed model information
-    model_info = nest.describe("fmri_nsd_fwrf")
+    model_info = nest.describe("fmri-nsd-fwrf")
