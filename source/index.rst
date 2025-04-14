@@ -1,4 +1,4 @@
-Welcome to NEST Documentation
+Welcome to NEST's Documentation
 ============================
 
 .. .. image:: static/nest_logo.png
