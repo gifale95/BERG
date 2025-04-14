@@ -47,7 +47,7 @@ The main folder structure follows this pattern:
     ├── encoding_models/
     │   ├── modality-{modality}/
     │   │   ├── train_dataset-{dataset}/
-    │   │   │   └── model-{model_type}/
+    │   │   │   └── model-{model}/
     │   │   │       ├── encoding_models_accuracy/
     │   │   │       ├── encoding_models_weights/
     │   │   │       └── metadata/
@@ -58,9 +58,9 @@ Detailed Structure of Encoding Models
 
 The ``encoding_models`` directory contains all trained models organized hierarchically by:
 
-1. **Modality**: The neural recording recording modality on which the encoding model was trained (e.g., ``fmri``, ``eeg``).
-2. **Training Dataset**: The neural dataset on which the encoding model was trained (e.g., ``nsd``, ``things_eeg_2``).
-3. **Model Type**: The type of encoding model used (e.g., ``fwrf``, ``vit_b_32``).
+1. **``modality``:** The neural recording recording modality on which the encoding model was trained (e.g., ``fmri``, ``eeg``).
+2. **``dataset``:** The neural dataset on which the encoding model was trained (e.g., ``nsd``, ``things_eeg_2``).
+3. **``Model``:** The type of encoding model used (e.g., ``fwrf``, ``vit_b_32``).
 
 
 
