@@ -98,7 +98,7 @@ Step 2: Generate responses for your images
 # Encode fMRI responses to images with metadata
 insilico_fmri, insilico_fmri_metadata = nest.encode(fmri_model,
                                                    images,
-                                                   return_metadata=True)  # if you want to return metadata as well
+                                                   return_metadata=True)  # if needed
 
 # Encode EEG responses to images without metadata
 insilico_eeg = nest.encode(eeg_model,
@@ -115,7 +115,7 @@ We provide several tutorials to help you get started with NEST:
 **Using NEST:**
 - [fMRI Tutorial](https://colab.research.google.com/drive/1W9Sroz2Y0eTYfyhVrAJwe50GGHHAGBdE?usp=drive_link) - Learn how to generate in silico fMRI responses 
 - [EEG Tutorial](https://colab.research.google.com/drive/10NSRBrJ390vuaPyRWq5fDBIA4NNAUlTk?usp=drive_link) - Explore how to generate time-resolved EEG responses 
-- [Adding New Models](https://github.com/gifale95/NEST/blob/main/tutorials/NEST_Adding_Models_Tutorial.ipynb) - Guide on how to implement and contribute your own encoding models to NEST
+- [Adding New Models](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/tutorials/Adding_New_Models_to_Nest.html) - Guide on how to implement and contribute your own encoding models to NEST
 
 **Example Application - Relational Neural Control (RNC):**
 

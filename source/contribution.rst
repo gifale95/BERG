@@ -55,6 +55,6 @@ To submit your contribution:
 Contact
 -------
 
-If you have questions or would like to discuss your contribution before submitting, please contact Ale Gifford (alessandro.gifford@gmail.com). All feedback and help is strongly appreciated!
+If you have questions or would like to discuss your contribution before submitting, please contact us at brain.nest.contact@gmail.com. All feedback and help is strongly appreciated!
 
 We look forward to your contributions and are excited to see how the community expands NEST!

@@ -73,7 +73,7 @@ You can get detailed information about any model using:
 
     from nest import NEST
     
-    nest = NEST()
+    nest = NEST("path/to/NEST")
 
     # List all available models
     all_models = nest.list_models()
