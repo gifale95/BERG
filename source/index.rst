@@ -5,7 +5,7 @@ Welcome to NEST's Documentation
    :width: 300
    :alt: NEST Logo
 
-**Neural Encoding Simulation Toolkit (NEST)** is a resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.
+**Neural Encoding Simulation Toolkit (NEST)** is a resource consisting of multiple pre-trained encoding models of the brain and an accompanying `Python package <https://github.com/gifale95/NEST>`_ to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.
 
 In silico neural responses generated from encoding models increasingly resemble in vivo responses recorded from real brains, enabling the novel research paradigm of in silico neuroscience. These simulated responses are fast and cost-effective to generate, allowing researchers to explore and test scientific hypotheses across vastly larger solution spaces than possible in vivo. Novel findings from large-scale in silico experimentation can then be validated through targeted small-scale in vivo data collection, in this way optimizing research resources. Thus, in silico neuroscience scales beyond what is possible with in vivo data, and democratizes research across groups with diverse data collection infrastructure and resources.
 
