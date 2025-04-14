@@ -11,14 +11,12 @@ Model Summary
 
    * - Modality
      - eeg
-   * - Dataset
+   * - Training Dataset
      - things_eeg_2
-   * - Features
+   * - Model Architecture
      - vision transformer (ViT-B/32)
-   * - Repeats
-     - multi
-   * - Subject-specific
-     - True
+   * - Creator
+     - Alessandro Gifford
 
 Description
 ----------
@@ -27,7 +25,7 @@ This model generates in silico EEG responses to visual stimuli using a vision tr
 It was trained on the THINGS-EEG-2 dataset, which contains EEG recordings from subjects viewing
 images of everyday objects. The model extracts visual features using a pre-trained ViT-B/32
 transformer, applies dimensionality reduction, and then predicts EEG responses across all channels
-and time points. Multiple repetitions are modeled to capture trial-to-trial variability.
+and time points.
 
 The model takes as input a batch of RGB images in the shape [batch_size, 3, height, width], with pixel values ranging from 0 to 255 and square dimensions (e.g., 224×224).
 
@@ -35,7 +33,7 @@ Input
 -----
 
 **Type**: ``numpy.ndarray``  
-**Shape**: ``[batch_size, 3, height, width]``  
+**Shape**: ``['batch_size', 3, 'height', 'width']``  
 **Description**: The input should be a batch of RGB images.
 
 **Constraints:**
@@ -48,7 +46,7 @@ Output
 ------
 
 **Type**: ``numpy.ndarray``  
-**Shape**: ``[batch_size, n_repetitions, n_channels, n_timepoints]``  
+**Shape**: ``['batch_size', 'n_repetitions', 'n_channels', 'n_timepoints']``  
 **Description**:  
 The output is a 4D array containing predicted EEG responses.
 
@@ -65,7 +63,7 @@ The output is a 4D array containing predicted EEG responses.
    * - n_repetitions
      - Number of simulated repetitions of the same stimulus (typically 4)
    * - n_channels
-     - Number of EEG channels (typically 64)
+     - Number of EEG channels (typically 63)
    * - n_timepoints
      - Number of time points in the EEG epoch (typically 140)
 
@@ -82,8 +80,8 @@ Parameters used in ``get_encoding_model``
    * - **subject**
      - | **Type:** int
        | **Required:** Yes
-       | **Description:** Subject ID from the THINGS-EEG-2 dataset (1-4)
-       | **Valid Values:** 1, 2, 3, 4
+       | **Description:** Subject ID from the THINGS-EEG-2 dataset (1-10)
+       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
        | **Example:** 1
    * - **nest_dir**
      - | **Type:** str
@@ -92,7 +90,7 @@ Parameters used in ``get_encoding_model``
        | **Example:** ./
 
 Parameters used in ``encode``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. list-table::
    :widths: 20 80
@@ -101,8 +99,7 @@ Parameters used in ``encode``
    * - **stimulus**
      - | **Type:** numpy.ndarray
        | **Required:** Yes
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer 
-       |                format with values in the range [0, 255], and square dimensions.
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
        | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
    * - **device**
      - | **Type:** str
@@ -126,6 +123,7 @@ Performance
 Example Usage
 ------------
 
+
 .. code-block:: python
 
     from nest import NEST
@@ -133,20 +131,20 @@ Example Usage
     # Initialize NEST
     nest = NEST(nest_dir="path/to/nest")
     
-    # Load the model for subject 1
+    # Load the model
     model = nest.get_encoding_model("eeg_things_eeg_2_vit_b_32", subject=1)
     
-    # Prepare your stimuli (a batch of images)
-    # stimulus shape should be [batch_size, 3, height, width]
+    # Prepare your stimuli
+    # stimulus shape should be ['batch_size', 3, 'height', 'width']
     
-    # Generate EEG responses
-    responses = nest.encode(model, stimulus)
+    # Generate responses
+    responses = nest.encode(model, stimulus, device="auto", show_progress=True)
     
-    # responses shape will be [batch_size, 4, 64, 140]
+    # responses shape will be ['batch_size', 'n_repetitions', 'n_channels', 'n_timepoints']
     # where:
-    # - 4 is the number of repetitions
-    # - 64 is the number of EEG channels
-    # - 140 is the number of time points
+    # - n_repetitions is Number of simulated repetitions of the same stimulus (typically 4)
+    # - n_channels is Number of EEG channels (typically 63)
+    # - n_timepoints is Number of time points in the EEG epoch (typically 140)
     
     # Get responses with metadata
     responses, metadata = nest.encode(model, stimulus, return_metadata=True)
