@@ -44,14 +44,14 @@ There are two ways to get detailed information about a model:
 .. code-block:: python
 
     # Get comprehensive model information
-    model_info = nest.describe("fmri_nsd_fwrf")
+    model_info = nest.describe("fmri-nsd-fwrf")
 
 This will output detailed information about the model, including the required input parameters:
 
 .. code-block:: text
 
     ================================================================================
-    🧠 Model: fmri_nsd_fwrf
+    🧠 Model: fmri-nsd-fwrf
     ================================================================================
 
     Modality: fmri
@@ -104,7 +104,7 @@ This will output detailed information about the model, including the required in
 .. code-block:: python
 
     # Load Encoding Model
-    fwrf_model = nest.get_encoding_model("fmri_nsd_fwrf", 
+    fwrf_model = nest.get_encoding_model("fmri-nsd-fwrf", 
                                          subject=1, 
                                          roi="V1")
     
@@ -121,7 +121,7 @@ This is an example on how to use the fwRF model with NEST. For more information 
 .. code-block:: python
 
     # Load the fMRI encoding model
-    fwrf_model = nest.get_encoding_model("fmri_nsd_fwrf", 
+    fwrf_model = nest.get_encoding_model("fmri-nsd-fwrf", 
                                          subject=1, 
                                          roi="V1",
                                          device="cpu")
