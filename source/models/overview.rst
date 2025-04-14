@@ -80,7 +80,7 @@ These models were trained on 23 ROIs overlaying visual cortex. For detailed info
 modality-eeg
 ~~~~~~~~~~~~
 
-Encoding models trained on neural responses recorded with functional Magnetic Resonance Imaging (Electroencephalography).
+Encoding models trained on neural responses recorded with Electroencephalography (EEG).
 
 dataset-things_eeg_2
 ^^^^^^^^^^^^^^^^^^^^
