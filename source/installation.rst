@@ -4,7 +4,7 @@ Installation
 This guide covers how to install the Neural Encoding Simulation Toolkit (NEST) `Python package <https://github.com/gifale95/NEST>`_ and its dependencies.
 
 
-Installing NEST from PyPI
+Install NEST from PyPI
 --------------
 
 The simplest way to install NEST is via pip:
@@ -14,7 +14,7 @@ The simplest way to install NEST is via pip:
    pip install -U git+https://github.com/gifale95/NEST.git
 
 
-Verifying Installation
+Verify Installation
 ---------------------
 
 To verify that NEST is correctly installed, run:
