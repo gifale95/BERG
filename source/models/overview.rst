@@ -68,7 +68,7 @@ These models were trained on 23 ROIs overlaying visual cortex. For detailed info
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 55 15
+   :widths: 20 55
    :class: wrap-table
 
    * - Model ID
@@ -95,7 +95,7 @@ Encoding models trained on `THINGS EEG2 <https://www.alegifford.com/projects/eeg
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 55 15
+   :widths: 20 55
    :class: wrap-table
 
    * - Model ID
