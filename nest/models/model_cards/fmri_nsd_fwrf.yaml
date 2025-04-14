@@ -1,9 +1,8 @@
 model_id: fmri_nsd_fwrf
 modality: fmri
-dataset: NSD
-features: feature-weighted receptive fields (fwrf)
-repeats: single
-subject_specific: true
+training_dataset: NSD
+model_architecture: feature-weighted receptive fields (fwrf)
+creator: Alessandro Gifford
 
 # General description of the model
 description: |

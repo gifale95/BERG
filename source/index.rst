@@ -13,7 +13,7 @@ Novel findings from large-scale in silico experimentation can be validated throu
 
 NEST includes a growing, well-documented library of encoding models trained on different neural data acquisition modalities (including fMRI and EEG), datasets, subjects, stimulation types, and brain areas, offering broad versatility for addressing a wide range of research questions through in silico neuroscience.
 
-If anything in this manual is not clear, or if you think some information is missing, please get in touch with Ale (alessandro.gifford@gmail.com).
+If anything in this manual is not clear, or if you think some information is missing, please get in touch with us at brain.nest.contact@gmail.com.
 
 
 

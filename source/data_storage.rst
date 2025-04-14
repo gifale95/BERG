@@ -44,7 +44,6 @@ The main folder structure follows this pattern:
 .. code-block:: text
 
     neural_encoding_simulation_toolkit/
-    ├── NEST_data_manual
     ├── TERMS_AND_CONDITIONS
     ├── encoding_models/
     │   ├── modality-{modality}/
@@ -76,13 +75,11 @@ Each model directory contains three important subdirectories:
 This directory contains visualizations and data showing how well the models perform:
 
 * Performance plots for different subjects, regions, and channels
-* Accuracy metrics across different conditions
 
 **encoding_models_weights/**
 
 This directory contains the actual trained model weights that NEST uses to generate predictions:
 
-* Model parameters for each subject
 * Model-specific weight files organized by subject and other relevant parameters
 
 **metadata/**

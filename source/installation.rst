@@ -24,7 +24,7 @@ To verify that NEST is correctly installed, run:
    from nest import NEST
    
    # Initialize NEST with default data directory
-   nest = NEST()
+   nest = NEST("/path/to/nest_dir")
    
    # List available models
    models = nest.list_models()
