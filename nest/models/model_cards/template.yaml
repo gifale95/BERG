@@ -2,7 +2,7 @@
 # Replace placeholder values with actual model information
 
 # Basic metadata
-model_id: modality_dataset_model_type  # e.g., fmri_nsd_fwrf
+model_id: modality-dataset-model_type  # e.g., fmri-nsd-fwrf
 modality: modality  # e.g., fmri, eeg, meg, ...
 training_dataset: dataset_name
 model_architecture: feature_extraction_method

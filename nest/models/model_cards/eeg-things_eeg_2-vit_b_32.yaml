@@ -1,4 +1,4 @@
-model_id: eeg_things_eeg_2_vit_b_32
+model_id: eeg-things_eeg_2-vit_b_32
 modality: eeg
 training_dataset:  things_eeg_2
 model_architecture: vision transformer (ViT-B/32)
@@ -88,4 +88,4 @@ performance:
     - "neural_encoding_simulation_toolkit/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy"
   
 references:
-    - x
+    - https://doi.org/10.1038/s41593-021-00962-x

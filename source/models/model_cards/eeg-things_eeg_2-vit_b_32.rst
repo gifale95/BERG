@@ -1,6 +1,6 @@
-=============
-fmri_nsd_fwrf
-=============
+=========================
+eeg-things_eeg_2-vit_b_32
+=========================
 
 Model Summary
 ------------
@@ -10,21 +10,22 @@ Model Summary
    :stub-columns: 1
 
    * - Modality
-     - fmri
+     - eeg
    * - Training Dataset
-     - NSD
+     - things_eeg_2
    * - Model Architecture
-     - feature-weighted receptive fields (fwrf)
+     - vision transformer (ViT-B/32)
    * - Creator
      - Alessandro Gifford
 
 Description
 ----------
 
-This model generates in silico fMRI responses to visual stimuli using feature-weighted receptive fields (fwrf).
-It was trained on the Natural Scenes Dataset (NSD), a large-scale 7T fMRI dataset of subjects viewing natural images.
-The model extracts visual features using a convolutional neural network and maps these features to brain activity 
-patterns across multiple visual regions of interest (ROIs).
+This model generates in silico EEG responses to visual stimuli using a vision transformer model.
+It was trained on the THINGS-EEG-2 dataset, which contains EEG recordings from subjects viewing
+images of everyday objects. The model extracts visual features using a pre-trained ViT-B/32
+transformer, applies dimensionality reduction, and then predicts EEG responses across all channels
+and time points.
 
 The model takes as input a batch of RGB images in the shape [batch_size, 3, height, width], with pixel values ranging from 0 to 255 and square dimensions (e.g., 224×224).
 
@@ -45,35 +46,9 @@ Output
 ------
 
 **Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 'n_voxels']``  
+**Shape**: ``['batch_size', 'n_repetitions', 'n_channels', 'n_timepoints']``  
 **Description**:  
-The output is a 2D array containing predicted fMRI responses.
-The second dimension (n_voxels) corresponds to the number of voxels in the selected ROI,
-which varies by ROI and subject. For subject 1, the number of voxels per ROI is as follows:
-
-* V1: 1350
-* V2: 1433
-* V3: 1187
-* hV4: 687
-* EBA: 2971
-* FBA-2: 430
-* OFA: 355
-* FFA-1: 484
-* FFA-2: 310
-* PPA: 1033
-* RSC: 566
-* OPA: 1611
-* OWFA: 464
-* VWFA-1: 773
-* VWFA-2: 505
-* mfs-words: 165
-* early: 5917
-* midventral: 986
-* midlateral: 834
-* midparietal: 950
-* parietal: 3548
-* lateral: 7799
-* ventral: 7604
+The output is a 4D array containing predicted EEG responses.
 
 **Dimensions:**
 
@@ -85,8 +60,12 @@ which varies by ROI and subject. For subject 1, the number of voxels per ROI is 
      - Description
    * - batch_size
      - Number of stimuli in the batch
-   * - n_voxels
-     - Number of voxels in the selected ROI, varies by ROI and subject
+   * - n_repetitions
+     - Number of simulated repetitions of the same stimulus (typically 4)
+   * - n_channels
+     - Number of EEG channels (typically 63)
+   * - n_timepoints
+     - Number of time points in the EEG epoch (typically 140)
 
 Parameters
 ---------
@@ -101,19 +80,9 @@ Parameters used in ``get_encoding_model``
    * - **subject**
      - | **Type:** int
        | **Required:** Yes
-       | **Description:** Subject ID from the NSD dataset (1-8)
-       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
+       | **Description:** Subject ID from the THINGS-EEG-2 dataset (1-10)
+       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
        | **Example:** 1
-   * - **roi**
-     - | **Type:** str
-       | **Required:** Yes
-       | **Description:** Region of Interest (ROI) for voxel prediction. Early visual areas (V1-V3), category-selective regions (EBA, FFA, etc.), or composite regions (lateral, ventral).
-       | **Valid Values:** V1, V2, V3, hV4, EBA, 
-       |                  FBA-2, OFA, FFA-1, FFA-2, PPA, 
-       |                  RSC, OPA, OWFA, VWFA-1, VWFA-2, 
-       |                  mfs-words, early, midventral, midlateral, midparietal, 
-       |                  parietal, lateral, ventral
-       | **Example:** V1
    * - **nest_dir**
      - | **Type:** str
        | **Required:** No
@@ -138,13 +107,18 @@ Parameters used in ``encode``
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
        | **Valid Values:** cpu, cuda, auto
        | **Example:** auto
+   * - **show_progress**
+     - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to show a progress bar during encoding (for large batches)
+       | **Example:** True
 
 Performance
 ----------
 
 **Accuracy Plots:**
 
-* ``neural_encoding_simulation_toolkit/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy``
+* ``neural_encoding_simulation_toolkit/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy``
 
 Example Usage
 ------------
@@ -158,19 +132,28 @@ Example Usage
     nest = NEST(nest_dir="path/to/nest")
     
     # Load the model
-    model = nest.get_encoding_model("fmri_nsd_fwrf", subject=1, roi="V1")
+    model = nest.get_encoding_model("eeg-things_eeg_2-vit_b_32", subject=1)
     
     # Prepare your stimuli
     # stimulus shape should be ['batch_size', 3, 'height', 'width']
     
     # Generate responses
-    responses = nest.encode(model, stimulus, device="auto")
+    responses = nest.encode(model, stimulus, device="auto", show_progress=True)
     
-    # responses shape will be ['batch_size', 'n_voxels']
+    # responses shape will be ['batch_size', 'n_repetitions', 'n_channels', 'n_timepoints']
     # where:
-    # - n_voxels is Number of voxels in the selected ROI, varies by ROI and subject
+    # - n_repetitions is Number of simulated repetitions of the same stimulus (typically 4)
+    # - n_channels is Number of EEG channels (typically 63)
+    # - n_timepoints is Number of time points in the EEG epoch (typically 140)
+    
+    # Get responses with metadata
+    responses, metadata = nest.encode(model, stimulus, return_metadata=True)
+    
+    # Access channel names and time information
+    channel_names = metadata['eeg']['ch_names']
+    time_points = metadata['eeg']['times']  # in seconds
 
 References
 ---------
 
-* x
+* https://doi.org/10.1038/s41593-021-00962-x

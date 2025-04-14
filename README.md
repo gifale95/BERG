@@ -80,13 +80,13 @@ Step 1: Load an encoding model
 
 ```python
 # Load an example fMRI encoding model
-fmri_model = nest.get_encoding_model("fmri_nsd_fwrf", 
+fmri_model = nest.get_encoding_model("fmri-nsd-fwrf", 
                                      subject=1,
                                      roi="V1",
                                      device="cpu")
 
 # Load an example EEG encoding model
-eeg_model = nest.get_encoding_model("eeg_things_eeg_2_vit_b_32",
+eeg_model = nest.get_encoding_model("eeg-things_eeg_2-vit_b_32",
                                     subject=1,
                                     device="auto")
 

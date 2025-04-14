@@ -21,7 +21,7 @@ from nest.interfaces.base_model import BaseModelInterface
 
 # Load model info from YAML
 def load_model_model_info():
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg_things_eeg_2_vit_b_32.yaml")
+    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg-things_eeg_2-vit_b_32.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -34,7 +34,7 @@ register_model(
     class_name="EEGEncodingModel",
     modality=model_info.get("modality", "eeg"),
     dataset=model_info.get("dataset", "things_eeg_2"),
-    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg_things_eeg_2_vit_b_32.yaml")
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg-things_eeg_2-vit_b_32.yaml")
 )
 
 

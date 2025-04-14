@@ -14,7 +14,7 @@ from nest.models.fmri.fwrf.torch_joint_training_unpacked_sequences import *
 
 # Load model model_info from YAML
 def load_model_info():
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri_nsd_fwrf.yaml")
+    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd-fwrf.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -28,7 +28,7 @@ register_model(
     class_name="FMRIEncodingModel",
     modality=model_info.get("modality", "fmri"),
     dataset=model_info.get("dataset", "nsd"),
-    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri_nsd_fwrf.yaml")
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd-fwrf.yaml")
 )
 
 
