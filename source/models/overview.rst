@@ -41,7 +41,7 @@ EEG (Electroencephalography) models in NEST generate simulated electrical brain 
      - Vision Transformer (ViT-B/32) model trained on the THINGS-EEG-2 
        dataset. Predicts EEG responses across all channels and time 
        points.
-     - 1-4
+     - 1-10
 
 .. raw:: html
 
