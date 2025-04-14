@@ -116,10 +116,9 @@ Here's a template for your YAML configuration file:
     # Basic metadata
     model_id: modality_dataset_model_type  # e.g., fmri_nsd_fwrf
     modality: modality  # e.g., fmri, eeg, meg, ...
-    dataset: dataset_name
-    features: feature_extraction_method
-    repeats: single/multi  # whether model generates single or multiple repetitions
-    subject_specific: true/false  # whether model is subject-specific
+    training_dataset: dataset_name
+    model_architecture: feature_extraction_method
+    creator: your_name
 
     # General description of the model
     description: |
