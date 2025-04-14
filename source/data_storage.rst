@@ -58,9 +58,9 @@ Detailed Structure of Encoding Models
 
 The ``encoding_models`` directory contains all trained models organized hierarchically by:
 
-1. **Modality**: The neural recording recording modality (e.g., ``fmri``, ``eeg``).
-2. **Training Dataset**: The dataset used to train the model (e.g., ``nsd``, ``things_eeg_2``).
-3. **Model Type**: The encoding architecture or approach used (e.g., ``fwrf``, ``vit_b_32``).
+1. **Modality**: The neural recording recording modality on which the encoding model was trained (e.g., ``fmri``, ``eeg``).
+2. **Training Dataset**: The neural dataset on which the encoding model was trained (e.g., ``nsd``, ``things_eeg_2``).
+3. **Model Type**: The type of encoding model used (e.g., ``fwrf``, ``vit_b_32``).
 
 
 
