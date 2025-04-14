@@ -1,5 +1,5 @@
 =========================
-Contributing to NEST
+Contribute to NEST
 =========================
 
 Whether you have developed better encoding models, have models for different neural datasets, want to add support for new modalities, or have suggestions for improvement, we'd love to hear from you!
@@ -15,7 +15,7 @@ You can contribute to NEST in several ways:
 * **Models tained for different stimulus types** (e.g., videos, language, audio, multimodal).
 * **Improvements to the codebase** or documentation.
 
-Adding Your Model to NEST
+Add Your Model to NEST
 ------------------------
 
 NEST provides a standardized framework for integrating new models. To add your model:
