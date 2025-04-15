@@ -54,7 +54,7 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 55 10 15
+   :widths: 20 55 10 10
    :class: wrap-table
 
    * - Model ID
@@ -74,7 +74,7 @@ Encoding models trained on neural responses recorded with Electroencephalography
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 55 10 15
+   :widths: 20 55 10 10
    :class: wrap-table
 
    * - Model ID
