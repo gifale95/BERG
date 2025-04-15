@@ -46,12 +46,12 @@ We recommend downloading the folder directly from Google Drive via terminal usin
 
 ### 🧠 Available encoding models
 
-The following table shows the encoding models currently available in NEST. For more details on these models feel free to check out the [model cards][model_cards] in our documentation page.
+The following table shows the encoding models currently available in NEST. For more details on these models, please refer to the [documentation][model_cards].
 
-| modality | train_dataset | model | subject | roi |
-|-------------|-----------------------|----------| ----------| ----|
-| fmri | nsd | fwrf | 1, 2, 3, 4, 5, 6, 7, 8 | V1, V2, V3, hV4, EBA, FBA-2, OFA, FFA-1, FFA-2, PPA, RSC, OPA, OWFA, VWFA-1, VWFA-2, mfs-words, early, midventral, midlateral, midparietal, parietal, lateral, ventral|
-| eeg | things_eeg_2 | vit_b_32 | 1, 2, 3, 4, 5, 6, 7, 8, 9, 10| – |
+| Model ID | Training dataset | Species | Stimuli |
+|----------|------------------|---------|---------|
+| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD][NSD] | Human | Images |
+| [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | Human | Images |
  
 
 
@@ -164,6 +164,11 @@ If you use the Neural Encoding Simulation Toolkit, please cite:
 [encode]: https://github.com/gifale95/NEST/blob/main/nest/nest.py#L321
 [load_insilico_neural_responses]: https://github.com/gifale95/NEST/blob/main/nest/nest.py#L551
 
+
+[fmri-nsd-fwrf]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/fmri-nsd-fwrf.html
+[NSD]: https://doi.org/10.1038/s41593-021-00962-x
+[eeg-things_eeg_2-vit_b_32]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-vit_b_32.html
+[THINGS EEG2]: https://doi.org/10.1016/j.neuroimage.2022.119754
 
 
 [fmri_tutorial_colab]: https://colab.research.google.com/drive/1W9Sroz2Y0eTYfyhVrAJwe50GGHHAGBdE?usp=drive_link
