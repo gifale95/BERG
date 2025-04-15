@@ -54,15 +54,17 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 55 10 10
+   :widths: 20 55 20 10 10
    :class: wrap-table
 
    * - Model ID
      - Description
+     - Training dataset
      - Species
      - Stimuli
    * - :doc:`model_cards/fmri-nsd-fwrf`
      - Feature-weighted receptive fields, convolutional neural networks trained end-to-end to predict fMRI responses from input images.
+     - Natural Scenes Dataset
      - Human
      - Images
 
@@ -74,15 +76,17 @@ Encoding models trained on neural responses recorded with Electroencephalography
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 55 10 10
+   :widths: 20 55 20 10 10
    :class: wrap-table
 
    * - Model ID
      - Description
+     - Training dataset
      - Species
      - Stimuli
    * - :doc:`model_cards/eeg-things_eeg_2-vit_b_32`
      - Linear mapping of vision transformer image features onto EEG responses.
+     - THINGS EEG2
      - Human
      - Images
 
