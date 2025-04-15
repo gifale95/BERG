@@ -50,7 +50,7 @@ The following table shows the encoding models currently available in NEST. For m
 
 | Model ID | Training dataset | Species | Stimuli |
 |----------|------------------|---------|---------|
-| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD][NSD] | Human | Images |
+| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD][allen] | Human | Images |
 | [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | Human | Images |
  
 
@@ -166,7 +166,6 @@ If you use the Neural Encoding Simulation Toolkit, please cite:
 
 
 [fmri-nsd-fwrf]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/fmri-nsd-fwrf.html
-[NSD]: https://doi.org/10.1038/s41593-021-00962-x
 [eeg-things_eeg_2-vit_b_32]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-vit_b_32.html
 [THINGS EEG2]: https://doi.org/10.1016/j.neuroimage.2022.119754
 
