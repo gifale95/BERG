@@ -59,7 +59,7 @@ The following table shows the encoding models currently available in NEST. For m
 
 #### 🔹 Initialize the NEST object
 
-To use `NEST`'s functions you need to import `NEST` and create a `nest_object`.
+To use `NEST`'s functions, you first need to import `NEST` and create a `nest_object`.
 
 ```python
 from nest import NEST
@@ -67,9 +67,9 @@ from nest import NEST
 # Initialize NEST with the path to the toolkit
 nest = NEST(nest_dir="path/to/neural_encoding_simulation_toolkit")
 ```
-#### 🔹 Generate in silico neural responses to the stimuli of your choice
+#### 🔹 Generate in silico neural responses to stimuli
 
-Step 1: Load an encoding model
+Step 1: Load an encoding model of your choice using the `get_encoding_model` function.
 
 ```python
 # Load an example fMRI encoding model
@@ -85,7 +85,7 @@ eeg_model = nest.get_encoding_model("eeg-things_eeg_2-vit_b_32",
 
 ```
 
-Step 2: Generate responses for your images
+Step 2: Generate in silico neural responses to stimuli using the `encode` function.
 
 ```python
 # Encode fMRI responses to images with metadata
@@ -106,9 +106,9 @@ For more detailed information on how to use these functions and which parameters
 We provide several tutorials to help you get started with NEST:
 
 **Using NEST:**
-- [fMRI Tutorial](https://colab.research.google.com/drive/1W9Sroz2Y0eTYfyhVrAJwe50GGHHAGBdE?usp=drive_link) - Learn how to generate in silico fMRI responses 
-- [EEG Tutorial](https://colab.research.google.com/drive/10NSRBrJ390vuaPyRWq5fDBIA4NNAUlTk?usp=drive_link) - Explore how to generate time-resolved EEG responses 
-- [Adding New Models](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/tutorials/Adding_New_Models_to_Nest.html) - Guide on how to implement and contribute your own encoding models to NEST
+- [fMRI Tutorial](https://colab.research.google.com/drive/1W9Sroz2Y0eTYfyhVrAJwe50GGHHAGBdE?usp=drive_link) - Learn how to generate in silico fMRI responses.
+- [EEG Tutorial](https://colab.research.google.com/drive/10NSRBrJ390vuaPyRWq5fDBIA4NNAUlTk?usp=drive_link) - Explore how to generate EEG responses.
+- [Adding New Models](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/tutorials/Adding_New_Models_to_Nest.html) - Guide on how to implement and contribute your own encoding models to NEST.
 
 **Example Application - Relational Neural Control (RNC):**
 
