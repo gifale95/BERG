@@ -8,17 +8,17 @@ Data Sharing and Usage Agreement
 
 Before I download NEST, I agree to the following terms and conditions:
 
-1. Prior to downloading this dataset, I must have filled the NED Data Access Agreement at this link.
+1. Prior to downloading this dataset, I must have filled the NEST's Data Access Agreement at `this link <https://forms.gle/ZKxEcjBmdYL6zdrg9>`_.
 
 2. I agree that all presentations and publications resulting from any use of this dataset must cite the relevant work.
 
 3. In case I share or redistribute this dataset, I will:
 
-   a. give appropriate credit by citing the relevant work,
+   a. Give appropriate credit by citing the relevant work;
    
-   b. indicate any changes that I have made to the dataset, and
+   b. Indicate any changes that I have made to the dataset;
    
-   c. share or redistribute any derivative data under the same Terms and Conditions.
+   c. Share or redistribute any derivative data under the same Terms and Conditions.
 
 4. I will utilize this dataset only for research and educational purposes. In case I wish to use the dataset for commercial purposes, I will first need to get explicit permission from the dataset creators.
 
