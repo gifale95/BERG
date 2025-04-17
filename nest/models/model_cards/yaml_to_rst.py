@@ -220,7 +220,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         'from nest import NEST',
         '',
         '# Initialize NEST',
-        'nest = NEST(nest_dir="path/to/nest")',
+        'nest = NEST(nest_dir="path/to/neural_encoding_simulation_toolkit")',
         ''
     ]
     
