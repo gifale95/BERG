@@ -41,7 +41,7 @@ input:
   constraints:
     - "Image values should be integers in range [0, 255]."
     - "Image dimensions (height, width) should be equal (square)."
-    - "Minimum recommended image size: 224x224 pixels."
+    - "Minimum recommended image size: 224×224 pixels."
 
 # Output information
 output:
@@ -52,11 +52,11 @@ output:
     - name: "batch_size"
       description: "Number of stimuli in the batch."
     - name: "n_repetitions"
-      description: "Number of simulated repetitions of the same stimulus."
+      description: "Number of simulated repetitions of the same stimulus (always 4)."
     - name: "n_channels"
-      description: "Number of EEG channels."
+      description: "Number of EEG channels (up to 63, based on the number of channels selected)."
     - name: "n_timepoints"
-      description: "Number of time points in the EEG epoch."
+      description: "Number of time points in the EEG epoch (up to 140, based on the number of time points selected)."
 
 # Model parameters and their usage
 parameters:
@@ -79,7 +79,7 @@ parameters:
     type: numpy.ndarray
     required: true
     shape: [batch_size, 3, height, width]
-    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224)."
     example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
     function: "encode"
 
