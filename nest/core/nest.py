@@ -91,10 +91,10 @@ class NEST:
         return get_available_models()
         
     
-    def get_encoding_model(self, model_id: str, device:str="auto", **kwargs):
+    def get_encoding_model(self, model_id: str, device: str = "auto", selection: dict = None, **kwargs):
         """
         Load and return a specific encoding model instance.
-        
+
         Parameters
         ----------
         model_id : str
@@ -102,11 +102,18 @@ class NEST:
         device : str, default="auto"
             Target device for computation ("cpu", "cuda", or "auto").
             If "auto", the system will use GPU acceleration if available.
+        selection : dict, optional
+            Optional selection dictionary to specify which parts of the model output to include.
+            Keys may include:
+            - "roi": str, e.g. "V1", "FFA-2", etc.
+            - "channels": list of EEG channel names to include
+            - "timepoints": binary one-hot encoded vector (length must match number of timepoints)
+            Refer to the model's YAML config for valid options.
         **kwargs
             Additional model-specific initialization parameters.
             These vary by model and are documented in each model's
             YAML configuration file.
-        
+
         Returns
         -------
         BaseModelInterface
@@ -115,13 +122,14 @@ class NEST:
         """
         try:
             model_class = get_model_class(model_id)
-            model = model_class(nest_dir=self.nest_dir, device=device, **kwargs)
+            model = model_class(nest_dir=self.nest_dir, device=device, selection=selection, **kwargs)
             model.load_model()
             return model
         except ValueError as e:
             raise ModelNotFoundError(str(e))
         except Exception as e:
             raise
+
     
     def encode(self, model: BaseModelInterface, stimulus: np.ndarray, return_metadata: bool = False, **kwargs):
         """

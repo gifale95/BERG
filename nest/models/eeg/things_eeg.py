@@ -1,6 +1,6 @@
 import os
 from copy import deepcopy
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List, Optional, Union
 import numpy as np
 import torch
 import torchvision
@@ -14,6 +14,13 @@ from nest.core.exceptions import (
     InvalidParameterError,
     ModelLoadError,
     StimulusError,
+)
+from nest.core.parameter_validator import (
+    validate_subject,
+    validate_selection_keys,
+    validate_channels,
+    validate_binary_array,
+    get_selected_indices
 )
 from nest.core.model_registry import register_model
 from nest.interfaces.base_model import BaseModelInterface
@@ -45,9 +52,12 @@ class EEGEncodingModel(BaseModelInterface):
     """
     
     MODEL_ID = model_info["model_id"]
+    SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
+    VALID_CHANNELS = model_info["parameters"]["selection"]["properties"]["channels"]["valid_values"]
+    TIMEPOINTS_LENGTH = 140
     
-    def __init__(self, subject: int, device:str = "auto", nest_dir: Optional[str] = None):
+    def __init__(self, subject: int, device: str = "auto", selection: Optional[Dict] = None, nest_dir: Optional[str] = None):
         """
         Initialize the EEG encoding model.
         
@@ -55,16 +65,29 @@ class EEGEncodingModel(BaseModelInterface):
         ----------
         subject : int
             Subject number from the THINGS-EEG-2 dataset.
-            Must be one of the valid subject IDs (1-4).
+            Must be one of the valid subject IDs (1-10).
         device : str, default="auto"
             Target device for computation. Options are "cpu", "cuda", or "auto".
-            If "auto", will use GPU if available, otherwise CPU.
+            If "auto", will use GPU if available, otherwise CPU.    
+        selection : dict, optional
+            Specifies which outputs to include in the model responses.
+            Can include specific channels and/or timepoints.
+            - channels: List of EEG channel names to include in the output
+            - timepoints: Binary one-hot encoded vector indicating which timepoints to include
         nest_dir : str, optional
             Root path to the NEST directory containing model files and weights.
         """
+        # Assign Parameters
         self.subject = subject
         self.nest_dir = nest_dir
         self.model = None
+        
+        # Parameters from selection
+        self.selection = selection
+        self.selected_channels = None
+        self.selected_timepoints = None
+        
+        # Validate parameters
         self._validate_parameters()
         
         # Select device
@@ -79,10 +102,27 @@ class EEGEncodingModel(BaseModelInterface):
         Ensures that subject IDs and other parameters match the expected
         values defined in the model's yaml.
         """
-        if self.subject not in self.VALID_SUBJECTS:
-            raise InvalidParameterError(
-                f"Subject must be one of {self.VALID_SUBJECTS}, got {self.subject}"
-            )
+
+        # Validate subject
+        validate_subject(self.subject, self.VALID_SUBJECTS)
+        
+        if self.selection is not None:
+            # Validate selection keys
+            validate_selection_keys(self.selection, self.SELECTION_KEYS)
+
+            # Individual validations
+            if "channels" in self.selection:
+                self.selected_channels = validate_channels(
+                    self.selection["channels"], self.VALID_CHANNELS
+                )
+
+            if "timepoints" in self.selection:
+                timepoints_array = validate_binary_array(
+                    self.selection["timepoints"],
+                    self.TIMEPOINTS_LENGTH,
+                    "timepoints"
+                )
+                self.selected_timepoints = get_selected_indices(timepoints_array)
 
     def load_model(self) -> None:
         """
@@ -103,6 +143,17 @@ class EEGEncodingModel(BaseModelInterface):
             metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
             self.ch_names = metadata_dict['eeg']['ch_names']
             self.times = metadata_dict['eeg']['times']
+            
+            # If selected_channels is set, store the indices
+            if self.selected_channels is not None:
+                self.channel_indices = [self.ch_names.index(ch) for ch in self.selected_channels]
+            else:
+                # If no channels selected, use all channels
+                self.channel_indices = range(len(self.ch_names))
+            
+            # If selected_timepoints is not set, use all timepoints
+            if self.selected_timepoints is None:
+                self.selected_timepoints = range(len(self.times))
 
             # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)
@@ -258,10 +309,10 @@ class EEGEncodingModel(BaseModelInterface):
         Returns
         -------
         np.ndarray
-            EEG response array with shape (batch_size, n_repetitions, n_channels, n_timepoints).
-            - n_repetitions : typically 4 separate simulations per stimulus
-            - n_channels : 64 EEG channels
-            - n_timepoints : 140 time points
+            EEG response array with shape (batch_size, n_repetitions, n_selected_channels, n_selected_timepoints).
+            The dimensions will be adapted based on the selection parameter:
+            - If channels are selected, only those channels are included
+            - If timepoints are selected, only those timepoints are included
         """
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -306,7 +357,7 @@ class EEGEncodingModel(BaseModelInterface):
                 # Generate responses for each repetition
                 insilico_eeg_part = []
                 for reg in self.regression_weights:
-                    # Generate the in silico EEG responses
+                    # Generate the in silico EEG responses for all channels and timepoints
                     insilico_eeg = reg.predict(features)
                     insilico_eeg = insilico_eeg.astype(np.float32)
                     
@@ -315,6 +366,11 @@ class EEGEncodingModel(BaseModelInterface):
                         insilico_eeg, 
                         (len(insilico_eeg), len(self.ch_names), len(self.times))
                     )
+                    
+                    # Extract only the selected channels and timepoints
+                    insilico_eeg = insilico_eeg[:, self.channel_indices, :]
+                    insilico_eeg = insilico_eeg[:, :, self.selected_timepoints]
+                    
                     insilico_eeg_part.append(insilico_eeg)
                 
                 # Reshape to (Images x Repeats x Channels x Time)
