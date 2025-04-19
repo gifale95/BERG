@@ -88,6 +88,26 @@ Parameters used in ``get_encoding_model``
        | **Required:** No
        | **Description:** Root directory of the NEST repository (optional if default paths are set)
        | **Example:** ./
+   * - **selection**
+     - | **Type:** dict
+       | **Required:** No
+       | **Description:** Specifies which outputs to include in the model responses.
+       | Can include specific channels and/or timepoints.
+       | 
+       | **Properties:**
+       | 
+       | **channels**
+       |     **Type:** list[str]
+       |     **Description:** List of EEG channel names to include in the output
+       |     **Valid values:** *63 options available* - e.g., "Fp1", "F3", ...
+       |     **Example:** ['Oz', 'Cz', 'Fp1']
+       | 
+       | **timepoints**
+       |     **Type:** binary_vector
+       |     **Description:** Binary one-hot encoded vector indicating which timepoints to include.
+       |     Must have exactly the same length as the number of available timepoints (140).
+       |     Each position set to 1 indicates that timepoint should be included.
+       |     **Example:** [0, 0, 0, 1, 1, 1, 0, 0]
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,7 +152,7 @@ Example Usage
     nest = NEST(nest_dir="path/to/nest")
     
     # Load the model
-    model = nest.get_encoding_model("eeg-things_eeg_2-vit_b_32", subject=1)
+    model = nest.get_encoding_model("eeg-things_eeg_2-vit_b_32", subject=1, selection={"channels": ['Oz', 'Cz', 'Fp1'], "timepoints": [0, 0, 0, ...]})
     
     # Prepare your stimuli
     # stimulus shape should be ['batch_size', 3, 'height', 'width']

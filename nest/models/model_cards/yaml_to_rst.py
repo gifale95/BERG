@@ -158,42 +158,112 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         rst_content.append('')
         
         for param_name, param_data in params:
-            rst_content.append(f'   * - **{param_name}**')
-            
-            # Format parameter details with proper indentation
-            details = []
-            details.append(f'**Type:** {param_data.get("type", "")}')
-            
-            required = param_data.get('required', False)
-            details.append(f'**Required:** {"Yes" if required else "No"}')
-            
-            if 'description' in param_data:
-                details.append(f'**Description:** {param_data.get("description", "")}')
-            
-            if 'valid_values' in param_data:
-                valid_values = param_data['valid_values']
-                if isinstance(valid_values, list):
-                    # Format the list of values nicely
-                    if all(isinstance(x, str) for x in valid_values) and len(", ".join(valid_values)) > 50:
-                        # For longer lists of string values, format them with line breaks
-                        formatted_values = ", \n       |                  ".join(
-                            [", ".join(valid_values[i:i+5]) for i in range(0, len(valid_values), 5)]
-                        )
-                        details.append(f'**Valid Values:** {formatted_values}')
+            # Special handling for selection parameter
+            if param_name == 'selection' and 'properties' in param_data:
+                # Add the main selection parameter entry
+                rst_content.append(f'   * - **{param_name}**')
+                
+                # Start the parameter details cell with the vertical bar
+                rst_content.append(f'     - | **Type:** {param_data.get("type", "")}')
+                
+                # Add required field
+                required = param_data.get('required', False)
+                rst_content.append(f'       | **Required:** {"Yes" if required else "No"}')
+                
+                # Process description with special handling for multiline text
+                if 'description' in param_data:
+                    desc = param_data.get("description", "").strip()
+                    # Split by newlines and handle each line separately
+                    desc_lines = desc.split('\n')
+                    # First description line
+                    rst_content.append(f'       | **Description:** {desc_lines[0]}')
+                    # Any additional description lines
+                    for line in desc_lines[1:]:
+                        rst_content.append(f'       | {line}')
+                
+                # Add properties header with an empty line before it
+                rst_content.append('       | ')
+                rst_content.append('       | **Properties:**')
+                
+                # Process each property
+                for prop_name, prop_data in param_data['properties'].items():
+                    # Add an empty line before each property for better readability
+                    rst_content.append('       | ')
+                    rst_content.append(f'       | **{prop_name}**')
+                    rst_content.append(f'       |     **Type:** {prop_data.get("type", "")}')
+                    
+                    # Process property description with careful handling of newlines
+                    if 'description' in prop_data:
+                        prop_desc = prop_data.get("description", "").strip()
+                        # Split and handle each line separately
+                        prop_desc_lines = prop_desc.split('\n')
+                        # First description line
+                        rst_content.append(f'       |     **Description:** {prop_desc_lines[0]}')
+                        # Any additional description lines
+                        for line in prop_desc_lines[1:]:
+                            rst_content.append(f'       |     {line}')
+                    
+                    # Add valid values if available
+                    if 'valid_values' in prop_data:
+                        valid_values = prop_data['valid_values']
+                        if isinstance(valid_values, list):
+                            if all(isinstance(x, str) for x in valid_values) and len(valid_values) > 10:
+                                # For very long lists, abbreviate
+                                rst_content.append(f'       |     **Valid values:** *{len(valid_values)} options available* - e.g., "{valid_values[0]}", "{valid_values[1]}", ...')
+                            else:
+                                # Show full list for smaller value sets
+                                formatted_values = ", ".join([f'"{v}"' if isinstance(v, str) else str(v) for v in valid_values])
+                                rst_content.append(f'       |     **Valid values:** {formatted_values}')
+                        else:
+                            rst_content.append(f'       |     **Valid values:** {valid_values}')
+                    
+                    # Add example if available
+                    if 'example' in prop_data:
+                        example = prop_data['example']
+                        if isinstance(example, list):
+                            if len(example) > 10:
+                                # Truncate long examples
+                                example_str = str(example[:5])[:-1] + ", ... ]"
+                            else:
+                                example_str = str(example)
+                            rst_content.append(f'       |     **Example:** {example_str}')
+                        else:
+                            rst_content.append(f'       |     **Example:** {example}')
+            else:
+                # Regular parameter handling
+                rst_content.append(f'   * - **{param_name}**')
+                
+                # Format parameter details with proper indentation
+                rst_content.append(f'     - | **Type:** {param_data.get("type", "")}')
+                
+                required = param_data.get('required', False)
+                rst_content.append(f'       | **Required:** {"Yes" if required else "No"}')
+                
+                if 'description' in param_data:
+                    desc = param_data.get("description", "").strip()
+                    # Handle multiline descriptions
+                    desc_lines = desc.split('\n')
+                    rst_content.append(f'       | **Description:** {desc_lines[0]}')
+                    for line in desc_lines[1:]:
+                        rst_content.append(f'       | {line}')
+                
+                if 'valid_values' in param_data:
+                    valid_values = param_data['valid_values']
+                    if isinstance(valid_values, list):
+                        # Format the list of values nicely
+                        if all(isinstance(x, str) for x in valid_values) and len(", ".join(map(str, valid_values))) > 50:
+                            # For longer lists of string values, format them with line breaks
+                            formatted_values = ", ".join(map(str, valid_values[:5]))
+                            if len(valid_values) > 5:
+                                formatted_values += ", ..."
+                            rst_content.append(f'       | **Valid Values:** {formatted_values}')
+                        else:
+                            rst_content.append(f'       | **Valid Values:** {", ".join(map(str, valid_values))}')
                     else:
-                        details.append(f'**Valid Values:** {", ".join(map(str, valid_values))}')
-                else:
-                    details.append(f'**Valid Values:** {valid_values}')
-            
-            if 'example' in param_data:
-                details.append(f'**Example:** {param_data.get("example", "")}')
-            
-            # Add the formatted details with proper indentation
-            for i, detail in enumerate(details):
-                if i == 0:  # First line
-                    rst_content.append(f'     - | {detail}')
-                else:
-                    rst_content.append(f'       | {detail}')
+                        rst_content.append(f'       | **Valid Values:** {valid_values}')
+                
+                if 'example' in param_data:
+                    rst_content.append(f'       | **Example:** {param_data.get("example", "")}')
         
         rst_content.append('')
     
@@ -267,6 +337,42 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     example_code.append(f'# Load the model')
     example_code.append(f'model = nest.get_encoding_model("{model_id}", {get_model_params_str})')
     example_code.append('')
+    
+    # Check if selection parameter exists and modify the model loading example
+    has_selection = False
+    selection_dict = {}
+    
+    for param_name, param_data in data.get('parameters', {}).items():
+        if param_name == 'selection' and param_data.get('function') == 'get_encoding_model':
+            has_selection = True
+            # Build selection dict from examples in properties
+            if 'properties' in param_data:
+                for prop_name, prop_data in param_data['properties'].items():
+                    if 'example' in prop_data:
+                        selection_dict[prop_name] = prop_data['example']
+    
+    # Replace the basic model loading with one that includes selection if available
+    if has_selection and selection_dict:
+        # Format the selection dictionary for code example
+        selection_str = "{"
+        for i, (k, v) in enumerate(selection_dict.items()):
+            if isinstance(v, list):
+                if len(v) > 5:
+                    val_str = str(v[:3])[:-1] + ", ...]"
+                else:
+                    val_str = str(v)
+            else:
+                val_str = f'"{v}"' if isinstance(v, str) else str(v)
+                
+            selection_str += f'"{k}": {val_str}'
+            if i < len(selection_dict) - 1:
+                selection_str += ", "
+        selection_str += "}"
+        
+        # Update the model loading line to include selection
+        for i, line in enumerate(example_code):
+            if line.startswith('model = nest.get_encoding_model('):
+                example_code[i] = f'model = nest.get_encoding_model("{model_id}", {get_model_params_str}, selection={selection_str})'
     
     # Add information about the stimulus based on the input definition
     input_data = data.get('input', {})
@@ -356,5 +462,6 @@ if __name__ == "__main__":
 # 2. Convert a YAML file to RST with specific output path:
 #    python yaml_to_rst.py fmri_nsd_fwrf.yaml docs/model_cards/fmri_nsd_fwrf.rst
     
-# python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/fmri_nsd_fwrf.yaml nest/models/model_cards/fmri_nsd_fwrf.rst
-# python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/eeg_things_eeg_2_vit_b_32.yaml nest/models/model_cards/eeg_things_eeg_2_vit_b_32.rst
+# python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/fmri-nsd-fwrf.yaml source/models/model_cards/fmri-nsd-fwrf.rst
+# python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml source/models/model_cards/eeg-things_eeg_2-vit_b_32.rst
+
