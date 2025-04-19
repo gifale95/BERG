@@ -37,7 +37,8 @@ input:
   constraints:
     - "Image values should be integers in range [0, 255]."
     - "Image dimensions (height, width) should be equal (square)."
-    - "Minimum recommended image size: 224x224 pixels."
+    - "Minimum recommended image size: 224×224 pixels."
+
 
 # Output information
 output:
