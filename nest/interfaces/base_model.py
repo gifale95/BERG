@@ -138,7 +138,18 @@ class BaseModelInterface(ABC):
         init_example_dict = {}
         if "get_encoding_model" in params_by_function:
             for name, info in params_by_function["get_encoding_model"].items():
-                if "example" in info:
+                if name == "selection":
+                    # Build example selection block from its properties
+                    selection_example = {}
+                    for subname, subinfo in info.get("properties", {}).items():
+                        if "example" in subinfo:
+                            selection_example[subname] = subinfo["example"]
+                        elif "valid_values" in subinfo and subinfo["valid_values"]:
+                            selection_example[subname] = subinfo["valid_values"][0]
+                        else:
+                            selection_example[subname] = "..."
+                    init_example_dict["selection"] = selection_example
+                elif "example" in info:
                     init_example_dict[name] = info["example"]
                 elif "valid_values" in info and info["valid_values"]:
                     init_example_dict[name] = info["valid_values"][0]
@@ -152,12 +163,12 @@ class BaseModelInterface(ABC):
         # Generate example code
         example_code = textwrap.dedent(f"""\
             from nest import NEST
-            
+
             nest = NEST("/path/to/nest_dir")
-            
+
             # Initialize the model
             model = nest.get_encoding_model("{model_id}", {init_param_str})
-            
+
             # Generate responses (assuming stimulus is a numpy array)
             responses = model.generate_response(stimulus)
         """)
@@ -211,29 +222,48 @@ class BaseModelInterface(ABC):
                 print("\n📌 Other Parameters:")
             else:
                 print(f"\n📌 Parameters for {func_name}():")
-                
+            
             for name, info in func_params.items():
                 desc = info.get("description", "")
                 example = info.get("example", info.get("default", "..."))
                 valid = info.get("valid_values", None)
                 required = info.get("required", True)
                 default = info.get("default", None)
-                
+                param_type = info.get("type", "unknown")
+
                 req_str = "required" if required else "optional"
                 if not required and default is not None:
                     req_str = f"optional, default={repr(default)}"
-                    
-                print(f"\n• {name} ({info.get('type', 'unknown')}, {req_str})")
+
+                print(f"\n• {name} ({param_type}, {req_str})")
                 if desc:
                     print(textwrap.fill(f"  ↳ {desc}", width=80, subsequent_indent="    "))
                 if valid:
                     if isinstance(valid, list) and len(valid) > 10:
-                        # Truncate long lists
                         valid_str = str(valid)[1:]
                         print(f"  ↳ Valid values: {valid_str}")
                     else:
                         print(f"  ↳ Valid values: {valid}")
-                print(f"  ↳ Example: {example}")
+
+                # 📦 Handle nested properties for dict-type params (like 'selection')
+                if param_type == "dict" and "properties" in info:
+                    print("\n  ↪ Sub-parameters within 'selection':")
+                    for subname, subinfo in info["properties"].items():
+                        subdesc = subinfo.get("description", "")
+                        subexample = subinfo.get("example", "...")
+                        subvalid = subinfo.get("valid_values", None)
+                        subtype = subinfo.get("type", "unknown")
+
+                        print(f"\n    • {subname} ({subtype})")
+                        if subdesc:
+                            print(textwrap.fill(f"      ↳ {subdesc}", width=80, subsequent_indent="        "))
+                        if subvalid:
+                            if isinstance(subvalid, list) and len(subvalid) > 10:
+                                subvalid_str = str(subvalid)[1:]
+                                print(f"      ↳ Valid values: {subvalid_str}")
+                            else:
+                                print(f"      ↳ Valid values: {subvalid}")
+                        print(f"      ↳ Example: {subexample}")
         
         # Print performance information if available
         if "performance" in model_info:
@@ -273,6 +303,7 @@ class BaseModelInterface(ABC):
             "performance": model_info.get("performance", {}),
             "example_usage": example_code.strip()
         }
+
         
     def describe(self) -> Dict[str, Any]:
         """
