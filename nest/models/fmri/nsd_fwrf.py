@@ -11,6 +11,11 @@ from nest.models.fmri.fwrf.torch_gnet import Encoder
 from nest.models.fmri.fwrf.torch_mpf import Torch_LayerwiseFWRF
 from nest.models.fmri.fwrf.load_nsd import image_feature_fn
 from nest.models.fmri.fwrf.torch_joint_training_unpacked_sequences import *
+from nest.core.parameter_validator import (
+    validate_subject,
+    validate_selection_keys,
+    validate_roi,
+)
 
 # Load model model_info from YAML
 def load_model_info():
@@ -40,10 +45,10 @@ class FMRIEncodingModel(BaseModelInterface):
     
     MODEL_ID = model_info["model_id"]
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
-    VALID_ROIS = model_info["parameters"]["roi"]["valid_values"]
+    SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
+    VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     
-    
-    def __init__(self, subject: int, roi: str, device:str="auto", nest_dir: Optional[str] = None):
+    def __init__(self, subject: int, selection: Optional[Dict], device:str="auto", nest_dir: Optional[str] = None):
         """
         Initialize the fMRI encoding model for a specific subject and ROI.
         
@@ -51,21 +56,26 @@ class FMRIEncodingModel(BaseModelInterface):
         ----------
         subject : int
             Subject number from the NSD dataset (1-8).
-        roi : str
-            Region of interest (e.g., "V1", "FFA-1", "lateral").
-            Must be one of the valid ROIs defined in the model yaml.
         device : str, default="auto"
             Target device for computation. Options are "cpu", "cuda", or "auto".
             If "auto", will use GPU if available, otherwise CPU.
+        selection : dict, optional
+            Specifies which outputs to include in the model responses.
+            - roi: Region of interest (e.g., "V1", "FFA-1", "lateral").
         nest_dir : str, optional
             Path to the NEST directory containing model files and weights.
         """
         self.img_chan = 3
         self.resize_px = 227
         self.subject = subject
-        self.roi = roi
         self.nest_dir = nest_dir
         self.model = None
+        
+        # Parameters from selection
+        self.selection = selection
+        self.roi = None
+        
+        # Validate Parameters
         self._validate_parameters()
         
         # Select device
@@ -80,15 +90,20 @@ class FMRIEncodingModel(BaseModelInterface):
         Verifies that the provided subject ID and ROI name are among
         the supported values defined in the model's modelinfo.
         """
-        if self.subject not in self.VALID_SUBJECTS:
-            raise InvalidParameterError(
-                f"Subject must be one of {self.VALID_SUBJECTS}, got {self.subject}"
-            )
         
-        if self.roi not in self.VALID_ROIS:
-            raise InvalidParameterError(
-                f"ROI must be one of {self.VALID_ROIS}, got {self.roi}"
-            )
+        # Validate subject
+        validate_subject(self.subject, self.VALID_SUBJECTS)
+        
+        if self.selection is not None:
+            # Validate selection keys
+            validate_selection_keys(self.selection, self.SELECTION_KEYS)
+
+            # Individual validations
+            if "roi" in self.selection:
+                self.roi = validate_roi(
+                    self.selection["roi"], self.VALID_ROIS
+                )
+
 
     def load_model(self, device: str = "auto") -> None:
         """

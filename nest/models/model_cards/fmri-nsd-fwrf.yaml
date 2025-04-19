@@ -39,6 +39,7 @@ input:
     - "Image dimensions (height, width) should be equal (square)."
     - "Minimum recommended image size: 224×224 pixels."
 
+
 # Output information
 output:
   type: "numpy.ndarray"
@@ -86,44 +87,30 @@ parameters:
     example: 1
     description: "Subject ID from the NSD dataset (1-8)."
     function: "get_encoding_model"
-  
-  roi:
-    type: str
-    required: true
-    valid_values:
-      - V1
-      - V2
-      - V3
-      - hV4
-      - EBA
-      - FBA-2
-      - OFA
-      - FFA-1
-      - FFA-2
-      - PPA
-      - RSC
-      - OPA
-      - OWFA
-      - VWFA-1
-      - VWFA-2
-      - mfs-words
-      - early
-      - midventral
-      - midlateral
-      - midparietal
-      - parietal
-      - lateral
-      - ventral
-    example: "V1"
-    description: "Region of Interest (ROI) for which the in silico fMRI responses should be generated."
-    function: "get_encoding_model"
-  
+    
   nest_dir:
     type: str
     required: false
     example: "./"
     description: "Root directory of the NEST repository (optional if default paths are set)."
     function: "get_encoding_model"
+
+  selection:
+    type: dict
+    description: Specifies which outputs to include in the model responses.
+    required: true
+    function: get_encoding_model
+    properties:
+      roi:
+        type: str
+        description: |
+          Region of Interest (ROI) for voxel prediction.
+          Early visual areas (V1-V3), category-selective regions (EBA, FFA, etc.),
+          or composite regions (lateral, ventral).
+        valid_values: ["V1", "V2", "V3", "hV4", "EBA", "FBA-2", "OFA", "FFA-1", "FFA-2", "PPA",
+        "RSC", "OPA", "OWFA", "VWFA-1", "VWFA-2", "mfs-words", "early",
+        "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral"]
+        example: "V1"
 
   stimulus:
     type: numpy.ndarray
