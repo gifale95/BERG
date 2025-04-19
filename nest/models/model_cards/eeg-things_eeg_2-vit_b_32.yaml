@@ -105,7 +105,7 @@ parameters:
           Binary one-hot encoded vector indicating which timepoints to include.
           Must have exactly the same length as the number of available timepoints (140).
           Each position set to 1 indicates that timepoint should be included.
-        example: [0, 0, 0, 1, 1, 1, 0, 0]  # Shortened for readability
+        example: [0, 0, 0, 1, 1, 1, 0, 0]  
 
 
   stimulus:

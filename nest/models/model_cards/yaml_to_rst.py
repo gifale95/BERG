@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#!/usr/bin/env python3
 import yaml
 import re
 from typing import Dict, List, Union, Any, Optional
@@ -40,9 +41,17 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     summary_items = [
         ('Modality', data.get('modality', '')),
         ('Training Dataset', data.get('training_dataset', '')),
-        ('Model Architecture', data.get('model_architecture', '')),
-        ('Creator', data.get('creator', ''))
     ]
+    if 'species' in data:
+        summary_items.append(('Species', data.get('species', '')))
+    if 'stimuli' in data:
+        summary_items.append(('Stimuli', data.get('stimuli', '')))
+    if 'model_type' in data:
+        summary_items.append(('Model Type', data.get('model_type', '')))
+    elif 'model_architecture' in data:  # Fallback to old field name
+        summary_items.append(('Model Architecture', data.get('model_architecture', '')))
+    
+    summary_items.append(('Creator', data.get('creator', '')))
     
     for item, value in summary_items:
         rst_content.append(f'   * - {item}')
@@ -290,7 +299,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         'from nest import NEST',
         '',
         '# Initialize NEST',
-        'nest = NEST(nest_dir="path/to/neural_encoding_simulation_toolkit")',
+        'nest = NEST(nest_dir="path/to/nest")',
         ''
     ]
     
@@ -406,7 +415,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                         example_code.append(f'# - {name} is {desc}')
     
     # Add metadata example if appropriate based on modality
-    if data.get('modality') == 'eeg':
+    if data.get('modality', '').lower() == 'eeg':  # Made case-insensitive
         example_code.extend([
             '',
             '# Get responses with metadata',
