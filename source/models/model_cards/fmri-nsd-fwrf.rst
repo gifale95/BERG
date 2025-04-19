@@ -104,21 +104,25 @@ Parameters used in ``get_encoding_model``
        | **Description:** Subject ID from the NSD dataset (1-8)
        | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
        | **Example:** 1
-   * - **roi**
-     - | **Type:** str
-       | **Required:** Yes
-       | **Description:** Region of Interest (ROI) for voxel prediction. Early visual areas (V1-V3), category-selective regions (EBA, FFA, etc.), or composite regions (lateral, ventral).
-       | **Valid Values:** V1, V2, V3, hV4, EBA, 
-       |                  FBA-2, OFA, FFA-1, FFA-2, PPA, 
-       |                  RSC, OPA, OWFA, VWFA-1, VWFA-2, 
-       |                  mfs-words, early, midventral, midlateral, midparietal, 
-       |                  parietal, lateral, ventral
-       | **Example:** V1
    * - **nest_dir**
      - | **Type:** str
        | **Required:** No
        | **Description:** Root directory of the NEST repository (optional if default paths are set)
        | **Example:** ./
+   * - **selection**
+     - | **Type:** dict
+       | **Required:** Yes
+       | **Description:** Specifies which outputs to include in the model responses.
+       | 
+       | **Properties:**
+       | 
+       | **roi**
+       |     **Type:** str
+       |     **Description:** Region of Interest (ROI) for voxel prediction.
+       |     Early visual areas (V1-V3), category-selective regions (EBA, FFA, etc.),
+       |     or composite regions (lateral, ventral).
+       |     **Valid values:** *23 options available* - e.g., "V1", "V2", ...
+       |     **Example:** V1
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -158,7 +162,7 @@ Example Usage
     nest = NEST(nest_dir="path/to/nest")
     
     # Load the model
-    model = nest.get_encoding_model("fmri-nsd-fwrf", subject=1, roi="V1")
+    model = nest.get_encoding_model("fmri-nsd-fwrf", subject=1, selection=value, selection={"roi": "V1"})
     
     # Prepare your stimuli
     # stimulus shape should be ['batch_size', 3, 'height', 'width']
