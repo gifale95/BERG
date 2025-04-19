@@ -1,5 +1,5 @@
 =========================
-Contributing to NEST
+Contribute to NEST
 =========================
 
 Whether you have developed better encoding models, have models for different neural datasets, want to add support for new modalities, or have suggestions for improvement, we'd love to hear from you!
@@ -9,19 +9,19 @@ Ways to Contribute
 
 You can contribute to NEST in several ways:
 
-* **New encoding models** with higher prediction accuracies than currently available
-* **Models for different neural datasets** or brain regions
-* **Support for new modalities** (e.g., MEG, ECoG, animal recordings)
-* **Models for different stimulus types** (e.g., videos, language, audio)
-* **Improvements to the codebase** or documentation
+* **New encoding models** with higher prediction accuracies than the currently available.
+* **Models trained on different neural datasets** or brain regions.
+* **Models trained on new neural recording modalities** (e.g., MEG, ECoG, animal recordings).
+* **Models tained for different stimulus types** (e.g., videos, language, audio, multimodal).
+* **Improvements to the codebase** or documentation.
 
-Adding Your Model to NEST
+Add Your Model to NEST
 ------------------------
 
 NEST provides a standardized framework for integrating new models. To add your model:
 
-1. **Implement your model class** following NEST's interface
-2. **Create a YAML configuration file** describing your model's parameters and behavior
+1. **Implement your model class** following NEST's interface.
+2. **Create a YAML configuration file** describing your model's parameters and behavior.
 
 For detailed instructions, see the :doc:`Tutorial </tutorials/Adding_New_Models_to_Nest>` on this website!
 
@@ -31,26 +31,26 @@ Code Quality Guidelines
 
 When contributing, please follow these quality guidelines:
 
-* Include clear **docstrings** for all public methods
-* Add **type hints** to improve code readability
-* Implement **robust error handling** with informative messages
-* Follow existing **NEST naming conventions**
-* Be thorough with your **YAML configuration**
-* If available, include **performance details**
+* Include clear **docstrings** for all public methods.
+* Add **type hints** to improve code readability.
+* Implement **robust error handling** with informative messages.
+* Follow existing **NEST naming conventions**.
+* Be thorough with your **YAML configuration**.
+* If available, include **performance details**.
 
 How to Submit Your Contribution
 ------------------------------
 
 To submit your contribution:
 
-1. **Fork** the NEST repository
-2. **Create a branch** from the ``development`` branch
-3. **Add your model** following the tutorial guidelines
+1. **Fork** the NEST repository.
+2. **Create a branch** from the ``development`` branch.
+3. **Add your model** following the tutorial guidelines.
 4. **Submit a pull request** with:
 
-  * A clear description of your model
-  * Example code showing how to use your model
-  * Any relevant citations or references
+  * A clear description of your model.
+  * Example code showing how to use your model.
+  * Any relevant citations or references.
 
 Contact
 -------

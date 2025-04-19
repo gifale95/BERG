@@ -1,6 +1,6 @@
 Citation
 ========
 
-If you use the code and/or data from this tutorial, please cite:
+If you use any of the data or code from NEST, please cite:
 
-    *Gifford AT, Bersch D, Roig G, Cichy RM. 2025. The Neural Encoding Simulation Toolkit. In preparation. https://github.com/gifale95/NEST*
+   * Gifford AT, Bersch D, Roig G, Cichy RM. 2025. The Neural Encoding Simulation Toolkit. In preparation. https://github.com/gifale95/NEST
