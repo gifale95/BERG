@@ -6,24 +6,23 @@ Documentation: https://neural-encoding-simulation-toolkit.readthedocs.io/en/late
 Contact: brain.nest.contact@gmail.com
 ManagedBy: "[Neural Dynamics of Visual Cognition](https://www.ewi-psy.fu-berlin.de/en/psychologie/arbeitsbereiche/neural_dyn_of_vis_cog/index.html), [CVAI](https://www.cvai.cs.uni-frankfurt.de/)"
 UpdateFrequency: Updates will be released on a per-model or dataset basis as new models are trained and tested.
-Tags: # Anything else?
+Tags:
   - neuroscience
   - brain
-  - neural encoding
   - machine learning
   - artificial intelligence
-  - fMRI
-  - EEG
-  - vision
+  - brain models
+  - brain images
+  - deep learning
+  - neuroimaging
+  - computer vision
 License: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/about/terms_and_conditions.html  # Anything else?
 Citation: Please cite the Neural Encoding Simulation Toolkit using the format provided here https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/about/citation.html
 Resources:
-  - Description: Pre-trained neural encoding models
-    ARN: # Add S3 Bucket
-    Region: # AWS Region
-    Type: S3 Bucket
-    Explore: # Link to Bucket
-DataAtWork:
+ - Description: Pre-trained neural encoding models
+   ARN: arn:aws:s3:::nest-models # Placeholder
+   Region: us-east-1 # Placeholder
+   Type: S3 Bucket
   Tutorials:
     - Title: Quickstart Tutorial
       URL: # ADD
