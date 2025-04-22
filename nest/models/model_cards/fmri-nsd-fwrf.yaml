@@ -87,13 +87,6 @@ parameters:
     example: 1
     description: "Subject ID from the NSD dataset (1-8)."
     function: "get_encoding_model"
-    
-  nest_dir:
-    type: str
-    required: false
-    example: "./"
-    description: "Root directory of the NEST repository (optional if default paths are set)."
-    function: "get_encoding_model"
 
   selection:
     type: dict
