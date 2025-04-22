@@ -10,11 +10,12 @@ Tags:
   - machine learning
   - artificial intelligence
   - brain models
-  - brain images
+  - encoding models
+  - neuro AI
   - deep learning
   - neuroimaging
   - computer vision
-License: CC BY-NC 4.0. For full license details, see https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/about/terms_and_conditions.html
+License: CC BY-NC 4.0. For Terms & Conditions, see https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/about/terms_and_conditions.html
 Citation: Please cite the Neural Encoding Simulation Toolkit using the format provided here https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/about/citation.html
 Resources:
   - Description: Pre-trained neural encoding models
