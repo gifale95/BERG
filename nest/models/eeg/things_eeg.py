@@ -371,7 +371,7 @@ class EEGEncodingModel(BaseModelInterface):
                     insilico_eeg = insilico_eeg[:, self.channel_indices, :]
                     insilico_eeg = insilico_eeg[:, :, self.selected_timepoints]
                     
-                    insilico_eeg_part.append(insilico_eeg)
+                    insilico_eeg_part.append(np.squeeze(insilico_eeg))
                 
                 # Reshape to (Images x Repeats x Channels x Time)
                 batch_responses = np.swapaxes(np.asarray(insilico_eeg_part), 0, 1)
