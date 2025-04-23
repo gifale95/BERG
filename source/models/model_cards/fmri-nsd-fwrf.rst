@@ -137,7 +137,7 @@ This function loads the encoding model.
        |     Early visual areas (V1-V3), category-selective regions (EBA, FFA, etc.),
        |     or composite regions (lateral, ventral).
        |     **Valid values:** "V1", "V2", "V3", "hV4", "EBA", "FBA-2", "OFA", "FFA-1", "FFA-2", "PPA", "RSC", "OPA", "OWFA", "VWFA-1", "VWFA-2", "mfs-words", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral"
-       |     **Example:** V1
+       |     **Example:** "V1"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,8 +157,8 @@ This function generates in silico neural responses using the encoding model prev
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
 
 Performance
 ----------
