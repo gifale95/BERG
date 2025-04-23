@@ -117,14 +117,14 @@ This function loads the encoding model.
        |     **Type:** list[str]
        |     **Description:** List of EEG channel names to include in the output
        |     **Valid values:** "Fp1", "F3", "F7", "FT9", "FC5", "FC1", "C3", "T7", "TP9", "CP5", "CP1", "Pz", "P3", "P7", "O1", "Oz", "O2", "P4", "P8", "TP10", "CP6", "CP2", "Cz", "C4", "T8", "FT10", "FC6", "FC2", "F4", "F8", "Fp2", "AF7", "AF3", "AFz", "F1", "F5", "FT7", "FC3", "FCz", "C1", "C5", "TP7", "CP3", "P1", "P5", "PO7", "PO3", "POz", "PO4", "PO8", "P6", "P2", "CPz", "CP4", "TP8", "C6", "C2", "FC4", "FT8", "F6", "F2", "AF4", "AF8"
-       |     **Example:** ['Oz', 'Cz', 'Fp1']
+       |     **Example:** ["Oz", "Cz", "Fp1"]
        | 
        | **timepoints**
        |     **Type:** numpy.ndarray
        |     **Description:** Binary one-hot encoded vector indicating which timepoints to include.
        |     Must have exactly the same length as the number of available timepoints (140).
        |     Each position set to 1 indicates that timepoint should be included.
-       |     **Example:** [0, 0, '...', 1, 1, 0]
+       |     **Example:** [0, 0, ..., 1, 1, 0]
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -144,8 +144,8 @@ This function generates in silico neural responses using the encoding model prev
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
    * - **show_progress**
      - | **Type:** bool
        | **Required:** No
