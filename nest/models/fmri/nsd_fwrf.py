@@ -48,7 +48,7 @@ class FMRIEncodingModel(BaseModelInterface):
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     
-    def __init__(self, subject: int, selection: Optional[Dict], device:str="auto", nest_dir: Optional[str] = None):
+    def __init__(self, subject: int, selection: Dict, device:str="auto", nest_dir: Optional[str] = None):
         """
         Initialize the fMRI encoding model for a specific subject and ROI.
         
@@ -103,6 +103,10 @@ class FMRIEncodingModel(BaseModelInterface):
                 self.roi = validate_roi(
                     self.selection["roi"], self.VALID_ROIS
                 )
+        # Ensure selection is provided
+        else:
+            raise InvalidParameterError("Parameter 'selection' is required but was not provided")
+        
 
 
     def load_model(self, device: str = "auto") -> None:
