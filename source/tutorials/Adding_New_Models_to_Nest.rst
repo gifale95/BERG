@@ -2,7 +2,8 @@
 Adding Models to NEST
 =======================
 
-This guide walks you through the process of adding new models to the Neural Encoding Simulation Toolkit (NEST) — a toolbox consisting of trained encoding models of the brain that you can use to generate in silico neural responses to stimuli of your choice.
+This guide walks you through the process of adding new models to the Neural Encoding Simulation Toolkit (NEST). You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1nBxEiJATzJdWwfzRPmyai2G76HkeBhAU>`_.
+
 
 Overview
 =========
@@ -17,7 +18,10 @@ These two files work together to register your model with NEST and make it acces
 Quick Start: Model Implementation Template
 ===========================================
 
-Here's a barebones version of a Python model file that shows only the required structure:
+Here's a barebones version of a Python model file that shows only the required structure.  
+We will expand on this template throughout the tutorial to build a fully functional model.
+
+You can use this as a starting point and fill in the details specific to your model.
 
 .. code-block:: python
 
@@ -84,8 +88,13 @@ First, determine which **modality** your model belongs to:
 Your corresponding **YAML configuration file** should go here:  
 ``nest/models/model_cards/your_model_id.yaml``
 
+**Note**: If you are adding a new modality, there are a few additional considerations. These are discussed in **Step 4** below.
+
 Step 2: Creating the YAML Configuration File
 ============================================
+
+In the NEST toolkit, you'll find a template YAML file at: ``nest/models/model_cards/template.yaml``
+This template serves as a guide for creating your model's configuration.
 
 Your YAML file is **crucial** because it:
 
@@ -95,6 +104,9 @@ Your YAML file is **crucial** because it:
 - Is used for parameter validation in your model class
 - Generates model cards for end users
 
+Be as detailed as possible — this helps others understand how to work with your model.  
+**You can reference existing model YAML files as examples.**
+
 Here's a template for your YAML configuration file:
 
 .. code-block:: yaml
@@ -103,12 +115,13 @@ Here's a template for your YAML configuration file:
     # Replace placeholder values with actual model information
 
     # Basic metadata
-    model_id: modality_dataset_model_type  # e.g., fmri_nsd_fwrf
+    model_id: modality-dataset-model_type  # e.g., fmri-nsd-fwrf
     modality: modality  # e.g., fmri, eeg, meg, ...
-    dataset: dataset_name
-    features: feature_extraction_method
-    repeats: single/multi  # whether model generates single or multiple repetitions
-    subject_specific: true/false  # whether model is subject-specific
+    training_dataset: dataset_name
+    species: Human  # e.g., Human, Macaque, etc.
+    stimuli: Images  # e.g., Images, Sounds, Text, etc.
+    model_architecture: feature_extraction_method  # e.g., ViT-B/32, fwRF, etc.
+    creator: your_name
 
     # General description of the model
     description: |
@@ -162,6 +175,22 @@ Here's a template for your YAML configuration file:
         description: "Description of what this parameter represents"
         function: "Which function uses this parameter"
 
+
+      # Selection parameter to define specific outputs (ROI, channels, timepoints, etc.)
+      selection:
+        type: dict
+        required: true
+        description: |
+        Specifies which outputs to include in the model responses.
+        This parameter defines for which data the in silico responses should be generated 
+        (e.g., specific ROI, timepoints, channels, etc.)
+        function: get_encoding_model
+        properties:
+        key_name:  # Replace with model-specific keys, e.g., "roi", "channels", "timepoints"
+            type: any
+            description: "Description of Model-specific selection criterion."
+            example: "V1"
+
     # Performance metrics (if needed) and references
     performance:
       metrics:
@@ -183,12 +212,19 @@ Here's a template for your YAML configuration file:
 Step 3: Implementing the Model Class
 ====================================
 
-Now we'll build the complete model implementation step by step. The required functions must be named **exactly as shown** to work with the ``BaseModelInterface``.
+Now we'll build the complete model implementation step by step. The required functions must be named **exactly as shown** to work with the ``BaseModelInterface``. You are free to add additional helper functions as needed — but the core methods must be implemented.
 
 3.1: Model Registration
 -----------------------
 
-First, set up the model registration code that makes your model discoverable by the NEST toolkit:
+First, set up the model registration code that makes your model discoverable by the NEST toolkit.
+
+
+This code:
+
+1. Loads your model's configuration from the YAML file  
+2. Registers your model with the NEST registry, making it discoverable  
+3. Specifies the module path, class name, and modality
 
 .. code-block:: python
 
@@ -219,7 +255,14 @@ First, set up the model registration code that makes your model discoverable by 
 3.2: Class Initialization and Parameter Validation
 -------------------------------------------------
 
-Next, define your model class by inheriting from ``BaseModelInterface`` and implement the initialization logic:
+Next, define your model class by inheriting from ``BaseModelInterface`` and implement the initialization logic.
+
+The initialization method:
+
+1. Stores user-provided parameters (e.g., subject ID, device, NEST directory)  
+2. Validates parameters against the specifications in the YAML file  
+3. Sets up the compute device (CPU or GPU)  
+4. Can process additional model-specific parameters through `**kwargs`
 
 .. code-block:: python
 
@@ -275,7 +318,16 @@ Next, define your model class by inheriting from ``BaseModelInterface`` and impl
 3.3: Loading the Model
 ----------------------
 
-Next, implement the ``load_model()`` method, which handles loading model weights and preparing the model for inference:
+Next, implement the ``load_model()`` method, which handles loading model weights and preparing the model for inference.
+
+
+This method:
+
+1. Constructs the file path to your model weights using a consistent directory structure  
+2. Loads the model architecture and weights (implementation will vary based on your model type)  
+3. Moves the model to the appropriate device (CPU or GPU)  
+4. Sets the model to evaluation mode  
+5. Stores the loaded model in a class variable (e.g., ``self.model``) for use by other methods
 
 .. code-block:: python
 
@@ -304,7 +356,19 @@ Next, implement the ``load_model()`` method, which handles loading model weights
 3.4: Generating Responses
 -------------------------
 
-The ``generate_response()`` method is the core functionality that produces in silico neural responses from input stimuli:
+The ``generate_response()`` method is the core functionality that produces in silico neural responses from input stimuli.
+
+This method:
+
+1. Validates the input stimulus to ensure it meets requirements  
+2. Preprocesses the stimulus if needed (e.g., normalization, resizing)  
+3. Runs the model inference, typically in batches to manage memory usage  
+4. Collects and formats the response data  
+5. Returns the in silico neural responses as a NumPy array  
+
+Customize this method based on your model's specific requirements and output format.
+
+
 
 .. code-block:: python
 
@@ -359,6 +423,14 @@ The ``generate_response()`` method is the core functionality that produces in si
 -----------------------
 
 The ``get_metadata()`` method provides information about the model and its outputs:
+
+This method:
+
+1. Attempts to load metadata from a predefined location  
+2. Returns the metadata as a dictionary  
+3. Provides basic information if no metadata file is found  
+
+The metadata may include information about voxel indices, channel information, region details, or other model-specific information.
 
 .. code-block:: python
 
@@ -516,7 +588,7 @@ Here's the complete implementation of a model class:
                 # Build paths to model weights
                 weights_path = os.path.join(
                     self.nest_dir,
-                    'your_path')  # Adjust filename format as needed
+                    'your_path') # Adjust filename format as needed
 
                 # Load your model here
                 # Example with PyTorch:
@@ -589,7 +661,7 @@ Here's the complete implementation of a model class:
             # Load metadata file if available
             metadata_path = os.path.join(
                     self.nest_dir,
-                    'your_path')  # Adjust filename format as needed
+                    'your_path') # Adjust filename format as needed
 
             try:
                 metadata = np.load(metadata_path, allow_pickle=True).item()

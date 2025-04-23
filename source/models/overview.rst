@@ -2,46 +2,93 @@
 Available Models
 ===================
 
-NEST provides a collection of pre-trained neural encoding models for different brain recording modalities. This page provides an overview of all currently available models.
+This page provides an overview of the brain encoding models currently available in NEST.
 
 
-fMRI Models
-----------
+Model Naming Convention
+----------------------
 
-fMRI (functional Magnetic Resonance Imaging) models in NEST generate simulated brain activity patterns in response to visual stimuli, with responses mapped to specific brain regions (ROIs).
+NEST contains several encoding models, defined by the following model ID naming convention:
+
+``{modality}-{dataset}-{model}``
+
+where
+
+* ``modality``: The neural recording recording modality on which the encoding model was trained.
+* ``dataset``: The neural dataset on which the encoding model was trained.
+* ``model``: The type of encoding model used.
+
+For example:
+
+- ``fmri-nsd-fwrf``: An fMRI encoding model trained on the NSD using feature-weighted receptive fields.
+- ``eeg-things_eeg_2-vit_b_32``: An EEG model trained on the THINGS-EEG2 dataset using the ViT-B/32 visual transformer architecture.
+
+
+Get Model Information
+------------------------
+
+You can get detailed information about any model using:
+
+.. code-block:: python
+
+    from nest import NEST
+    
+    nest = NEST("path/to/neural_encoding_simulation_toolkit")
+
+    # List all available models
+    all_models = nest.list_models()
+    
+    # Get detailed model information
+    model_info = nest.describe("fmri-nsd-fwrf")
+
+
+Available models
+----------------------
+
+Following is a list of all available models, grouped by ``modality`` and ``dataset``.
+
+modality-fmri
+~~~~~~~~~~
+
+Encoding models trained on neural responses recorded with functional Magnetic Resonance Imaging (fMRI).
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 55 15
+   :widths: 20 55 20 10 10
    :class: wrap-table
 
    * - Model ID
      - Description
-     - Subjects
-   * - :doc:`model_cards/fmri_nsd_fwrf`
-     - Feature-weighted receptive field model trained on the Natural 
-       Scenes Dataset (NSD). Predicts fMRI responses across multiple 
-       visual regions of interest.
-     - 1-8
+     - Training dataset
+     - Species
+     - Stimuli
+   * - :doc:`model_cards/fmri-nsd-fwrf`
+     - Feature-weighted receptive fields, convolutional neural networks trained end-to-end to predict fMRI responses from input images.
+     - Natural Scenes Dataset
+     - Human
+     - Images
 
-EEG Models
-----------
 
-EEG (Electroencephalography) models in NEST generate simulated electrical brain activity patterns in response to visual stimuli, providing high temporal resolution across multiple electrodes.
+modality-eeg
+~~~~~~~~~~~~
+
+Encoding models trained on neural responses recorded with Electroencephalography (EEG).
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 55 15
+   :widths: 20 55 20 10 10
    :class: wrap-table
 
    * - Model ID
      - Description
-     - Subjects
-   * - :doc:`model_cards/eeg_things_eeg_2_vit_b_32`
-     - Vision Transformer (ViT-B/32) model trained on the THINGS-EEG-2 
-       dataset. Predicts EEG responses across all channels and time 
-       points.
-     - 1-4
+     - Training dataset
+     - Species
+     - Stimuli
+   * - :doc:`model_cards/eeg-things_eeg_2-vit_b_32`
+     - Linear mapping of vision transformer image features onto EEG responses.
+     - THINGS EEG2
+     - Human
+     - Images
 
 .. raw:: html
 
@@ -52,31 +99,3 @@ EEG (Electroencephalography) models in NEST generate simulated electrical brain 
    }
    </style>
 
-Model Naming Convention
-----------------------
-
-NEST models follow a consistent naming convention:
-
-``{modality}_{dataset}_{model_architecture}``
-
-For example:
-
-- ``fmri_nsd_fwrf``: An fMRI model trained on the NSD dataset using feature-weighted receptive fields
-- ``eeg_things_eeg_2_vit_b_32``: An EEG model trained on the THINGS-EEG-2 dataset using ViT-B/32 architecture
-
-Getting Model Information
-------------------------
-
-You can get detailed information about any model using:
-
-.. code-block:: python
-
-    from nest import NEST
-    
-    nest = NEST()
-    
-    # Get detailed model information
-    model_info = nest.describe("fmri_nsd_fwrf")
-    
-    # List all available models
-    all_models = nest.list_models()

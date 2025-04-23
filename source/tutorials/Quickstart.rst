@@ -1,7 +1,9 @@
 Quickstart
 =========================================
 
-This tutorial will walk you through the fundamental functionality of NEST.
+This tutorial will walk you through the fundamental functionality of NEST. You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1JS4um1eS4Ml983lUNQgEw4544_Lc5Qn0>`_. For additional tutorials, check out the `Tutorial section in the NEST Repository <https://github.com/gifale95/NEST>`_.
+
+
 
 Initialization
 -----------
@@ -16,26 +18,26 @@ First, import the NEST package:
     nest = NEST(nest_dir="neural_encoding_simulation_toolkit")
 
 
-Exploring Available Models
+Explore Available Models
 --------------------------
 
 You can list all available models:
 
 .. code-block:: python
 
-    # List all available models and their versions
+    # List all available models
     available_models = nest.list_models()
     print(f"Available models: {available_models}")
     
-    # See what modalities are available
+    # Get a hierarchical view of available models by modality and dataset
     catalog = nest.get_model_catalog(print_format=True)
     print(f"Model Catalog as Dict: {catalog}")
 
 
-Getting Model Information
+Get Model Information
 ------------------------
 
-The ``describe`` function is the key to understanding which parameters each function takes. It provides comprehensive information about the model, including required parameters for both ``get_encoding_model()`` and ``encode()`` functions.
+The ``describe`` function provides comprehensive information about the model, and about the required input parameters for the ``get_encoding_model()`` and ``encode()`` functions (i.e., the functions used to generate the in silico neural responses).
 
 There are two ways to get detailed information about a model:
 
@@ -44,14 +46,14 @@ There are two ways to get detailed information about a model:
 .. code-block:: python
 
     # Get comprehensive model information
-    model_info = nest.describe("fmri_nsd_fwrf")
+    model_info = nest.describe("fmri-nsd-fwrf")
 
-This will output detailed information about the model, including the required parameters:
+This will output detailed information about the model, including the required input parameters:
 
 .. code-block:: text
 
     ================================================================================
-    🧠 Model: fmri_nsd_fwrf
+    🧠 Model: fmri-nsd-fwrf
     ================================================================================
 
     Modality: fmri
@@ -104,75 +106,40 @@ This will output detailed information about the model, including the required pa
 .. code-block:: python
 
     # Load Encoding Model
-    fwrf_model = nest.get_encoding_model("fmri_nsd_fwrf", 
+    fwrf_model = nest.get_encoding_model("fmri-nsd-fwrf", 
                                          subject=1, 
-                                         roi="V1")
+                                         selection={"roi": "V1"})
     
     # Get model description
     fwrf_model.describe()
 
-Both methods return the same comprehensive information. Always refer to the Parameters section to understand what inputs each function requires.
+Both methods return the same comprehensive information. Always refer to the **Parameters sections** to understand what inputs each function requires.
 
-Working with fMRI Models
+Example: Working with the feature-weighted receptive field (fwRF) Model
 -----------------------
 
-To use an fMRI encoding model:
+This is an example on how to use the fwRF model with NEST. For more information on this model, please see the :doc:`Model Overview </models/overview>`.
 
 .. code-block:: python
 
     # Load the fMRI encoding model
-    fwrf_model = nest.get_encoding_model("fmri_nsd_fwrf", 
+    fwrf_model = nest.get_encoding_model("fmri-nsd-fwrf", 
                                          subject=1, 
-                                         roi="V1",
+                                         selection={"roi": "V1"}
                                          device="cpu")
 
     # Assume images is a numpy array with shape (batch_size, 3, height, width)
     # For example: (100, 3, 227, 227) for 100 RGB images
     
-    # Generate fMRI responses
+    # Generate the in silico fMRI responses
     fwrf_silico = nest.encode(fwrf_model, images)
     
-    # To get both responses and metadata
+    # Get both in silico fMRI responses and metadata
     fwrf_silico, fwrf_metadata = nest.encode(fwrf_model, images, return_metadata=True)
     
-    # Just get the metadata of the model
+    # Only get the encoding model's metadata
     metadata = fwrf_model.get_metadata()
 
-The output shape for the fMRI model will be `(batch_size, n_voxels)` where `n_voxels` depends on the selected ROI.
+The generated in silico neural responses will be os shape `(batch_size, n_voxels)`, where `n_voxels` depends on the selected ROI.
 
-Working with EEG Models
----------------------
-
-Similarly, you can work with EEG encoding models. The EEG models take different parameters than fMRI models, which you can discover using the `describe` function:
-
-.. code-block:: python
-
-    # Get parameters for EEG model
-    nest.describe("eeg_things_eeg_2_vit_b_32")
-    
-    # Output will include parameters specific to EEG models, such as:
-    # 
-    # Parameters for get_encoding_model():
-    # • subject (int, required)
-    #   ↳ Subject ID from the THINGS-EEG-2 dataset (1-4)
-    #   ↳ Valid values: [1, 2, 3, 4]
-    # 
-    # ... (other parameters)
-
-Example usage of an EEG model:
-
-.. code-block:: python
-
-    # Load the EEG encoding model
-    eeg_model = nest.get_encoding_model("eeg_things_eeg_2_vit_b_32", 
-                                        subject=1,
-                                        device="auto")
-    
-    # Generate EEG responses
-    eeg_silico = nest.encode(eeg_model, images)
-    
-    # To get both responses and metadata
-    eeg_silico, eeg_metadata = nest.encode(eeg_model, images, return_metadata=True)
-    
-
-Always refer to the `describe` method to understand the specific parameters and requirements of each model type before using it.
+Always refer to the ``describe`` method to understand the specific parameters and requirements of each encoding model before using it.

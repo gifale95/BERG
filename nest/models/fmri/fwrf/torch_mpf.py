@@ -7,7 +7,7 @@ from tqdm import tqdm
 import math
 
 import numpy as np
-import nest.models.fwrf.numpy_utility as pnu
+import nest.models.fmri.fwrf.numpy_utility as pnu
 
 import torch as T
 import torch.nn as L
