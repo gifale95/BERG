@@ -1,9 +1,9 @@
 model_id: fmri-nsd-fwrf
 modality: fMRI
 training_dataset: Natural Scenes Dataset (NSD)
-species: Human # Add this
-stimuli: Images # Add this
-model_type: Feature-weighted receptive field (fwRF) # Model Architecture => Model type
+species: Human 
+stimuli: Images 
+model_type: Feature-weighted receptive field (fwRF)
 creator: Alessandro Gifford
 
 # General description of the model

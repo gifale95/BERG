@@ -75,7 +75,7 @@ Step 1: Load an encoding model of your choice using the `get_encoding_model` fun
 # Load an example fMRI encoding model
 fmri_model = nest.get_encoding_model("fmri-nsd-fwrf", 
                                      subject=1,
-                                     roi="V1",
+                                     selection={"roi": "V1"},
                                      device="cpu")
 
 # Load an example EEG encoding model
@@ -106,8 +106,9 @@ For more detailed information on how to use these functions and which parameters
 We provide several tutorials to help you get started with NEST:
 
 **Using NEST:**
-- [fMRI Tutorial](https://colab.research.google.com/drive/1W9Sroz2Y0eTYfyhVrAJwe50GGHHAGBdE?usp=drive_link) - Learn how to generate in silico fMRI responses.
-- [EEG Tutorial](https://colab.research.google.com/drive/10NSRBrJ390vuaPyRWq5fDBIA4NNAUlTk?usp=drive_link) - Explore how to generate EEG responses.
+- [Quickstart Tutorial](https://colab.research.google.com/drive/1JS4um1eS4Ml983lUNQgEw4544_Lc5Qn0) - Quick Guide on how to generate in silico neural responses
+- [fMRI Tutorial](https://colab.research.google.com/drive/1w4opmM9h8Oe1NWlwIDuLuDIGuIXj9UaV) - Learn how to generate in silico fMRI responses.
+- [EEG Tutorial](https://colab.research.google.com/drive/1uF5nr1pyg0_my3gULj3w5y0nuq5gZjhL) - Explore how to generate EEG responses.
 - [Adding New Models](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/tutorials/Adding_New_Models_to_Nest.html) - Guide on how to implement and contribute your own encoding models to NEST.
 
 **Example Application - Relational Neural Control (RNC):**

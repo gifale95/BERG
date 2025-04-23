@@ -5,7 +5,9 @@
 model_id: modality-dataset-model_type  # e.g., fmri-nsd-fwrf
 modality: modality  # e.g., fmri, eeg, meg, ...
 training_dataset: dataset_name
-model_architecture: feature_extraction_method
+species: Human  # e.g., Human, Macaque, etc.
+stimuli: Images  # e.g., Images, Sounds, Text, etc.
+model_architecture: feature_extraction_method  # e.g., ViT-B/32, fwRF, etc.
 creator: your_name
 
 # General description of the model
@@ -40,7 +42,7 @@ output:
 
 # Model parameters and their usage
 parameters:
-  # First parameter (typically subject)
+  # First parameter
   param_name:
     type: param_type  # e.g., int, str, float
     required: true/false
@@ -49,7 +51,22 @@ parameters:
     example: example_value
     description: "Description of what this parameter represents"
     function: "Which function uses this parameter: get_encoding_model, load_model, .."
-  
+
+  # Selection parameter to define specific outputs (ROI, channels, timepoints, etc.)
+  selection:
+    type: dict
+    required: true
+    description: |
+      Specifies which outputs to include in the model responses.
+      This parameter defines for which data the in silico responses should be generated 
+      (e.g., specific ROI, timepoints, channels, etc.)
+    function: get_encoding_model
+    properties:
+      key_name:  # Replace with model-specific keys, e.g., "roi", "channels", "timepoints"
+        type: any
+        description: "Description of Model-specific selection criterion."
+        example: "V1"
+
   # Add more parameters as needed
   param_name:
     type: param_type

@@ -164,7 +164,7 @@ class BaseModelInterface(ABC):
         example_code = textwrap.dedent(f"""\
             from nest import NEST
 
-            nest = NEST("/path/to/nest_dir")
+            nest = NEST("path/to/neural_encoding_simulation_toolkit")
 
             # Initialize the model
             model = nest.get_encoding_model("{model_id}", {init_param_str})

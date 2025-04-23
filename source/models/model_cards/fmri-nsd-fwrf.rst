@@ -112,6 +112,8 @@ Parameters
 Parameters used in ``get_encoding_model``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+This function loads the encoding model.
+
 .. list-table::
    :widths: 20 80
    :header-rows: 0
@@ -122,11 +124,6 @@ Parameters used in ``get_encoding_model``
        | **Description:** Subject ID from the NSD dataset (1-8).
        | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
        | **Example:** 1
-   * - **nest_dir**
-     - | **Type:** str
-       | **Required:** No
-       | **Description:** Root directory of the NEST repository (optional if default paths are set).
-       | **Example:** ./
    * - **selection**
      - | **Type:** dict
        | **Required:** Yes
@@ -139,11 +136,13 @@ Parameters used in ``get_encoding_model``
        |     **Description:** Region of Interest (ROI) for voxel prediction.
        |     Early visual areas (V1-V3), category-selective regions (EBA, FFA, etc.),
        |     or composite regions (lateral, ventral).
-       |     **Valid values:** *23 options available* - e.g., "V1", "V2", ...
+       |     **Valid values:** "V1", "V2", "V3", "hV4", "EBA", "FBA-2", "OFA", "FFA-1", "FFA-2", "PPA", "RSC", "OPA", "OWFA", "VWFA-1", "VWFA-2", "mfs-words", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral"
        |     **Example:** V1
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function generates in silico neural responses using the encoding model previously loaded.
 
 .. list-table::
    :widths: 20 80
@@ -177,16 +176,18 @@ Example Usage
     from nest import NEST
     
     # Initialize NEST
-    nest = NEST(nest_dir="path/to/nest")
+    nest = NEST(nest_dir="path/to/neural_encoding_simulation_toolkit")
     
     # Load the model
     model = nest.get_encoding_model("fmri-nsd-fwrf", subject=1, selection=value, selection={"roi": "V1"})
+    # This function loads the encoding model.
     
     # Prepare your stimuli
     # stimulus shape should be ['batch_size', 3, 'height', 'width']
     
     # Generate responses
     responses = nest.encode(model, stimulus, device="auto")
+    # This function generates in silico neural responses using the encoding model previously loaded.
     
     # responses shape will be ['batch_size', 'n_voxels']
     # where:

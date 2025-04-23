@@ -1,7 +1,9 @@
 Quickstart
 =========================================
 
-This tutorial will walk you through the fundamental functionality of NEST.
+This tutorial will walk you through the fundamental functionality of NEST. You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1JS4um1eS4Ml983lUNQgEw4544_Lc5Qn0>`_. For additional tutorials, check out the `Tutorial section in the NEST Repository <https://github.com/gifale95/NEST>`_.
+
+
 
 Initialization
 -----------
@@ -106,7 +108,7 @@ This will output detailed information about the model, including the required in
     # Load Encoding Model
     fwrf_model = nest.get_encoding_model("fmri-nsd-fwrf", 
                                          subject=1, 
-                                         roi="V1")
+                                         selection={"roi": "V1"})
     
     # Get model description
     fwrf_model.describe()
@@ -123,7 +125,7 @@ This is an example on how to use the fwRF model with NEST. For more information 
     # Load the fMRI encoding model
     fwrf_model = nest.get_encoding_model("fmri-nsd-fwrf", 
                                          subject=1, 
-                                         roi="V1",
+                                         selection={"roi": "V1"}
                                          device="cpu")
 
     # Assume images is a numpy array with shape (batch_size, 3, height, width)

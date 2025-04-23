@@ -2,7 +2,8 @@
 Adding Models to NEST
 =======================
 
-This guide walks you through the process of adding new models to the Neural Encoding Simulation Toolkit (NEST).
+This guide walks you through the process of adding new models to the Neural Encoding Simulation Toolkit (NEST). You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1nBxEiJATzJdWwfzRPmyai2G76HkeBhAU>`_.
+
 
 Overview
 =========
@@ -114,10 +115,12 @@ Here's a template for your YAML configuration file:
     # Replace placeholder values with actual model information
 
     # Basic metadata
-    model_id: modality_dataset_model_type  # e.g., fmri_nsd_fwrf
+    model_id: modality-dataset-model_type  # e.g., fmri-nsd-fwrf
     modality: modality  # e.g., fmri, eeg, meg, ...
     training_dataset: dataset_name
-    model_architecture: feature_extraction_method
+    species: Human  # e.g., Human, Macaque, etc.
+    stimuli: Images  # e.g., Images, Sounds, Text, etc.
+    model_architecture: feature_extraction_method  # e.g., ViT-B/32, fwRF, etc.
     creator: your_name
 
     # General description of the model
@@ -171,6 +174,22 @@ Here's a template for your YAML configuration file:
         example: example_value
         description: "Description of what this parameter represents"
         function: "Which function uses this parameter"
+
+
+      # Selection parameter to define specific outputs (ROI, channels, timepoints, etc.)
+      selection:
+        type: dict
+        required: true
+        description: |
+        Specifies which outputs to include in the model responses.
+        This parameter defines for which data the in silico responses should be generated 
+        (e.g., specific ROI, timepoints, channels, etc.)
+        function: get_encoding_model
+        properties:
+        key_name:  # Replace with model-specific keys, e.g., "roi", "channels", "timepoints"
+            type: any
+            description: "Description of Model-specific selection criterion."
+            example: "V1"
 
     # Performance metrics (if needed) and references
     performance:
