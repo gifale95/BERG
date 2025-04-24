@@ -163,7 +163,7 @@ class NEST:
         
         if return_metadata:
             try:
-                # Pass the model directly to the model's class method
+                # Get the model's class and call get_metadata with the model instance
                 model_class = model.__class__
                 metadata = model_class.get_metadata(model_instance=model)
                 return responses, metadata
@@ -186,10 +186,6 @@ class NEST:
             Parameters needed for metadata retrieval (e.g., subject, roi)
             These parameters depend on the specific model and are documented
             in the model's YAML configuration.
-            
-            Example for fMRI models:
-            - subject: int - Subject number
-            - roi: str - Region of interest
         
         Returns
         -------
@@ -203,7 +199,6 @@ class NEST:
             model_class = get_model_class(model_id)
             return model_class.get_metadata(nest_dir=self.nest_dir, **kwargs)
         except Exception as e:
-            # Provide helpful error with reference to model YAML
             yaml_path = MODEL_REGISTRY[model_id]["yaml_path"]
             error_msg = f"Error retrieving metadata: {str(e)}\n"
             error_msg += f"Check the model's YAML file at {yaml_path} for correct parameters."

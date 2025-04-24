@@ -397,41 +397,43 @@ class EEGEncodingModel(BaseModelInterface):
         return insilico_eeg_responses
     
     @classmethod
-    def get_metadata(cls, model_instance=None, nest_dir=None, subject=None, **kwargs) -> Dict[str, Any]:
+    def get_metadata(cls, nest_dir=None, subject=None, model_instance=None, **kwargs) -> Dict[str, Any]:
         """
         Retrieve metadata for the model.
         
-        This method works both as an instance method on a loaded model
-        and as a class method to retrieve metadata without loading the model.
-        
         Parameters
         ----------
-        model_instance : BaseModelInterface, optional
-            If provided, extract necessary parameters from this model instance.
         nest_dir : str, optional
-            Path to NEST directory. Required when not using model_instance.
+            Path to NEST directory.
         subject : int, optional
-            Subject number. Required when not using model_instance.
+            Subject number.
+        model_instance : BaseModelInterface, optional
+            If provided, extract parameters from this model instance.
         **kwargs
-            Additional parameters required by specific models.
+            Additional parameters.
                 
         Returns
         -------
         Dict[str, Any]
             Metadata dictionary.
         """
-        # If called with a model instance, extract parameters from it
+        # If model_instance is provided, extract parameters from it
         if model_instance is not None:
             nest_dir = model_instance.nest_dir
             subject = model_instance.subject
-        # Check if this is an instance method call
-        elif hasattr(cls, 'nest_dir') and hasattr(cls, 'subject'):
+        
+        # If this method is called on an instance (rather than the class)
+        elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             nest_dir = cls.nest_dir
             subject = cls.subject
         
-        # At this point, required parameters should be provided
-        if nest_dir is None or subject is None:
-            raise InvalidParameterError("Parameters 'nest_dir' and 'subject' are required")
+        # Validate required parameters
+        missing_params = []
+        if nest_dir is None: missing_params.append('nest_dir')
+        if subject is None: missing_params.append('subject')
+        
+        if missing_params:
+            raise InvalidParameterError(f"Required parameters missing: {', '.join(missing_params)}")
         
         # Validate parameters
         validate_subject(subject, cls.VALID_SUBJECTS)

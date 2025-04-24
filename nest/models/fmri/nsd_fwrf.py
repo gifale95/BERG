@@ -296,51 +296,48 @@ class FMRIEncodingModel(BaseModelInterface):
         
 
     @classmethod
-    def get_metadata(cls, model_instance=None, nest_dir=None, subject=None, roi=None, **kwargs) -> Dict[str, Any]:
+    def get_metadata(cls, nest_dir=None, subject=None, model_instance=None, roi=None, **kwargs) -> Dict[str, Any]:
         """
         Retrieve metadata for the model.
         
-        This method works both as an instance method on a loaded model
-        and as a class method to retrieve metadata without loading the model.
-        
         Parameters
         ----------
-        model_instance : FMRIEncodingModel, optional
-            If provided, extract necessary parameters from this model instance.
         nest_dir : str, optional
-            Path to NEST directory. Required when not using model_instance.
+            Path to NEST directory.
         subject : int, optional
-            Subject number. Required when not using model_instance.
+            Subject number.
+        model_instance : BaseModelInterface, optional
+            If provided, extract parameters from this model instance.
         roi : str, optional
-            Region of interest. Required when not using model_instance.
+            Region of interest.
         **kwargs
-            Additional parameters
+            Additional parameters.
                 
         Returns
         -------
         Dict[str, Any]
             Metadata dictionary.
         """
-        # If called with a model instance, extract parameters from it
+        # If model_instance is provided, extract parameters from it
         if model_instance is not None:
             nest_dir = model_instance.nest_dir
             subject = model_instance.subject
             roi = model_instance.roi
-        # Check if this is an instance method call
-        elif hasattr(cls, 'nest_dir') and hasattr(cls, 'subject') and hasattr(cls, 'roi'):
+        
+        # If this method is called on an instance (rather than the class)
+        elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             nest_dir = cls.nest_dir
             subject = cls.subject
             roi = cls.roi
-        # For backward compatibility, check for args
-        elif 'args' in kwargs and kwargs['args'] and isinstance(kwargs['args'][0], cls):
-            instance = kwargs['args'][0]
-            nest_dir = instance.nest_dir
-            subject = instance.subject
-            roi = instance.roi
         
-        # At this point, parameters should be provided
-        if nest_dir is None or subject is None or roi is None:
-            raise InvalidParameterError("Parameters 'nest_dir', 'subject', and 'roi' are required")
+        # Validate required parameters
+        missing_params = []
+        if nest_dir is None: missing_params.append('nest_dir')
+        if subject is None: missing_params.append('subject')
+        if roi is None: missing_params.append('roi')
+        
+        if missing_params:
+            raise InvalidParameterError(f"Required parameters missing: {', '.join(missing_params)}")
         
         # Validate parameters
         validate_subject(subject, cls.VALID_SUBJECTS)
