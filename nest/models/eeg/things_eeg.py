@@ -396,29 +396,61 @@ class EEGEncodingModel(BaseModelInterface):
         
         return insilico_eeg_responses
     
-    def get_metadata(self) -> Dict[str, Any]:
+    @classmethod
+    def get_metadata(cls, model_instance=None, nest_dir=None, subject=None, **kwargs) -> Dict[str, Any]:
         """
-        Load and return EEG metadata for the current subject.
+        Retrieve metadata for the model.
         
+        This method works both as an instance method on a loaded model
+        and as a class method to retrieve metadata without loading the model.
+        
+        Parameters
+        ----------
+        model_instance : BaseModelInterface, optional
+            If provided, extract necessary parameters from this model instance.
+        nest_dir : str, optional
+            Path to NEST directory. Required when not using model_instance.
+        subject : int, optional
+            Subject number. Required when not using model_instance.
+        **kwargs
+            Additional parameters required by specific models.
+                
         Returns
         -------
         Dict[str, Any]
-            EEG metadata dictionary containing:
-            - 'eeg': Dictionary with channel names, time points, etc.
-            - Subject-specific parameters and recording information
+            Metadata dictionary.
         """
-
-        file_name = os.path.join(self.nest_dir, 
-                                 'encoding_models', 
-                                 'modality-eeg',
-                                 'train_dataset-things_eeg_2', 
-                                 'model-vit_b_32', 
-                                 'metadata',
-                                 'metadata_sub-' + format(self.subject,'02') + '.npy')
-
-        metadata = np.load(file_name, allow_pickle=True).item()
+        # If called with a model instance, extract parameters from it
+        if model_instance is not None:
+            nest_dir = model_instance.nest_dir
+            subject = model_instance.subject
+        # Check if this is an instance method call
+        elif hasattr(cls, 'nest_dir') and hasattr(cls, 'subject'):
+            nest_dir = cls.nest_dir
+            subject = cls.subject
         
-        return metadata
+        # At this point, required parameters should be provided
+        if nest_dir is None or subject is None:
+            raise InvalidParameterError("Parameters 'nest_dir' and 'subject' are required")
+        
+        # Validate parameters
+        validate_subject(subject, cls.VALID_SUBJECTS)
+        
+        # Build metadata path
+        file_name = os.path.join(nest_dir, 
+                                'encoding_models', 
+                                'modality-eeg',
+                                'train_dataset-things_eeg_2', 
+                                'model-vit_b_32', 
+                                'metadata',
+                                f'metadata_sub-{subject:02d}.npy')
+        
+        # Load metadata if file exists
+        if os.path.exists(file_name):
+            metadata = np.load(file_name, allow_pickle=True).item()
+            return metadata
+        else:
+            raise FileNotFoundError(f"Metadata file not found for subject {subject}")
     
     @classmethod
     def get_model_id(cls) -> str:

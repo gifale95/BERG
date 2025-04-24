@@ -63,17 +63,32 @@ class BaseModelInterface(ABC):
         pass
         
         
+    @classmethod
     @abstractmethod
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(cls, nest_dir: str = None, **kwargs) -> Dict[str, Any]:
         """
-        Retrieve metadata for the model instance.
+        Retrieve metadata for the model.
         
+        This method should work both as an instance method on a loaded model
+        and as a class method to retrieve metadata without loading the model.
+        
+        When called on an instance (model.get_metadata()), it should use the
+        instance attributes. When called as a class method, it requires the
+        necessary parameters to be provided as arguments.
+        
+        Parameters
+        ----------
+        nest_dir : str, optional
+            Path to NEST directory. Required when called as a class method.
+        **kwargs
+            Parameters needed for metadata retrieval, which vary by model
+            (e.g., subject, roi for fMRI models)
+            Required when called as a class method.
+                
         Returns
         -------
         Dict[str, Any]
-            Dictionary containing model metadata such as voxel indices,
-            channel information, region details, or other model-specific
-            information.
+            Model metadata dictionary.
         """
         pass
     

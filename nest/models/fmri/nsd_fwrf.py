@@ -294,30 +294,73 @@ class FMRIEncodingModel(BaseModelInterface):
         ### Output ###
         return insilico_fmri_responses
         
-        
-    def get_metadata(self) -> Dict[str, Any]:
+
+    @classmethod
+    def get_metadata(cls, model_instance=None, nest_dir=None, subject=None, roi=None, **kwargs) -> Dict[str, Any]:
         """
-        Retrieve metadata for the current subject and ROI.
+        Retrieve metadata for the model.
         
+        This method works both as an instance method on a loaded model
+        and as a class method to retrieve metadata without loading the model.
+        
+        Parameters
+        ----------
+        model_instance : FMRIEncodingModel, optional
+            If provided, extract necessary parameters from this model instance.
+        nest_dir : str, optional
+            Path to NEST directory. Required when not using model_instance.
+        subject : int, optional
+            Subject number. Required when not using model_instance.
+        roi : str, optional
+            Region of interest. Required when not using model_instance.
+        **kwargs
+            Additional parameters
+                
         Returns
         -------
         Dict[str, Any]
             Metadata dictionary.
         """
+        # If called with a model instance, extract parameters from it
+        if model_instance is not None:
+            nest_dir = model_instance.nest_dir
+            subject = model_instance.subject
+            roi = model_instance.roi
+        # Check if this is an instance method call
+        elif hasattr(cls, 'nest_dir') and hasattr(cls, 'subject') and hasattr(cls, 'roi'):
+            nest_dir = cls.nest_dir
+            subject = cls.subject
+            roi = cls.roi
+        # For backward compatibility, check for args
+        elif 'args' in kwargs and kwargs['args'] and isinstance(kwargs['args'][0], cls):
+            instance = kwargs['args'][0]
+            nest_dir = instance.nest_dir
+            subject = instance.subject
+            roi = instance.roi
         
-        file_name = os.path.join(self.nest_dir, 
-                                 'encoding_models', 
-                                 'modality-fmri',
-                                 'train_dataset-nsd', 
-                                 'model-fwrf', 
-                                 'metadata',
-                                 'metadata_sub-' + format(self.subject,'02') + '_roi-' + self.roi + '.npy')
+        # At this point, parameters should be provided
+        if nest_dir is None or subject is None or roi is None:
+            raise InvalidParameterError("Parameters 'nest_dir', 'subject', and 'roi' are required")
         
-
-        metadata = np.load(file_name, allow_pickle=True).item()
+        # Validate parameters
+        validate_subject(subject, cls.VALID_SUBJECTS)
+        validate_roi(roi, cls.VALID_ROIS)
         
-        return metadata
-          
+        # Build metadata path
+        file_name = os.path.join(nest_dir,
+                            'encoding_models', 
+                            'modality-fmri',
+                            'train_dataset-nsd', 
+                            'model-fwrf', 
+                            'metadata',
+                            f'metadata_sub-{subject:02d}_roi-{roi}.npy')
+        
+        # Load metadata if file exists
+        if os.path.exists(file_name):
+            metadata = np.load(file_name, allow_pickle=True).item()
+            return metadata
+        else:
+            raise FileNotFoundError(f"Metadata file not found for subject {subject}, roi {roi}")
 
     @classmethod
     def get_model_id(cls) -> str:
