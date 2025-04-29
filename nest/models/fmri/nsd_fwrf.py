@@ -294,30 +294,70 @@ class FMRIEncodingModel(BaseModelInterface):
         ### Output ###
         return insilico_fmri_responses
         
-        
-    def get_metadata(self) -> Dict[str, Any]:
+
+    @classmethod
+    def get_metadata(cls, nest_dir=None, subject=None, model_instance=None, roi=None, **kwargs) -> Dict[str, Any]:
         """
-        Retrieve metadata for the current subject and ROI.
+        Retrieve metadata for the model.
         
+        Parameters
+        ----------
+        nest_dir : str
+            Path to NEST directory.
+        subject : int
+            Subject number.
+        model_instance : BaseModelInterface
+            If provided, extract parameters from this model instance.
+        roi : str
+            Region of interest.
+        **kwargs
+            Additional parameters.
+                
         Returns
         -------
         Dict[str, Any]
             Metadata dictionary.
         """
+        # If model_instance is provided, extract parameters from it
+        if model_instance is not None:
+            nest_dir = model_instance.nest_dir
+            subject = model_instance.subject
+            roi = model_instance.roi
         
-        file_name = os.path.join(self.nest_dir, 
-                                 'encoding_models', 
-                                 'modality-fmri',
-                                 'train_dataset-nsd', 
-                                 'model-fwrf', 
-                                 'metadata',
-                                 'metadata_sub-' + format(self.subject,'02') + '_roi-' + self.roi + '.npy')
+        # If this method is called on an instance (rather than the class)
+        elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
+            nest_dir = cls.nest_dir
+            subject = cls.subject
+            roi = cls.roi
         
-
-        metadata = np.load(file_name, allow_pickle=True).item()
+        # Validate required parameters
+        missing_params = []
+        if nest_dir is None: missing_params.append('nest_dir')
+        if subject is None: missing_params.append('subject')
+        if roi is None: missing_params.append('roi')
         
-        return metadata
-          
+        if missing_params:
+            raise InvalidParameterError(f"Required parameters missing: {', '.join(missing_params)}")
+        
+        # Validate parameters
+        validate_subject(subject, cls.VALID_SUBJECTS)
+        validate_roi(roi, cls.VALID_ROIS)
+        
+        # Build metadata path
+        file_name = os.path.join(nest_dir,
+                            'encoding_models', 
+                            'modality-fmri',
+                            'train_dataset-nsd', 
+                            'model-fwrf', 
+                            'metadata',
+                            f'metadata_sub-{subject:02d}_roi-{roi}.npy')
+        
+        # Load metadata if file exists
+        if os.path.exists(file_name):
+            metadata = np.load(file_name, allow_pickle=True).item()
+            return metadata
+        else:
+            raise FileNotFoundError(f"Metadata file not found for subject {subject}, roi {roi}")
 
     @classmethod
     def get_model_id(cls) -> str:

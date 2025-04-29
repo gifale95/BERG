@@ -1,6 +1,6 @@
 from typing import Any, Dict, List
 import numpy as np
-from nest.core.exceptions import ModelNotFoundError
+from nest.core.exceptions import ModelNotFoundError, InvalidParameterError
 from nest.core.model_registry import (
     MODEL_REGISTRY,
     get_available_models,
@@ -158,11 +158,52 @@ class NEST:
                 neural activity and metadata is a dictionary of model-specific
                 information.
         """
+        # Generate responses
+        responses = model.generate_response(stimulus, **kwargs)
         
         if return_metadata:
-            return model.generate_response(stimulus, **kwargs), model.get_metadata()
+            try:
+                # Get the model's class and call get_metadata with the model instance
+                model_class = model.__class__
+                metadata = model_class.get_metadata(model_instance=model)
+                return responses, metadata
+            except Exception as e:
+                # If that fails, provide a warning and return responses only
+                print(f"Warning: Could not retrieve metadata ({str(e)}). Returning responses only.")
+                return responses
         else:
-            return model.generate_response(stimulus, **kwargs)
+            return responses
+        
+    def get_model_metadata(self, model_id: str, **kwargs) -> Dict[str, Any]:
+        """
+        Retrieve metadata for a model with specific parameters without loading the model.
+        
+        Parameters
+        ----------
+        model_id : str
+            Unique identifier of the model.
+        **kwargs
+            Parameters needed for metadata retrieval (e.g., subject, roi)
+            These parameters depend on the specific model and are documented
+            in the model's YAML configuration.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Model metadata dictionary.
+        """
+        if model_id not in MODEL_REGISTRY:
+            raise ModelNotFoundError(f"Model '{model_id}' not found in registry.")
+            
+        try:
+            model_class = get_model_class(model_id)
+            return model_class.get_metadata(nest_dir=self.nest_dir, **kwargs)
+        except Exception as e:
+            yaml_path = MODEL_REGISTRY[model_id]["yaml_path"]
+            error_msg = f"Error retrieving metadata: {str(e)}\n"
+            error_msg += f"Check the model's YAML file at {yaml_path} for correct parameters."
+            raise InvalidParameterError(error_msg)
+        
     
     def describe(self, model_id: str) -> Dict[str, Any]:
         """
