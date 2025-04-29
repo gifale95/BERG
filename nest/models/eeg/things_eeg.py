@@ -403,11 +403,11 @@ class EEGEncodingModel(BaseModelInterface):
         
         Parameters
         ----------
-        nest_dir : str, optional
+        nest_dir : str
             Path to NEST directory.
-        subject : int, optional
+        subject : int
             Subject number.
-        model_instance : BaseModelInterface, optional
+        model_instance : BaseModelInterface
             If provided, extract parameters from this model instance.
         **kwargs
             Additional parameters.

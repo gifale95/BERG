@@ -302,13 +302,13 @@ class FMRIEncodingModel(BaseModelInterface):
         
         Parameters
         ----------
-        nest_dir : str, optional
+        nest_dir : str
             Path to NEST directory.
-        subject : int, optional
+        subject : int
             Subject number.
-        model_instance : BaseModelInterface, optional
+        model_instance : BaseModelInterface
             If provided, extract parameters from this model instance.
-        roi : str, optional
+        roi : str
             Region of interest.
         **kwargs
             Additional parameters.
