@@ -432,32 +432,92 @@ This method:
 
 The metadata may include information about voxel indices, channel information, region details, or other model-specific information.
 
+
+The ``get_metadata()`` method is a versatile function that provides information about your model and its outputs. This method is designed to be flexible, allowing it to be called in three different contexts:
+
+1. **Class method with explicit parameters**: When users want metadata without initializing the model
+2. **Instance method**: When called on an already initialized model
+3. **During encoding**: When users request metadata alongside model responses
+
+The metadata may include information about voxel indices, channel information, region details, or other model-specific information.
+
+This function is a bit more complicated because it needs to handle **all three scenarios**.
+However, we tried to make the code snippet below as understandable as possible so that you just need to fill in all the missing information and paste it into your function! Always feel free to check out the existing implementations for reference.
+
+
 .. code-block:: python
 
-    def get_metadata(self) -> Dict[str, Any]:
+    @classmethod
+    def get_metadata(cls, nest_dir=None, subject=None, model_instance=None, 
+                    # Add any model-specific parameters here (e.g., roi=None)
+                    **kwargs) -> Dict[str, Any]:
         """
-        Return metadata about the model and its outputs.
+        Retrieve metadata for the model.
         
+        Parameters
+        ----------
+        nest_dir : str, optional
+            Path to NEST directory.
+        subject : int, optional
+            Subject number.
+        model_instance : BaseModelInterface, optional
+            If provided, extract parameters from this model instance.
+        # Document any model-specific parameters here
+        **kwargs
+            Additional parameters.
+                
         Returns
         -------
         Dict[str, Any]
-            Dictionary containing model metadata.
+            Metadata dictionary.
         """
-        # Load metadata file if available
-        metadata_path = os.path.join(
-            self.nest_dir,
-            'your_path')
+        # STEP 1: Detect calling context and extract parameters
+        # If model_instance is provided, extract parameters from it
+        if model_instance is not None:
+            nest_dir = model_instance.nest_dir
+            subject = model_instance.subject
+            # Extract any model-specific parameters you need
+            # For example: roi = model_instance.roi
         
-        try:
-            metadata = np.load(metadata_path, allow_pickle=True).item()
+        # If this method is called on an instance (rather than the class)
+        elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
+            # 'cls' is actually an instance in this case
+            nest_dir = cls.nest_dir
+            subject = cls.subject
+            # Extract any model-specific attributes
+            # For example: roi = cls.roi
+        
+        # STEP 2: Validate required parameters
+        missing_params = []
+        if nest_dir is None: missing_params.append('nest_dir')
+        if subject is None: missing_params.append('subject')
+        # Add checks for any other required parameters
+        # For example: if roi is None: missing_params.append('roi')
+        
+        if missing_params:
+            raise InvalidParameterError(f"Required parameters missing: {', '.join(missing_params)}")
+        
+        # STEP 3: Validate parameter values
+        validate_subject(subject, cls.VALID_SUBJECTS)
+        # Add validation for any other parameters
+        # For example: validate_roi(roi, cls.VALID_ROIS)
+        
+        # STEP 4: Build metadata file path
+        # CUSTOMIZE THIS PATH for your specific model
+        file_name = os.path.join(nest_dir, 
+                                'encoding_models', 
+                                'modality-YOUR_MODALITY',  # Replace with your modality
+                                'train_dataset-YOUR_DATASET',  # Replace with your dataset
+                                'model-YOUR_MODEL_NAME',  # Replace with your model name
+                                'metadata',
+                                f'metadata_sub-{subject:02d}.npy')  # Customize filename format
+        
+        # STEP 5: Load and return metadata
+        if os.path.exists(file_name):
+            metadata = np.load(file_name, allow_pickle=True).item()
             return metadata
-        except Exception as e:
-            # If no metadata file exists, return basic info
-            return {
-                "model_id": self.MODEL_ID,
-                "subject": self.subject,
-                # Add any other relevant metadata
-            }
+        else:
+            raise FileNotFoundError(f"Metadata file not found: {file_name}")
 
 3.6: Auxiliary Methods
 ----------------------
