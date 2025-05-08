@@ -127,7 +127,7 @@ parameters:
 performance:
 
   accuracy_plots: 
-    - "neural_encoding_simulation_toolkit/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy"
+    - "neural-encoding-simulation-toolkit/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy"
   
 references:
     - fwRF model (St-Yves et al., 2018): https://doi.org/10.1016/j.neuroimage.2017.06.035

@@ -165,7 +165,7 @@ Performance
 
 **Accuracy Plots:**
 
-* ``neural_encoding_simulation_toolkit/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy``
+* ``neural-encoding-simulation-toolkit/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy``
 
 Example Usage
 ------------
