@@ -124,10 +124,9 @@ We used NEST to develop [RNC](https://github.com/gifale95/RNC), a neural control
 
 The folder [`../NEST/nest_creation_code/`][nest_creation_code] contains the code used to create the Neural Encoding Simulation Toolkit, divided in the following sub-folders:
 
-* **[`../00_prepare_data/`][prepare_data]:** prepare the data (i.e., images and corresponding neural responses) used to train the encoding models.
-* **[`../01_train_encoding_models/`][train_encoding]:** train the encoding models, and save their weights.
-* **[`../02_test_encoding_models/`][test_encoding]:** test the encoding models (i.e., compute and plot their encoding accuracy).
-* **[`../03_create_metadata/`][metadata]:** create metadata files relative to the encoding models and their in silico neural responses.
+* **[`../01_prepare_data/`][prepare_data]:** prepare the neural responses in the right format for encoding model training.
+* **[`../02_train_encoding_models/`][train_encoding]:** train the encoding models, and save their weights.
+* **[`../03_test_encoding_models/`][test_encoding]:** test the encoding models (i.e., compute and plot their encoding accuracy).
 
 
 
@@ -180,9 +179,9 @@ If you use the Neural Encoding Simulation Toolkit, please cite:
 [uni_rnc_jupyter]: https://github.com/gifale95/RNC/blob/main/tutorials/univariate_rnc_tutorial.ipynb
 [multi_rnc_jupyter]: https://github.com/gifale95/RNC/blob/main/tutorials/multivariate_rnc_tutorial.ipynb
 [nest_creation_code]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/
-[prepare_data]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/00_prepare_data
-[train_encoding]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/01_train_encoding_models
-[test_encoding]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/02_test_encoding_models
+[prepare_data]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/01_prepare_data
+[train_encoding]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/02_train_encoding_models
+[test_encoding]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/03_test_encoding_models
 [metadata]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/03_create_metadata
 [synthesize]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/04_synthesize_neural_responses
 
