@@ -138,7 +138,7 @@ class EEGEncodingModel(BaseModelInterface):
             metadata_dir = os.path.join(
                 self.nest_dir, 'encoding_models', 'modality-eeg',
                 'train_dataset-things_eeg_2', 'model-vit_b_32',
-                'metadata', f'metadata_sub-{self.subject:02d}.npy'
+                'metadata', f'metadata_subject-{self.subject:02d}.npy'
             )
             metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
             self.ch_names = metadata_dict['eeg']['ch_names']
@@ -157,15 +157,12 @@ class EEGEncodingModel(BaseModelInterface):
 
             # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)
-            
-            # Load the scaler and PCA weights
-            self.scaler, self.pca = self._load_scaler_and_pca()
-            
+
             # Define the image preprocessing transform
             self.transform = torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms()
-            
-            # Load the trained regression weights
-            self.regression_weights = self._load_regression_weights()
+
+            # Load the scaler, PCA, and trained regression weights
+            self.scaler, self.pca, self.regression_weights = self._load_encoding_weights()
             
             print(f"Model loaded on {self.device} for subject {self.subject}")
         
@@ -209,84 +206,65 @@ class EEGEncodingModel(BaseModelInterface):
         feature_extractor.eval()
         
         return feature_extractor
-    
-    def _load_scaler_and_pca(self):
+
+    def _load_encoding_weights(self):
         """
         Load pretrained scaler and PCA transformation parameters.
-        
         Loads and configures StandardScaler and PCA models with
         pre-computed parameters for feature normalization and
         dimensionality reduction.
-        
+
+        Load trained linear regression models for each EEG repetition.
+        Loads the weights for the linear mapping from visual features
+        to EEG responses, with separate models for each repetition.
+
         Returns
         -------
         tuple
-            A tuple containing (scaler, pca) where:
+            A tuple containing (scaler, pca, regression_weights) where:
             - scaler : StandardScaler - Fitted feature normalization object
             - pca : PCA - Fitted principal component analysis model
+            - regression_weights: List of scikit-learn LinearRegression models,
+                one per repetition.
         """
-        # Scaler
+        # Load the weights
         weights_dir = os.path.join(
             self.nest_dir, 'encoding_models', 'modality-eeg',
             'train_dataset-things_eeg_2', 'model-vit_b_32',
-            'encoding_models_weights', 'StandardScaler_param.npy'
+            'encoding_models_weights', 'weights_subject-'+
+            format(self.subject, '02')+'.npy'
         )
-        scaler_weights = np.load(weights_dir, allow_pickle=True).item()
+        weights = np.load(weights_dir, allow_pickle=True).item()
+        # Scaler
         scaler = StandardScaler()
-        scaler.scale_ = scaler_weights['scale_']
-        scaler.mean_ = scaler_weights['mean_']
-        scaler.var_ = scaler_weights['var_']
-        scaler.n_features_in_ = scaler_weights['n_features_in_']
-        scaler.n_samples_seen_ = scaler_weights['n_samples_seen_']
+        scaler.scale_ = weights['scaler_param']['scale_']
+        scaler.mean_ = weights['scaler_param']['mean_']
+        scaler.var_ = weights['scaler_param']['var_']
+        scaler.n_features_in_ = weights['scaler_param']['n_features_in_']
+        scaler.n_samples_seen_ = weights['scaler_param']['n_samples_seen_']
         
         # PCA
-        weights_dir = os.path.join(
-            self.nest_dir, 'encoding_models', 'modality-eeg',
-            'train_dataset-things_eeg_2', 'model-vit_b_32',
-            'encoding_models_weights', 'pca_param.npy'
-        )
-        pca_weights = np.load(weights_dir, allow_pickle=True).item()
-        pca = PCA(n_components=1000, random_state=20200220)
-        pca.components_ = pca_weights['components_']
-        pca.explained_variance_ = pca_weights['explained_variance_']
-        pca.explained_variance_ratio_ = pca_weights['explained_variance_ratio_']
-        pca.singular_values_ = pca_weights['singular_values_']
-        pca.mean_ = pca_weights['mean_']
-        pca.n_components_ = pca_weights['n_components_']
-        pca.n_samples_ = pca_weights['n_samples_']
-        pca.noise_variance_ = pca_weights['noise_variance_']
-        pca.n_features_in_ = pca_weights['n_features_in_']
-        
-        return scaler, pca
-    
-    def _load_regression_weights(self):
-        """
-        Load trained linear regression models for each EEG repetition.
-        
-        Loads the weights for the linear mapping from visual features
-        to EEG responses, with separate models for each repetition.
-        
-        Returns
-        -------
-        list
-            List of scikit-learn LinearRegression models, one per repetition.
-        """
-        weights_dir = os.path.join(
-            self.nest_dir, 'encoding_models', 'modality-eeg',
-            'train_dataset-things_eeg_2', 'model-vit_b_32',
-            'encoding_models_weights', f'LinearRegression_param_sub-{self.subject:02d}.npy'
-        )
-        reg_weights = np.load(weights_dir, allow_pickle=True).item()
-        
+        pca = PCA(n_components=250, random_state=20200220)
+        pca.components_ = weights['pca_param']['components_']
+        pca.explained_variance_ = weights['pca_param']['explained_variance_']
+        pca.explained_variance_ratio_ = weights['pca_param']['explained_variance_ratio_']
+        pca.singular_values_ = weights['pca_param']['singular_values_']
+        pca.mean_ = weights['pca_param']['mean_']
+        pca.n_components_ = weights['pca_param']['n_components_']
+        pca.n_samples_ = weights['pca_param']['n_samples_']
+        pca.noise_variance_ = weights['pca_param']['noise_variance_']
+        pca.n_features_in_ = weights['pca_param']['n_features_in_']
+
+        # Linear regression
         regression_weights = []
-        for r in range(len(reg_weights)):
+        for r in range(len(weights['reg_param'])):
             reg = LinearRegression()
-            reg.coef_ = reg_weights[f'rep-{r+1}']['coef_']
-            reg.intercept_ = reg_weights[f'rep-{r+1}']['intercept_']
-            reg.n_features_in_ = reg_weights[f'rep-{r+1}']['n_features_in_']
+            reg.coef_ = weights['reg_param'][f'rep-{r+1}']['coef_']
+            reg.intercept_ = weights['reg_param'][f'rep-{r+1}']['intercept_']
+            reg.n_features_in_ = weights['reg_param'][f'rep-{r+1}']['n_features_in_']
             regression_weights.append(deepcopy(reg))
-        
-        return regression_weights
+
+        return scaler, pca, regression_weights
 
     def generate_response(
             self, 
@@ -351,7 +329,6 @@ class EEGEncodingModel(BaseModelInterface):
                 # Process features
                 features = self.scaler.transform(features)
                 features = self.pca.transform(features)
-                features = features[:, :250]  # Only use first 250 principal components
                 features = features.astype(np.float32)
                 
                 # Generate responses for each repetition
@@ -445,7 +422,7 @@ class EEGEncodingModel(BaseModelInterface):
                                 'train_dataset-things_eeg_2', 
                                 'model-vit_b_32', 
                                 'metadata',
-                                f'metadata_sub-{subject:02d}.npy')
+                                f'metadata_subject-{subject:02d}.npy')
         
         # Load metadata if file exists
         if os.path.exists(file_name):
