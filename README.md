@@ -50,8 +50,8 @@ The following table shows the encoding models currently available in NEST. For m
 
 | Model ID | Training dataset | Species | Stimuli |
 |----------|------------------|---------|---------|
-| [fmri-nsd_fsaverage-vit_b_32][fmri-nsd_fsaverage-vit_b_32] | [NSD][allen] | Human | Images |
-| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD][allen] | Human | Images |
+| [fmri-nsd_fsaverage-vit_b_32][fmri-nsd_fsaverage-vit_b_32] | [NSD (surface space)][allen] | Human | Images |
+| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD (volume space)][allen] | Human | Images |
 | [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | Human | Images |
  
 
