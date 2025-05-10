@@ -166,7 +166,7 @@ If you use the Neural Encoding Simulation Toolkit, please cite:
 [load_insilico_neural_responses]: https://github.com/gifale95/NEST/blob/main/nest/nest.py#L551
 
 
-[fmri-nsd_fsaverage-vit_b_32] : https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-vit_b_32.html
+[fmri-nsd_fsaverage-vit_b_32]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-vit_b_32.html
 [fmri-nsd-fwrf]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/fmri-nsd-fwrf.html
 [eeg-things_eeg_2-vit_b_32]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-vit_b_32.html
 [THINGS EEG2]: https://doi.org/10.1016/j.neuroimage.2022.119754
