@@ -217,7 +217,7 @@ class FMRIEncodingModel(BaseModelInterface):
         self, 
         stimulus: np.ndarray) -> np.ndarray:
         """
-        Generate in silico fMRI responses for a batch of visual stimuli.
+        Generate in silico fMRI responses for a batch of images.
         
         Parameters
         ----------
