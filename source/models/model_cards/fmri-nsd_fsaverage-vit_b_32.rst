@@ -172,14 +172,25 @@ Example Usage
     nest = NEST(nest_dir="path/to/neural-encoding-simulation-toolkit")
     
     # Load the encoding model
-    model = nest.get_encoding_model("fmri-nsd_fsaverage-vit_b_32", subject=1, selection={"roi": "V1v"})
+    model = nest.get_encoding_model(
+      "fmri-nsd_fsaverage-vit_b_32",
+      subject=1,
+      selection={
+        "roi": "V1v"
+      }
+    )
     
     # Prepare the stimulus images
     # Image shape should be [batch_size, 3 RGB channels, height, width]
     images = np.random.randint(0, 255, (100, 3, 256, 256))
     
     # Generates the in silico neural responses to images using the encoding model previously loaded
-    responses = nest.encode(model, images, device="auto", show_progress=True)
+    responses = nest.encode(
+      model,
+      images,
+      device="auto",
+      show_progress=True
+    )
     
     # The in silico fMRI responses will be a tuple of numpy.ndarray of shape: 
     # ([batch_size, lh_vertices], [batch_size, rh_vertices])

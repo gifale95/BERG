@@ -170,14 +170,26 @@ Example Usage
     nest = NEST(nest_dir="path/to/neural-encoding-simulation-toolkit")
     
     # Load the encoding model
-    model = nest.get_encoding_model("eeg-things_eeg_2-vit_b_32", subject=1, selection={"channels": ['Oz', 'Cz', 'Fp1'], "timepoints": [0, 1, ..., 1]})
+    model = nest.get_encoding_model(
+      "eeg-things_eeg_2-vit_b_32",
+      subject=1,
+      selection={
+        "channels": ['Oz', 'Cz', 'Fp1'],
+        "timepoints": [0, 1, ..., 1]
+      }
+    )
     
     # Prepare the stimulus images
     # Image shape should be [batch_size, 3 RGB channels, height, width]
     images = np.random.randint(0, 255, (100, 3, 256, 256))
     
     # Generates the in silico neural responses to images using the encoding model previously loaded
-    responses = nest.encode(model, images, device="auto", show_progress=True)
+    responses = nest.encode(
+      model,
+      images,
+      device="auto",
+      show_progress=True
+      )
     
     # responses shape will be [batch_size, n_repetitions, n_channels, n_timepoints]
     # where:
