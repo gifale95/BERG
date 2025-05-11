@@ -1,6 +1,6 @@
 import os
 from copy import deepcopy
-from typing import Any, Dict, Optional, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import torch
 import torchvision
@@ -81,12 +81,12 @@ class EEGEncodingModel(BaseModelInterface):
         self.subject = subject
         self.nest_dir = nest_dir
         self.model = None
-        
+
         # Parameters from selection
         self.selection = selection
         self.selected_channels = None
         self.selected_timepoints = None
-        
+
         # Validate parameters
         self._validate_parameters()
         
@@ -94,11 +94,11 @@ class EEGEncodingModel(BaseModelInterface):
         if device == "auto":
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
-        
+
     def _validate_parameters(self):
         """
         Validate user-provided parameters against supported model yaml.
-        
+
         Ensures that subject IDs and other parameters match the expected
         values defined in the model's yaml.
         """
@@ -127,12 +127,13 @@ class EEGEncodingModel(BaseModelInterface):
     def load_model(self) -> None:
         """
         Load model weights, preprocessing pipeline, and regression layers.
-        
+
         Loads the vision transformer backbone, preprocessing components 
         (scaler, PCA), and trained regression weights for the specified
         subject. Sets up all necessary components for generating EEG
         responses.
         """
+
         try:
             # Get the EEG channels and time points dimensions
             metadata_dir = os.path.join(
@@ -143,14 +144,14 @@ class EEGEncodingModel(BaseModelInterface):
             metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
             self.ch_names = metadata_dict['eeg']['ch_names']
             self.times = metadata_dict['eeg']['times']
-            
+
             # If selected_channels is set, store the indices
             if self.selected_channels is not None:
                 self.channel_indices = [self.ch_names.index(ch) for ch in self.selected_channels]
             else:
                 # If no channels selected, use all channels
                 self.channel_indices = range(len(self.ch_names))
-            
+
             # If selected_timepoints is not set, use all timepoints
             if self.selected_timepoints is None:
                 self.selected_timepoints = range(len(self.times))
@@ -163,12 +164,13 @@ class EEGEncodingModel(BaseModelInterface):
 
             # Load the scaler, PCA, and trained regression weights
             self.scaler, self.pca, self.regression_weights = self._load_encoding_weights()
-            
+
             print(f"Model loaded on {self.device} for subject {self.subject}")
-        
+
         except Exception as e:
             raise ModelLoadError(f"Failed to load model: {str(e)}")
-    
+
+
     def _load_feature_extractor(self, device):
         """
         Load the ViT feature extractor for selected intermediate layers.
@@ -204,8 +206,9 @@ class EEGEncodingModel(BaseModelInterface):
         feature_extractor = create_feature_extractor(model, return_nodes=model_layers)
         feature_extractor.to(device)
         feature_extractor.eval()
-        
+
         return feature_extractor
+
 
     def _load_encoding_weights(self):
         """
@@ -227,6 +230,7 @@ class EEGEncodingModel(BaseModelInterface):
             - regression_weights: List of scikit-learn LinearRegression models,
                 one per repetition.
         """
+
         # Load the weights
         weights_dir = os.path.join(
             self.nest_dir, 'encoding_models', 'modality-eeg',
@@ -242,9 +246,10 @@ class EEGEncodingModel(BaseModelInterface):
         scaler.var_ = weights['scaler_param']['var_']
         scaler.n_features_in_ = weights['scaler_param']['n_features_in_']
         scaler.n_samples_seen_ = weights['scaler_param']['n_samples_seen_']
-        
+
         # PCA
-        pca = PCA(n_components=250, random_state=20200220)
+        n_components = 250
+        pca = PCA(n_components=n_components, random_state=20200220)
         pca.components_ = weights['pca_param']['components_']
         pca.explained_variance_ = weights['pca_param']['explained_variance_']
         pca.explained_variance_ratio_ = weights['pca_param']['explained_variance_ratio_']
@@ -259,20 +264,29 @@ class EEGEncodingModel(BaseModelInterface):
         regression_weights = []
         for r in range(len(weights['reg_param'])):
             reg = LinearRegression()
-            reg.coef_ = weights['reg_param'][f'rep-{r+1}']['coef_']
-            reg.intercept_ = weights['reg_param'][f'rep-{r+1}']['intercept_']
+            coef_ = np.reshape(weights['reg_param'][f'rep-{r+1}']['coef_'],
+                (len(self.ch_names), len(self.times), n_components))
+            coef_ = coef_[self.channel_indices]
+            coef_ = coef_[:,self.selected_timepoints]
+            reg.coef_ = np.reshape(coef_, (-1, n_components))
+            intercept_ = np.reshape(weights['reg_param'][f'rep-{r+1}']['intercept_'],
+                (len(self.ch_names), len(self.times)))
+            intercept_ = intercept_[self.channel_indices]
+            intercept_ = intercept_[:,self.selected_timepoints]
+            reg.intercept_ = np.reshape(intercept_, -1)
             reg.n_features_in_ = weights['reg_param'][f'rep-{r+1}']['n_features_in_']
             regression_weights.append(deepcopy(reg))
 
         return scaler, pca, regression_weights
 
-    def generate_response(
+
+    def generate_response( # !!!
             self, 
             stimulus: np.ndarray,
             show_progress: bool = True) -> np.ndarray:
         """
-        Generate in silico EEG responses for a batch of visual stimuli.
-        
+        Generate in silico EEG responses for a batch of images.
+
         Parameters
         ----------
         stimulus : np.ndarray
@@ -283,96 +297,93 @@ class EEGEncodingModel(BaseModelInterface):
             height).
         show_progress : bool, default=True
             Whether to display a progress bar during encoding.
-        
+
         Returns
         -------
-        np.ndarray
-            EEG response array with shape (batch_size, n_repetitions, n_selected_channels, n_selected_timepoints).
-            The dimensions will be adapted based on the selection parameter:
-            - If channels are selected, only those channels are included
-            - If timepoints are selected, only those timepoints are included
+        insilico_eeg_responses : np.ndarray
+            In silico EEG response array of shape (batch_size, 4 repetitions,
+            n_channels, n_times), where the number of channels and time points
+            depends on The selection parameter.
         """
+
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
             raise StimulusError(
                 "Stimulus must be a 4D numpy array (batch, channels, height, width)"
             )
-        
+
         # Preprocess the images
         images = self.transform(torch.from_numpy(stimulus))
-        
+
         # Extract features and generate responses in batches
         batch_size = 100
         n_batches = int(np.ceil(len(images) / batch_size))
-        
+
         if show_progress:
             progress_bar = tqdm(range(n_batches), desc='Encoding EEG responses')
         else:
             progress_bar = range(n_batches)
-            
+
         insilico_eeg_responses = None
-        
+
         with torch.no_grad():
             for b in progress_bar:
                 # Image batch indices
                 idx_start = b * batch_size
                 idx_end = idx_start + batch_size
-                
+
                 # Extract features
                 img_batch = images[idx_start:idx_end].to(self.device)
                 features = self.feature_extractor(img_batch)
-                
+
                 # Flatten features
                 features = torch.hstack([torch.flatten(l, start_dim=1) for l in features.values()])
                 features = features.detach().cpu().numpy()
-                
+
                 # Process features
                 features = self.scaler.transform(features)
                 features = self.pca.transform(features)
                 features = features.astype(np.float32)
-                
+
                 # Generate responses for each repetition
                 insilico_eeg_part = []
                 for reg in self.regression_weights:
                     # Generate the in silico EEG responses for all channels and timepoints
                     insilico_eeg = reg.predict(features)
                     insilico_eeg = insilico_eeg.astype(np.float32)
-                    
+
                     # Reshape to (Images x Channels x Time)
-                    insilico_eeg = np.reshape(
-                        insilico_eeg, 
-                        (len(insilico_eeg), len(self.ch_names), len(self.times))
+                    insilico_eeg = np.reshape(insilico_eeg,
+                        (len(insilico_eeg), len(self.channel_indices),
+                        len(self.selected_timepoints))
                     )
-                    
-                    # Extract only the selected channels and timepoints
-                    insilico_eeg = insilico_eeg[:, self.channel_indices, :]
-                    insilico_eeg = insilico_eeg[:, :, self.selected_timepoints]
-                    
+
                     insilico_eeg_part.append(np.squeeze(insilico_eeg))
-                
+
                 # Reshape to (Images x Repeats x Channels x Time)
                 batch_responses = np.swapaxes(np.asarray(insilico_eeg_part), 0, 1)
                 batch_responses = batch_responses.astype(np.float32)
-                
+
                 # Combine with previous batches
                 if insilico_eeg_responses is None:
                     insilico_eeg_responses = batch_responses
                 else:
                     insilico_eeg_responses = np.append(
-                        insilico_eeg_responses, 
+                        insilico_eeg_responses,
                         batch_responses, 
                         axis=0
                     )
-                
+
                 if show_progress and isinstance(progress_bar, tqdm):
                     encoded_images = min((b + 1) * batch_size, len(images))
                     progress_bar.set_postfix({
                         'Encoded images': encoded_images, 
                         'Total images': len(images)
                     })
-        
+
         return insilico_eeg_responses
-    
+
+
     @classmethod
     def get_metadata(cls, nest_dir=None, subject=None, model_instance=None, **kwargs) -> Dict[str, Any]:
         """
@@ -398,23 +409,23 @@ class EEGEncodingModel(BaseModelInterface):
         if model_instance is not None:
             nest_dir = model_instance.nest_dir
             subject = model_instance.subject
-        
+
         # If this method is called on an instance (rather than the class)
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             nest_dir = cls.nest_dir
             subject = cls.subject
-        
+
         # Validate required parameters
         missing_params = []
         if nest_dir is None: missing_params.append('nest_dir')
         if subject is None: missing_params.append('subject')
-        
+
         if missing_params:
             raise InvalidParameterError(f"Required parameters missing: {', '.join(missing_params)}")
-        
+
         # Validate parameters
         validate_subject(subject, cls.VALID_SUBJECTS)
-        
+
         # Build metadata path
         file_name = os.path.join(nest_dir, 
                                 'encoding_models', 
@@ -423,14 +434,15 @@ class EEGEncodingModel(BaseModelInterface):
                                 'model-vit_b_32', 
                                 'metadata',
                                 f'metadata_subject-{subject:02d}.npy')
-        
+
         # Load metadata if file exists
         if os.path.exists(file_name):
             metadata = np.load(file_name, allow_pickle=True).item()
             return metadata
         else:
             raise FileNotFoundError(f"Metadata file not found for subject {subject}")
-    
+
+
     @classmethod
     def get_model_id(cls) -> str:
         """
@@ -442,7 +454,8 @@ class EEGEncodingModel(BaseModelInterface):
             Model ID string that identifies this model in the registry.
         """
         return cls.MODEL_ID
-    
+
+
     def cleanup(self) -> None:
         """
         Release GPU memory and unload the feature extractor.
