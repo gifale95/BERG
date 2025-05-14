@@ -1,6 +1,6 @@
 model_id: fmri-nsd-fwrf
 modality: fMRI
-training_dataset: Natural Scenes Dataset (NSD)
+training_dataset: Natural Scenes Dataset (NSD) (subject-native volume space)
 species: Human 
 stimuli: Images 
 model_type: Feature-weighted receptive field (fwRF)
@@ -38,7 +38,6 @@ input:
     - "Image values should be integers in range [0, 255]."
     - "Image dimensions (height, width) should be equal (square)."
     - "Minimum recommended image size: 224×224 pixels."
-
 
 # Output information
 output:
@@ -113,7 +112,6 @@ parameters:
     example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
     function: "encode"
 
-    
   device:
     type: str
     required: false
@@ -130,6 +128,7 @@ performance:
     - "neural-encoding-simulation-toolkit/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy"
   
 references:
-    - fwRF model (St-Yves et al., 2018): https://doi.org/10.1016/j.neuroimage.2017.06.035
+    - Model building code: 'https://github.com/gifale95/NEST/tree/main/nest_creation_code'
     - NSD paper (Allen et al., 2022): https://doi.org/10.1038/s41593-021-00962-x
+    - fwRF model (St-Yves et al., 2018): https://doi.org/10.1016/j.neuroimage.2017.06.035
     - COCO dataset (Lin et al., 2014): https://cocodataset.org/#home

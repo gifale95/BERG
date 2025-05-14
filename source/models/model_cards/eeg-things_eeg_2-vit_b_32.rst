@@ -107,7 +107,8 @@ This function loads the encoding model.
      - | **Type:** dict
        | **Required:** No
        | **Description:** Specifies which outputs to include in the model responses.
-       | Can include specific channels and/or timepoints.
+       | Can include specific channels and/or timepoints. If not provided, EEG responses
+       | are generated for all EEG channels and time points.
        | 
        | **Properties:**
        | 
@@ -166,35 +167,47 @@ Example Usage
     from nest import NEST
     
     # Initialize NEST
-    nest = NEST(nest_dir="path/to/neural_encoding_simulation_toolkit")
+    nest = NEST(nest_dir="path/to/neural-encoding-simulation-toolkit")
     
-    # Load the model
-    model = nest.get_encoding_model("eeg-things_eeg_2-vit_b_32", subject=1, selection={"channels": ['Oz', 'Cz', 'Fp1'], "timepoints": [0, 0, '...', ...]})
-    # This function loads the encoding model.
+    # Load the encoding model
+    model = nest.get_encoding_model(
+      "eeg-things_eeg_2-vit_b_32",
+      subject=1,
+      selection={
+        "channels": ['Oz', 'Cz', 'Fp1'],
+        "timepoints": [0, 1, ..., 1]
+      }
+    )
     
-    # Prepare your stimuli
-    # stimulus shape should be ['batch_size', 3, 'height', 'width']
+    # Prepare the stimulus images
+    # Image shape should be [batch_size, 3 RGB channels, height, width]
+    images = np.random.randint(0, 255, (100, 3, 256, 256))
     
-    # Generate responses
-    responses = nest.encode(model, stimulus, device="auto", show_progress=True)
-    # This function generates in silico neural responses using the encoding model previously loaded.
+    # Generates the in silico neural responses to images using the encoding model previously loaded
+    responses = nest.encode(
+      model,
+      images,
+      device="auto",
+      show_progress=True
+      )
     
-    # responses shape will be ['batch_size', 'n_repetitions', 'n_channels', 'n_timepoints']
+    # responses shape will be [batch_size, n_repetitions, n_channels, n_timepoints]
     # where:
     # - n_repetitions is Number of simulated repetitions of the same stimulus (always 4).
     # - n_channels is Number of EEG channels (up to 63, based on the number of channels selected).
     # - n_timepoints is Number of time points in the EEG epoch (up to 140, based on the number of time points selected).
     
-    # Get responses with metadata
-    responses, metadata = nest.encode(model, stimulus, return_metadata=True)
+    # Generate in silico neural responses with metadata
+    responses, metadata = nest.encode(model, images, return_metadata=True)
     
-    # Access channel names and time information
+    # Access EEG channel names and time information
     channel_names = metadata["eeg"]["ch_names"]
     time_points = metadata["eeg"]["times"]  # in seconds
 
 References
 ---------
 
+* {'Model building code': 'https://github.com/gifale95/NEST/tree/main/nest_creation_code'}
 * {'THINGS EEG2 (Gifford et al., 2022)': 'https://doi.org/10.1016/j.neuroimage.2022.119754'}
 * {'THINGS initiative (Hebart et al., 2019)': 'https://things-initiative.org/'}
 * {'ViT-B/32 (Dosovitskiy et al., 2020)': 'https://arxiv.org/abs/2010.11929'}

@@ -90,7 +90,7 @@ class NEST:
         """
         return get_available_models()
         
-    
+
     def get_encoding_model(self, model_id: str, device: str = "auto", selection: dict = None, **kwargs):
         """
         Load and return a specific encoding model instance.

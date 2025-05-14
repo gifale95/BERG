@@ -1,15 +1,17 @@
 import os
-from copy import deepcopy
-from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import torch
 import torchvision
 import yaml
+from torchvision import transforms as trn
+from typing import Dict, Any, Optional
+from nest.core.model_registry import register_model
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
+from nest.interfaces.base_model import BaseModelInterface
 from nest.core.exceptions import (
     InvalidParameterError,
     ModelLoadError,
@@ -18,143 +20,172 @@ from nest.core.exceptions import (
 from nest.core.parameter_validator import (
     validate_subject,
     validate_selection_keys,
-    validate_channels,
     validate_binary_array,
-    get_selected_indices
+    get_selected_indices,
+    validate_roi,
 )
-from nest.core.model_registry import register_model
-from nest.interfaces.base_model import BaseModelInterface
 
-
-# Load model info from YAML
-def load_model_model_info():
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg-things_eeg_2-vit_b_32.yaml")
+# Load model model_info from YAML
+def load_model_info():
+    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-vit_b_32.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
 # Load model_info once at the top
-model_info = load_model_model_info()
+model_info = load_model_info()
 
+# Register this model with the registry using model_info
 register_model(
     model_id=model_info["model_id"],
-    module_path="nest.models.eeg.things_eeg",
-    class_name="EEGEncodingModel",
-    modality=model_info.get("modality", "eeg"),
-    dataset=model_info.get("dataset", "things_eeg_2"),
-    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg-things_eeg_2-vit_b_32.yaml")
+    module_path="nest.models.fmri.nsd_fsaverage_vit_b_32",
+    class_name="FMRIEncodingModel",
+    modality=model_info.get("modality", "fmri"),
+    dataset=model_info.get("dataset", "nsd_fsaverage"),
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-vit_b_32.yaml")
 )
 
 
-class EEGEncodingModel(BaseModelInterface):
+class FMRIEncodingModel(BaseModelInterface):
     """
-    EEG encoding model using a vision transformer backbone to generate
-    in silico EEG responses for the THINGS-EEG-2 dataset.
+    fMRI encoding model using feature-weighted receptive fields (fwrf)
+    for the Natural Scenes Dataset (NSD).
     """
-    
+
     MODEL_ID = model_info["model_id"]
-    SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
-    VALID_CHANNELS = model_info["parameters"]["selection"]["properties"]["channels"]["valid_values"]
-    TIMEPOINTS_LENGTH = 140
-    
-    def __init__(self, subject: int, device: str = "auto", selection: Optional[Dict] = None, nest_dir: Optional[str] = None):
+    SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
+    VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
+    VERTICES_LENGTH = 163842
+
+    def __init__(self, subject: int, selection: Dict, device:str="auto", nest_dir: Optional[str] = None):
         """
-        Initialize the EEG encoding model.
-        
+        Initialize the fMRI encoding model for a specific subject and ROI.
+
         Parameters
         ----------
         subject : int
-            Subject number from the THINGS-EEG-2 dataset.
-            Must be one of the valid subject IDs (1-10).
+            Subject number from the NSD dataset (1-8).
         device : str, default="auto"
             Target device for computation. Options are "cpu", "cuda", or "auto".
-            If "auto", will use GPU if available, otherwise CPU.    
+            If "auto", will use GPU if available, otherwise CPU.
         selection : dict, optional
-            Specifies which outputs to include in the model responses.
-            Can include specific channels and/or timepoints.
-            - channels: List of EEG channel names to include in the output
-            - timepoints: Binary one-hot encoded vector indicating which timepoints to include
+            Specifies for which vertices to generate the in silico fMRI responses.
+            - roi: The region-of-interest (ROI) for which the in silico fMRI
+                responses (of both hemispherese) are generated.
+            - lh_vertices: Binary one-hot encoded vector with ones indicating
+                the left hemisphere (LH) vertices for which the in silico fMRI
+                responses are generated. This vector must have exactly the same
+                length as the number of LH fsaverage vertices (163,842). The
+                vertices from the one-hot encoded vector are only selected if
+                the "roi" key is not provided, or has value None.
+            - rh_vertices: Binary one-hot encoded vector with ones indicating
+                the right hemisphere (RH) vertices for which the in silico fMRI
+                responses are generated. This vector must have exactly the same
+                length as the number of RH fsaverage vertices (163,842). The
+                vertices from the one-hot encoded vector are only selected if
+                the "roi" key is not provided, or has value None.
         nest_dir : str, optional
-            Root path to the NEST directory containing model files and weights.
+            Path to the NEST directory containing model files and weights.
         """
-        # Assign Parameters
+
         self.subject = subject
         self.nest_dir = nest_dir
         self.model = None
 
         # Parameters from selection
         self.selection = selection
-        self.selected_channels = None
-        self.selected_timepoints = None
+        self.roi = None
+        self.selected_lh_vertices = None
+        self.selected_rh_vertices = None
 
-        # Validate parameters
+        # Validate Parameters
         self._validate_parameters()
-        
+
         # Select device
         if device == "auto":
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
 
+
     def _validate_parameters(self):
         """
         Validate user-provided parameters against supported model yaml.
 
-        Ensures that subject IDs and other parameters match the expected
-        values defined in the model's yaml.
+        Verifies that the provided subject ID and ROI name are among
+        the supported values defined in the model's modelinfo.
         """
 
         # Validate subject
         validate_subject(self.subject, self.VALID_SUBJECTS)
-        
+
+        # Validate selection keys
         if self.selection is not None:
-            # Validate selection keys
             validate_selection_keys(self.selection, self.SELECTION_KEYS)
 
-            # Individual validations
-            if "channels" in self.selection:
-                self.selected_channels = validate_channels(
-                    self.selection["channels"], self.VALID_CHANNELS
+            # Validate ROI
+            if "roi" in self.selection:
+                self.roi = validate_roi(
+                    self.selection["roi"], self.VALID_ROIS
                 )
 
-            if "timepoints" in self.selection:
-                timepoints_array = validate_binary_array(
-                    self.selection["timepoints"],
-                    self.TIMEPOINTS_LENGTH,
-                    "timepoints"
+            # Validate LH vertices
+            if "lh_vertices" in self.selection:
+                lh_vertices_array = validate_binary_array(
+                    self.selection["lh_vertices"],
+                    self.VERTICES_LENGTH,
+                    "lh_vertices"
                 )
-                self.selected_timepoints = get_selected_indices(timepoints_array)
+                self.selected_lh_vertices = get_selected_indices(lh_vertices_array)
 
-    def load_model(self) -> None:
+            # Validate RH vertices
+            if "rh_vertices" in self.selection:
+                rh_vertices_array = validate_binary_array(
+                    self.selection["rh_vertices"],
+                    self.VERTICES_LENGTH,
+                    "rh_vertices"
+                )
+                self.selected_rh_vertices = get_selected_indices(rh_vertices_array)
+
+
+    def load_model(self, device: str = "auto") -> None:
         """
         Load model weights, preprocessing pipeline, and regression layers.
 
-        Loads the vision transformer backbone, preprocessing components 
-        (scaler, PCA), and trained regression weights for the specified
-        subject. Sets up all necessary components for generating EEG
-        responses.
+        Loads the vision transformer backbone, preprocessing components (scaler,
+        PCA), and trained regression weights for the specified subject. Sets up
+        all necessary components for generating fMRI responses.
+
+        Parameters
+        ----------
+        device : str, default="auto"
+            Target device for computation. Options are "cpu", "cuda", or "auto".
+            If "auto", will use GPU if available, otherwise CPU.
         """
 
         try:
-            # Get the EEG channels and time points dimensions
-            metadata_dir = os.path.join(
-                self.nest_dir, 'encoding_models', 'modality-eeg',
-                'train_dataset-things_eeg_2', 'model-vit_b_32',
-                'metadata', f'metadata_subject-{self.subject:02d}.npy'
-            )
-            metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
-            self.ch_names = metadata_dict['eeg']['ch_names']
-            self.times = metadata_dict['eeg']['times']
 
-            # If selected_channels is set, store the indices
-            if self.selected_channels is not None:
-                self.channel_indices = [self.ch_names.index(ch) for ch in self.selected_channels]
+            # Select the used vertices
+            # If the ROI is provided, select the LH and RH vertices based on the
+            # chosen ROI
+            if self.roi is not None:
+                metadata_dir = os.path.join(
+                    self.nest_dir, 'encoding_models', 'modality-fmri',
+                    'train_dataset-nsd_fsaverage', 'model-vit_b_32',
+                    'metadata', f'metadata_subject-{self.subject:02d}.npy'
+                )
+                metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
+                self.selected_lh_vertices = metadata_dict['fmri']\
+                    ['lh_fsaverage_rois'][self.roi]
+                self.selected_rh_vertices = metadata_dict['fmri']\
+                    ['rh_fsaverage_rois'][self.roi]
+            # Select vertices based on one-hot encoded vector only if the ROI is
+            # not provided
             else:
-                # If no channels selected, use all channels
-                self.channel_indices = range(len(self.ch_names))
-
-            # If selected_timepoints is not set, use all timepoints
-            if self.selected_timepoints is None:
-                self.selected_timepoints = range(len(self.times))
+                # If selected vertices is not set, use all vertice
+                if self.selected_lh_vertices is None:
+                        self.selected_lh_vertices = range(self.VERTICES_LENGTH)
+                if self.selected_rh_vertices is None:
+                        self.selected_rh_vertices = range(self.VERTICES_LENGTH)
 
             # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)
@@ -163,7 +194,8 @@ class EEGEncodingModel(BaseModelInterface):
             self.transform = torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms()
 
             # Load the scaler, PCA, and trained regression weights
-            self.scaler, self.pca, self.regression_weights = self._load_encoding_weights()
+            self.scaler, self.pca, self.lh_reg, self.rh_reg = \
+                self._load_encoding_weights()
 
             print(f"Model loaded on {self.device} for subject {self.subject}")
 
@@ -206,39 +238,37 @@ class EEGEncodingModel(BaseModelInterface):
         feature_extractor = create_feature_extractor(model, return_nodes=model_layers)
         feature_extractor.to(device)
         feature_extractor.eval()
-
+        
         return feature_extractor
 
 
     def _load_encoding_weights(self):
         """
-        Load pretrained scaler and PCA transformation parameters.
         Loads and configures StandardScaler and PCA models with
         pre-computed parameters for feature normalization and
         dimensionality reduction.
 
-        Load trained linear regression models for each EEG repetition.
         Loads the weights for the linear mapping from visual features
-        to EEG responses, with separate models for each repetition.
+        to fMRI responses.
 
         Returns
         -------
         tuple
             A tuple containing (scaler, pca, regression_weights) where:
-            - scaler : StandardScaler - Fitted feature normalization object
-            - pca : PCA - Fitted principal component analysis model
-            - regression_weights: List of scikit-learn LinearRegression models,
-                one per repetition.
+            - scaler : StandardScaler - Fitted feature normalization object.
+            - pca : PCA - Fitted principal component analysis model.
+            - regression_weights: scikit-learn LinearRegression model.
         """
 
         # Load the weights
         weights_dir = os.path.join(
-            self.nest_dir, 'encoding_models', 'modality-eeg',
-            'train_dataset-things_eeg_2', 'model-vit_b_32',
+            self.nest_dir, 'encoding_models', 'modality-fmri',
+            'train_dataset-nsd_fsaverage', 'model-vit_b_32',
             'encoding_models_weights', 'weights_subject-'+
             format(self.subject, '02')+'.npy'
         )
         weights = np.load(weights_dir, allow_pickle=True).item()
+
         # Scaler
         scaler = StandardScaler()
         scaler.scale_ = weights['scaler_param']['scale_']
@@ -248,8 +278,7 @@ class EEGEncodingModel(BaseModelInterface):
         scaler.n_samples_seen_ = weights['scaler_param']['n_samples_seen_']
 
         # PCA
-        n_components = 250
-        pca = PCA(n_components=n_components, random_state=20200220)
+        pca = PCA(n_components=250, random_state=20200220)
         pca.components_ = weights['pca_param']['components_']
         pca.explained_variance_ = weights['pca_param']['explained_variance_']
         pca.explained_variance_ratio_ = weights['pca_param']['explained_variance_ratio_']
@@ -260,32 +289,27 @@ class EEGEncodingModel(BaseModelInterface):
         pca.noise_variance_ = weights['pca_param']['noise_variance_']
         pca.n_features_in_ = weights['pca_param']['n_features_in_']
 
-        # Linear regression
-        regression_weights = []
-        for r in range(len(weights['reg_param'])):
-            reg = LinearRegression()
-            coef_ = np.reshape(weights['reg_param'][f'rep-{r+1}']['coef_'],
-                (len(self.ch_names), len(self.times), n_components))
-            coef_ = coef_[self.channel_indices]
-            coef_ = coef_[:,self.selected_timepoints]
-            reg.coef_ = np.reshape(coef_, (-1, n_components))
-            intercept_ = np.reshape(weights['reg_param'][f'rep-{r+1}']['intercept_'],
-                (len(self.ch_names), len(self.times)))
-            intercept_ = intercept_[self.channel_indices]
-            intercept_ = intercept_[:,self.selected_timepoints]
-            reg.intercept_ = np.reshape(intercept_, -1)
-            reg.n_features_in_ = weights['reg_param'][f'rep-{r+1}']['n_features_in_']
-            regression_weights.append(deepcopy(reg))
+        # LH linear regression parameters
+        lh_reg = LinearRegression()
+        lh_reg.coef_ = weights['lh_reg_param']['coef_'][self.selected_lh_vertices]
+        lh_reg.intercept_ = weights['lh_reg_param']['intercept_'][self.selected_lh_vertices]
+        lh_reg.n_features_in_ = weights['lh_reg_param']['n_features_in_']
 
-        return scaler, pca, regression_weights
+        # RH linear regression parameters
+        rh_reg = LinearRegression()
+        rh_reg.coef_ = weights['rh_reg_param']['coef_'][self.selected_rh_vertices]
+        rh_reg.intercept_ = weights['rh_reg_param']['intercept_'][self.selected_rh_vertices]
+        rh_reg.n_features_in_ = weights['rh_reg_param']['n_features_in_']
+
+        return scaler, pca, lh_reg, rh_reg
 
 
-    def generate_response( # !!!
+    def generate_response(
             self, 
             stimulus: np.ndarray,
             show_progress: bool = True) -> np.ndarray:
         """
-        Generate in silico EEG responses for a batch of images.
+        Generate in silico fMRI responses for a batch of images.
 
         Parameters
         ----------
@@ -300,10 +324,10 @@ class EEGEncodingModel(BaseModelInterface):
 
         Returns
         -------
-        insilico_eeg_responses : np.ndarray
-            In silico EEG response array of shape (batch_size, 4 repetitions,
-            n_channels, n_times), where the number of channels and time points
-            depends on The selection parameter.
+        (lh_insilico_fmri, rh_insilico_fmri) : tuple of np.ndarray
+            LH and RH in silico fMRI response array, each with with shape
+            (batch_size, n_vertices), where the number of vertices depends on
+            The selection parameter.
         """
 
         # Validate stimulus
@@ -320,11 +344,12 @@ class EEGEncodingModel(BaseModelInterface):
         n_batches = int(np.ceil(len(images) / batch_size))
 
         if show_progress:
-            progress_bar = tqdm(range(n_batches), desc='Encoding EEG responses')
+            progress_bar = tqdm(range(n_batches), desc='Encoding fMRI responses')
         else:
             progress_bar = range(n_batches)
 
-        insilico_eeg_responses = None
+        lh_insilico_fmri = None
+        rh_insilico_fmri = None
 
         with torch.no_grad():
             for b in progress_bar:
@@ -345,32 +370,23 @@ class EEGEncodingModel(BaseModelInterface):
                 features = self.pca.transform(features)
                 features = features.astype(np.float32)
 
-                # Generate responses for each repetition
-                insilico_eeg_part = []
-                for reg in self.regression_weights:
-                    # Generate the in silico EEG responses for all channels and timepoints
-                    insilico_eeg = reg.predict(features)
-                    insilico_eeg = insilico_eeg.astype(np.float32)
-
-                    # Reshape to (Images x Channels x Time)
-                    insilico_eeg = np.reshape(insilico_eeg,
-                        (len(insilico_eeg), len(self.channel_indices),
-                        len(self.selected_timepoints))
-                    )
-
-                    insilico_eeg_part.append(np.squeeze(insilico_eeg))
-
-                # Reshape to (Images x Repeats x Channels x Time)
-                batch_responses = np.swapaxes(np.asarray(insilico_eeg_part), 0, 1)
-                batch_responses = batch_responses.astype(np.float32)
+                # Generate the in silico fMRI responses
+                lh_insilico_fmri_batch = self.lh_reg.predict(features).astype(np.float32)
+                rh_insilico_fmri_batch = self.rh_reg.predict(features).astype(np.float32)
 
                 # Combine with previous batches
-                if insilico_eeg_responses is None:
-                    insilico_eeg_responses = batch_responses
+                if lh_insilico_fmri is None:
+                    lh_insilico_fmri = lh_insilico_fmri_batch
+                    rh_insilico_fmri = rh_insilico_fmri_batch
                 else:
-                    insilico_eeg_responses = np.append(
-                        insilico_eeg_responses,
-                        batch_responses, 
+                    lh_insilico_fmri = np.append(
+                        lh_insilico_fmri,
+                        lh_insilico_fmri_batch,
+                        axis=0
+                    )
+                    rh_insilico_fmri = np.append(
+                        rh_insilico_fmri,
+                        rh_insilico_fmri_batch,
                         axis=0
                     )
 
@@ -381,7 +397,7 @@ class EEGEncodingModel(BaseModelInterface):
                         'Total images': len(images)
                     })
 
-        return insilico_eeg_responses
+        return (lh_insilico_fmri, rh_insilico_fmri)
 
 
     @classmethod
@@ -405,6 +421,7 @@ class EEGEncodingModel(BaseModelInterface):
         Dict[str, Any]
             Metadata dictionary.
         """
+
         # If model_instance is provided, extract parameters from it
         if model_instance is not None:
             nest_dir = model_instance.nest_dir
@@ -427,13 +444,13 @@ class EEGEncodingModel(BaseModelInterface):
         validate_subject(subject, cls.VALID_SUBJECTS)
 
         # Build metadata path
-        file_name = os.path.join(nest_dir, 
-                                'encoding_models', 
-                                'modality-eeg',
-                                'train_dataset-things_eeg_2', 
-                                'model-vit_b_32', 
-                                'metadata',
-                                f'metadata_subject-{subject:02d}.npy')
+        file_name = os.path.join(nest_dir,
+                            'encoding_models', 
+                            'modality-fmri',
+                            'train_dataset-nsd_fsaverage', 
+                            'model-vit_b_32', 
+                            'metadata',
+                            f'metadata_subject-{subject:02d}.npy')
 
         # Load metadata if file exists
         if os.path.exists(file_name):
@@ -447,30 +464,33 @@ class EEGEncodingModel(BaseModelInterface):
     def get_model_id(cls) -> str:
         """
         Return the model's unique string identifier.
-        
+
         Returns
         -------
         str
             Model ID string that identifies this model in the registry.
         """
+
         return cls.MODEL_ID
 
 
     def cleanup(self) -> None:
         """
-        Release GPU memory and unload the feature extractor.
+        Release memory and resources associated with the model.
         
         Frees GPU memory by moving models to CPU and clearing CUDA cache
         if available, preventing memory leaks when working with multiple
         models.
         """
-        if hasattr(self, 'feature_extractor'):
+
+        if hasattr(self, 'model') and self.model is not None:
             # Free GPU memory if using CUDA
-            if hasattr(self.feature_extractor, 'to'):
-                self.feature_extractor.to('cpu')
-            
-            self.feature_extractor = None
-            
+            if hasattr(self.model, 'to'):
+                self.model.to('cpu')
+
+            # Clear references to large objects
+            self.model = None
+
             # Force CUDA cache clear if available
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()

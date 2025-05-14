@@ -109,7 +109,7 @@ def validate_binary_array(
 ) -> np.ndarray:
     """
     Validate a binary (one-hot encoded) array.
-    
+
     Parameters
     ----------
     array : any
@@ -118,17 +118,18 @@ def validate_binary_array(
         The expected length of the array
     parameter_name : str, optional
         Name of the parameter for error messages
-        
+
     Returns
     -------
     np.ndarray
         Validated binary array
-        
+
     Raises
     ------
     ValidationError
         If the array is invalid
     """
+
     # Check if array is a list or numpy array
     if not isinstance(array, (list, np.ndarray)):
         raise ValidationError(
@@ -175,6 +176,7 @@ def get_selected_indices(binary_array: np.ndarray) -> np.ndarray:
     np.ndarray
         Array of indices where the value is 1
     """
+
     return np.where(binary_array == 1)[0]
 
 
