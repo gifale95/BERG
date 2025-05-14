@@ -183,9 +183,9 @@ class FMRIEncodingModel(BaseModelInterface):
             else:
                 # If selected vertices is not set, use all vertice
                 if self.selected_lh_vertices is None:
-                    	self.selected_lh_vertices = range(self.VERTICES_LENGTH)
+                        self.selected_lh_vertices = range(self.VERTICES_LENGTH)
                 if self.selected_rh_vertices is None:
-                    	self.selected_rh_vertices = range(self.VERTICES_LENGTH)
+                        self.selected_rh_vertices = range(self.VERTICES_LENGTH)
 
             # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)
