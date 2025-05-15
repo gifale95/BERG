@@ -2,32 +2,55 @@
 How to Access NEST
 ====================
 
-NEST is stored in a Google Drive public folder called *neural_encoding_dataset*. To access this folder, follow these steps:
+NEST is stored in a public Amazon S3 bucket made available through the **AWS Open Data Program**. You do **not need an AWS account** to browse or download the data.
+By downloading the data you will agree to NEST's :doc:`Terms and Conditions </about/terms_and_conditions>`.
 
-1. Fill out the **NEST Data Access Agreement** form `here <https://forms.gle/ZKxEcjBmdYL6zdrg9>`_, where you will also need to agree to NEST's :doc:`Terms and Conditions </about/terms_and_conditions>`.
+To access the bucket, use the following information:
 
-2. After completing the form, you will automatically receive the link to the Google Drive folder where NEST is stored.
+- **Bucket name:** neural-encoding-simulation-toolkit
+- **AWS region:** us-west-2
+- **ARN:** arn:aws:s3:::neural-encoding-simulation-toolkit
 
 .. note::
-   The *neural_encoding_dataset* folder contains many GBs of data, and downloading might take a while. Depending on your needs, you may choose to download only specific parts of the dataset. This documentation provides a detailed description of NEST's content to help you decide what to download.
+   The *neural-encoding-simulation-toolkit* bucket contains many GBs of data. Depending on your needs, you may choose to download only specific folders. This documentation provides a detailed description of NEST's content to help you decide what to download.
 
 Recommended Download Method
 ---------------------------
 
-We recommend downloading the dataset directly from Google Drive via terminal using **Rclone**. 
+The most efficient way to download NEST is using the **AWS Command Line Interface (CLI)**.
 
-**Prerequisites:**
+**Step 1: Install AWS CLI**
 
-* Before downloading NEST via terminal, add a shortcut of the *neural_encoding_dataset* folder to your Google Drive:
-   1. Right-click on the *neural_encoding_dataset* folder.
-   2. Select *Organise* → *Add shortcut*.
-   3. This creates a shortcut (without copying or taking space) to a desired path in your Google Drive.
+You can follow the installation instructions here: https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html
 
-**Using Rclone:**
+**Step 2: Browse or Download Data**
 
-* Rclone is a command-line program to manage files on cloud storage.
-* For installation and usage instructions, visit the `Rclone website <https://rclone.org/>`_.
-* For a step-by-step guide on using Rclone with Google Drive, see `this guide <https://noisyneuron.github.io/nyu-hpc/transfer.html>`_.
+To list all folders in the bucket:
+::
+
+    aws s3 ls --no-sign-request s3://neural-encoding-simulation-toolkit/
+
+To download the entire dataset into a local folder named `neural-encoding-simulation-toolkit`:
+::
+
+    aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit ./neural-encoding-simulation-toolkit
+
+To download only a specific subfolder (e.g., models trained on fMRI data):
+::
+
+    aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit/encoding_models/modality-fmri ./modality-fmri
+
+You can also use `--dryrun` to preview what would be downloaded:
+::
+
+    aws s3 sync --no-sign-request --dryrun s3://neural-encoding-simulation-toolkit ./neural-encoding-simulation-toolkit
+
+**Optional Web Access**
+
+You can access files directly from your browser using:
+::
+
+    https://neural-encoding-simulation-toolkit.s3.us-west-2.amazonaws.com/index.html
 
 
 ============================
@@ -43,7 +66,7 @@ The main folder structure follows this pattern:
 
 .. code-block:: text
 
-    neural_encoding_simulation_toolkit/
+    neural-encoding-simulation-toolkit/
     ├── encoding_models/
     │   ├── modality-{modality}/
     │   │   ├── train_dataset-{dataset}/

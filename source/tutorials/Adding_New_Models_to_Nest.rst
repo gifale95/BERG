@@ -10,68 +10,14 @@ Overview
 
 Adding a new model to NEST requires creating two main files:
 
-1. **A Python model file** — implements the model's logic and interface
-2. **A YAML configuration file** — describes the model's parameters and behavior
+1. **A Python model file** — implements the model's core logic (i.e., how it processes input stimuli to produce predicted neural responses) and defines a standard interface (i.e., functions like ``predict()`` that allow the model to interact with NEST).
+2. **A YAML configuration file** — describes the model's parameters and behavior, including information about the model architecture, training data, and training procedure.
 
-These two files work together to register your model with NEST and make it accessible through the unified interface.
+These two files work together to register your encoding model with NEST and make it compatible with NEST's unified interface — a common structure that allows users to call any model in the same way, regardless of its internal details.
 
-Quick Start: Model Implementation Template
-===========================================
 
-Here's a barebones version of a Python model file that shows only the required structure.  
-We will expand on this template throughout the tutorial to build a fully functional model.
 
-You can use this as a starting point and fill in the details specific to your model.
-
-.. code-block:: python
-
-    from nest.interfaces.base_model import BaseModelInterface
-    from nest.core.model_registry import register_model
-
-    # Load model info from YAML
-    def load_model_info():
-        path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "your_model_id.yaml")
-        with open(path, "r") as f:
-            return yaml.safe_load(f)
-
-    model_info = load_model_info()
-
-    register_model(
-        model_id=model_info["model_id"],
-        module_path="nest.models.your_modality.your_model_file",
-        class_name="YourModelClass",
-        modality=model_info["modality"],
-        dataset=model_info["dataset"],
-        yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "your_model_id.yaml")
-    )
-
-    class YourModelClass(BaseModelInterface):
-        def __init__(self, subject, device="auto", nest_dir=None, **kwargs):
-            # Set up model parameters and device
-            pass
-
-        def load_model(self):
-            # Load model weights and prepare for inference
-            pass
-
-        def generate_response(self, stimulus, **kwargs):
-            # Generate simulated neural responses
-            pass
-
-        def get_metadata(self):
-            # Return model metadata
-            pass
-
-        @classmethod
-        def get_model_id(cls):
-            # Return the model ID string
-            pass
-
-        def cleanup(self):
-            # Free up any resources (e.g., GPU memory)
-            pass
-
-Step 1: Determining Your Model's Location
+Step 1: Determining Your Model's Location in the GitHub repository
 ==========================================
 
 First, determine which **modality** your model belongs to:
@@ -125,38 +71,38 @@ Here's a template for your YAML configuration file:
 
     # General description of the model
     description: |
-      Provide a concise but informative description of the model, including:
-       - What kind of neural responses it generates
-       - What dataset it was trained on
-       - The basic approach/architecture
-       - Any notable characteristics or limitations
-       Keep this to 3-5 sentences for readability.
+    Provide a concise but informative description of the model, including:
+    - What kind of in silico neural responses it generates
+    - What dataset it was trained on
+    - The basic approach/architecture
+    - Any notable characteristics or limitations
+    Keep this to 3-5 sentences for readability.
 
     # Input stimulus information
     input:
-      type: "numpy.ndarray"  # or other appropriate type
-      shape: [shape_description]  # e.g., [batch_size, 3, height, width]
-      description: "Brief description of input format"
-      constraints:
+    type: "numpy.ndarray"  # or other appropriate type
+    shape: [shape_description]  # e.g., [batch_size, 3, height, width]
+    description: "Brief description of input format"
+    constraints:
         - "List any constraints on input values"
         - "e.g., value ranges, size requirements, etc."
 
     # Output information
     output:
-      type: "numpy.ndarray"  # or other appropriate type
-      shape: [shape_description]  # e.g., [batch_size, n_voxels]
-      description: "Brief description of output format"
-      dimensions:
+    type: "numpy.ndarray"  # or other appropriate type
+    shape: [shape_description]  # e.g., [batch_size, n_voxels]
+    description: "Brief description of output format"
+    dimensions:
         - name: "dimension_name"
-          description: "What this dimension represents"
+        description: "What this dimension represents"
         - name: "dimension_name"
-          description: "What this dimension represents"
+        description: "What this dimension represents"
         # Add more dimensions as needed
 
     # Model parameters and their usage
     parameters:
-      # First parameter (typically subject)
-      param_name:
+    # First parameter
+    param_name:
         type: param_type  # e.g., int, str, float
         required: true/false
         valid_values: list_of_valid_values  # or range, or omit if not applicable
@@ -164,25 +110,14 @@ Here's a template for your YAML configuration file:
         example: example_value
         description: "Description of what this parameter represents"
         function: "Which function uses this parameter: get_encoding_model, load_model, .."
-      
-      # Add more parameters as needed
-      param_name:
-        type: param_type
-        required: true/false
-        valid_values: list_of_valid_values  # or range, or omit if not applicable
-        default: default_value  # include if there's a default value
-        example: example_value
-        description: "Description of what this parameter represents"
-        function: "Which function uses this parameter"
 
-
-      # Selection parameter to define specific outputs (ROI, channels, timepoints, etc.)
-      selection:
+    # Selection parameter to define specific outputs (ROI, channels, timepoints, etc.)
+    selection:
         type: dict
         required: true
         description: |
-        Specifies which outputs to include in the model responses.
-        This parameter defines for which data the in silico responses should be generated 
+        Specifies which outputs to include in the in silico model responses.
+        This parameter defines for which data the in silico responses should be generated
         (e.g., specific ROI, timepoints, channels, etc.)
         function: get_encoding_model
         properties:
@@ -191,23 +126,34 @@ Here's a template for your YAML configuration file:
             description: "Description of Model-specific selection criterion."
             example: "V1"
 
+    # Add more parameters as needed
+    param_name:
+        type: param_type
+        required: true/false
+        valid_values: list_of_valid_values  # or range, or omit if not applicable
+        default: default_value  # include if there's a default value
+        example: example_value
+        description: "Description of what this parameter represents"
+        function: "Which function uses this parameter"
+
     # Performance metrics (if needed) and references
     performance:
-      metrics:
+    metrics:
         - name: "metric_name"
-          value: "metric_value"
-          description: "What this metric represents"
+        value: "metric_value"
+        description: "What this metric represents"
         
         # Add more metrics as needed
         - name: "metric_name"
-          value: "metric_value"
-          description: "What this metric represents"
-      
-      plots: "URL_to_performance_plots"  # URL or path to visualizations
+        value: "metric_value"
+        description: "What this metric represents"
+    
+    plots: "URL_to_performance_plots"  # URL or path to visualizations
 
     # Add References here
     references:
-        - "Citation for your model or dataset"
+        - "Citation for your model or training dataset"
+
 
 Step 3: Implementing the Model Class
 ====================================
@@ -232,7 +178,6 @@ This code:
     import yaml
     from nest.core.model_registry import register_model
 
-
     # Load model info from YAML
     def load_model_info():
         yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "your_model_id.yaml")
@@ -248,7 +193,7 @@ This code:
         module_path="nest.models.your_modality.your_model_file",  # Replace with actual path
         class_name="YourModelClass",
         modality=model_info.get("modality", "your_modality"),
-        dataset=model_info.get("dataset", "your_dataset"),
+        training_dataset=model_info.get("training_dataset", "your_dataset"),
         yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "your_model_id.yaml")
     )
 
@@ -264,19 +209,25 @@ The initialization method:
 3. Sets up the compute device (CPU or GPU)  
 4. Can process additional model-specific parameters through `**kwargs`
 
+Most importantly, you can include a `selection` parameter to specify which parts of the model output should be returned.  
+This is useful for selecting specific brain regions (e.g., "V1"), timepoints, or channels from the full in silico response.  
+It allows users to work with only the subset of data relevant to their analysis, reducing memory usage and improving flexibility.  
+The structure and valid values of this parameter should be defined in the model’s YAML configuration file (see above).
+
 .. code-block:: python
+
 
     class YourModelClass(BaseModelInterface):
         """
         Your model description here. Explain what this model does, what
-        neural responses it generates, and any other important details.
+        in silico neural responses it generates, and any other important details.
         """
         
         MODEL_ID = model_info["model_id"]
         # Extract any validation info from model_info
         VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
         
-        def __init__(self, subject: int, device: str = "auto", nest_dir: Optional[str] = None, **kwargs):
+        def __init__(self, subject: int, selection: Dict, device: str = "auto", nest_dir: Optional[str] = None, **kwargs):
             """
             Initialize your model with the required parameters.
             
@@ -284,6 +235,9 @@ The initialization method:
             ----------
             subject : int
                 Subject ID for subject-specific models.
+            selection : dict
+                Specifies which outputs to include in the model responses
+                (ROI, Time interval, ...)
             device : str
                 Device to run the model on ('cpu', 'cuda', or 'auto').
             nest_dir : str, optional
@@ -294,6 +248,7 @@ The initialization method:
             self.subject = subject
             self.nest_dir = nest_dir
             self.model = None
+            self.selection = selection
             self._validate_parameters()
             
             # Select device
@@ -312,8 +267,23 @@ The initialization method:
                 raise InvalidParameterError(
                     f"Subject must be one of {self.VALID_SUBJECTS}, got {self.subject}"
                 )
+
+            # For selection Paramter if available
+            if self.selection is not None:
+                # Validate selection keys
+                validate_selection_keys(self.selection, self.SELECTION_KEYS)
+
+                # Individual validations (example of ROIs)
+                if "roi" in self.selection:
+                    self.roi = validate_roi(
+                        self.selection["roi"], self.VALID_ROIS
+                    )
+            # Ensure selection is provided
+            else:
+                raise InvalidParameterError("Parameter 'selection' is required but was not provided")
             
             # Add any other parameter validation here
+
 
 3.3: Loading the Model
 ----------------------
@@ -368,6 +338,7 @@ This method:
 
 Customize this method based on your model's specific requirements and output format.
 
+If you implement the `selection parameter` (`self.selection`) to select specific ROIs or timeintervals, make sure that given those parameters only those models are loaded to save memory and computation time!
 
 
 .. code-block:: python
@@ -385,12 +356,12 @@ Customize this method based on your model's specific requirements and output for
             Input stimulus array. Typically has shape (batch_size, channels, height, width)
             for image stimuli, but requirements vary by model.
         **kwargs
-            Additional model-specific parameters for response generation.
+            Additional model-specific parameters for in silico response generation.
         
         Returns
         -------
         np.ndarray
-            Simulated neural responses. Shape depends on your model's output.
+            Simulated in silico neural responses. Shape depends on your model's output.
         """
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -399,125 +370,117 @@ Customize this method based on your model's specific requirements and output for
             )
         
         # Preprocess stimulus if needed
-        # preprocessed_stimulus = preprocess(stimulus)
+        preprocessed_stimulus = preprocess(stimulus)
         
-        # Generate responses
-        # with torch.no_grad():
-        #     batch_size = 100  # Adjust as needed
-        #     responses = []
-        #     
-        #     for i in range(0, len(stimulus), batch_size):
-        #         batch = torch.from_numpy(stimulus[i:i+batch_size]).to(self.device)
-        #         output = self.model(batch)
-        #         responses.append(output.cpu().numpy())
-        #     
-        #     all_responses = np.concatenate(responses, axis=0)
+        # Generate in silico responses
+        with torch.no_grad():
+            batch_size = 100  # Adjust as needed
+            responses = []
+            
+            for i in range(0, len(stimulus), batch_size):
+                batch = torch.from_numpy(stimulus[i:i+batch_size]).to(self.device)
+                output = self.model(batch)
+                responses.append(output.cpu().numpy())
+            
+            all_responses = np.concatenate(responses, axis=0)
         
-        # For now, return dummy data with expected shape
-        # Replace this with your actual model inference
-        dummy_response = np.zeros((stimulus.shape[0], 100))  # Example shape
-        
-        return dummy_response
+        return all_responses
+
 
 3.5: Accessing Metadata
 -----------------------
 
-The ``get_metadata()`` method provides information about the model and its outputs:
+The ``get_metadata()`` method provides information about your encoding model and the shape or structure of its in silico responses.
+This might include voxel indices, channel names, ROIs, timepoint definitions, or any other output-relevant detail.
 
-This method:
+To support metadata access *without having to load the full model*, NEST allows retrieving metadata in two ways:
 
-1. Attempts to load metadata from a predefined location  
-2. Returns the metadata as a dictionary  
-3. Provides basic information if no metadata file is found  
+- **During encoding**:
+  ``_, metadata = nest_object.encode(model_id, stimuli, return_metadata=True)``
 
-The metadata may include information about voxel indices, channel information, region details, or other model-specific information.
+- **Directly through the NEST API** (without loading the model):
+  ``metadata = nest_object.get_model_metadata(model_id, subject=..., roi=...)``
 
+To support this flexibility, you must implement a ``@classmethod get_metadata()`` in your model class.
+This method can extract metadata either from a provided model instance or from the input parameters alone.
 
-The ``get_metadata()`` method is a versatile function that provides information about your model and its outputs. This method is designed to be flexible, allowing it to be called in three different contexts:
+Below is a template showing the recommended structure.
+You can adapt it depending on whether your model uses ROIs, timepoints, or other selection parameters.
 
-1. **Class method with explicit parameters**: When users want metadata without initializing the model
-2. **Instance method**: When called on an already initialized model
-3. **During encoding**: When users request metadata alongside model responses
+This is the most complicated function to implement but you should be able to "blindly" follow this template and just add your missing variables. Feel free to refer to existing models for concrete implementations:
 
-The metadata may include information about voxel indices, channel information, region details, or other model-specific information.
-
-This function is a bit more complicated because it needs to handle **all three scenarios**.
-However, we tried to make the code snippet below as understandable as possible so that you just need to fill in all the missing information and paste it into your function! Always feel free to check out the existing implementations for reference.
-
+- `fMRI model example <https://github.com/gifale95/NEST/blob/main/nest/models/fmri/nsd_fwrf.py>`_
+- `EEG model example <https://github.com/gifale95/NEST/blob/main/nest/models/eeg/things_eeg.py>`_
 
 .. code-block:: python
 
     @classmethod
-    def get_metadata(cls, nest_dir=None, subject=None, model_instance=None, 
-                    # Add any model-specific parameters here (e.g., roi=None)
-                    **kwargs) -> Dict[str, Any]:
+    def get_metadata(cls, nest_dir=None, subject=None, model_instance=None, roi=None, **kwargs) -> Dict[str, Any]:
         """
         Retrieve metadata for the model.
-        
+
         Parameters
         ----------
-        nest_dir : str, optional
-            Path to NEST directory.
-        subject : int, optional
+        nest_dir : str
+            Path to the NEST directory where metadata is stored.
+        subject : int
             Subject number.
         model_instance : BaseModelInterface, optional
-            If provided, extract parameters from this model instance.
-        # Document any model-specific parameters here
+            If provided, parameters can be extracted directly from the model instance.
+        roi : str, optional
+            Region of interest (if applicable).
         **kwargs
-            Additional parameters.
-                
+            Additional model-specific parameters.
+
         Returns
         -------
         Dict[str, Any]
             Metadata dictionary.
         """
-        # STEP 1: Detect calling context and extract parameters
-        # If model_instance is provided, extract parameters from it
+        
+        # Extract parameters from instance if available
         if model_instance is not None:
             nest_dir = model_instance.nest_dir
             subject = model_instance.subject
-            # Extract any model-specific parameters you need
-            # For example: roi = model_instance.roi
-        
-        # If this method is called on an instance (rather than the class)
+            roi = getattr(model_instance, "roi", roi)
+
+        # Also allow metadata retrieval from class instance
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
-            # 'cls' is actually an instance in this case
             nest_dir = cls.nest_dir
             subject = cls.subject
-            # Extract any model-specific attributes
-            # For example: roi = cls.roi
+            roi = getattr(cls, "roi", roi)
+
+        # Validate required parameters
+        missing = []
+        if nest_dir is None: missing.append("nest_dir")
+        if subject is None: missing.append("subject")
+        if roi is None and "VALID_ROIS" in dir(cls): missing.append("roi")
         
-        # STEP 2: Validate required parameters
-        missing_params = []
-        if nest_dir is None: missing_params.append('nest_dir')
-        if subject is None: missing_params.append('subject')
-        # Add checks for any other required parameters
-        # For example: if roi is None: missing_params.append('roi')
-        
-        if missing_params:
-            raise InvalidParameterError(f"Required parameters missing: {', '.join(missing_params)}")
-        
-        # STEP 3: Validate parameter values
+        if missing:
+            raise InvalidParameterError(f"Required parameters missing: {', '.join(missing)}")
+
+        # Optional: validate against allowed values
         validate_subject(subject, cls.VALID_SUBJECTS)
-        # Add validation for any other parameters
-        # For example: validate_roi(roi, cls.VALID_ROIS)
-        
-        # STEP 4: Build metadata file path
-        # CUSTOMIZE THIS PATH for your specific model
-        file_name = os.path.join(nest_dir, 
-                                'encoding_models', 
-                                'modality-YOUR_MODALITY',  # Replace with your modality
-                                'train_dataset-YOUR_DATASET',  # Replace with your dataset
-                                'model-YOUR_MODEL_NAME',  # Replace with your model name
-                                'metadata',
-                                f'metadata_sub-{subject:02d}.npy')  # Customize filename format
-        
-        # STEP 5: Load and return metadata
-        if os.path.exists(file_name):
-            metadata = np.load(file_name, allow_pickle=True).item()
+        if roi is not None and hasattr(cls, "VALID_ROIS"):
+            validate_roi(roi, cls.VALID_ROIS)
+
+        # Build metadata path
+        filename = os.path.join(
+            nest_dir,
+            "encoding_models",
+            "modality-<your_modality>",               # e.g., modality-fmri
+            "train_dataset-<your_dataset>",           # e.g., train_dataset-nsd
+            "model-<your_model_id>",                  # e.g., model-vit_b_32
+            "metadata",
+            f"metadata_sub-{subject:02d}" + (f"_roi-{roi}" if roi else "") + ".npy"
+        )
+
+        # Load metadata
+        if os.path.exists(filename):
+            metadata = np.load(filename, allow_pickle=True).item()
             return metadata
         else:
-            raise FileNotFoundError(f"Metadata file not found: {file_name}")
+            raise FileNotFoundError(f"Metadata file not found at: {filename}")
 
 3.6: Auxiliary Methods
 ----------------------
@@ -557,7 +520,12 @@ Finally, implement these required auxiliary methods:
 3.7: Complete Model Implementation
 ----------------------------------
 
-Here's the complete implementation of a model class:
+Here's the complete implementation of a model class.
+
+For more detailed examples, you can refer to existing models:
+
+- `fMRI model example <https://github.com/gifale95/NEST/blob/main/nest/models/fmri/nsd_fwrf.py>`_
+- `EEG model example <https://github.com/gifale95/NEST/blob/main/nest/models/eeg/things_eeg.py>`_
 
 .. code-block:: python
 
@@ -586,22 +554,24 @@ Here's the complete implementation of a model class:
         module_path="nest.models.your_modality.your_model_file",  # Replace with actual path
         class_name="YourModelClass",
         modality=model_info.get("modality", "your_modality"),
-        dataset=model_info.get("dataset", "your_dataset"),
+        training_dataset=model_info.get("training_dataset", "your_dataset"),
         yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "your_model_id.yaml")
     )
+
+
 
 
     class YourModelClass(BaseModelInterface):
         """
         Your model description here. Explain what this model does, what
-        neural responses it generates, and any other important details.
+        in silico neural responses it generates, and any other important details.
         """
 
         MODEL_ID = model_info["model_id"]
         # Extract any validation info from model_info
         VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
 
-        def __init__(self, subject: int, device: str = "auto", nest_dir: Optional[str] = None, **kwargs):
+        def __init__(self, subject: int, selection: Dict, device: str = "auto", nest_dir: Optional[str] = None, **kwargs):
             """
             Initialize your model with the required parameters.
 
@@ -609,6 +579,9 @@ Here's the complete implementation of a model class:
             ----------
             subject : int
                 Subject ID for subject-specific models.
+            selection : dict
+                Specifies which outputs to include in the model responses
+                (ROI, Time interval, ...)
             device : str
                 Device to run the model on ('cpu', 'cuda', or 'auto').
             nest_dir : str, optional
@@ -619,6 +592,7 @@ Here's the complete implementation of a model class:
             self.subject = subject
             self.nest_dir = nest_dir
             self.model = None
+            self.selection = selection
             self._validate_parameters()
 
             # Select device
@@ -637,6 +611,20 @@ Here's the complete implementation of a model class:
                 raise InvalidParameterError(
                     f"Subject must be one of {self.VALID_SUBJECTS}, got {self.subject}"
                 )
+
+            # For selection Paramter if available
+            if self.selection is not None:
+                # Validate selection keys
+                validate_selection_keys(self.selection, self.SELECTION_KEYS)
+
+                # Individual validations (example of ROIs)
+                if "roi" in self.selection:
+                    self.roi = validate_roi(
+                        self.selection["roi"], self.VALID_ROIS
+                    )
+            # Ensure selection is provided
+            else:
+                raise InvalidParameterError("Parameter 'selection' is required but was not provided")
 
             # Add any other parameter validation here
 
@@ -675,12 +663,12 @@ Here's the complete implementation of a model class:
                 Input stimulus array. Typically has shape (batch_size, channels, height, width)
                 for image stimuli, but requirements vary by model.
             **kwargs
-                Additional model-specific parameters for response generation.
+                Additional model-specific parameters for in silico response generation.
 
             Returns
             -------
             np.ndarray
-                Simulated neural responses. Shape depends on your model's output.
+                Simulated in silico neural responses. Shape depends on your model's output.
             """
             # Validate stimulus
             if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -689,50 +677,91 @@ Here's the complete implementation of a model class:
                 )
 
             # Preprocess stimulus if needed
-            # preprocessed_stimulus = preprocess(stimulus)
+            preprocessed_stimulus = preprocess(stimulus)
 
-            # Generate responses
-            # with torch.no_grad():
-            #     batch_size = 100  # Adjust as needed
-            #     responses = []
-            #
-            #     for i in range(0, len(stimulus), batch_size):
-            #         batch = torch.from_numpy(stimulus[i:i+batch_size]).to(self.device)
-            #         output = self.model(batch)
-            #         responses.append(output.cpu().numpy())
-            #
-            #     all_responses = np.concatenate(responses, axis=0)
+            # Generate in silico responses
+            with torch.no_grad():
+                batch_size = 100  # Adjust as needed
+                responses = []
 
-            # For now, return dummy data with expected shape
-            # Replace this with your actual model inference
-            dummy_response = np.zeros((stimulus.shape[0], 100))  # Example shape
+                for i in range(0, len(stimulus), batch_size):
+                    batch = torch.from_numpy(stimulus[i:i+batch_size]).to(self.device)
+                    output = self.model(batch)
+                    responses.append(output.cpu().numpy())
 
-            return dummy_response
+                all_responses = np.concatenate(responses, axis=0)
 
-        def get_metadata(self) -> Dict[str, Any]:
+            return all_responses
+
+
+
+        @classmethod
+        def get_metadata(cls, nest_dir=None, subject=None, model_instance=None, roi=None, **kwargs) -> Dict[str, Any]:
             """
-            Return metadata about the model and its outputs.
+            Retrieve metadata for the model.
+
+            Parameters
+            ----------
+            nest_dir : str
+                Path to the NEST directory where metadata is stored.
+            subject : int
+                Subject number.
+            model_instance : BaseModelInterface, optional
+                If provided, parameters can be extracted directly from the model instance.
+            roi : str, optional
+                Region of interest (if applicable).
+            **kwargs
+                Additional model-specific parameters.
 
             Returns
             -------
             Dict[str, Any]
-                Dictionary containing model metadata.
+                Metadata dictionary.
             """
-            # Load metadata file if available
-            metadata_path = os.path.join(
-                    self.nest_dir,
-                    'your_path') # Adjust filename format as needed
 
-            try:
-                metadata = np.load(metadata_path, allow_pickle=True).item()
+            # Extract parameters from instance if available
+            if model_instance is not None:
+                nest_dir = model_instance.nest_dir
+                subject = model_instance.subject
+                roi = getattr(model_instance, "roi", roi)
+
+            # Also allow metadata retrieval from class instance
+            elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
+                nest_dir = cls.nest_dir
+                subject = cls.subject
+                roi = getattr(cls, "roi", roi)
+
+            # Validate required parameters
+            missing = []
+            if nest_dir is None: missing.append("nest_dir")
+            if subject is None: missing.append("subject")
+            if roi is None and "VALID_ROIS" in dir(cls): missing.append("roi")
+
+            if missing:
+                raise InvalidParameterError(f"Required parameters missing: {', '.join(missing)}")
+
+            # Optional: validate against allowed values
+            validate_subject(subject, cls.VALID_SUBJECTS)
+            if roi is not None and hasattr(cls, "VALID_ROIS"):
+                validate_roi(roi, cls.VALID_ROIS)
+
+            # Build metadata path
+            filename = os.path.join(
+                nest_dir,
+                "encoding_models",
+                "modality-<your_modality>",               # e.g., modality-fmri
+                "train_dataset-<your_dataset>",           # e.g., train_dataset-nsd
+                "model-<your_model_id>",                  # e.g., model-vit_b_32
+                "metadata",
+                f"metadata_sub-{subject:02d}" + (f"_roi-{roi}" if roi else "") + ".npy"
+            )
+
+            # Load metadata
+            if os.path.exists(filename):
+                metadata = np.load(filename, allow_pickle=True).item()
                 return metadata
-            except Exception as e:
-                # If no metadata file exists, return basic info
-                return {
-                    "model_id": self.MODEL_ID,
-                    "subject": self.subject,
-                    # Add any other relevant metadata
-                }
+            else:
+                raise FileNotFoundError(f"Metadata file not found at: {filename}")
 
         @classmethod
         def get_model_id(cls) -> str:
@@ -861,6 +890,58 @@ If you would like to contribute your model back to NEST:
    - Any relevant **citations** or **references**.
 
 We look forward to your contributions and are excited to see the creative ways the community expands NEST!
+
+
+
+.. _uploading_model_weights:
+
+Uploading Your Model Weights
+===========================
+
+After implementing and testing your model, the final step is to upload the trained weights and associated metadata so that others can use your model through NEST.
+
+Step 1: Follow the NEST Directory Structure
+------------------------------------------
+
+Please organize your files following the official NEST dataset structure, as described in the `NEST documentation <https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/data_storage.html#nest-dataset-structure>`_:
+
+.. code-block:: text
+
+    neural-encoding-simulation-toolkit/
+    ├── encoding_models/
+    │   ├── modality-{modality}/
+    │   │   ├── train_dataset-{dataset}/
+    │   │   │   └── model-{model}/
+    │   │   │       ├── encoding_models_accuracy/
+    │   │   │       ├── encoding_models_weights/
+    │   │   │       └── metadata/
+    └── nest_tutorials/
+
+Replace ``{modality}``, ``{dataset}``, and ``{model}`` with the appropriate values (e.g., ``modality-fmri``, ``train_dataset-nsd``, ``model-fwrf``).
+
+Each model directory must contain the following subfolders:
+
+- ``encoding_models_weights/``: your model weights (e.g., ``.pth``, ``.npz``, etc.)
+- ``encoding_models_accuracy/``: performance metrics or evaluation results
+- ``metadata/``: precomputed metadata files returned by your ``get_metadata()`` method
+
+Step 2: Create a Zip Archive
+---------------------------
+
+Once the directory is correctly structured, compress the entire ``neural-encoding-simulation-toolkit/`` folder into a ``.zip`` archive.
+
+Step 3: Upload to a Cloud Service
+--------------------------------
+
+Upload the ``.zip`` file to a cloud storage provider that provides a **public direct download link**. Make sure that access permissions are set to **public or viewable by link**.
+
+Step 4: Submit a Pull Request
+----------------------------
+
+Include the public link to your ``.zip`` archive in your pull request.
+For detailed instructions on contributing to NEST, please refer to the official guide: `How to contribute <https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/contribution.html>`_
+
+
 
 Citation
 ========
