@@ -25,7 +25,7 @@ class NEST:
         
     def get_model_catalog(self, print_format: bool = False) -> Dict[str, List[str]]:
         """
-        Get a catalog of available models organized by modality and dataset.
+        Get a catalog of available models organized by modality and training dataset.
         
         Parameters
         ----------
@@ -44,7 +44,7 @@ class NEST:
         
         for model_id, info in MODEL_REGISTRY.items():
             modality = info.get("modality")
-            dataset = info.get("dataset")
+            training_dataset = info.get("training_dataset")
             
             # Handle missing modality
             if not modality:
@@ -52,15 +52,15 @@ class NEST:
                 modality = parts[0] if parts else "unknown"
                 
             # Handle missing dataset
-            if not dataset:
+            if not training_dataset:
                 parts = model_id.split('_')
-                dataset = parts[1] if len(parts) > 1 else "unknown"
+                training_dataset = parts[1] if len(parts) > 1 else "unknown"
             
             # Add to catalog
             if modality not in catalog:
                 catalog[modality] = set()
             
-            catalog[modality].add(dataset)
+            catalog[modality].add(training_dataset)
         
         # Convert sets to sorted lists for more predictable output
         formatted_catalog = {modality: sorted(datasets) for modality, datasets in catalog.items()}

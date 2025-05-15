@@ -40,7 +40,7 @@ register_model(
     module_path="nest.models.eeg.things_eeg",
     class_name="EEGEncodingModel",
     modality=model_info.get("modality", "eeg"),
-    dataset=model_info.get("dataset", "things_eeg_2"),
+    training_dataset=model_info.get("training_dataset", "things_eeg_2"),
     yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg-things_eeg_2-vit_b_32.yaml")
 )
 

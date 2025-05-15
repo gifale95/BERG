@@ -40,7 +40,7 @@ register_model(
     module_path="nest.models.fmri.nsd_fsaverage_vit_b_32",
     class_name="FMRIEncodingModel",
     modality=model_info.get("modality", "fmri"),
-    dataset=model_info.get("dataset", "nsd_fsaverage"),
+    training_dataset=model_info.get("training_dataset", "nsd_fsaverage"),
     yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-vit_b_32.yaml")
 )
 
