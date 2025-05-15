@@ -38,10 +38,21 @@ You will additionally need to install the Python dependencies found in [requirem
 ### 🧰 Download the Neural Encoding Simulation Toolkit encoding models
 
 
-To use `NEST`, you first need to download the trained encoding models from [here][nest_data]. Depending on your needs, you might download all or only parts of the toolkit. Please refer to the [documentation][nest_structure] to understand how NEST is structured.
-We recommend downloading the folder directly from Google Drive via terminal using [Rclone][rclone]. [Here][guide] is a step-by-step guide for using Rclone. Before downloading, add a shortcut of the `neural_encoding_simulation_toolkit` folder to your Google Drive by right-clicking on the folder and selecting `Organise` → `Add shortcut`.
+NEST is hosted as a public AWS S3 bucket via the AWS Open Data Program. You do **not need an AWS account** to [browse](https://neural-encoding-simulation-toolkit.s3.us-west-2.amazonaws.com/index.html) or download the data.
 
+To download the full dataset into a local folder named `neural-encoding-simulation-toolkit`, use the AWS CLI:
 
+```bash
+aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit ./neural-encoding-simulation-toolkit
+```
+
+You can also download specific subfolders, for example:
+
+```bash
+aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit/encoding_models/modality-fmri ./modality-fmri
+```
+
+For detailed instructions and folder structure, see the [full documentation](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/data_storage.html#).
 
 
 ### 🧠 Available encoding models
