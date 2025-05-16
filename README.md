@@ -35,12 +35,14 @@ You will additionally need to install the Python dependencies found in [requirem
 
 ## 🕹️ How to use
 
-### 🧰 Download the Neural Encoding Simulation Toolkit encoding models
+### 🧰 Download the Neural Encoding Simulation Toolkit
 
 
-NEST is hosted as a public AWS S3 bucket via the AWS Open Data Program. You do **not need an AWS account** to [browse](https://neural-encoding-simulation-toolkit.s3.us-west-2.amazonaws.com/index.html) or download the data.
+NEST is hosted as a public [AWS S3 bucket](](https://neural-encoding-simulation-toolkit.s3.us-west-2.amazonaws.com/index.html)) via the AWS Open Data Program. You do **not need an AWS account** to browse or download the data.
 
-To download the full dataset into a local folder named `neural-encoding-simulation-toolkit`, use the AWS CLI:
+<font color='red'><b>IMPORTANT:</b></font> By downloading the data you agree to NEST's [Terms and Conditions](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/about/terms_and_conditions.html).
+
+To download the full NEST dataset into a local folder named `neural-encoding-simulation-toolkit`, use the AWS CLI:
 
 ```bash
 aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit ./neural-encoding-simulation-toolkit
@@ -52,7 +54,7 @@ You can also download specific subfolders, for example:
 aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit/encoding_models/modality-fmri ./modality-fmri
 ```
 
-For detailed instructions and folder structure, see the [full documentation](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/data_storage.html#).
+For detailed instructions and folder structure, see the [documentation](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/data_storage.html#).
 
 
 ### 🧠 Available encoding models
@@ -77,7 +79,7 @@ To use `NEST`'s functions, you first need to import `NEST` and create a `nest_ob
 from nest import NEST
 
 # Initialize NEST with the path to the toolkit
-nest = NEST(nest_dir="path/to/neural_encoding_simulation_toolkit")
+nest = NEST(nest_dir="path/to/neural-encoding-simulation-toolkit")
 ```
 #### 🔹 Generate in silico neural responses to stimuli
 

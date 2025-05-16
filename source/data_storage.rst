@@ -2,8 +2,7 @@
 How to Access NEST
 ====================
 
-NEST is stored in a public Amazon S3 bucket made available through the **AWS Open Data Program**. You do **not need an AWS account** to browse or download the data.
-By downloading the data you will agree to NEST's :doc:`Terms and Conditions </about/terms_and_conditions>`.
+NEST is stored in a public `Amazon S3 bucket <https://neural-encoding-simulation-toolkit.s3.us-west-2.amazonaws.com/index.html>`_ made available through the **AWS Open Data Program**. You do **not need an AWS account** to browse or download the data. By downloading the data you agree to NEST's :doc:`Terms and Conditions </about/terms_and_conditions>`.
 
 To access the bucket, use the following information:
 
@@ -82,7 +81,7 @@ Detailed Structure of Encoding Models
 The ``encoding_models`` directory contains all trained models organized hierarchically by:
 
 1. **modality:** The neural recording recording modality on which the encoding model was trained (e.g., ``fmri``, ``eeg``).
-2. **dataset:** The neural dataset on which the encoding model was trained (e.g., ``nsd``, ``things_eeg_2``).
+2. **train_dataset:** The neural dataset on which the encoding model was trained (e.g., ``nsd``, ``things_eeg_2``).
 3. **model:** The type of encoding model used (e.g., ``fwrf``, ``vit_b_32``).
 
 
