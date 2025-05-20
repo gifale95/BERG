@@ -10,7 +10,7 @@ def register_model(
     module_path: str, 
     class_name: Optional[str] = None, 
     modality: str = None, 
-    dataset: str = None,
+    training_dataset: str = None,
     yaml_path: str = None
 ):
     """
@@ -26,7 +26,7 @@ def register_model(
         Name of the model class. If not provided, defaults to model_id.
     modality : str, optional
         Associated data modality (e.g., 'fmri', 'eeg').
-    dataset : str, optional
+    training_dataset : str, optional
         Dataset on which the model was trained (e.g., 'NSD', 'THINGS_EEG_2').
     yaml_path : str, optional
         Path to the YAML metadata file that describes the model.
@@ -35,7 +35,7 @@ def register_model(
         "module_path": module_path,
         "class_name": class_name or model_id,
         "modality": modality,
-        "dataset": dataset,
+        "training_dataset": training_dataset,
         "yaml_path": yaml_path
     }
 

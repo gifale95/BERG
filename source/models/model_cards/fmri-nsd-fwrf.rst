@@ -12,7 +12,7 @@ Model Summary
    * - Modality
      - fMRI
    * - Training Dataset
-     - Natural Scenes Dataset (NSD)
+     - Natural Scenes Dataset (NSD) (subject-native volume space)
    * - Species
      - Human
    * - Stimuli
@@ -165,7 +165,7 @@ Performance
 
 **Accuracy Plots:**
 
-* ``neural_encoding_simulation_toolkit/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy``
+* ``neural-encoding-simulation-toolkit/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy``
 
 Example Usage
 ------------
@@ -176,26 +176,40 @@ Example Usage
     from nest import NEST
     
     # Initialize NEST
-    nest = NEST(nest_dir="path/to/neural_encoding_simulation_toolkit")
+    nest = NEST(nest_dir="path/to/neural-encoding-simulation-toolkit")
     
-    # Load the model
-    model = nest.get_encoding_model("fmri-nsd-fwrf", subject=1, selection=value, selection={"roi": "V1"})
-    # This function loads the encoding model.
+    # Load the encoding model
+    model = nest.get_encoding_model(
+      "fmri-nsd-fwrf",
+      subject=1,
+      selection={
+        "roi": "V1"
+      }
+    )
     
-    # Prepare your stimuli
-    # stimulus shape should be ['batch_size', 3, 'height', 'width']
+    # Prepare the stimulus images
+    # Image shape should be [batch_size, 3 RGB channels, height, width]
+    images = np.random.randint(0, 255, (100, 3, 256, 256))
     
-    # Generate responses
-    responses = nest.encode(model, stimulus, device="auto")
-    # This function generates in silico neural responses using the encoding model previously loaded.
+    # Generates the in silico neural responses to images using the encoding model previously loaded
+    responses = nest.encode(
+      model,
+      images,
+      device="auto",
+      show_progress=True
+    )
     
-    # responses shape will be ['batch_size', 'n_voxels']
+    # responses shape will be [batch_size, n_voxels]
     # where:
     # - n_voxels is Number of voxels in the selected ROI, varies by ROI and subject.
+
+    # Generate in silico neural responses with metadata
+    responses, metadata = nest.encode(model, images, return_metadata=True)
 
 References
 ---------
 
-* {'fwRF model (St-Yves et al., 2018)': 'https://doi.org/10.1016/j.neuroimage.2017.06.035'}
+* {'Model building code': 'https://github.com/gifale95/NEST/tree/main/nest_creation_code'}
 * {'NSD paper (Allen et al., 2022)': 'https://doi.org/10.1038/s41593-021-00962-x'}
+* {'fwRF model (St-Yves et al., 2018)': 'https://doi.org/10.1016/j.neuroimage.2017.06.035'}
 * {'COCO dataset (Lin et al., 2014)': 'https://cocodataset.org/#home'}

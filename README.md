@@ -35,13 +35,26 @@ You will additionally need to install the Python dependencies found in [requirem
 
 ## 🕹️ How to use
 
-### 🧰 Download the Neural Encoding Simulation Toolkit encoding models
+### 🧰 Download the Neural Encoding Simulation Toolkit
 
 
-To use `NEST`, you first need to download the trained encoding models from [here][nest_data]. Depending on your needs, you might download all or only parts of the toolkit. Please refer to the [documentation][nest_structure] to understand how NEST is structured.
-We recommend downloading the folder directly from Google Drive via terminal using [Rclone][rclone]. [Here][guide] is a step-by-step guide for using Rclone. Before downloading, add a shortcut of the `neural_encoding_simulation_toolkit` folder to your Google Drive by right-clicking on the folder and selecting `Organise` → `Add shortcut`.
+NEST is hosted as a public [AWS S3 bucket](](https://neural-encoding-simulation-toolkit.s3.us-west-2.amazonaws.com/index.html)) via the AWS Open Data Program. You do **not need an AWS account** to browse or download the data.
 
+<font color='red'><b>IMPORTANT:</b></font> By downloading the data you agree to NEST's [Terms and Conditions](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/about/terms_and_conditions.html).
 
+To download the full NEST dataset into a local folder named `neural-encoding-simulation-toolkit`, use the AWS CLI:
+
+```bash
+aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit ./neural-encoding-simulation-toolkit
+```
+
+You can also download specific subfolders, for example:
+
+```bash
+aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit/encoding_models/modality-fmri ./modality-fmri
+```
+
+For detailed instructions and folder structure, see the [documentation](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/data_storage.html#).
 
 
 ### 🧠 Available encoding models
@@ -50,7 +63,8 @@ The following table shows the encoding models currently available in NEST. For m
 
 | Model ID | Training dataset | Species | Stimuli |
 |----------|------------------|---------|---------|
-| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD][allen] | Human | Images |
+| [fmri-nsd_fsaverage-vit_b_32][fmri-nsd_fsaverage-vit_b_32] | [NSD (surface space)][allen] | Human | Images |
+| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD (volume space)][allen] | Human | Images |
 | [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | Human | Images |
  
 
@@ -65,7 +79,7 @@ To use `NEST`'s functions, you first need to import `NEST` and create a `nest_ob
 from nest import NEST
 
 # Initialize NEST with the path to the toolkit
-nest = NEST(nest_dir="path/to/neural_encoding_simulation_toolkit")
+nest = NEST(nest_dir="path/to/neural-encoding-simulation-toolkit")
 ```
 #### 🔹 Generate in silico neural responses to stimuli
 
@@ -124,10 +138,9 @@ We used NEST to develop [RNC](https://github.com/gifale95/RNC), a neural control
 
 The folder [`../NEST/nest_creation_code/`][nest_creation_code] contains the code used to create the Neural Encoding Simulation Toolkit, divided in the following sub-folders:
 
-* **[`../00_prepare_data/`][prepare_data]:** prepare the data (i.e., images and corresponding neural responses) used to train the encoding models.
-* **[`../01_train_encoding_models/`][train_encoding]:** train the encoding models, and save their weights.
-* **[`../02_test_encoding_models/`][test_encoding]:** test the encoding models (i.e., compute and plot their encoding accuracy).
-* **[`../03_create_metadata/`][metadata]:** create metadata files relative to the encoding models and their in silico neural responses.
+* **[`../01_prepare_data/`][prepare_data]:** prepare the neural responses in the right format for encoding model training.
+* **[`../02_train_encoding_models/`][train_encoding]:** train the encoding models, and save their weights.
+* **[`../03_test_encoding_models/`][test_encoding]:** test the encoding models (i.e., compute and plot their encoding accuracy).
 
 
 
@@ -166,6 +179,7 @@ If you use the Neural Encoding Simulation Toolkit, please cite:
 [load_insilico_neural_responses]: https://github.com/gifale95/NEST/blob/main/nest/nest.py#L551
 
 
+[fmri-nsd_fsaverage-vit_b_32]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-vit_b_32.html
 [fmri-nsd-fwrf]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/fmri-nsd-fwrf.html
 [eeg-things_eeg_2-vit_b_32]: https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-vit_b_32.html
 [THINGS EEG2]: https://doi.org/10.1016/j.neuroimage.2022.119754
@@ -180,9 +194,9 @@ If you use the Neural Encoding Simulation Toolkit, please cite:
 [uni_rnc_jupyter]: https://github.com/gifale95/RNC/blob/main/tutorials/univariate_rnc_tutorial.ipynb
 [multi_rnc_jupyter]: https://github.com/gifale95/RNC/blob/main/tutorials/multivariate_rnc_tutorial.ipynb
 [nest_creation_code]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/
-[prepare_data]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/00_prepare_data
-[train_encoding]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/01_train_encoding_models
-[test_encoding]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/02_test_encoding_models
+[prepare_data]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/01_prepare_data
+[train_encoding]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/02_train_encoding_models
+[test_encoding]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/03_test_encoding_models
 [metadata]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/03_create_metadata
 [synthesize]: https://github.com/gifale95/NEST/tree/main/nest_creation_code/04_synthesize_neural_responses
 

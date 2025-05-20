@@ -62,9 +62,14 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Training dataset
      - Species
      - Stimuli
+   * - :doc:`model_cards/fmri-nsd_fsaverage-vit_b_32`
+     - Linear mapping of vision transformer image features onto fMRI responses.
+     - Natural Scenes Dataset(surface space)
+     - Human
+     - Images
    * - :doc:`model_cards/fmri-nsd-fwrf`
      - Feature-weighted receptive fields, convolutional neural networks trained end-to-end to predict fMRI responses from input images.
-     - Natural Scenes Dataset
+     - Natural Scenes Dataset (volume space)
      - Human
      - Images
 
