@@ -38,7 +38,7 @@ You will additionally need to install the Python dependencies found in [requirem
 ### 🧰 Download the Neural Encoding Simulation Toolkit
 
 
-NEST is hosted as a public [AWS S3 bucket](](https://neural-encoding-simulation-toolkit.s3.us-west-2.amazonaws.com/index.html)) via the AWS Open Data Program. You do **not need an AWS account** to browse or download the data.
+NEST is hosted as a public [AWS S3 bucket](https://neural-encoding-simulation-toolkit.s3.us-west-2.amazonaws.com/index.html) via the AWS Open Data Program. You do **not need an AWS account** to browse or download the data.
 
 <font color='red'><b>IMPORTANT:</b></font> By downloading the data you agree to NEST's [Terms and Conditions](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/about/terms_and_conditions.html).
 
@@ -52,6 +52,12 @@ You can also download specific subfolders, for example:
 
 ```bash
 aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit/encoding_models/modality-fmri ./modality-fmri
+```
+
+Or, you can also downlaod specific files:
+
+```bash
+aws s3 cp --no-sign-request s3://neural-encoding-simulation-toolkit/encoding_models/../model_weights.npy ./modality-fmri
 ```
 
 For detailed instructions and folder structure, see the [documentation](https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/data_storage.html#).
