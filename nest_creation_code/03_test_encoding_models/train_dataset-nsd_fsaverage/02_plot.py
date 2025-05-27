@@ -66,7 +66,7 @@ plt.rc('ytick', labelsize=19)
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-subject = 'fsaverage_nsd'
+subject = 'fsaverage'
 
 
 # =============================================================================
