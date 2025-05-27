@@ -44,6 +44,11 @@ You can also use `--dryrun` to preview what would be downloaded:
 
     aws s3 sync --no-sign-request --dryrun s3://neural-encoding-simulation-toolkit ./neural-encoding-simulation-toolkit
 
+Finally, you can also download individual files with:
+::
+
+    aws s3 cp --no-sign-request s3://neural-encoding-simulation-toolkit/encoding_models/../model_weights.npy ./modality-fmri
+
 **Optional Web Access**
 
 You can access files directly from your browser using:
