@@ -303,10 +303,10 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     
     # Generate example code
     example_code = [
-        "from nest import NEST",
+        "from berg import BERG",
         "",
-        "# Initialize NEST",
-        "nest = NEST(nest_dir=\"path/to/neural_encoding_simulation_toolkit\")",
+        "# Initialize BERG",
+        "berg = BERG(berg=\"path/to/brain-encoding-response-generator\")",
         ""
     ]
     
@@ -351,7 +351,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     # Build the model loading line
     get_model_params_str = ", ".join(get_model_params)
     example_code.append(f"# Load the model")
-    example_code.append(f"model = nest.get_encoding_model(\"{model_id}\", {get_model_params_str})")
+    example_code.append(f"model = berg.get_encoding_model(\"{model_id}\", {get_model_params_str})")
     example_code.append("")
     
     # Add a comment with the function description for get_encoding_model
@@ -390,8 +390,8 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         
         # Update the model loading line to include selection
         for i, line in enumerate(example_code):
-            if line.startswith("model = nest.get_encoding_model("):
-                example_code[i] = f"model = nest.get_encoding_model(\"{model_id}\", {get_model_params_str}, selection={selection_str})"
+            if line.startswith("model = berg.get_encoding_model("):
+                example_code[i] = f"model = berg.get_encoding_model(\"{model_id}\", {get_model_params_str}, selection={selection_str})"
     
     # Add information about the stimulus based on the input definition
     input_data = data.get("input", {})
@@ -404,7 +404,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     # Add encode call
     encode_params_str = ", ".join(["stimulus"] + encode_params)
     example_code.append("# Generate responses")
-    example_code.append(f"responses = nest.encode(model, {encode_params_str})")
+    example_code.append(f"responses = berg.encode(model, {encode_params_str})")
     # Add a comment with the function description for encode
     example_code.append("# This function generates in silico neural responses using the encoding model previously loaded.")
     example_code.append("")
@@ -431,7 +431,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         example_code.extend([
             "",
             "# Get responses with metadata",
-            "responses, metadata = nest.encode(model, stimulus, return_metadata=True)",
+            "responses, metadata = berg.encode(model, stimulus, return_metadata=True)",
             "",
             "# Access channel names and time information",
             "channel_names = metadata[\"eeg\"][\"ch_names\"]",
@@ -483,5 +483,5 @@ if __name__ == "__main__":
 # 2. Convert a YAML file to RST with specific output path:
 #    python yaml_to_rst.py fmri_nsd_fwrf.yaml docs/model_cards/fmri_nsd_fwrf.rst
     
-# python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/fmri-nsd-fwrf.yaml source/models/model_cards/fmri-nsd-fwrf.rst
-# python nest/models/model_cards/yaml_to_rst.py nest/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml source/models/model_cards/eeg-things_eeg_2-vit_b_32.rst
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-nsd-fwrf.yaml source/models/model_cards/fmri-nsd-fwrf.rst
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml source/models/model_cards/eeg-things_eeg_2-vit_b_32.rst
