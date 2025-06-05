@@ -6,9 +6,9 @@ subjects : list
 	List with all used NSD subjects.
 model : str
 	Name of the used encoding model.
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--model', type=str, default='vit_b_32')
-parser.add_argument('--nest_dir', default='../neural-encoding-simulation-toolkit', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args = parser.parse_args()
 
 
@@ -39,7 +39,7 @@ r2 = []
 noise_ceiling = []
 explained_variance = []
 
-metadata_dir = os.path.join(args.nest_dir, 'encoding_models', 'modality-fmri',
+metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
 	'train_dataset-nsd_fsaverage', 'model-'+args.model, 'metadata')
 
 for sub in args.subjects:

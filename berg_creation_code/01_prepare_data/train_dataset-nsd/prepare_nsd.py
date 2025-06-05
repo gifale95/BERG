@@ -19,9 +19,9 @@ roi : str
 nsd_dir : str
 	Directory of the Natural Scenes Dataset (NSD).
 	https://naturalscenesdataset.org/
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -38,7 +38,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--roi', type=str, default='V1')
 parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
-parser.add_argument('--nest_dir', default='../neural-encoding-simulation-toolkit', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args = parser.parse_args()
 
 print('>>> Prepare NSD volume betas <<<')
@@ -203,7 +203,7 @@ prepared_betas = {
 	'test_img_idx': test_img_idx
 	}
 
-save_dir = os.path.join(args.nest_dir, 'model_training_datasets',
+save_dir = os.path.join(args.berg_dir, 'model_training_datasets',
 	'train_dataset-nsd')
 
 if not os.path.isdir(save_dir):

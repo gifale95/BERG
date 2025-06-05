@@ -183,7 +183,7 @@ def save_prepr(args, epoched_test, epoched_train, img_conditions_train,
 		'ch_names': ch_names,
 		'times': times
 		}
-	save_dir = os.path.join(args.nest_dir, 'model_training_datasets',
+	save_dir = os.path.join(args.berg_dir, 'model_training_datasets',
 		'train_dataset-things_eeg_2')
 	file_name = 'metadata_subject-'+str(args.subject)+'.npy'
 	if not os.path.isdir(save_dir):

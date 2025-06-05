@@ -53,9 +53,9 @@ weight_decay : float
 	Weight decay coefficient.
 batch_size : int
 	Batch size for weight update.
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -90,7 +90,7 @@ parser.add_argument('--epochs_phase_3', type=int, default=10)
 parser.add_argument('--lr', type=float, default=1e-3)
 parser.add_argument('--weight_decay', type=float, default=0.)
 parser.add_argument('--batch_size', type=int, default=128)
-parser.add_argument('--nest_dir', default='../neural-encoding-simulation-toolkit', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args = parser.parse_args()
 
 print('>>> Train encoding <<<')
@@ -158,14 +158,14 @@ if args.split_roi == 1:
 #         str(args.use_prefilter), model_hyperpar)
 
 # Create models output directory
-model_output_dir = os.path.join(args.nest_dir, 'encoding_models',
+model_output_dir = os.path.join(args.berg_dir, 'encoding_models',
 	'modality-fmri', 'training_dataset-nsd', 'model-fwrf',
 	'encoding_models_weights')
 if not os.path.exists(model_output_dir):
 	os.makedirs(model_output_dir)
 
 # TensorBoard output directory
-tensorboard_parent = os.path.join(args.nest_dir, 'results',
+tensorboard_parent = os.path.join(args.berg_dir, 'results',
 	'train_encoding_models', 'modality-fmri', 'training_dataset-nsd',
 	'model-fwrf', 'tensorboard', subj_roi_dir)
 
@@ -176,7 +176,7 @@ tensorboard_parent = os.path.join(args.nest_dir, 'results',
 print ('\nStimulus Images:')
 stim_data = {}
 for s in nsd_subjects:
-	image_data_set = h5py.File(os.path.join(args.nest_dir,
+	image_data_set = h5py.File(os.path.join(args.berg_dir,
 		'model_training_datasets', 'train_dataset-nsd',
 		'nsd_images_sub-0%d_px-227.h5py'%s), 'r')
 	stim_data[s] = image_feature_fn(np.copy(image_data_set['stimuli']))

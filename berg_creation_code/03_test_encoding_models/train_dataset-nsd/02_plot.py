@@ -8,9 +8,9 @@ rois : list of str
 	List of all modeled ROIs.
 model : str
 	Name of the used encoding model.
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -31,7 +31,7 @@ parser.add_argument('--rois', type=list, default=['V1', 'V2', 'V3', 'hV4',
 	'OWFA', 'VWFA-1', 'VWFA-2', 'mfs-words', 'early', 'midventral',
 	'midlateral', 'midparietal', 'parietal', 'lateral', 'ventral'])
 parser.add_argument('--model', type=str, default='fwrf')
-parser.add_argument('--nest_dir', default='../neural-encoding-simulation-toolkit', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args = parser.parse_args()
 
 
@@ -65,7 +65,7 @@ colors = [(170/255, 118/255, 186/255)]
 # =============================================================================
 # Load the encoding models' encoding accuracy
 explained_variance = np.zeros((len(args.subjects), len(args.rois)))
-metadata_dir = os.path.join(args.nest_dir, 'encoding_models', 'modality-fmri',
+metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
 	'train_dataset-nsd', 'model-'+args.model, 'metadata')
 for s, sub in enumerate(args.subjects):
 	for r, roi in enumerate(args.rois):
@@ -132,7 +132,7 @@ for s, sub in enumerate(args.subjects):
 	# Load the encoding models' encoding accuracy
 	noise_ceiling = {}
 	r2 = {}
-	metadata_dir = os.path.join(args.nest_dir, 'encoding_models',
+	metadata_dir = os.path.join(args.berg_dir, 'encoding_models',
 		'modality-fmri', 'train_dataset-nsd', 'model-'+args.model, 'metadata')
 	for r, roi in enumerate(args.rois):
 		file_name = 'metadata_sub-' + format(sub, '02') + '_roi-' + roi + '.npy'

@@ -37,9 +37,9 @@ sfreq : int
 things_eeg_2_dir : str
 	Directory of the THINGS EEG2 dataset.
 	https://osf.io/3jk45/
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -63,7 +63,7 @@ parser.add_argument('--baseline_mode', default='zscore', type=str)
 parser.add_argument('--csd', default=1, type=int)
 parser.add_argument('--sfreq', default=200, type=int)
 parser.add_argument('--things_eeg_2_dir', default='../things_eeg_2', type=str)
-parser.add_argument('--nest_dir', default='../neural-encoding-simulation-toolkit', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args = parser.parse_args()
 
 print('>>> EEG data preprocessing <<<')

@@ -7,9 +7,9 @@ subject : int
 	Number of the used NSD subject.
 model : str
 	Name of the used encoding model.
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -22,7 +22,7 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--model', type=str, default='vit_b_32')
-parser.add_argument('--nest_dir', default='../neural-encoding-simulation-toolkit', type=str)
+parser.add_argument('--berg_dir', default='../neural-encoding-simulation-toolkit', type=str)
 args = parser.parse_args()
 
 print('>>> Test encoding models <<<')
@@ -34,7 +34,7 @@ for key, val in vars(args).items():
 # =============================================================================
 # Load the responses metadata
 # =============================================================================
-data_dir = os.path.join(args.nest_dir, 'model_training_datasets',
+data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
 	'train_dataset-things_eeg_2')
 
 metadata_things_eeg2 = np.load(os.path.join(data_dir, 'metadata_subject-'+
@@ -55,7 +55,7 @@ eeg_test = np.mean(eeg_test, 1)
 # =============================================================================
 # Load the in silico EEG responses for the test images
 # =============================================================================
-data_dir = os.path.join(args.nest_dir, 'results', 'test_encoding_models',
+data_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 	'modality-eeg', 'train_dataset-things_eeg_2', 'model-'+args.model)
 pred_dir = os.path.join(data_dir, 'eeg_test_pred_subject-'+
 	str(args.subject)+'.npy')
@@ -107,7 +107,7 @@ encoding_models = {
 metadata['encoding_models'] = encoding_models
 
 # Save the metadata
-save_dir = os.path.join(args.nest_dir, 'encoding_models', 'modality-eeg',
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
 	'train_dataset-things_eeg_2', 'model-'+args.model, 'metadata')
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)

@@ -12,9 +12,9 @@ model : str
 nsd_dir : str
 	Directory of the Natural Scenes Dataset (NSD).
 	https://naturalscenesdataset.org/
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -32,7 +32,7 @@ parser.add_argument('--rois', type=list, default=['V1', 'V2', 'V3', 'hV4',
 	'midparietal', 'parietal', 'lateral', 'ventral'])
 parser.add_argument('--model', type=str, default='fwrf')
 parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
-parser.add_argument('--nest_dir', default='../datasetsneural-encoding-simulation-toolkit', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args = parser.parse_args()
 
 print('>>> Test encoding models <<<')
@@ -50,7 +50,7 @@ for r in tqdm(args.rois):
 # =============================================================================
 # Load the in vivo tesing fMRI responses (and average them across repeats)
 # =============================================================================
-	data_dir = os.path.join(args.nest_dir, 'model_training_datasets',
+	data_dir = os.path.join(args,berg_dir, 'model_training_datasets',
 		'train_dataset-nsd', 'nsd_betas_sub-'+format(args.subject,'02')+'_roi-'+
 		r+'.npy')
 	data_dict = np.load(data_dir, allow_pickle=True).item()
@@ -69,7 +69,7 @@ for r in tqdm(args.rois):
 # =============================================================================
 # Load the in silico fMRI responses for the test images
 # =============================================================================
-	data_dir = os.path.join(args.nest_dir, 'results', 'test_encoding_models',
+	data_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 		'modality-fmri', 'train_dataset-nsd', 'model-'+args.model,
 		'betas_test_pred_subject-'+str(args.subject)+'_roi-'+r+'.npy')
 	betas_pred = np.load(data_dir)
@@ -131,7 +131,7 @@ for r in tqdm(args.rois):
 	del data_dict
 
 	# Save the metadata
-	save_dir = os.path.join(args.nest_dir, 'encoding_models', 'modality-fmri',
+	save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
 		'train_dataset-nsd', 'model-'+args.model, 'metadata')
 	if os.path.isdir(save_dir) == False:
 		os.makedirs(save_dir)

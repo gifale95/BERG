@@ -19,9 +19,9 @@ model : str
 things_eeg_2_dir : str
 	Directory of the THINGS EEG2 dataset.
 	https://osf.io/3jk45/
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -49,7 +49,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--model', type=str, default='vit_b_32')
 parser.add_argument('--things_eeg_2_dir', default='../things_eeg_2', type=str)
-parser.add_argument('--nest_dir', default='../neural-encoding-simulation-toolkit', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args = parser.parse_args()
 
 print('>>> Train encoding models <<<')
@@ -176,7 +176,7 @@ fmaps_test = pca.transform(fmaps_test)
 # Train the encoding models
 # =============================================================================
 # Load the training EEG responses
-data_dir = os.path.join(args.nest_dir, 'model_training_datasets',
+data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
 	'train_dataset-things_eeg_2')
 eeg_dir = os.path.join(data_dir, 'eeg_sub-'+format(args.subject,'02')+
 	'_split-train.h5')
@@ -214,7 +214,7 @@ for r in range(eeg_train.shape[1]): # Loop over the 4 training EEG repeats
 	del reg_dict
 
 # Save the in silico EEG responses for the test images
-save_dir = os.path.join(args.nest_dir, 'results', 'test_encoding_models',
+save_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 	'modality-eeg', 'train_dataset-things_eeg_2', 'model-'+args.model)
 file_name = 'eeg_test_pred_subject-' + str(args.subject) + '.npy'
 if not os.path.isdir(save_dir):
@@ -247,7 +247,7 @@ weights = {
 	'reg_param': reg_param
 	}
 
-save_dir = os.path.join(args.nest_dir, 'encoding_models', 'modality-eeg',
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
 	'train_dataset-things_eeg_2', 'model-'+args.model,
 	'encoding_models_weights')
 if os.path.isdir(save_dir) == False:

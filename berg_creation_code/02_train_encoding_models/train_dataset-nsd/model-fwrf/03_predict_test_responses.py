@@ -12,9 +12,9 @@ all_rois : list of str
 nsd_dir : str
 	Directory of the Natural Scenes Dataset (NSD).
 	https://naturalscenesdataset.org/
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -40,7 +40,7 @@ parser.add_argument('--all_rois', type=list, default=['V1', 'V2', 'V3', 'hV4',
 	'RSC', 'OPA', 'EBA', 'FBA-2', 'early', 'midventral', 'midlateral',
 	'midparietal', 'parietal', 'lateral', 'ventral'])
 parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
-parser.add_argument('--nest_dir', default='../neural-encoding-simulation-toolkit', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args = parser.parse_args()
 
 print('>>> Predict fMRI responses for the test images <<<')
@@ -76,7 +76,7 @@ img_dataset = h5py.File(img_dir, 'r').get('imgBrick')
 # =============================================================================
 # Get the test images IDs
 # =============================================================================
-data_dir = os.path.join(args.nest_dir, 'model_training_datasets',
+data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
 	'train_dataset-nsd', 'nsd_betas_sub-'+format(args.all_subs[0],'02')+'_roi-'+
 	args.all_rois[0]+'.npy')
 
@@ -118,14 +118,14 @@ for sub in tqdm(args.all_subs, leave=False):
 
 		# Total model directory
 		if r in ['lateral', 'ventral']:
-			model_dir_1 = os.path.join(args.nest_dir, 'encoding_models',
+			model_dir_1 = os.path.join(args.berg_dir, 'encoding_models',
 				'modality-fmri', 'train_dataset-nsd', 'model-fwrf',
 				'encoding_models_weights', 'weights_'+subj_roi_dir_1+'.pt')
-			model_dir_2 = os.path.join(args.nest_dir, 'encoding_models',
+			model_dir_2 = os.path.join(args.berg_dir, 'encoding_models',
 				'modality-fmri', 'train_dataset-nsd', 'model-fwrf',
 				'encoding_models_weights', 'weights_'+subj_roi_dir_2+'.pt')
 		else:
-			model_dir = os.path.join(args.nest_dir, 'encoding_models',
+			model_dir = os.path.join(args.berg_dir, 'encoding_models',
 				'modality-fmri', 'train_dataset-nsd', 'model-fwrf',
 				'encoding_models_weights', 'weights_'+subj_roi_dir+'.pt')
 
@@ -299,7 +299,7 @@ for sub in tqdm(args.all_subs, leave=False):
 # =============================================================================
 # Save the predicted fMRI responses
 # =============================================================================
-		save_dir = os.path.join(args.nest_dir, 'results', 'test_encoding_models',
+		save_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 			'modality-fmri', 'train_dataset-nsd', 'model-fwrf')
 
 		if os.path.isdir(save_dir) == False:

@@ -16,9 +16,9 @@ model : str
 nsd_dir : str
 	Directory of the Natural Scenes Dataset (NSD).
 	https://naturalscenesdataset.org/
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -44,7 +44,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--model', type=str, default='vit_b_32')
 parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
-parser.add_argument('--nest_dir', default='../neural-encoding-simulation-toolkit', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args = parser.parse_args()
 
 print('>>> Train encoding models <<<')
@@ -62,7 +62,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 # =============================================================================
 # Load the image presentation order and the training/testing splits
 # =============================================================================
-data_dir = os.path.join(args.nest_dir, 'model_training_datasets',
+data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
 	'train_dataset-nsd_fsaverage')
 
 metadata = np.load(os.path.join(data_dir, 'metadata_subject-'+
@@ -209,7 +209,7 @@ lh_betas_test_pred = lh_reg.predict(fmaps_test)
 rh_betas_test_pred = rh_reg.predict(fmaps_test)
 
 # Save the in silico fMRI responses for the test images
-save_dir = os.path.join(args.nest_dir, 'results', 'test_encoding_models',
+save_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 	'modality-fmri', 'train_dataset-nsd_fsaverage', 'model-'+args.model)
 lh_file_name = 'lh_betas_test_pred_subject-' + str(args.subject) + '.npy'
 rh_file_name = 'rh_betas_test_pred_subject-' + str(args.subject) + '.npy'
@@ -253,7 +253,7 @@ weights = {
 		}
 	}
 
-save_dir = os.path.join(args.nest_dir, 'encoding_models', 'modality-fmri',
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
 	'train_dataset-nsd_fsaverage', 'model-'+args.model,
 	'encoding_models_weights')
 if os.path.isdir(save_dir) == False:

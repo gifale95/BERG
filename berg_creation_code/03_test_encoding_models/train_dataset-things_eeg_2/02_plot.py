@@ -8,9 +8,9 @@ channels : str
 	Used EEG channels.
 model : str
 	Name of the used encoding model.
-nest_dir : str
-	Directory of the Neural Encoding Simulation Toolkit (NEST).
-	https://github.com/gifale95/NEST
+berg_dir : str
+	Directory of the Brain Encoding Response Generator (BERG).
+	https://github.com/gifale95/BERG
 
 """
 
@@ -28,7 +28,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 parser.add_argument('--channels', type=str, default='all') # ['O', 'P', 'T', 'C', 'F', 'all']
 parser.add_argument('--model', type=str, default='vit_b_32')
-parser.add_argument('--nest_dir', default='../neural-encoding-simulation-toolkit/', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator/', type=str)
 args = parser.parse_args()
 
 
@@ -38,7 +38,7 @@ args = parser.parse_args()
 correlation_averaged_repetitions = []
 correlation_single_repetitions = []
 
-metadata_dir = os.path.join(args.nest_dir, 'encoding_models', 'modality-eeg',
+metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
 	'train_dataset-things_eeg_2', 'model-'+args.model, 'metadata')
 
 for sub in args.subjects:
