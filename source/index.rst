@@ -72,10 +72,10 @@ Generate in silico fMRI responses:
    nest = BERG("/path/to/brain-encoding-response-generator")
    
    # Get an encoding model
-   model = nest.get_encoding_model("fmri-nsd-fwrf", subject=1, selection={"roi": "V1"})
+   model = berg.get_encoding_model("fmri-nsd-fwrf", subject=1, selection={"roi": "V1"})
    
    # Generate responses to stimuli
    stimuli = np.random.randint(0, 255, (10, 3, 224, 224), dtype=np.uint8)
-   responses = nest.encode(model, stimuli)
+   responses = berg.encode(model, stimuli)
    
    print(f"Generated responses shape: {responses.shape}")
