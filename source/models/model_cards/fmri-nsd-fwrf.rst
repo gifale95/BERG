@@ -173,13 +173,13 @@ Example Usage
 
 .. code-block:: python
 
-    from nest import NEST
+    from berg import BERG
     
-    # Initialize NEST
-    nest = NEST(nest_dir="path/to/neural-encoding-simulation-toolkit")
+    # Initialize BERG
+    berg = BERG(nest_dir="path/to/brain-encoding-response-generator")
     
     # Load the encoding model
-    model = nest.get_encoding_model(
+    model = berg.get_encoding_model(
       "fmri-nsd-fwrf",
       subject=1,
       selection={
@@ -192,7 +192,7 @@ Example Usage
     images = np.random.randint(0, 255, (100, 3, 256, 256))
     
     # Generates the in silico neural responses to images using the encoding model previously loaded
-    responses = nest.encode(
+    responses = berg.encode(
       model,
       images,
       device="auto",
@@ -204,12 +204,12 @@ Example Usage
     # - n_voxels is Number of voxels in the selected ROI, varies by ROI and subject.
 
     # Generate in silico neural responses with metadata
-    responses, metadata = nest.encode(model, images, return_metadata=True)
+    responses, metadata = berg.encode(model, images, return_metadata=True)
 
 References
 ---------
 
-* {'Model building code': 'https://github.com/gifale95/NEST/tree/main/nest_creation_code'}
+* {'Model building code': 'https://github.com/gifale95/BERG/tree/main/berg_creation_code'}
 * {'NSD paper (Allen et al., 2022)': 'https://doi.org/10.1038/s41593-021-00962-x'}
 * {'fwRF model (St-Yves et al., 2018)': 'https://doi.org/10.1016/j.neuroimage.2017.06.035'}
 * {'COCO dataset (Lin et al., 2014)': 'https://cocodataset.org/#home'}
