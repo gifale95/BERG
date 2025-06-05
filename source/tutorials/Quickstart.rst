@@ -1,7 +1,7 @@
 Quickstart
 =========================================
 
-This tutorial will walk you through the fundamental functionality of BERG. You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1JS4um1eS4Ml983lUNQgEw4544_Lc5Qn0>`_. For additional tutorials, check out the `Tutorial section in the BERG Repository <https://github.com/gifale95/BERG>`_.
+This tutorial will walk you through the fundamental functionality of BERG. You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1JS4um1eS4Ml983lUNQgEw4544_Lc5Qn0>`_. For additional tutorials, check out the `Tutorial section in the BERG Repository <https://github.com/gifale95/BERG/tree/main/tutorials>`_.
 
 
 
