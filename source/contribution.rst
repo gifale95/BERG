@@ -1,5 +1,5 @@
 =========================
-Contribute to NEST
+Contribute to BERG
 =========================
 
 Whether you have developed better encoding models, have models for different neural datasets, want to add support for new modalities, or have suggestions for improvement, we'd love to hear from you!
@@ -7,7 +7,7 @@ Whether you have developed better encoding models, have models for different neu
 Ways to Contribute
 -----------------
 
-You can contribute to NEST in several ways:
+You can contribute to BERG in several ways:
 
 * **New encoding models** with higher prediction accuracies than the currently available.
 * **Models trained on different neural datasets** or brain regions.
@@ -15,7 +15,7 @@ You can contribute to NEST in several ways:
 * **Models tained for different stimulus types** (e.g., videos, language, audio, multimodal).
 * **Improvements to the codebase** or documentation.
 
-Add Your Model to NEST
+Add Your Model to BERG
 ------------------------
 
 NEST provides a standardized framework for integrating new models. To add your model:
@@ -23,7 +23,7 @@ NEST provides a standardized framework for integrating new models. To add your m
 1. **Implement your model class** following NEST's interface.
 2. **Create a YAML configuration file** describing your model's parameters and behavior.
 
-For detailed instructions, see the :doc:`Tutorial </tutorials/Adding_New_Models_to_Nest>` on this website!
+For detailed instructions, see the :doc:`Tutorial </tutorials/Adding_New_Models_to_Berg>` on this website!
 
 
 Code Quality Guidelines
@@ -43,7 +43,7 @@ How to Submit Your Contribution
 
 To submit your contribution:
 
-1. **Fork** the NEST repository.
+1. **Fork** the BERG repository.
 2. **Create a branch** from the ``development`` branch.
 3. **Add your model** following the tutorial guidelines.
 4. **Submit a pull request** with:
@@ -55,6 +55,6 @@ To submit your contribution:
 Contact
 -------
 
-If you have questions or would like to discuss your contribution before submitting, please contact us at brain.nest.contact@gmail.com. All feedback and help is strongly appreciated!
+If you have questions or would like to discuss your contribution before submitting, please contact us at brain.berg.info@gmail.com. All feedback and help is strongly appreciated!
 
-We look forward to your contributions and are excited to see how the community expands NEST!
+We look forward to your contributions and are excited to see how the community expands BERG!
