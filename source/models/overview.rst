@@ -33,7 +33,7 @@ You can get detailed information about any model using:
 
     from berg import BERG
     
-    nest = BERG("path/to/brain-encoding-response-generator")
+    berg = BERG("path/to/brain-encoding-response-generator")
 
     # List all available models
     all_models = berg.list_models()
