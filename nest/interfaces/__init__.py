@@ -1,1 +1,0 @@
-from nest.interfaces.base_model import BaseModelInterface

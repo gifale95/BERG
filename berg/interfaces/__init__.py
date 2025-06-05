@@ -1,0 +1,1 @@
+from berg.interfaces.base_model import BaseModelInterface
