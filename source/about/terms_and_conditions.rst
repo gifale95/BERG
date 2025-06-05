@@ -1,12 +1,12 @@
 Terms and Conditions
 ===================
 
-Before you download the NEST data, please read the data sharing and usage agreement below. You must agree to all terms and conditions before accessing the data.
+Before you download the BERG data, please read the data sharing and usage agreement below. You must agree to all terms and conditions before accessing the data.
 
 Data Sharing and Usage Agreement
 --------------------------------
 
-By downloading NEST, I agree to the following terms and conditions:
+By downloading BERG, I agree to the following terms and conditions:
 
 1. I agree that all presentations and publications resulting from any use of this dataset must cite the relevant work.
 
