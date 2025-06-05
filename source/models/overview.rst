@@ -2,13 +2,13 @@
 Available Models
 ===================
 
-This page provides an overview of the brain encoding models currently available in NEST.
+This page provides an overview of the brain encoding models currently available in BERG.
 
 
 Model Naming Convention
 ----------------------
 
-NEST contains several encoding models, defined by the following model ID naming convention:
+BERG contains several encoding models, defined by the following model ID naming convention:
 
 ``{modality}-{dataset}-{model}``
 
@@ -31,15 +31,15 @@ You can get detailed information about any model using:
 
 .. code-block:: python
 
-    from nest import NEST
+    from berg import BERG
     
-    nest = NEST("path/to/neural_encoding_simulation_toolkit")
+    nest = BERG("path/to/brain-encoding-response-generator")
 
     # List all available models
-    all_models = nest.list_models()
+    all_models = berg.list_models()
     
     # Get detailed model information
-    model_info = nest.describe("fmri-nsd-fwrf")
+    model_info = berg.describe("fmri-nsd-fwrf")
 
 
 Available models
