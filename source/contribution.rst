@@ -18,9 +18,9 @@ You can contribute to BERG in several ways:
 Add Your Model to BERG
 ------------------------
 
-NEST provides a standardized framework for integrating new models. To add your model:
+BERG provides a standardized framework for integrating new models. To add your model:
 
-1. **Implement your model class** following NEST's interface.
+1. **Implement your model class** following BERG's interface.
 2. **Create a YAML configuration file** describing your model's parameters and behavior.
 
 For detailed instructions, see the :doc:`Tutorial </tutorials/Adding_New_Models_to_Berg>` on this website!
@@ -34,7 +34,7 @@ When contributing, please follow these quality guidelines:
 * Include clear **docstrings** for all public methods.
 * Add **type hints** to improve code readability.
 * Implement **robust error handling** with informative messages.
-* Follow existing **NEST naming conventions**.
+* Follow existing **BERG naming conventions**.
 * Be thorough with your **YAML configuration**.
 * If available, include **performance details**.
 
