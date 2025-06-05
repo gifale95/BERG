@@ -201,7 +201,7 @@ Example Usage
     # fMRI responses are generated."
 
     # Generate in silico neural responses with metadata
-    responses, metadata = nest.encode(model, images, return_metadata=True)
+    responses, metadata = berg.encode(model, images, return_metadata=True)
 
 References
 ---------
