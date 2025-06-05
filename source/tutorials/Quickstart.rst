@@ -1,21 +1,21 @@
 Quickstart
 =========================================
 
-This tutorial will walk you through the fundamental functionality of NEST. You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1JS4um1eS4Ml983lUNQgEw4544_Lc5Qn0>`_. For additional tutorials, check out the `Tutorial section in the NEST Repository <https://github.com/gifale95/NEST>`_.
+This tutorial will walk you through the fundamental functionality of BERG. You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1JS4um1eS4Ml983lUNQgEw4544_Lc5Qn0>`_. For additional tutorials, check out the `Tutorial section in the BERG Repository <https://github.com/gifale95/BERG>`_.
 
 
 
 Initialization
 -----------
 
-First, import the NEST package:
+First, import the BERG package:
 
 .. code-block:: python
 
-    from nest import NEST
+    from berg import BERG
     
-    # Initialize NEST with the path to the root directory
-    nest = NEST(nest_dir="neural_encoding_simulation_toolkit")
+    # Initialize BERG with the path to the root directory
+    berg = BERG(berg_dir="brain-encoding-response-generator")
 
 
 Explore Available Models
@@ -26,11 +26,11 @@ You can list all available models:
 .. code-block:: python
 
     # List all available models
-    available_models = nest.list_models()
+    available_models = berg.list_models()
     print(f"Available models: {available_models}")
     
     # Get a hierarchical view of available models by modality and dataset
-    catalog = nest.get_model_catalog(print_format=True)
+    catalog = berg.get_model_catalog(print_format=True)
     print(f"Model Catalog as Dict: {catalog}")
 
 
@@ -46,7 +46,7 @@ There are two ways to get detailed information about a model:
 .. code-block:: python
 
     # Get comprehensive model information
-    model_info = nest.describe("fmri-nsd-fwrf")
+    model_info = berg.describe("fmri-nsd-fwrf")
 
 This will output detailed information about the model, including the required input parameters:
 
@@ -95,8 +95,8 @@ This will output detailed information about the model, including the required in
       ↳ Valid values: 'V1', 'V2', 'V3', 'hV4', 'EBA', 'FBA-2', 'OFA', 'FFA-1', 'FFA-2', 'PPA', 'RSC', 'OPA', 'OWFA', 'VWFA-1', 'VWFA-2', 'mfs-words', 'early', 'midventral', 'midlateral', 'midparietal', 'parietal', 'lateral', 'ventral'
       ↳ Example: V1
 
-    • nest_dir (str, optional)
-      ↳ Root directory of the NEST repository (optional if default paths are set)
+    • berg_dir (str, optional)
+      ↳ Root directory of the BERG repository (optional if default paths are set)
       ↳ Example: ./
 
     ... (shortened for view)
@@ -106,7 +106,7 @@ This will output detailed information about the model, including the required in
 .. code-block:: python
 
     # Load Encoding Model
-    fwrf_model = nest.get_encoding_model("fmri-nsd-fwrf", 
+    fwrf_model = berg.get_encoding_model("fmri-nsd-fwrf", 
                                          subject=1, 
                                          selection={"roi": "V1"})
     
@@ -118,12 +118,12 @@ Both methods return the same comprehensive information. Always refer to the **Pa
 Example: Working with the feature-weighted receptive field (fwRF) Model
 -----------------------
 
-This is an example on how to use the fwRF model with NEST. For more information on this model, please see the :doc:`Model Overview </models/overview>`.
+This is an example on how to use the fwRF model with BERG. For more information on this model, please see the :doc:`Model Overview </models/overview>`.
 
 .. code-block:: python
 
     # Load the fMRI encoding model
-    fwrf_model = nest.get_encoding_model("fmri-nsd-fwrf", 
+    fwrf_model = berg.get_encoding_model("fmri-nsd-fwrf", 
                                          subject=1, 
                                          selection={"roi": "V1"}
                                          device="cpu")
@@ -132,10 +132,10 @@ This is an example on how to use the fwRF model with NEST. For more information 
     # For example: (100, 3, 227, 227) for 100 RGB images
     
     # Generate the in silico fMRI responses
-    fwrf_silico = nest.encode(fwrf_model, images)
+    fwrf_silico = berg.encode(fwrf_model, images)
     
     # Get both in silico fMRI responses and metadata
-    fwrf_silico, fwrf_metadata = nest.encode(fwrf_model, images, return_metadata=True)
+    fwrf_silico, fwrf_metadata = berg.encode(fwrf_model, images, return_metadata=True)
     
     # Only get the encoding model's metadata
     metadata = fwrf_model.get_metadata()
