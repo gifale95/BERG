@@ -1,5 +1,5 @@
 =======================
-Adding Models to NEST
+Adding Models to BERG
 =======================
 
 This guide walks you through the process of adding new models to the Neural Encoding Simulation Toolkit (NEST). You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1nBxEiJATzJdWwfzRPmyai2G76HkeBhAU>`_.
