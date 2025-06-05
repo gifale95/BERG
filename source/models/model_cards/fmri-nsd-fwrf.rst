@@ -176,7 +176,7 @@ Example Usage
     from berg import BERG
     
     # Initialize BERG
-    berg = BERG(nest_dir="path/to/brain-encoding-response-generator")
+    berg = BERG(berg_dir="path/to/brain-encoding-response-generator")
     
     # Load the encoding model
     model = berg.get_encoding_model(
