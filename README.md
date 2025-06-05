@@ -126,10 +126,10 @@ For more detailed information on how to use these functions and which parameters
 We provide several tutorials to help you get started with BERG:
 
 **Using BERG:**
-- [Quickstart Tutorial](https://colab.research.google.com/drive/1JS4um1eS4Ml983lUNQgEw4544_Lc5Qn0) - Quick Guide on how to generate in silico neural responses
-- [fMRI Tutorial](https://colab.research.google.com/drive/1w4opmM9h8Oe1NWlwIDuLuDIGuIXj9UaV) - Learn how to generate in silico fMRI responses.
-- [EEG Tutorial](https://colab.research.google.com/drive/1uF5nr1pyg0_my3gULj3w5y0nuq5gZjhL) - LEarn how to generate in silico EEG responses.
-- [Adding New Models](https://brain-encoding-response-generator.readthedocs.io/en/latest/tutorials/Adding_New_Models_to_Berg.html) - Guide on how to implement and contribute your own encoding models to BERG.
+- [Quickstart Tutorial](https://drive.google.com/file/d/1JS4um1eS4Ml983lUNQgEw4544_Lc5Qn0/view?usp=drive_link) - Quick Guide on how to generate in silico neural responses
+- [fMRI Tutorial](https://drive.google.com/file/d/1w4opmM9h8Oe1NWlwIDuLuDIGuIXj9UaV/view?usp=drive_link) - Learn how to generate in silico fMRI responses.
+- [EEG Tutorial](https://drive.google.com/file/d/1uF5nr1pyg0_my3gULj3w5y0nuq5gZjhL/view?usp=drive_link) - Learn how to generate in silico EEG responses.
+- [Adding New Models](https://drive.google.com/file/d/1nBxEiJATzJdWwfzRPmyai2G76HkeBhAU/view?usp=drive_link) - Guide on how to implement and contribute your own encoding models to BERG.
 
 **Example Application - Relational Neural Control (RNC):**
 
