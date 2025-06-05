@@ -24,10 +24,10 @@ To verify that BERG is correctly installed, run:
    from berg import BERG
    
    # Initialize BERG with default data directory
-   nest = BERG("/path/to/brain-encoding-response-generator")
+   berg = BERG("/path/to/brain-encoding-response-generator")
    
    # List available models
-   models = nest.list_models()
+   models = berg.list_models()
    print(f"Available models: {models}")
 
 You should see a list of available models in the output.
@@ -42,8 +42,8 @@ Here's a simple example of how to generate in silico neural responses using BERG
    from berg import BERG
    import numpy as np
    
-   # Initialize NEST
-   nest = BERG("/path/to/brain-encoding-response-generator")
+   # Initialize BERG
+   berg = BERG("/path/to/brain-encoding-response-generator")
    
    # Get an encoding model
    model = berg.get_encoding_model("fmri-nsd-fwrf", subject=1, selection={"roi": "V1"})
