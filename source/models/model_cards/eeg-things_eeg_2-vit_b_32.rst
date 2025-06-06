@@ -156,7 +156,7 @@ Performance
 
 **Accuracy Plots:**
 
-* ``neural-encoding-simulation-toolkit/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy``
+* ``brain-encoding-response-generator/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy``
 
 Example Usage
 ------------
@@ -164,13 +164,13 @@ Example Usage
 
 .. code-block:: python
 
-    from nest import NEST
+    from berg import BERG
     
-    # Initialize NEST
-    nest = NEST(nest_dir="path/to/neural-encoding-simulation-toolkit")
+    # Initialize BERG
+    berg = BERG(berg_dir="path/to/brain-encoding-response-generator")
     
     # Load the encoding model
-    model = nest.get_encoding_model(
+    model = berg.get_encoding_model(
       "eeg-things_eeg_2-vit_b_32",
       subject=1,
       selection={
@@ -184,7 +184,7 @@ Example Usage
     images = np.random.randint(0, 255, (100, 3, 256, 256))
     
     # Generates the in silico neural responses to images using the encoding model previously loaded
-    responses = nest.encode(
+    responses = berg.encode(
       model,
       images,
       device="auto",
@@ -198,7 +198,7 @@ Example Usage
     # - n_timepoints is Number of time points in the EEG epoch (up to 140, based on the number of time points selected).
     
     # Generate in silico neural responses with metadata
-    responses, metadata = nest.encode(model, images, return_metadata=True)
+    responses, metadata = berg.encode(model, images, return_metadata=True)
     
     # Access EEG channel names and time information
     channel_names = metadata["eeg"]["ch_names"]
@@ -207,7 +207,7 @@ Example Usage
 References
 ---------
 
-* {'Model building code': 'https://github.com/gifale95/NEST/tree/main/nest_creation_code'}
+* {'Model building code': 'https://github.com/gifale95/BERG/tree/main/berg_creation_code'}
 * {'THINGS EEG2 (Gifford et al., 2022)': 'https://doi.org/10.1016/j.neuroimage.2022.119754'}
 * {'THINGS initiative (Hebart et al., 2019)': 'https://things-initiative.org/'}
 * {'ViT-B/32 (Dosovitskiy et al., 2020)': 'https://arxiv.org/abs/2010.11929'}

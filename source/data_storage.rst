@@ -1,22 +1,22 @@
 ====================
-How to Access NEST
+How to Access BERG
 ====================
 
-NEST is stored in a public `Amazon S3 bucket <https://neural-encoding-simulation-toolkit.s3.us-west-2.amazonaws.com/index.html>`_ made available through the **AWS Open Data Program**. You do **not need an AWS account** to browse or download the data. By downloading the data you agree to NEST's :doc:`Terms and Conditions </about/terms_and_conditions>`.
+BERG is stored in a public `Amazon S3 bucket <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html>`_ made available through the **AWS Open Data Program**. You do **not need an AWS account** to browse or download the data. By downloading the data you agree to BERG's :doc:`Terms and Conditions </about/terms_and_conditions>`.
 
 To access the bucket, use the following information:
 
-- **Bucket name:** neural-encoding-simulation-toolkit
+- **Bucket name:** brain-encoding-response-generator
 - **AWS region:** us-west-2
-- **ARN:** arn:aws:s3:::neural-encoding-simulation-toolkit
+- **ARN:** arn:aws:s3:::brain-encoding-response-generator
 
 .. note::
-   The *neural-encoding-simulation-toolkit* bucket contains many GBs of data. Depending on your needs, you may choose to download only specific folders. This documentation provides a detailed description of NEST's content to help you decide what to download.
+   The *brain-encoding-response-generator* bucket contains many GBs of data. Depending on your needs, you may choose to download only specific folders. This documentation provides a detailed description of BERG's content to help you decide what to download.
 
 Recommended Download Method
 ---------------------------
 
-The most efficient way to download NEST is using the **AWS Command Line Interface (CLI)**.
+The most efficient way to download BERG is using the **AWS Command Line Interface (CLI)**.
 
 **Step 1: Install AWS CLI**
 
@@ -27,45 +27,50 @@ You can follow the installation instructions here: https://docs.aws.amazon.com/c
 To list all folders in the bucket:
 ::
 
-    aws s3 ls --no-sign-request s3://neural-encoding-simulation-toolkit/
+    aws s3 ls --no-sign-request s3://brain-encoding-response-generator/
 
-To download the entire dataset into a local folder named `neural-encoding-simulation-toolkit`:
+To download the entire dataset into a local folder named `brain-encoding-response-generator`:
 ::
 
-    aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit ./neural-encoding-simulation-toolkit
+    aws s3 sync --no-sign-request s3://brain-encoding-response-generator ./brain-encoding-response-generator
 
 To download only a specific subfolder (e.g., models trained on fMRI data):
 ::
 
-    aws s3 sync --no-sign-request s3://neural-encoding-simulation-toolkit/encoding_models/modality-fmri ./modality-fmri
+    aws s3 sync --no-sign-request s3://brain-encoding-response-generator/encoding_models/modality-fmri ./modality-fmri
 
 You can also use `--dryrun` to preview what would be downloaded:
 ::
 
-    aws s3 sync --no-sign-request --dryrun s3://neural-encoding-simulation-toolkit ./neural-encoding-simulation-toolkit
+    aws s3 sync --no-sign-request --dryrun s3://brain-encoding-response-generator ./brain-encoding-response-generator
+
+Finally, you can also download individual files with:
+::
+
+    aws s3 cp --no-sign-request s3://brain-encoding-response-generator/encoding_models/../model_weights.npy ./modality-fmri
 
 **Optional Web Access**
 
 You can access files directly from your browser using:
 ::
 
-    https://neural-encoding-simulation-toolkit.s3.us-west-2.amazonaws.com/index.html
+    https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html
 
 
 ============================
-NEST Dataset Structure
+BERG Dataset Structure
 ============================
 
-Overview of NEST Folder Organization
+Overview of BERG Folder Organization
 ------------------------------------
 
-NEST is organized in a structured hierarchy designed to make it easy to locate specific encoding models by their neural data recording modality, training dataset, and model type.
+BERG is organized in a structured hierarchy designed to make it easy to locate specific encoding models by their neural data recording modality, training dataset, and model type.
 
 The main folder structure follows this pattern:
 
 .. code-block:: text
 
-    neural-encoding-simulation-toolkit/
+    brain-encoding-response-generator/
     ├── encoding_models/
     │   ├── modality-{modality}/
     │   │   ├── train_dataset-{dataset}/
@@ -73,7 +78,7 @@ The main folder structure follows this pattern:
     │   │   │       ├── encoding_models_accuracy/
     │   │   │       ├── encoding_models_weights/
     │   │   │       └── metadata/
-    └── nest_tutorials/
+    └── berg_tutorials/
 
 Detailed Structure of Encoding Models
 -------------------------------------
@@ -103,4 +108,4 @@ Each model directory contains three subdirectories:
 
 * This directory contains important metadata relative to the encoding models and to the neural data used to train them.
 
-The NEST Python package automatically handles access to these files based on your requested parameters, making it easy to use without managing these paths directly.
+The BERG Python package automatically handles access to these files based on your requested parameters, making it easy to use without managing these paths directly.

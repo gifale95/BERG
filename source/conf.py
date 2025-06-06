@@ -6,7 +6,7 @@
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = 'NEST'
+project = 'BERG'
 copyright = '2025, Alessandro Gifford, Domenic Bersch'
 author = 'Alessandro Gifford, Domenic Bersch'
 release = '1.0.0'
