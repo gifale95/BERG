@@ -11,7 +11,7 @@ To access the bucket, use the following information:
 - **ARN:** arn:aws:s3:::brain-encoding-response-generator
 
 .. note::
-   The *neural-encoding-simulation-toolkit* bucket contains many GBs of data. Depending on your needs, you may choose to download only specific folders. This documentation provides a detailed description of BERG's content to help you decide what to download.
+   The *brain-encoding-response-generator* bucket contains many GBs of data. Depending on your needs, you may choose to download only specific folders. This documentation provides a detailed description of BERG's content to help you decide what to download.
 
 Recommended Download Method
 ---------------------------
@@ -29,7 +29,7 @@ To list all folders in the bucket:
 
     aws s3 ls --no-sign-request s3://brain-encoding-response-generator/
 
-To download the entire dataset into a local folder named `neural-encoding-simulation-toolkit`:
+To download the entire dataset into a local folder named `brain-encoding-response-generator`:
 ::
 
     aws s3 sync --no-sign-request s3://brain-encoding-response-generator ./brain-encoding-response-generator

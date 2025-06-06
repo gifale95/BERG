@@ -2,18 +2,18 @@
 Adding Models to BERG
 =======================
 
-This guide walks you through the process of adding new models to the Neural Encoding Simulation Toolkit (NEST). You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1nBxEiJATzJdWwfzRPmyai2G76HkeBhAU>`_.
+This guide walks you through the process of adding new models to the Brain Encoding Response Generator (BERG). You can also execute this `tutorial on Google Colab <https://colab.research.google.com/drive/1nBxEiJATzJdWwfzRPmyai2G76HkeBhAU>`_.
 
 
 Overview
 =========
 
-Adding a new model to NEST requires creating two main files:
+Adding a new model to BERG requires creating two main files:
 
-1. **A Python model file** — implements the model's core logic (i.e., how it processes input stimuli to produce predicted neural responses) and defines a standard interface (i.e., functions like ``predict()`` that allow the model to interact with NEST).
+1. **A Python model file** — implements the model's core logic (i.e., how it processes input stimuli to produce predicted neural responses) and defines a standard interface (i.e., functions like ``predict()`` that allow the model to interact with BERG).
 2. **A YAML configuration file** — describes the model's parameters and behavior, including information about the model architecture, training data, and training procedure.
 
-These two files work together to register your encoding model with NEST and make it compatible with NEST's unified interface — a common structure that allows users to call any model in the same way, regardless of its internal details.
+These two files work together to register your encoding model with BERG and make it compatible with BERG's unified interface — a common structure that allows users to call any model in the same way, regardless of its internal details.
 
 
 
@@ -23,23 +23,23 @@ Step 1: Determining Your Model's Location in the GitHub repository
 First, determine which **modality** your model belongs to:
 
 - If it's an **fMRI model**, add it to:  
-  ``nest/models/fmri/``
+  ``berg/models/fmri/``
 
 - If it's an **EEG model**, add it to:  
-  ``nest/models/eeg/``
+  ``berg/models/eeg/``
 
 - If it's a **new modality**, create a new directory:  
-  ``nest/models/your_new_modality/``
+  ``berg/models/your_new_modality/``
 
 Your corresponding **YAML configuration file** should go here:  
-``nest/models/model_cards/your_model_id.yaml``
+``berg/models/model_cards/your_model_id.yaml``
 
 **Note**: If you are adding a new modality, there are a few additional considerations. These are discussed in **Step 4** below.
 
 Step 2: Creating the YAML Configuration File
 ============================================
 
-In the NEST toolkit, you'll find a template YAML file at: ``nest/models/model_cards/template.yaml``
+In the BERG toolkit, you'll find a template YAML file at: ``berg/models/model_cards/template.yaml``
 This template serves as a guide for creating your model's configuration.
 
 Your YAML file is **crucial** because it:
@@ -57,7 +57,7 @@ Here's a template for your YAML configuration file:
 
 .. code-block:: yaml
 
-    # Template YAML file for NEST model specification
+    # Template YAML file for BERG model specification
     # Replace placeholder values with actual model information
 
     # Basic metadata
@@ -163,20 +163,20 @@ Now we'll build the complete model implementation step by step. The required fun
 3.1: Model Registration
 -----------------------
 
-First, set up the model registration code that makes your model discoverable by the NEST toolkit.
+First, set up the model registration code that makes your model discoverable by the BERG toolkit.
 
 
 This code:
 
 1. Loads your model's configuration from the YAML file  
-2. Registers your model with the NEST registry, making it discoverable  
+2. Registers your model with the BERG registry, making it discoverable  
 3. Specifies the module path, class name, and modality
 
 .. code-block:: python
 
     import os
     import yaml
-    from nest.core.model_registry import register_model
+    from berg.core.model_registry import register_model
 
     # Load model info from YAML
     def load_model_info():
@@ -190,7 +190,7 @@ This code:
     # Register this model with the registry using model_info
     register_model(
         model_id=model_info["model_id"],
-        module_path="nest.models.your_modality.your_model_file",  # Replace with actual path
+        module_path="berg.models.your_modality.your_model_file",  # Replace with actual path
         class_name="YourModelClass",
         modality=model_info.get("modality", "your_modality"),
         training_dataset=model_info.get("training_dataset", "your_dataset"),
@@ -204,7 +204,7 @@ Next, define your model class by inheriting from ``BaseModelInterface`` and impl
 
 The initialization method:
 
-1. Stores user-provided parameters (e.g., subject ID, device, NEST directory)  
+1. Stores user-provided parameters (e.g., subject ID, device, BERG directory)  
 2. Validates parameters against the specifications in the YAML file  
 3. Sets up the compute device (CPU or GPU)  
 4. Can process additional model-specific parameters through `**kwargs`
@@ -227,7 +227,7 @@ The structure and valid values of this parameter should be defined in the model�
         # Extract any validation info from model_info
         VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
         
-        def __init__(self, subject: int, selection: Dict, device: str = "auto", nest_dir: Optional[str] = None, **kwargs):
+        def __init__(self, subject: int, selection: Dict, device: str = "auto", berg_dir: Optional[str] = None, **kwargs):
             """
             Initialize your model with the required parameters.
             
@@ -240,13 +240,13 @@ The structure and valid values of this parameter should be defined in the model�
                 (ROI, Time interval, ...)
             device : str
                 Device to run the model on ('cpu', 'cuda', or 'auto').
-            nest_dir : str, optional
-                Path to the NEST directory.
+            berg_dir : str, optional
+                Path to the BERG directory.
             **kwargs
                 Additional model-specific parameters.
             """
             self.subject = subject
-            self.nest_dir = nest_dir
+            self.berg_dir = berg_dir
             self.model = None
             self.selection = selection
             self._validate_parameters()
@@ -308,7 +308,7 @@ This method:
         try:
             # Build paths to model weights
             weights_path = os.path.join(
-                self.nest_dir,
+                self.berg_dir,
                 'your_path')  # Adjust filename format as needed
             
             # Load your model here
@@ -393,13 +393,13 @@ If you implement the `selection parameter` (`self.selection`) to select specific
 The ``get_metadata()`` method provides information about your encoding model and the shape or structure of its in silico responses.
 This might include voxel indices, channel names, ROIs, timepoint definitions, or any other output-relevant detail.
 
-To support metadata access *without having to load the full model*, NEST allows retrieving metadata in two ways:
+To support metadata access *without having to load the full model*, BERG allows retrieving metadata in two ways:
 
 - **During encoding**:
-  ``_, metadata = nest_object.encode(model_id, stimuli, return_metadata=True)``
+  ``_, metadata = berg_object.encode(model_id, stimuli, return_metadata=True)``
 
-- **Directly through the NEST API** (without loading the model):
-  ``metadata = nest_object.get_model_metadata(model_id, subject=..., roi=...)``
+- **Directly through the BERG API** (without loading the model):
+  ``metadata = berg_object.get_model_metadata(model_id, subject=..., roi=...)``
 
 To support this flexibility, you must implement a ``@classmethod get_metadata()`` in your model class.
 This method can extract metadata either from a provided model instance or from the input parameters alone.
@@ -409,20 +409,20 @@ You can adapt it depending on whether your model uses ROIs, timepoints, or other
 
 This is the most complicated function to implement but you should be able to "blindly" follow this template and just add your missing variables. Feel free to refer to existing models for concrete implementations:
 
-- `fMRI model example <https://github.com/gifale95/NEST/blob/main/nest/models/fmri/nsd_fwrf.py>`_
-- `EEG model example <https://github.com/gifale95/NEST/blob/main/nest/models/eeg/things_eeg.py>`_
+- `fMRI model example <https://github.com/gifale95/BERG/blob/main/berg/models/fmri/nsd_fwrf.py>`_
+- `EEG model example <https://github.com/gifale95/BERG/blob/main/berg/models/eeg/things_eeg.py>`_
 
 .. code-block:: python
 
     @classmethod
-    def get_metadata(cls, nest_dir=None, subject=None, model_instance=None, roi=None, **kwargs) -> Dict[str, Any]:
+    def get_metadata(cls, berg_dir=None, subject=None, model_instance=None, roi=None, **kwargs) -> Dict[str, Any]:
         """
         Retrieve metadata for the model.
 
         Parameters
         ----------
-        nest_dir : str
-            Path to the NEST directory where metadata is stored.
+        berg_dir : str
+            Path to the BERG directory where metadata is stored.
         subject : int
             Subject number.
         model_instance : BaseModelInterface, optional
@@ -440,19 +440,19 @@ This is the most complicated function to implement but you should be able to "bl
         
         # Extract parameters from instance if available
         if model_instance is not None:
-            nest_dir = model_instance.nest_dir
+            berg_dir = model_instance.berg_dir
             subject = model_instance.subject
             roi = getattr(model_instance, "roi", roi)
 
         # Also allow metadata retrieval from class instance
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
-            nest_dir = cls.nest_dir
+            berg_dir = cls.berg_dir
             subject = cls.subject
             roi = getattr(cls, "roi", roi)
 
         # Validate required parameters
         missing = []
-        if nest_dir is None: missing.append("nest_dir")
+        if berg_dir is None: missing.append("berg_dir")
         if subject is None: missing.append("subject")
         if roi is None and "VALID_ROIS" in dir(cls): missing.append("roi")
         
@@ -466,7 +466,7 @@ This is the most complicated function to implement but you should be able to "bl
 
         # Build metadata path
         filename = os.path.join(
-            nest_dir,
+            berg_dir,
             "encoding_models",
             "modality-<your_modality>",               # e.g., modality-fmri
             "train_dataset-<your_dataset>",           # e.g., train_dataset-nsd
@@ -524,8 +524,8 @@ Here's the complete implementation of a model class.
 
 For more detailed examples, you can refer to existing models:
 
-- `fMRI model example <https://github.com/gifale95/NEST/blob/main/nest/models/fmri/nsd_fwrf.py>`_
-- `EEG model example <https://github.com/gifale95/NEST/blob/main/nest/models/eeg/things_eeg.py>`_
+- `fMRI model example <https://github.com/gifale95/BERG/blob/main/berg/models/fmri/nsd_fwrf.py>`_
+- `EEG model example <https://github.com/gifale95/BERG/blob/main/berg/models/eeg/things_eeg.py>`_
 
 .. code-block:: python
 
@@ -535,9 +535,9 @@ For more detailed examples, you can refer to existing models:
     import yaml
     from typing import Dict, Any, Optional
 
-    from nest.interfaces.base_model import BaseModelInterface
-    from nest.core.model_registry import register_model
-    from nest.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
+    from berg.interfaces.base_model import BaseModelInterface
+    from berg.core.model_registry import register_model
+    from berg.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
 
     # Load model info from YAML
     def load_model_info():
@@ -551,7 +551,7 @@ For more detailed examples, you can refer to existing models:
     # Register this model with the registry using model_info
     register_model(
         model_id=model_info["model_id"],
-        module_path="nest.models.your_modality.your_model_file",  # Replace with actual path
+        module_path="berg.models.your_modality.your_model_file",  # Replace with actual path
         class_name="YourModelClass",
         modality=model_info.get("modality", "your_modality"),
         training_dataset=model_info.get("training_dataset", "your_dataset"),
@@ -571,7 +571,7 @@ For more detailed examples, you can refer to existing models:
         # Extract any validation info from model_info
         VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
 
-        def __init__(self, subject: int, selection: Dict, device: str = "auto", nest_dir: Optional[str] = None, **kwargs):
+        def __init__(self, subject: int, selection: Dict, device: str = "auto", berg_dir: Optional[str] = None, **kwargs):
             """
             Initialize your model with the required parameters.
 
@@ -584,13 +584,13 @@ For more detailed examples, you can refer to existing models:
                 (ROI, Time interval, ...)
             device : str
                 Device to run the model on ('cpu', 'cuda', or 'auto').
-            nest_dir : str, optional
-                Path to the NEST directory.
+            berg_dir : str, optional
+                Path to the BERG directory.
             **kwargs
                 Additional model-specific parameters.
             """
             self.subject = subject
-            self.nest_dir = nest_dir
+            self.berg_dir = berg_dir
             self.model = None
             self.selection = selection
             self._validate_parameters()
@@ -635,7 +635,7 @@ For more detailed examples, you can refer to existing models:
             try:
                 # Build paths to model weights
                 weights_path = os.path.join(
-                    self.nest_dir,
+                    self.berg_dir,
                     'your_path') # Adjust filename format as needed
 
                 # Load your model here
@@ -696,14 +696,14 @@ For more detailed examples, you can refer to existing models:
 
 
         @classmethod
-        def get_metadata(cls, nest_dir=None, subject=None, model_instance=None, roi=None, **kwargs) -> Dict[str, Any]:
+        def get_metadata(cls, berg_dir=None, subject=None, model_instance=None, roi=None, **kwargs) -> Dict[str, Any]:
             """
             Retrieve metadata for the model.
 
             Parameters
             ----------
-            nest_dir : str
-                Path to the NEST directory where metadata is stored.
+            berg_dir : str
+                Path to the BERG directory where metadata is stored.
             subject : int
                 Subject number.
             model_instance : BaseModelInterface, optional
@@ -721,19 +721,19 @@ For more detailed examples, you can refer to existing models:
 
             # Extract parameters from instance if available
             if model_instance is not None:
-                nest_dir = model_instance.nest_dir
+                berg_dir = model_instance.berg_dir
                 subject = model_instance.subject
                 roi = getattr(model_instance, "roi", roi)
 
             # Also allow metadata retrieval from class instance
             elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
-                nest_dir = cls.nest_dir
+                berg_dir = cls.berg_dir
                 subject = cls.subject
                 roi = getattr(cls, "roi", roi)
 
             # Validate required parameters
             missing = []
-            if nest_dir is None: missing.append("nest_dir")
+            if berg_dir is None: missing.append("berg_dir")
             if subject is None: missing.append("subject")
             if roi is None and "VALID_ROIS" in dir(cls): missing.append("roi")
 
@@ -747,7 +747,7 @@ For more detailed examples, you can refer to existing models:
 
             # Build metadata path
             filename = os.path.join(
-                nest_dir,
+                berg_dir,
                 "encoding_models",
                 "modality-<your_modality>",               # e.g., modality-fmri
                 "train_dataset-<your_dataset>",           # e.g., train_dataset-nsd
@@ -794,15 +794,15 @@ For more detailed examples, you can refer to existing models:
 Step 4: Adding a New Modality
 =============================
 
-To extend NEST with a new recording modality (e.g., MEG), follow these steps:
+To extend BERG with a new recording modality (e.g., MEG), follow these steps:
 
 1. Create a Folder
 ------------------
-Create a new directory under ``nest/models/``:
+Create a new directory under ``berg/models/``:
 
 .. code-block:: text
 
-    nest/models/your_modality/
+    berg/models/your_modality/
 
 2. Add Your Model Files
 -----------------------
@@ -813,7 +813,7 @@ Inside the new folder, include:
 
   .. code-block:: python
 
-      import nest.models.your_modality.your_model
+      import berg.models.your_modality.your_model
 
 3. Add a Model Card
 ------------------
@@ -821,7 +821,7 @@ Create a YAML configuration file for your model and place it in:
 
 .. code-block:: text
 
-    nest/models/model_cards/your_model_id.yaml
+    berg/models/model_cards/your_model_id.yaml
 
 4. Specify the Modality
 ----------------------
@@ -833,18 +833,18 @@ In both ``your_model.py`` and the YAML config file, define the modality name. Fo
 
 5. Register the Modality
 -----------------------
-Finally, update ``nest/models/__init__.py`` to ensure your modality is loaded:
+Finally, update ``berg/models/__init__.py`` to ensure your modality is loaded:
 
 .. code-block:: python
 
-    import nest.models.your_modality
+    import berg.models.your_modality
 
 Final Directory Structure
 ------------------------
 
 .. code-block:: text
 
-    nest/
+    berg/
     ├── models/
     │   ├── __init__.py
     │   ├── fmri/
@@ -855,17 +855,17 @@ Final Directory Structure
     │   └── model_cards/
     │       └── your_model_id.yaml
 
-Contributing to NEST
+Contributing to BERG
 ===================
 
-We warmly welcome all contributions to the NEST toolbox and are happy for every addition that helps grow the community.
+We warmly welcome all contributions to the BERG toolbox and are happy for every addition that helps grow the community.
 
 Code Quality
 -----------
 - Include clear **docstrings** for all public methods.
 - Add **type hints** to improve code readability.
 - Implement **robust error handling** with informative messages.
-- Follow existing **NEST naming conventions**.
+- Follow existing **BERG naming conventions**.
 - Be thorough with your **YAML configuration** and include as much relevant information as possible.
 - If available, feel free to add **performance details**.
 
@@ -879,9 +879,9 @@ Testing
 How to Contribute
 ---------------
 
-If you would like to contribute your model back to NEST:
+If you would like to contribute your model back to BERG:
 
-1. **Fork** the NEST repository.
+1. **Fork** the BERG repository.
 2. **Create a branch** from the ``development`` branch.
 3. **Add your model** following this tutorial.
 4. **Submit a pull request** with:
@@ -889,7 +889,7 @@ If you would like to contribute your model back to NEST:
    - Example code showing how to run your model.
    - Any relevant **citations** or **references**.
 
-We look forward to your contributions and are excited to see the creative ways the community expands NEST!
+We look forward to your contributions and are excited to see the creative ways the community expands BERG!
 
 
 
@@ -898,16 +898,16 @@ We look forward to your contributions and are excited to see the creative ways t
 Uploading Your Model Weights
 ===========================
 
-After implementing and testing your model, the final step is to upload the trained weights and associated metadata so that others can use your model through NEST.
+After implementing and testing your model, the final step is to upload the trained weights and associated metadata so that others can use your model through BERG.
 
-Step 1: Follow the NEST Directory Structure
+Step 1: Follow the BERG Directory Structure
 ------------------------------------------
 
-Please organize your files following the official NEST dataset structure, as described in the `NEST documentation <https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/data_storage.html#nest-dataset-structure>`_:
+Please organize your files following the official BERG dataset structure, as described in the `BERG documentation <https://brain-encoding-response-generator.readthedocs.io/en/latest/data_storage.html#berg-dataset-structure>`_:
 
 .. code-block:: text
 
-    neural-encoding-simulation-toolkit/
+    brain-encoding-response-generator/
     ├── encoding_models/
     │   ├── modality-{modality}/
     │   │   ├── train_dataset-{dataset}/
@@ -915,7 +915,7 @@ Please organize your files following the official NEST dataset structure, as des
     │   │   │       ├── encoding_models_accuracy/
     │   │   │       ├── encoding_models_weights/
     │   │   │       └── metadata/
-    └── nest_tutorials/
+    └── berg_tutorials/
 
 Replace ``{modality}``, ``{dataset}``, and ``{model}`` with the appropriate values (e.g., ``modality-fmri``, ``train_dataset-nsd``, ``model-fwrf``).
 
@@ -928,7 +928,7 @@ Each model directory must contain the following subfolders:
 Step 2: Create a Zip Archive
 ---------------------------
 
-Once the directory is correctly structured, compress the entire ``neural-encoding-simulation-toolkit/`` folder into a ``.zip`` archive.
+Once the directory is correctly structured, compress the entire ``brain-encoding-response-generator/`` folder into a ``.zip`` archive.
 
 Step 3: Upload to a Cloud Service
 --------------------------------
@@ -939,7 +939,7 @@ Step 4: Submit a Pull Request
 ----------------------------
 
 Include the public link to your ``.zip`` archive in your pull request.
-For detailed instructions on contributing to NEST, please refer to the official guide: `How to contribute <https://neural-encoding-simulation-toolkit.readthedocs.io/en/latest/contribution.html>`_
+For detailed instructions on contributing to BERG, please refer to the official guide: `How to contribute <https://brain-encoding-response-generator.readthedocs.io/en/latest/contribution.html>`_
 
 
 
@@ -948,4 +948,4 @@ Citation
 
 If you use the code and/or data from this tutorial, please cite:
 
-    *Gifford AT, Bersch D, Roig G, Cichy RM. 2025. The Neural Encoding Simulation Toolkit. In preparation. https://github.com/gifale95/NEST*
+    *Gifford AT, Bersch D, Roig G, Cichy RM. 2025. The Brain Encoding Response Generator. In preparation. https://github.com/gifale95/BERG*
