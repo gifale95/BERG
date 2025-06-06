@@ -43,7 +43,7 @@ metadata_dir = os.path.join(args.nest_dir, 'encoding_models', 'modality-fmri',
 	'train_dataset-nsd_fsaverage', 'model-'+args.model, 'metadata')
 
 for sub in args.subjects:
-	file_name = 'metadata_subject-' + format(sub, '02') + '.npy'
+	file_name = f'metadata_subject-{int(sub):02d}.npy'
 	metadata = np.load(os.path.join(metadata_dir, file_name),
 		allow_pickle=True).item()
 	# Append the encoding accuracies across hemispheres
@@ -66,7 +66,7 @@ plt.rc('ytick', labelsize=19)
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-subject = 'fsaverage_nsd'
+subject = 'fsaverage'
 
 
 # =============================================================================
@@ -279,7 +279,7 @@ acc = np.zeros((len(args.subjects), len(rois)))
 for r, roi in enumerate(rois):
 	for s, sub in enumerate(args.subjects):
 		# Load the metadata
-		file_name = 'metadata_subject-' + format(sub, '02') + '.npy'
+		file_name = f'metadata_subject-{int(sub):02d}.npy'
 		metadata = np.load(os.path.join(metadata_dir, file_name),
 			allow_pickle=True).item()
 		# Get the ROI mask
@@ -344,15 +344,16 @@ for r, roi in enumerate(rois):
 		axs[r].set_ylabel('Noise-ceiling-normalized\nexplained variance (%)',
 			fontsize=fontsize)
 		yticks = np.arange(0, 101, 20)
-		ylabels = np.arange(0, 101, 20)
-		plt.yticks(ticks=yticks, labels=ylabels)
-	axs[r].set_ylim(bottom=0, top=100)
+		axs[r].set_yticks(yticks)
+		axs[r].set_yticklabels(yticks)
+		axs[r].set_ylim(bottom=0, top=100)
 	# x-axis
 	if r in [18, 19, 20, 21, 22, 23]:
 		axs[r].set_xlabel('Subjects', fontsize=fontsize)
-		xticks = x
-		xlabels = ['1', '2', '3', '4', '5', '6', '7', '8']
-		plt.xticks(ticks=xticks, labels=xlabels, fontsize=fontsize)
+		xticks = np.arange(len(args.subjects))  # Make sure this matches the actual x data
+		xlabels = [str(i) for i in args.subjects]  # Use actual subject numbers
+		axs[r].set_xticks(xticks)
+		axs[r].set_xticklabels(xlabels)
 	# Title
 	axs[r].set_title(roi, fontsize=fontsize)
 # Save the figure
