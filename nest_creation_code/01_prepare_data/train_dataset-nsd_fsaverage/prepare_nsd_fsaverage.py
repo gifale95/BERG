@@ -119,6 +119,19 @@ rh_ncsnr = rh_ncsnr.astype(np.float32)
 # =============================================================================
 # Prepare the ROI mask indices
 # =============================================================================
+
+def read_ctab_file(filepath):
+    with open(filepath, 'r') as f:
+        lines = f.readlines()
+    roi_map = {}
+    for line in lines:
+        parts = line.strip().split()
+        if len(parts) >= 2:
+            roi_id = int(parts[0])
+            roi_name = parts[1]
+            roi_map[roi_id] = roi_name
+    return roi_map
+
 # Save the mapping between ROI names and ROI mask values
 roi_dir = os.path.join(args.nsd_dir, 'nsddata', 'freesurfer', 'subj'+
 	format(args.subject, '02'), 'label')
@@ -126,11 +139,18 @@ roi_map_files = ['prf-visualrois.mgz.ctab', 'floc-bodies.mgz.ctab',
 	'floc-faces.mgz.ctab', 'floc-places.mgz.ctab', 'floc-words.mgz.ctab',
 	'streams.mgz.ctab']
 roi_name_maps = []
+
+roi_name_maps = []
 for r in roi_map_files:
-	roi_map = pd.read_csv(os.path.join(roi_dir, r), delimiter=' ',
-		header=None, index_col=0)
-	roi_map = roi_map.to_dict()[1]
-	roi_name_maps.append(roi_map)
+    ctab_path = os.path.join(roi_dir, r)
+    roi_map = read_ctab_file(ctab_path)
+    roi_name_maps.append(roi_map)
+
+# for r in roi_map_files:
+# 	roi_map = pd.read_csv(os.path.join(roi_dir, r), delimiter=' ',
+# 		header=None, index_col=0)
+# 	roi_map = roi_map.to_dict()[1]
+# 	roi_name_maps.append(roi_map)
 
 # Map the ROI mask indices from subject native space to fsaverage space
 lh_roi_files = ['lh.prf-visualrois.mgz', 'lh.floc-bodies.mgz',
