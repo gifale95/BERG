@@ -140,9 +140,9 @@ We used BERG to develop [Relational Neural Control](https://github.com/gifale95/
 
 
 
-## 📦 Brain Encoding Response Generator creation code
+## 📦 BERG creation code
 
-The folder [`../BERG/berg_creation_code/`][berg_creation_code] contains the code used to create the Neural Encoding Simulation Toolkit, divided in the following sub-folders:
+The folder [`../BERG/berg_creation_code/`][berg_creation_code] contains the code used to train the encoding models in BERG, divided in the following sub-folders:
 
 * **[`../01_prepare_data/`][prepare_data]:** prepare the neural responses in the right format for encoding model training.
 * **[`../02_train_encoding_models/`][train_encoding]:** train the encoding models, and save their weights.
