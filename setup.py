@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-with open('nest/_version.py') as f:
+with open('berg/_version.py') as f:
     exec(f.read())
 
 requires = []
@@ -12,10 +12,10 @@ with open('README.md', encoding='utf-8') as readmefile:
 
 
 setup(
-    name='NEST',
+    name='BERG',
     version=__version__,
-    description='Neural Encoding Simulation Toolkit',
-    url='https://github.com/gifale95/NEST',
+    description='Brain Encoding Response Generator',
+    url='https://github.com/gifale95/BERG',
     long_description=long_description,
     long_description_content_type='text/markdown',
     classifiers=[

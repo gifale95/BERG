@@ -162,5 +162,4 @@ cython_debug/
 /tutorial_images
 *.DS_Store
 /neural_encoding_simulation_toolkit
-debugging.ipynb
 /neural-encoding-simulation-toolkit
