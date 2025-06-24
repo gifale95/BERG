@@ -20,17 +20,17 @@ import cortex
 import cortex.polyutils
 import matplotlib
 import matplotlib.pyplot as plt
+import ast
 
 
 # =============================================================================
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
+parser.add_argument('--subjects', type=ast.literal_eval, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--model', type=str, default='vit_b_32')
 parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args = parser.parse_args()
-
 
 # =============================================================================
 # Load the encoding models' encoding accuracy
@@ -43,7 +43,7 @@ metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
 	'train_dataset-nsd_fsaverage', 'model-'+args.model, 'metadata')
 
 for sub in args.subjects:
-	file_name = f'metadata_subject-{int(sub):02d}.npy'
+	file_name = 'metadata_subject-' + format(sub, '02') + '.npy'
 	metadata = np.load(os.path.join(metadata_dir, file_name),
 		allow_pickle=True).item()
 	# Append the encoding accuracies across hemispheres
@@ -279,7 +279,7 @@ acc = np.zeros((len(args.subjects), len(rois)))
 for r, roi in enumerate(rois):
 	for s, sub in enumerate(args.subjects):
 		# Load the metadata
-		file_name = f'metadata_subject-{int(sub):02d}.npy'
+		file_name = 'metadata_subject-' + format(sub, '02') + '.npy'
 		metadata = np.load(os.path.join(metadata_dir, file_name),
 			allow_pickle=True).item()
 		# Get the ROI mask
@@ -328,10 +328,17 @@ plt.rcParams['svg.fonttype'] = 'none'
 colors = [(170/255, 118/255, 186/255)]
 
 # Plot the encoding accuracy results
-fig, axs = plt.subplots(nrows=4, ncols=6, sharex=True, sharey=True)
+# Increase figure size to accommodate all text properly
+fig, axs = plt.subplots(nrows=4, ncols=6, sharex=True, sharey=True, 
+                        figsize=(18, 12))  # Increased figure size
 axs = np.reshape(axs, (-1))
+
+# Adjust spacing between subplots
+plt.subplots_adjust(hspace=0.4, wspace=0.3)  # Add proper spacing
+
 x = np.arange(len(acc))
 width = 0.4
+
 for r, roi in enumerate(rois):
 	# Plot the encoding accuracies
 	axs[r].bar(x, acc[:,r], width=width, color=colors[0])
@@ -339,23 +346,32 @@ for r, roi in enumerate(rois):
 	y = np.mean(acc[:,r], 0)
 	axs[r].plot([min(x), max(x)], [y, y], '--', color='k', linewidth=2,
 		alpha=0.4, label='Subjects mean')
-	# y-axis
+	
+	# y-axis - Fix the yticks setting
 	if r in [0, 6, 12, 18]:
 		axs[r].set_ylabel('Noise-ceiling-normalized\nexplained variance (%)',
 			fontsize=fontsize)
-		yticks = np.arange(0, 101, 20)
-		axs[r].set_yticks(yticks)
-		axs[r].set_yticklabels(yticks)
-		axs[r].set_ylim(bottom=0, top=100)
+	
+	# Set y-axis properties for ALL subplots
+	axs[r].set_ylim(bottom=0, top=100)
+	yticks = np.arange(0, 101, 20)
+	ylabels = np.arange(0, 101, 20)
+	axs[r].set_yticks(ticks=yticks)  # Use axs[r] instead of plt
+	axs[r].set_yticklabels(labels=ylabels)  # Use axs[r] instead of plt
+	
 	# x-axis
 	if r in [18, 19, 20, 21, 22, 23]:
 		axs[r].set_xlabel('Subjects', fontsize=fontsize)
-		xticks = np.arange(len(args.subjects))  # Make sure this matches the actual x data
-		xlabels = [str(i) for i in args.subjects]  # Use actual subject numbers
-		axs[r].set_xticks(xticks)
-		axs[r].set_xticklabels(xlabels)
+	
+	# Set x-axis properties for ALL subplots
+	xticks = x
+	xlabels = ['1', '2', '3', '4', '5', '6', '7', '8']
+	axs[r].set_xticks(ticks=xticks)  # Use axs[r] instead of plt
+	axs[r].set_xticklabels(labels=xlabels, fontsize=fontsize)  # Use axs[r] instead of plt
+	
 	# Title
 	axs[r].set_title(roi, fontsize=fontsize)
+
 # Save the figure
 fig.savefig('noise_ceiling_normalized_explained_variance_roi_barplot.svg',
 	bbox_inches='tight', transparent=True, format='svg')
