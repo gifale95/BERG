@@ -66,7 +66,6 @@ class MEM(BaseModelInterface):
     """
 
     MODEL_ID = model_info["model_id"]
-    # Extract any validation info from model_info
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
@@ -177,7 +176,7 @@ class MEM(BaseModelInterface):
         if x.shape[-2:] != (224, 224):
             x = F.interpolate(x, size=(224, 224), mode='bilinear', align_corners=False)
         
-        # Apply ImageNet normalization (same as original implementation)
+        # Apply ImageNet normalization
         means = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
         stds = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
         x = (x - means) / stds
