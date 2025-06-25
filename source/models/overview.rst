@@ -72,6 +72,11 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Natural Scenes Dataset (volume space)
      - Human
      - Images
+   * - :doc:`model_cards/fmri-nsd-mem`
+     - Memory Encoding Model incorporating previous image frames to predict fMRI responses across visual and non-visual brain regions. Winner of Algonauts 2023 competition.
+     - Natural Scenes Dataset (volume space)
+     - Human
+     - Images
 
 
 modality-eeg
