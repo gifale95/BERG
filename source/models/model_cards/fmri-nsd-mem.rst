@@ -165,7 +165,7 @@ Example Usage
     from berg import BERG
     
     # Initialize BERG
-    berg = BERG(berg="path/to/brain-encoding-response-generator")
+    berg = BERG(berg_dir="path/to/brain-encoding-response-generator")
     
     # Load the model
     model = berg.get_encoding_model("fmri-nsd-mem", subject=1, selection={"roi": "V1v"})
