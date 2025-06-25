@@ -80,7 +80,7 @@ parameters:
         'FBA-2', 'mTL-bodies', 'OFA', 'FFA-1', 'FFA-2', 'mTL-faces', 'aTL-faces', 'OPA', 
         'PPA', 'RSC', 'OWFA', 'VWFA-1', 'VWFA-2', 'mfs-words', 'mTL-words', 'early', 
         'midventral', 'midlateral', 'midparietal', 'ventral', 'lateral', 'parietal']
-        example: "V1"
+        example: "V1v"
       lh_vertices:
         type: numpy.ndarray
         description: |
