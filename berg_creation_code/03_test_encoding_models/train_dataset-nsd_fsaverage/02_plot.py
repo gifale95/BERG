@@ -221,7 +221,7 @@ plt.close()
 expl_var_threshold = []
 for s in range(len(explained_variance_nsdsynthetic)):
 	expl_var = copy(explained_variance_nsdsynthetic[s])
-	idx = noise_ceiling_nsdsynthetic[s] < 0.1
+	idx = noise_ceiling_nsdsynthetic[s] < 0.3
 	expl_var[idx] = np.nan
 	expl_var_threshold.append(expl_var)
 vertex_data = cortex.Vertex(np.nanmean(expl_var_threshold, 0), subject,
@@ -389,7 +389,7 @@ for s, sub in enumerate(args.subjects):
 expl_var_threshold = []
 for s in range(len(explained_variance_nsdsynthetic)):
 	expl_var = copy(explained_variance_nsdsynthetic[s])
-	idx = noise_ceiling_nsdsynthetic[s] < 0.1
+	idx = noise_ceiling_nsdsynthetic[s] < 0.3
 	expl_var[idx] = np.nan
 	expl_var_threshold.append(expl_var)
 for s, sub in enumerate(args.subjects):
