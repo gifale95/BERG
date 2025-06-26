@@ -184,7 +184,8 @@ Example Usage
       subject=1,
       selection={
         "roi": "V1"
-      }
+      },
+      device="auto"
     )
     
     # Prepare the stimulus images
@@ -195,7 +196,6 @@ Example Usage
     responses = berg.encode(
       model,
       images,
-      device="auto",
       show_progress=True
     )
     
@@ -204,7 +204,11 @@ Example Usage
     # - n_voxels is Number of voxels in the selected ROI, varies by ROI and subject.
 
     # Generate in silico neural responses with metadata
-    responses, metadata = berg.encode(model, images, return_metadata=True)
+    responses, metadata = berg.encode(
+      model,
+      images,
+      return_metadata=True
+    )
 
 References
 ---------

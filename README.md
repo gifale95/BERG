@@ -67,11 +67,12 @@ For detailed instructions and folder structure, see the [documentation](https://
 
 The following table shows the encoding models currently available in BERG. For more details on these models, please refer to the [documentation][model_cards].
 
-| Model ID | Training dataset | Species | Stimuli |
-|----------|------------------|---------|---------|
-| [fmri-nsd_fsaverage-vit_b_32][fmri-nsd_fsaverage-vit_b_32] | [NSD (surface space)][allen] | Human | Images |
-| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD (volume space)][allen] | Human | Images |
-| [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | Human | Images |
+| Model ID | Training dataset | Acquisition device | Species | Stimuli |
+|----------|------------------|--------------------|---------|---------|
+| [fmri-nsd_fsaverage-huze][fmri-nsd_fsaverage-huze] | [NSD (surface space)][allen] | fMRI | Human | Images |
+| [fmri-nsd_fsaverage-vit_b_32][fmri-nsd_fsaverage-vit_b_32] | [NSD (surface space)][allen] | fMRI | Human | Images |
+| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD (volume space)][allen] | fMRI | Human | Images |
+| [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | EEG | Human | Images |
  
 
 
@@ -179,6 +180,7 @@ If you use the Brain Encoding Response Generator, please cite:
 [load_insilico_neural_responses]: https://github.com/gifale95/BERG/blob/main/berg/berg.py#L551
 
 
+[fmri-nsd_fsaverage-huze]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-huze.html
 [fmri-nsd_fsaverage-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-vit_b_32.html
 [fmri-nsd-fwrf]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd-fwrf.html
 [eeg-things_eeg_2-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-vit_b_32.html

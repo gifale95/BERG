@@ -45,7 +45,9 @@ subject during the NSD experiment).
 all subjects saw for up to three times during the NSD experiment).
 
 **Model testing partition.** fMRI responses for 515/1,000 shared images (i.e., the 515 images that each subject saw for
-exactly three times during the NSD experiment).
+exactly three times during the NSD experiment). The models are additionally tested out-of-distribution on NSD-synthetic,
+the out-of-distribution component of NSD consisting of fMRI responses from the same 8 NSD subjects to 286 NSD-synthetic
+images.
 
 Input
 -----
@@ -177,7 +179,8 @@ Example Usage
       subject=1,
       selection={
         "roi": "V1v"
-      }
+      },
+      device="auto"
     )
     
     # Prepare the stimulus images
@@ -188,7 +191,6 @@ Example Usage
     responses = berg.encode(
       model,
       images,
-      device="auto",
       show_progress=True
     )
     
@@ -201,12 +203,17 @@ Example Usage
     # fMRI responses are generated."
 
     # Generate in silico neural responses with metadata
-    responses, metadata = berg.encode(model, images, return_metadata=True)
+    responses, metadata = berg.encode(
+      model,
+      images,
+      return_metadata=True
+      )
 
 References
 ---------
 
 * {'Model building code': 'https://github.com/gifale95/BERG/tree/main/berg_creation_code'}
 * {'NSD paper (Allen et al., 2022)': 'https://doi.org/10.1038/s41593-021-00962-x'}
+* {'NSD-synhtetic paper (Gifford et al., 2025)': 'https://doi.org/10.48550/arXiv.2503.06286'}
 * {'COCO dataset (Lin et al., 2014)': 'https://cocodataset.org/#home'}
 * {'ViT-B/32 (Dosovitskiy et al., 2020)': 'https://arxiv.org/abs/2010.11929'}
