@@ -31,8 +31,7 @@ have been downsampled to 250 principal components using principal component anal
 
 The encoding models were trained on the Natural Scenes Dataset (NSD) (Allen et al., 2022), 7T fMRI responses of 8
 subjects to 73k natural scenes coming from the COCO dataset (Lin et al., 2014). One encoding model was trained for
-each NSD subject, and for each of 23 ROIs overlaying visual cortex. For detailed information on these ROIs, and on how
-they were selected, refer to the NSD paper and data manual.
+each NSD subject, and for each fMRI vertex.
 
 **Preprocessing.** The encoding models are trained on NSD's data prepared in FreeSurfer's fsaverage space, from the
 "betas_fithrf_GLMdenoise_RR" preprocessing version. Note that the NSD data were *z*-scored at each scan session, and as
