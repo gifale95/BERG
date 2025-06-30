@@ -471,12 +471,12 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     
     # References section
     rst_content.extend(["", "References", "---------", ""])
-    
+
     references = data.get("references", [])
     for ref in references:
         if isinstance(ref, dict):
             for key, value in ref.items():
-                rst_content.append(f"* {{'{key}': '{value}'}}")
+                rst_content.append(f"* {key}: {value}")
         else:
             rst_content.append(f"* {ref}")
     

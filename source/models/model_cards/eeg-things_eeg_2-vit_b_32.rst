@@ -209,7 +209,7 @@ Example Usage
 References
 ---------
 
-* {'Model building code': 'https://github.com/gifale95/BERG/tree/main/berg_creation_code'}
-* {'THINGS EEG2 (Gifford et al., 2022)': 'https://doi.org/10.1016/j.neuroimage.2022.119754'}
-* {'THINGS initiative (Hebart et al., 2019)': 'https://things-initiative.org/'}
-* {'ViT-B/32 (Dosovitskiy et al., 2020)': 'https://arxiv.org/abs/2010.11929'}
+* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code
+* THINGS EEG2 (Gifford et al., 2022): https://doi.org/10.1016/j.neuroimage.2022.119754
+* THINGS initiative (Hebart et al., 2019): https://things-initiative.org/
+* ViT-B/32 (Dosovitskiy et al., 2020): https://arxiv.org/abs/2010.11929

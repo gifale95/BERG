@@ -208,7 +208,7 @@ Example Usage
 References
 ---------
 
-* {'Model building code': 'https://huggingface.co/huzey/nsd_model/tree/main'}
-* {'NSD paper (Allen et al., 2022)': 'https://doi.org/10.1038/s41593-021-00962-x'}
-* {'NSD-synthetic paper (Gifford et al., 2025)': 'https://doi.org/10.48550/arXiv.2503.06286'}
-* {'COCO dataset (Lin et al., 2014)': 'https://cocodataset.org/#home'}
+* Model building code: https://huggingface.co/huzey/nsd_model/tree/main
+* NSD paper (Allen et al., 2022): https://doi.org/10.1038/s41593-021-00962-x
+* NSD-synthetic paper (Gifford et al., 2025): https://doi.org/10.48550/arXiv.2503.06286
+* COCO dataset (Lin et al., 2014): https://cocodataset.org/#home

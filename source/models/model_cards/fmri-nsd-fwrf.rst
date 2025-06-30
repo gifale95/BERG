@@ -215,7 +215,7 @@ Example Usage
 References
 ---------
 
-* {'Model building code': 'https://github.com/gifale95/BERG/tree/main/berg_creation_code'}
-* {'NSD paper (Allen et al., 2022)': 'https://doi.org/10.1038/s41593-021-00962-x'}
-* {'fwRF model (St-Yves et al., 2018)': 'https://doi.org/10.1016/j.neuroimage.2017.06.035'}
-* {'COCO dataset (Lin et al., 2014)': 'https://cocodataset.org/#home'}
+* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code
+* NSD paper (Allen et al., 2022): https://doi.org/10.1038/s41593-021-00962-x
+* fwRF model (St-Yves et al., 2018): https://doi.org/10.1016/j.neuroimage.2017.06.035
+* COCO dataset (Lin et al., 2014): https://cocodataset.org/#home

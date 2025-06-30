@@ -211,8 +211,8 @@ Example Usage
 References
 ---------
 
-* {'Model building code': 'https://github.com/gifale95/BERG/tree/main/berg_creation_code'}
-* {'NSD paper (Allen et al., 2022)': 'https://doi.org/10.1038/s41593-021-00962-x'}
-* {'NSD-synthetic paper (Gifford et al., 2025)': 'https://doi.org/10.48550/arXiv.2503.06286'}
-* {'COCO dataset (Lin et al., 2014)': 'https://cocodataset.org/#home'}
-* {'ViT-B/32 (Dosovitskiy et al., 2020)': 'https://arxiv.org/abs/2010.11929'}
+* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code
+* NSD paper (Allen et al., 2022): https://doi.org/10.1038/s41593-021-00962-x
+* NSD-synthetic paper (Gifford et al., 2025): https://doi.org/10.48550/arXiv.2503.06286
+* COCO dataset (Lin et al., 2014): https://cocodataset.org/#home
+* ViT-B/32 (Dosovitskiy et al., 2020): https://arxiv.org/abs/2010.11929
