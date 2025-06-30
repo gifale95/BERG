@@ -251,33 +251,58 @@ class TowPartModel(nn.Module):
         self.model_part1 = model_part1
         self.model_part2 = model_part2
         self.part1_voxel_indices = part1_voxel_indices
+            
+            
+    def forward(self, x, voxel_indices=None):
+        # x: [B, 3, 224, 224] # image after normalization
+        if voxel_indices is None:
+            out1 = self.model_part1(x)
+            out2 = self.model_part2(x)
+            out = out2
+            out[:, self.part1_voxel_indices] = out1
+            return out
+        else:
+            # Compute only the selected voxels
+            # Convert numpy to torch
+            if isinstance(self.part1_voxel_indices, np.ndarray):
+                part1_voxel_indices_tensor = torch.from_numpy(self.part1_voxel_indices).to(voxel_indices.device)
+            else:
+                part1_voxel_indices_tensor = self.part1_voxel_indices.to(voxel_indices.device)
+            
+            # Sort part1_voxel_indices for searchsorted to work correctly
+            part1_sorted, sort_permutation = torch.sort(part1_voxel_indices_tensor)
+            
+            # Find which of the requested voxel_indices are in part1
+            part1_mask = torch.isin(voxel_indices, part1_voxel_indices_tensor)
+            part1_global_indices = voxel_indices[part1_mask]
+            part2_global_indices = voxel_indices[~part1_mask]
+            
+            # Initialize output tensor
+            out = torch.zeros(x.shape[0], len(voxel_indices), device=x.device)
+            
+            # Process part1 voxels
+            if len(part1_global_indices) > 0:
+                # Use sorted indices for searchsorted, then map back to original order
+                part1_local_indices_sorted = torch.searchsorted(part1_sorted, part1_global_indices)
+                part1_local_indices = sort_permutation[part1_local_indices_sorted]
+                
+                out1 = self.model_part1(x, voxel_indices=part1_local_indices)
+                out[:, part1_mask] = out1
+            
+            # Process part2 voxels
+            if len(part2_global_indices) > 0:
+                # Create part2's global indices (all indices not in part1)
+                total_voxels = self.model_part1.coords.shape[0] + self.model_part2.coords.shape[0]
+                all_indices = torch.arange(total_voxels, device=x.device)
+                part2_global_map = all_indices[~torch.isin(all_indices, part1_voxel_indices_tensor)]
+                part2_global_map_sorted, part2_sort_perm = torch.sort(part2_global_map)
+                
+                # Map part2's global indices to local indices
+                part2_local_indices_sorted = torch.searchsorted(part2_global_map_sorted, part2_global_indices)
+                part2_local_indices = part2_sort_perm[part2_local_indices_sorted]
+                
+                out2 = self.model_part2(x, voxel_indices=part2_local_indices)
+                out[:, ~part1_mask] = out2
+            
+            return out
         
-    def forward(self, x):
-        # x: [B, 3, 224, 224]   # image after normalization
-        out1 = self.model_part1(x)
-        out2 = self.model_part2(x)
-        out = out2
-        out[:, self.part1_voxel_indices] = out1
-        return out
-    
-
-
-
-# %%
-if __name__ == '__main__':
-    # model_path = "/nfscc/alg23/xalex_distill2/high/t826c6_00016_DATASET.SUBJECT_LIST=subj01,LOSS.DARK.MAX_EPOCH=90,/soup.pth"
-    subject = 'subj01'
-    cfg_path = "/workspace/model_packed2/config.yaml"
-    model_path1 = f"/workspace/model_packed2/ckpts/{subject}_part1.pth"
-    model_path2 = f"/workspace/model_packed2/ckpts/{subject}_part2.pth"
-    model1 = _load_one_model(model_path1, subject, cfg_path)
-    model2 = _load_one_model(model_path2, subject, cfg_path)
-    voxel_indices_path = "/workspace/model_packed2/ckpts/part1_voxel_indices.pt"
-    voxel_indices = torch.load(voxel_indices_path)[subject]
-    model = TowPartModel(model1, model2, voxel_indices)
-
-    x = torch.randn(1, 3, 224, 224)
-    x = x.cuda()
-    model = model.cuda()
-    out = model(x)
-    print(out.shape)

@@ -267,8 +267,6 @@ class HUZE(BaseModelInterface):
             "encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_weights/part1_voxel_indices.pt"
         )
         voxel_indices = torch.load(voxel_indices_path, weights_only=False)[f"subj{self.subject:02d}"]
-        print("voxel indiczes")
-        print(voxel_indices)
         
         # Initalize model
         model = TowPartModel(model1, model2, voxel_indices)
@@ -323,20 +321,48 @@ class HUZE(BaseModelInterface):
             progress_bar = range(n_batches)
         
         all_outputs = []
-        
-        print(self.selected_lh_vertices)
-        
+
+        # Check if vertex selection is applied
+        lh_vertices_selected = (self.selected_lh_vertices is not None and 
+                            not (isinstance(self.selected_lh_vertices, range) and 
+                                    self.selected_lh_vertices == range(self.VERTICES_LENGTH)))
+
+        rh_vertices_selected = (self.selected_rh_vertices is not None and 
+                            not (isinstance(self.selected_rh_vertices, range) and 
+                                    self.selected_rh_vertices == range(self.VERTICES_LENGTH)))
+
+        if lh_vertices_selected or rh_vertices_selected:
+            # Create combined indices for the model (remap to 0-327684 space)
+            if lh_vertices_selected:
+                selected_lh_model_indices = torch.tensor(self.selected_lh_vertices, dtype=torch.long)
+            else:
+                selected_lh_model_indices = torch.arange(self.VERTICES_LENGTH, dtype=torch.long)
+            
+            if rh_vertices_selected:
+                selected_rh_model_indices = torch.tensor(self.selected_rh_vertices, dtype=torch.long) + self.VERTICES_LENGTH
+            else:
+                selected_rh_model_indices = torch.arange(self.VERTICES_LENGTH, self.VERTICES_LENGTH * 2, dtype=torch.long)
+            
+            # Combine both hemispheres
+            all_selected_voxel_indices = torch.cat([selected_lh_model_indices, selected_rh_model_indices])
+            
+            print(f"Computing responses for {len(all_selected_voxel_indices)} voxels instead of all {self.VERTICES_LENGTH * 2} voxels")
+            print(f"LH: {len(selected_lh_model_indices)} vertices, RH: {len(selected_rh_model_indices)} vertices")
+        else:
+            # No selection - use original behavior
+            all_selected_voxel_indices = None
+            print("Computing responses for all vertices (no selection applied)")
+            
+
         with torch.no_grad():
             for b in progress_bar:
                 # Image batch indices
                 idx_start = b * batch_size
                 idx_end = idx_start + batch_size
-                
                 # Extract features
                 img_batch = images[idx_start:idx_end]
-                features = self.model(img_batch)
+                features = self.model(img_batch, voxel_indices=all_selected_voxel_indices)
                 all_outputs.append(features.cpu())
-                
                 if show_progress and isinstance(progress_bar, tqdm):
                     encoded_images = min((b + 1) * batch_size, len(images))
                     progress_bar.set_postfix({
@@ -347,32 +373,23 @@ class HUZE(BaseModelInterface):
         # Concatenate all outputs into one tensor
         model_outputs = torch.cat(all_outputs, dim=0)
 
-        # Split into left and right hemisphere predictions
-        voxels = model_outputs.shape[1]
-        voxels_half = voxels // 2
-        
-        lh_insilico_fmri_full = model_outputs[:, :voxels_half]
-        rh_insilico_fmri_full = model_outputs[:, voxels_half:]
-        
-        # Apply vertex selection to reduce output to selected vertices only
-        if isinstance(self.selected_lh_vertices, range) and self.selected_lh_vertices == range(self.VERTICES_LENGTH):
-            # No selection applied - use all vertices
-            lh_insilico_fmri = lh_insilico_fmri_full
+        if lh_vertices_selected or rh_vertices_selected:
+            # Split back into hemispheres based on how many we selected from each
+            n_lh_selected = len(selected_lh_model_indices)
+            n_rh_selected = len(selected_rh_model_indices)
+            
+            lh_insilico_fmri = model_outputs[:, :n_lh_selected]
+            rh_insilico_fmri = model_outputs[:, n_lh_selected:n_lh_selected + n_rh_selected]
         else:
-            # Apply vertex selection for left hemisphere
-            lh_insilico_fmri = lh_insilico_fmri_full[:, self.selected_lh_vertices]
-        
-        if isinstance(self.selected_rh_vertices, range) and self.selected_rh_vertices == range(self.VERTICES_LENGTH):
-            # No selection applied - use all vertices  
-            rh_insilico_fmri = rh_insilico_fmri_full
-        else:
-            # Apply vertex selection for right hemisphere
-            rh_insilico_fmri = rh_insilico_fmri_full[:, self.selected_rh_vertices]
-        
+            # Original behavior - split in half
+            voxels = model_outputs.shape[1]
+            voxels_half = voxels // 2
+            lh_insilico_fmri = model_outputs[:, :voxels_half]
+            rh_insilico_fmri = model_outputs[:, voxels_half:]
+
         # Convert to numpy arrays and return
         lh_insilico_fmri = lh_insilico_fmri.numpy()
         rh_insilico_fmri = rh_insilico_fmri.numpy()
-        
         return (lh_insilico_fmri, rh_insilico_fmri)
 
 
