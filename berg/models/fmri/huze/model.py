@@ -7,20 +7,20 @@ from typing import Dict, Optional, Union
 import torch
 import torch.nn.functional as F
 from torch import nn, Tensor
-from berg.models.fmri.mem.config import AutoConfig
+from berg.models.fmri.huze.config import AutoConfig
 
-from berg.models.fmri.mem.backbone import (
+from berg.models.fmri.huze.backbone import (
     build_backbone,
     AdaLNLoRADiNOv2ViT,
 )
-from berg.models.fmri.mem.blocks import (
+from berg.models.fmri.huze.blocks import (
     build_conv_blocks,
     build_class_token_mlp,
     DictConvBlocks,
     ClassTokenMLPs,
 )
-from berg.models.fmri.mem.config_utils import load_from_yaml
-from berg.models.fmri.mem.topyneck import (
+from berg.models.fmri.huze.config_utils import load_from_yaml
+from berg.models.fmri.huze.topyneck import (
     build_coords_mlp,
     CachedCoordsMLP,
     build_voxelouts_weight,

@@ -11,8 +11,8 @@ import torch
 from torch import Tensor, nn
 import torch.nn.functional as F
 
-from berg.models.fmri.mem.config import AutoConfig
-from berg.models.fmri.mem.registry import Registry
+from berg.models.fmri.huze.config import AutoConfig
+from berg.models.fmri.huze.registry import Registry
 
 import math
 

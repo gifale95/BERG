@@ -14,8 +14,8 @@ from einops import einsum, rearrange, repeat
 
 from torch import Tensor, nn
 
-from berg.models.fmri.mem.config import AutoConfig
-from berg.models.fmri.mem.point_pe import point_position_encoding
+from berg.models.fmri.huze.config import AutoConfig
+from berg.models.fmri.huze.point_pe import point_position_encoding
 
 
 

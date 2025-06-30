@@ -3,7 +3,7 @@ from einops import rearrange
 from typing import Dict
 
 import torch
-from berg.models.fmri.mem.config import AutoConfig
+from berg.models.fmri.huze.config import AutoConfig
 
 from timm.layers.norm import LayerNorm2d
 from timm.models.convnext import ConvNeXtBlock

@@ -15,12 +15,12 @@ from berg.core.parameter_validator import (
     validate_roi,
 )
 from berg.interfaces.base_model import BaseModelInterface
-from berg.models.fmri.mem.model import _load_one_model, TowPartModel, BrainEncodingModel
+from berg.models.fmri.huze.model import _load_one_model, TowPartModel, BrainEncodingModel
 
 
 # Load model info from YAML
 def load_model_info():
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd-mem.yaml")
+    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-huze.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -30,16 +30,16 @@ model_info = load_model_info()
 # Register this model with the registry using model_info
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.nsd_mem",  # Replace with actual path
-    class_name="MEM",
+    module_path="berg.models.fmri.nsd_huze",  # Replace with actual path
+    class_name="HUZE",
     modality=model_info.get("modality", "fmri"),
-    training_dataset=model_info.get("training_dataset", "nsd"),
-    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd-mem.yaml")
+    training_dataset=model_info.get("training_dataset", "nsd_fsaverage"),
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-huze.yaml")
 )
 
 
 
-class MEM(BaseModelInterface):
+class HUZE(BaseModelInterface):
     """
     Memory Encoding Model (MEM) for predicting fMRI responses across the entire cortex.
 
@@ -110,7 +110,7 @@ class MEM(BaseModelInterface):
         
         # Other parameters:
         current_dir = os.path.dirname(__file__)  # path to nsd_mem.py
-        self.cfg_path = os.path.join(current_dir, "mem", "config.yaml")
+        self.cfg_path = os.path.join(current_dir, "huze", "config.yaml")
         
         # Validate Parameters
         self._validate_parameters()
@@ -202,7 +202,7 @@ class MEM(BaseModelInterface):
             if self.roi is not None:
                 metadata_dir = os.path.join(
                     self.berg_dir, 'encoding_models', 'modality-fmri',
-                    'train_dataset-nsd', 'model-mem',
+                    'train_dataset-nsd_fsaverage', 'model-huze',
                     'metadata', f'metadata_subject-{self.subject:02d}.npy'
                 )
                 metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
@@ -249,12 +249,12 @@ class MEM(BaseModelInterface):
         # Load model checkpoints
         model_path1 = os.path.join(
             self.berg_dir, 
-            f"encoding_models/modality-fmri/train_dataset-nsd/model-mem/encoding_models_weights/subj{self.subject:02d}_part1.pth"
+            f"encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_weights/subj{self.subject:02d}_part1.pth"
         )
         
         model_path2 = os.path.join(
             self.berg_dir, 
-            f"encoding_models/modality-fmri/train_dataset-nsd/model-mem/encoding_models_weights/subj{self.subject:02d}_part2.pth"
+            f"encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_weights/subj{self.subject:02d}_part2.pth"
         )
         
         # Load models
@@ -264,9 +264,11 @@ class MEM(BaseModelInterface):
         # Get model Indices
         voxel_indices_path = os.path.join(
             self.berg_dir, 
-            "encoding_models/modality-fmri/train_dataset-nsd/model-mem/encoding_models_weights/part1_voxel_indices.pt"
+            "encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_weights/part1_voxel_indices.pt"
         )
         voxel_indices = torch.load(voxel_indices_path, weights_only=False)[f"subj{self.subject:02d}"]
+        print("voxel indiczes")
+        print(voxel_indices)
         
         # Initalize model
         model = TowPartModel(model1, model2, voxel_indices)
@@ -321,6 +323,8 @@ class MEM(BaseModelInterface):
             progress_bar = range(n_batches)
         
         all_outputs = []
+        
+        print(self.selected_lh_vertices)
         
         with torch.no_grad():
             for b in progress_bar:
@@ -421,8 +425,8 @@ class MEM(BaseModelInterface):
             berg_dir,
             "encoding_models",
             "modality-fmri",             
-            "train_dataset-nsd",       
-            "model-mem",              
+            "train_dataset-nsd_fsaverage",       
+            "model-huze",              
             "metadata",
             f'metadata_subject-{subject:02d}.npy')
 

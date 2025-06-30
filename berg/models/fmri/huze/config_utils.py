@@ -9,7 +9,7 @@ from yacs.config import CfgNode
 from yacs.config import CfgNode as CN
 from yacs.config import _assert_with_logging, _valid_type
 
-from berg.models.fmri.mem.config import _C
+from berg.models.fmri.huze.config import _C
 
 
 def check_cfg(C):

@@ -1,7 +1,7 @@
 from torch import nn, Tensor
 from einops import rearrange
 from typing import Dict, Optional
-from berg.models.fmri.mem.config import AutoConfig
+from berg.models.fmri.huze.config import AutoConfig
 
 
 from timm.layers.mlp import Mlp
