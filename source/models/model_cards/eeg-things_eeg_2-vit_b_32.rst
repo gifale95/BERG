@@ -18,7 +18,7 @@ Model Summary
    * - Stimuli
      - Images
    * - Model Type
-     - vision transformer (ViT-B/32)
+     - Vision transformer (ViT-B/32)
    * - Creator
      - Alessandro Gifford
 
@@ -107,8 +107,8 @@ This function loads the encoding model.
      - | **Type:** dict
        | **Required:** No
        | **Description:** Specifies which outputs to include in the model responses.
-       | Can include specific channels and/or timepoints. If not provided, EEG responses
-       | are generated for all EEG channels and time points.
+       | Can include specific channels and/or timepoints. If not provided,
+       | EEG responses are generated for all EEG channels and time points.
        | 
        | **Properties:**
        | 
@@ -116,14 +116,14 @@ This function loads the encoding model.
        |     **Type:** list[str]
        |     **Description:** List of EEG channel names to include in the output
        |     **Valid values:** "Fp1", "F3", "F7", "FT9", "FC5", "FC1", "C3", "T7", "TP9", "CP5", "CP1", "Pz", "P3", "P7", "O1", "Oz", "O2", "P4", "P8", "TP10", "CP6", "CP2", "Cz", "C4", "T8", "FT10", "FC6", "FC2", "F4", "F8", "Fp2", "AF7", "AF3", "AFz", "F1", "F5", "FT7", "FC3", "FCz", "C1", "C5", "TP7", "CP3", "P1", "P5", "PO7", "PO3", "POz", "PO4", "PO8", "P6", "P2", "CPz", "CP4", "TP8", "C6", "C2", "FC4", "FT8", "F6", "F2", "AF4", "AF8"
-       |     **Example:** ["Oz", "Cz", "Fp1"]
+       |     **Example:** ['Oz', 'Cz', 'Fp1']
        | 
        | **timepoints**
        |     **Type:** numpy.ndarray
        |     **Description:** Binary one-hot encoded vector indicating which timepoints to include.
        |     Must have exactly the same length as the number of available timepoints (140).
        |     Each position set to 1 indicates that timepoint should be included.
-       |     **Example:** [0, 0, ..., 1, 1, 0]
+       |     **Example:** [0, 0, '...', 1, 1, 0]
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -143,8 +143,8 @@ This function generates in silico neural responses using the encoding model prev
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** "cpu", "cuda", "auto"
-       | **Example:** "auto"
+       | **Valid Values:** cpu, cuda, auto
+       | **Example:** auto
    * - **show_progress**
      - | **Type:** bool
        | **Required:** No
@@ -169,14 +169,15 @@ Example Usage
     # Initialize BERG
     berg = BERG(berg_dir="path/to/brain-encoding-response-generator")
     
-    # Load the encoding model
+    # Load the model
     model = berg.get_encoding_model(
-      "eeg-things_eeg_2-vit_b_32",
-      subject=1,
-      selection={
-        "channels": ['Oz', 'Cz', 'Fp1'],
-        "timepoints": [0, 1, ..., 1]
-      }
+        "eeg-things_eeg_2-vit_b_32",
+        subject=1,
+        selection={
+            "channels": ["Oz", "Cz", "Fp1"]
+            "timepoints": [0, 0, '...', 1, 1, 0]
+        },
+        device="auto"
     )
     
     # Prepare the stimulus images
@@ -185,24 +186,25 @@ Example Usage
     
     # Generates the in silico neural responses to images using the encoding model previously loaded
     responses = berg.encode(
-      model,
-      images,
-      device="auto",
-      show_progress=True
-      )
+        model,
+        images,
+        show_progress=True
+    )
     
-    # responses shape will be [batch_size, n_repetitions, n_channels, n_timepoints]
+    # The in silico fMRI responses will be a numpy.ndarray of shape:
+    # ['batch_size', 'n_repetitions', 'n_channels', 'n_timepoints']
     # where:
-    # - n_repetitions is Number of simulated repetitions of the same stimulus (always 4).
-    # - n_channels is Number of EEG channels (up to 63, based on the number of channels selected).
-    # - n_timepoints is Number of time points in the EEG epoch (up to 140, based on the number of time points selected).
+    # - n_repetitions: Number of simulated repetitions of the same stimulus (always 4).
+    # - n_channels: Number of EEG channels (up to 63, based on the number of channels selected).
+    # - n_timepoints: Number of time points in the EEG epoch (up to 140, based on the number of time points selected).
     
     # Generate in silico neural responses with metadata
-    responses, metadata = berg.encode(model, images, return_metadata=True)
+    responses, metadata = berg.encode(
+        model,
+        images,
+        return_metadata=True
+    )
     
-    # Access EEG channel names and time information
-    channel_names = metadata["eeg"]["ch_names"]
-    time_points = metadata["eeg"]["times"]  # in seconds
 
 References
 ---------

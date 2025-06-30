@@ -137,7 +137,7 @@ This function loads the encoding model.
        |     Early visual areas (V1-V3), category-selective regions (EBA, FFA, etc.),
        |     or composite regions (lateral, ventral).
        |     **Valid values:** "V1", "V2", "V3", "hV4", "EBA", "FBA-2", "OFA", "FFA-1", "FFA-2", "PPA", "RSC", "OPA", "OWFA", "VWFA-1", "VWFA-2", "mfs-words", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral"
-       |     **Example:** "V1"
+       |     **Example:** V1
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -157,8 +157,8 @@ This function generates in silico neural responses using the encoding model prev
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** "cpu", "cuda", "auto"
-       | **Example:** "auto"
+       | **Valid Values:** cpu, cuda, auto
+       | **Example:** auto
 
 Performance
 ----------
@@ -178,14 +178,14 @@ Example Usage
     # Initialize BERG
     berg = BERG(berg_dir="path/to/brain-encoding-response-generator")
     
-    # Load the encoding model
+    # Load the model
     model = berg.get_encoding_model(
-      "fmri-nsd-fwrf",
-      subject=1,
-      selection={
-        "roi": "V1"
-      },
-      device="auto"
+        "fmri-nsd-fwrf",
+        subject=1,
+        selection={
+            "roi": "V1"
+        },
+        device="auto"
     )
     
     # Prepare the stimulus images
@@ -194,21 +194,23 @@ Example Usage
     
     # Generates the in silico neural responses to images using the encoding model previously loaded
     responses = berg.encode(
-      model,
-      images,
-      show_progress=True
+        model,
+        images,
+        show_progress=True
     )
     
-    # responses shape will be [batch_size, n_voxels]
+    # The in silico fMRI responses will be a numpy.ndarray of shape:
+    # ['batch_size', 'n_voxels']
     # where:
-    # - n_voxels is Number of voxels in the selected ROI, varies by ROI and subject.
-
+    # - n_voxels: Number of voxels in the selected ROI, varies by ROI and subject.
+    
     # Generate in silico neural responses with metadata
     responses, metadata = berg.encode(
-      model,
-      images,
-      return_metadata=True
+        model,
+        images,
+        return_metadata=True
     )
+    
 
 References
 ---------
