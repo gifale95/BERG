@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-#!/usr/bin/env python3
 import yaml
 import re
 from typing import Dict, List, Union, Any, Optional
@@ -227,9 +226,9 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     if "valid_values" in prop_data:
                         valid_values = prop_data["valid_values"]
                         if isinstance(valid_values, list):
-                            if all(isinstance(x, str) for x in valid_values) and len(valid_values) > 10:
-                                formatted_values = ", ".join([f'"{v}"' if isinstance(v, str) else str(v) for v in valid_values])
-                                rst_content.append(f"       |     **Valid values:** {formatted_values}")
+                            # Format as comma-separated string wrapped in quotes
+                            formatted_values = ", ".join([f'"{v}"' for v in valid_values])
+                            rst_content.append(f"       |     **Valid values:** {formatted_values}")
                         else:
                             rst_content.append(f"       |     **Valid values:** {valid_values}")
                     
@@ -266,15 +265,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                 if "valid_values" in param_data:
                     valid_values = param_data["valid_values"]
                     if isinstance(valid_values, list):
-                        # Format the list of values nicely
-                        if all(isinstance(x, str) for x in valid_values) and len(", ".join(map(str, valid_values))) > 50:
-                            # For longer lists of string values, format them with line breaks
-                            formatted_values = ", ".join(map(str, valid_values[:5]))
-                            if len(valid_values) > 5:
-                                formatted_values += ", ..."
-                            rst_content.append(f"       | **Valid Values:** {formatted_values}")
-                        else:
-                            rst_content.append(f"       | **Valid Values:** {', '.join(map(str, valid_values))}")
+                        rst_content.append(f"       | **Valid Values:** {', '.join(map(str, valid_values))}")
                     else:
                         rst_content.append(f"       | **Valid Values:** {valid_values}")
                 
@@ -301,30 +292,43 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     rst_content.append(".. code-block:: python")
     rst_content.append("")
     
-    # Generate example code
+    # Generate example code - FIXED: use berg_dir instead of berg
     example_code = [
         "from berg import BERG",
         "",
         "# Initialize BERG",
-        "berg = BERG(berg=\"path/to/brain-encoding-response-generator\")",
+        "berg = BERG(berg_dir=\"path/to/brain-encoding-response-generator\")",
         ""
     ]
     
     # Dynamically create the model loading example based on actual parameters
     get_model_params = []
     encode_params = []
+    has_selection = False
+    selection_example = {}
+    device_param = None
     
-    # Find parameters used in get_encoding_model
+    # Find parameters used in get_encoding_model and encode
     for param_name, param_data in data.get("parameters", {}).items():
         if param_data.get("function") == "get_encoding_model":
-            if param_data.get("required", False):
+            if param_name == "selection":
+                has_selection = True
+                # Build selection example from properties
+                if "properties" in param_data:
+                    for prop_name, prop_data in param_data["properties"].items():
+                        if "example" in prop_data:
+                            selection_example[prop_name] = prop_data["example"]
+                        elif prop_name == "roi" and "valid_values" in prop_data:
+                            # Fallback for roi if no example provided
+                            selection_example["roi"] = prop_data["valid_values"][0]
+            elif param_data.get("required", False):
                 # For required parameters, use an example value if available
                 if "example" in param_data:
                     example_val = param_data["example"]
                     # Format the value based on its type
                     if param_data.get("type") == "str":
                         if isinstance(example_val, str):
-                            get_model_params.append(f"{param_name}=\"{example_val}\"")
+                            get_model_params.append(f"{param_name}={example_val}")
                         else:
                             get_model_params.append(f"{param_name}={example_val}")
                     else:
@@ -338,105 +342,128 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     else:
                         get_model_params.append(f"{param_name}=value")
         
-        # Identify what parameters are needed for encode
+        # Look for device parameter in encode function to add to get_encoding_model
         elif param_data.get("function") == "encode":
-            if param_name != "stimulus":  # We'll handle stimulus separately
-                if not param_data.get("required", False) and "default" in param_data:
-                    # Only include optional parameters if they have defaults
+            if param_name == "device" and "example" in param_data:
+                device_param = f"device=\"{param_data['example']}\""
+            elif param_name != "stimulus":  # We'll handle stimulus separately
+                # Collect other encode parameters for later use
+                if "example" in param_data and param_data.get("example") != param_data.get("default"):
                     if param_data.get("type") == "str":
-                        encode_params.append(f"{param_name}=\"{param_data['default']}\"")
+                        encode_params.append(f"{param_name}=\"{param_data['example']}\"")
                     else:
-                        encode_params.append(f"{param_name}={param_data['default']}")
+                        encode_params.append(f"{param_name}={param_data['example']}")
     
-    # Build the model loading line
-    get_model_params_str = ", ".join(get_model_params)
-    example_code.append(f"# Load the model")
-    example_code.append(f"model = berg.get_encoding_model(\"{model_id}\", {get_model_params_str})")
-    example_code.append("")
+    # Build the model loading section
+    example_code.append("# Load the model")
     
-    # Add a comment with the function description for get_encoding_model
-    example_code.insert(len(example_code)-1, "# This function loads the encoding model.")
+    # Always use multi-line format for better readability
+    example_code.append("model = berg.get_encoding_model(")
+    example_code.append(f"    \"{model_id}\",")
     
-    # Check if selection parameter exists and modify the model loading example
-    has_selection = False
-    selection_dict = {}
+    # Add required parameters
+    for param in get_model_params:
+        example_code.append(f"    {param},")
     
-    for param_name, param_data in data.get("parameters", {}).items():
-        if param_name == "selection" and param_data.get("function") == "get_encoding_model":
-            has_selection = True
-            # Build selection dict from examples in properties
-            if "properties" in param_data:
-                for prop_name, prop_data in param_data["properties"].items():
-                    if "example" in prop_data:
-                        selection_dict[prop_name] = prop_data["example"]
-    
-    # Replace the basic model loading with one that includes selection if available
-    if has_selection and selection_dict:
-        # Format the selection dictionary for code example
-        selection_str = "{"
-        for i, (k, v) in enumerate(selection_dict.items()):
-            if isinstance(v, list):
-                if len(v) > 5:
-                    val_str = str(v[:3])[:-1] + ", ...]"
+    # Add selection if it exists
+    if has_selection and selection_example:
+        example_code.append("    selection={")
+        for key, value in selection_example.items():
+            if isinstance(value, str):
+                example_code.append(f"        \"{key}\": \"{value}\"")
+            elif isinstance(value, list):
+                # Handle list values properly
+                if all(isinstance(x, str) for x in value):
+                    # List of strings
+                    formatted_list = "[" + ", ".join([f'"{item}"' for item in value]) + "]"
                 else:
-                    val_str = str(v)
+                    # List of other types (like arrays)
+                    formatted_list = str(value)
+                example_code.append(f"        \"{key}\": {formatted_list}")
             else:
-                val_str = f'"{v}"' if isinstance(v, str) else str(v)
-                
-            selection_str += f'"{k}": {val_str}'
-            if i < len(selection_dict) - 1:
-                selection_str += ", "
-        selection_str += "}"
-        
-        # Update the model loading line to include selection
-        for i, line in enumerate(example_code):
-            if line.startswith("model = berg.get_encoding_model("):
-                example_code[i] = f"model = berg.get_encoding_model(\"{model_id}\", {get_model_params_str}, selection={selection_str})"
+                example_code.append(f"        \"{key}\": {value}")
+        example_code.append("    },")
+    
+    # Add device parameter
+    if device_param:
+        example_code.append(f"    {device_param}")
+    
+    example_code.append(")")
+    example_code.append("")
     
     # Add information about the stimulus based on the input definition
     input_data = data.get("input", {})
     input_shape = input_data.get("shape", "")
-    if isinstance(input_shape, list) and len(input_shape) > 0:
-        example_code.append("# Prepare your stimuli")
-        example_code.append(f"# stimulus shape should be {input_shape}")
-        example_code.append("")
     
-    # Add encode call
-    encode_params_str = ", ".join(["stimulus"] + encode_params)
-    example_code.append("# Generate responses")
-    example_code.append(f"responses = berg.encode(model, {encode_params_str})")
-    # Add a comment with the function description for encode
-    example_code.append("# This function generates in silico neural responses using the encoding model previously loaded.")
+    example_code.append("# Prepare the stimulus images")
+    if isinstance(input_shape, list) and len(input_shape) > 0:
+        # Create a more descriptive comment based on shape
+        shape_description = str(input_shape).replace("'", "")
+        if "3" in str(input_shape) and ("height" in str(input_shape) or "width" in str(input_shape)):
+            example_code.append("# Image shape should be [batch_size, 3 RGB channels, height, width]")
+        else:
+            example_code.append(f"# Image shape should be {shape_description}")
+    
+    # Add example stimulus creation
+    example_code.append("images = np.random.randint(0, 255, (100, 3, 256, 256))")
     example_code.append("")
     
-    # Add information about the output shape and format based on output definition
+    # Add encode call with improved formatting and comments
+    example_code.append("# Generates the in silico neural responses to images using the encoding model previously loaded")
+    example_code.append("responses = berg.encode(")
+    example_code.append("    model,")
+    example_code.append("    images,")
+    
+    # Add encode parameters if they exist
+    if encode_params:
+        for param in encode_params:
+            example_code.append(f"    {param}")
+    else:
+        # Add show_progress as a common parameter
+        example_code.append("    show_progress=True")
+    
+    example_code.append(")")
+    example_code.append("")
+    
+    # Add output information based on the YAML output definition
     output_data = data.get("output", {})
-    output_shape = output_data.get("shape", "")
-    if isinstance(output_shape, list) and len(output_shape) > 0:
-        example_code.append(f"# responses shape will be {output_shape}")
+    if output_data:
+        # Add output description with improved formatting
+        output_type = output_data.get("type", "")
+        output_shape = output_data.get("shape", "")
         
-        # Add comments explaining the dimensions if available
+        if output_type and output_shape:
+            example_code.append(f"# The in silico fMRI responses will be a {output_type} of shape:")
+            example_code.append(f"# {output_shape}")
+        
+        # Add dimension explanations (exclude batch_size as it's self-explanatory)
         dimensions = output_data.get("dimensions", [])
         if dimensions:
             example_code.append("# where:")
             for dim in dimensions:
-                if dim.get("name") != "batch_size":  # Skip batch_size as it's self-explanatory
-                    name = dim.get("name", "")
-                    desc = dim.get("description", "")
-                    if name and desc:
-                        example_code.append(f"# - {name} is {desc}")
+                name = dim.get("name", "")
+                desc = dim.get("description", "")
+                if name and desc and name != "batch_size":
+                    # Improve the description formatting
+                    if "lh_vertices" in name.lower():
+                        example_code.append(f"# - {name} is the number of selected left hemisphere (LH) vertices for which the in silico")
+                        example_code.append("#   fMRI responses are generated.")
+                    elif "rh_vertices" in name.lower():
+                        example_code.append(f"# - {name} is the number of selected right hemisphere (RH) vertices for which the in silico")
+                        example_code.append("#   fMRI responses are generated.")
+                    else:
+                        example_code.append(f"# - {name}: {desc}")
+        
+        example_code.append("")
     
-    # Add metadata example if appropriate based on modality
-    if data.get("modality", "").lower() == "eeg":  # Made case-insensitive
-        example_code.extend([
-            "",
-            "# Get responses with metadata",
-            "responses, metadata = berg.encode(model, stimulus, return_metadata=True)",
-            "",
-            "# Access channel names and time information",
-            "channel_names = metadata[\"eeg\"][\"ch_names\"]",
-            "time_points = metadata[\"eeg\"][\"times\"]  # in seconds"
-        ])
+    # Add metadata example
+    example_code.append("# Generate in silico neural responses with metadata")
+    example_code.append("responses, metadata = berg.encode(")
+    example_code.append("    model,")
+    example_code.append("    images,")
+    example_code.append("    return_metadata=True")
+    example_code.append(")")
+    example_code.append("")
     
     # Add the example code
     for line in example_code:
@@ -444,10 +471,14 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     
     # References section
     rst_content.extend(["", "References", "---------", ""])
-    
+
     references = data.get("references", [])
     for ref in references:
-        rst_content.append(f"* {ref}")
+        if isinstance(ref, dict):
+            for key, value in ref.items():
+                rst_content.append(f"* {key}: {value}")
+        else:
+            rst_content.append(f"* {ref}")
     
     # Convert the list to a string
     rst_text = "\n".join(rst_content)

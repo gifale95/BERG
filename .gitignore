@@ -163,3 +163,5 @@ cython_debug/
 *.DS_Store
 /neural_encoding_simulation_toolkit
 /neural-encoding-simulation-toolkit
+debug.ipynb
+debug.ipynb
