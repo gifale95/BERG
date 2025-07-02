@@ -165,3 +165,4 @@ cython_debug/
 /neural-encoding-simulation-toolkit
 debug.ipynb
 debug.ipynb
+*.ipynb
