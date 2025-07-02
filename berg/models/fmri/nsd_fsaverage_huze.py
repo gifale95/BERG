@@ -30,7 +30,7 @@ model_info = load_model_info()
 # Register this model with the registry using model_info
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.nsd_huze",  # Replace with actual path
+    module_path="berg.models.fmri.nsd_fsaverage_huze",  # Replace with actual path
     class_name="HUZE",
     modality=model_info.get("modality", "fmri"),
     training_dataset=model_info.get("training_dataset", "nsd_fsaverage"),
