@@ -62,6 +62,11 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Training dataset
      - Species
      - Stimuli
+   * - :doc:`model_cards/fmri-nsd_fsaverage-huze`
+     - ADD.
+     - Natural Scenes Dataset (surface space)
+     - Human
+     - Images
    * - :doc:`model_cards/fmri-nsd_fsaverage-vit_b_32`
      - Linear mapping of vision transformer image features onto fMRI responses.
      - Natural Scenes Dataset(surface space)
