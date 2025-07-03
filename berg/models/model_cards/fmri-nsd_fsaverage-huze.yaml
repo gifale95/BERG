@@ -4,7 +4,7 @@ modality: fMRI
 training_dataset: Natural Scenes Dataset (NSD) (fsaverage surface space)
 species: Human
 stimuli: Images
-model_architecture: ADD
+model_type: Vision transformer (DINOv2)
 creator: Huzheng Yang
 
 # General description of the model
