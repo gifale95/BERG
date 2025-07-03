@@ -25,7 +25,18 @@ Model Summary
 Description
 ----------
 
-ADD.
+The encoding model is based on a vision transformer (DINOv2) finetuned on LoRA. During training, the encoding model
+learned which DINOv2 layers and which spatial location of layer features to use to best predict each fMRI vertex.
+While this feature selection was learn for each voxel, near-by voxels were constrained to select similar features.
+Finally. the activity of each vertex is linearly predicted from the selected DINOv2 features.
+
+The encoding model training pipeline consisted of two steps. The goal of step 1 was to generate a noiseless version of
+fMRI responses, later used in step 2. This was achieved by training a single encoding model that predicted the fMRI
+responses of all 8 NSD subjects, by using as input the stimulus images, experimental design information (i.e., the
+stimulus presentation order), and behavioral data. This model was then used to generate in silico fMRI responses for
+all NSD images. In step 2 encoding models were trained, individually for each NSD subject, using as target data both
+the original fMRI responses of each subject and the in silico fMRI responses generated in step 1, and as input only
+the stimulus images.
 
 The encoding models were trained on the Natural Scenes Dataset (NSD) (Allen et al., 2022), 7T fMRI responses of 8
 subjects to 73k natural scenes coming from the COCO dataset (Lin et al., 2014).
@@ -109,25 +120,16 @@ This function loads the encoding model.
        | 
        | **roi**
        |     **Type:** str
-       |     **Description:** The region-of-interest (ROI) for which the in silico fMRI responses (of both
-       |     hemispherese) are generated.
+       |     **Description:** The region-of-interest (ROI) for which the in silico fMRI responses (of both hemispherese) are generated.
        |     **Valid values:** "V1d", "V1v", "V2d", "V2v", "V3d", "V3v", "hV4", "OFA", "FFA-1", "FFA-2", "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words", "OPA", "PPA", "RSC", "EBA", "FBA-1", "FBA-2", "mTL-bodies", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral"
        | 
        | **lh_vertices**
        |     **Type:** numpy.ndarray
-       |     **Description:** Binary one-hot encoded vector with ones indicating the left hemisphere (LH)
-       |     vertices for which the in silico fMRI responses are generated. This vector must
-       |     have exactly the same length as the number of LH fsaverage vertices (163,842).
-       |     The vertices from the one-hot encoded vector are only selected if the "roi" key
-       |     is not provided, or has value None.
+       |     **Description:** Binary one-hot encoded vector with ones indicating the left hemisphere (LH) vertices for which the in silico fMRI responses are generated. This vector must have exactly the same length as the number of LH fsaverage vertices (163,842). The vertices from the one-hot encoded vector are only selected if the "roi" key is not provided, or has value None.
        | 
        | **rh_vertices**
        |     **Type:** numpy.ndarray
-       |     **Description:** Binary one-hot encoded vector with ones indicating the right hemisphere (RH)
-       |     vertices for which the in silico fMRI responses are generated. This vector must
-       |     have exactly the same length as the number of RH fsaverage vertices (163,842).
-       |     The vertices from the one-hot encoded vector are only selected if the "roi" key
-       |     is not provided, or has value None.
+       |     **Description:** Binary one-hot encoded vector with ones indicating the right hemisphere (RH) vertices for which the in silico fMRI responses are generated. This vector must have exactly the same length as the number of RH fsaverage vertices (163,842). The vertices from the one-hot encoded vector are only selected if the "roi" key is not provided, or has value None.
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -208,7 +210,11 @@ Example Usage
 References
 ---------
 
+* Model video: https://youtu.be/Qh49zQQCW1g
+* Model slides: https://penno365-my.sharepoint.com/:p:/g/personal/huze_upenn_edu/EVDLndCXy21LpKEelu_MVkMBK9dbFIhlI6VEQzOl4j6eLA?e=eED63x
 * Model building code: https://huggingface.co/huzey/nsd_model/tree/main
 * NSD paper (Allen et al., 2022): https://doi.org/10.1038/s41593-021-00962-x
 * NSD-synthetic paper (Gifford et al., 2025): https://doi.org/10.48550/arXiv.2503.06286
 * COCO dataset (Lin et al., 2014): https://cocodataset.org/#home
+* DINOv2: https://huggingface.co/docs/transformers/en/model_doc/dinov2
+* LoRA: https://github.com/microsoft/LoRA
