@@ -17,8 +17,8 @@ Model Summary
      - Human
    * - Stimuli
      - Images
-   * - Model Architecture
-     - ADD
+   * - Model Type
+     - Vision transformer (DINOv2)
    * - Creator
      - Huzheng Yang
 
