@@ -280,8 +280,8 @@ class EEGEncodingModel(BaseModelInterface):
         return scaler, pca, regression_weights
 
 
-    def generate_response( # !!!
-            self, 
+    def generate_response(
+            self,
             stimulus: np.ndarray,
             show_progress: bool = True) -> np.ndarray:
         """
@@ -358,7 +358,7 @@ class EEGEncodingModel(BaseModelInterface):
                         len(self.selected_timepoints))
                     )
 
-                    insilico_eeg_part.append(np.squeeze(insilico_eeg))
+                    insilico_eeg_part.append(insilico_eeg)
 
                 # Reshape to (Images x Repeats x Channels x Time)
                 batch_responses = np.swapaxes(np.asarray(insilico_eeg_part), 0, 1)
@@ -370,14 +370,14 @@ class EEGEncodingModel(BaseModelInterface):
                 else:
                     insilico_eeg_responses = np.append(
                         insilico_eeg_responses,
-                        batch_responses, 
+                        batch_responses,
                         axis=0
                     )
 
                 if show_progress and isinstance(progress_bar, tqdm):
                     encoded_images = min((b + 1) * batch_size, len(images))
                     progress_bar.set_postfix({
-                        'Encoded images': encoded_images, 
+                        'Encoded images': encoded_images,
                         'Total images': len(images)
                     })
 
