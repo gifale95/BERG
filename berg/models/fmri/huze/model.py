@@ -264,10 +264,12 @@ class TowPartModel(nn.Module):
         else:
             # Compute only the selected voxels
             # Convert numpy to torch
+            target_device = voxel_indices.device if voxel_indices is not None else x.device
+
             if isinstance(self.part1_voxel_indices, np.ndarray):
-                part1_voxel_indices_tensor = torch.from_numpy(self.part1_voxel_indices).to(voxel_indices.device)
+                part1_voxel_indices_tensor = torch.from_numpy(self.part1_voxel_indices).to(target_device)
             else:
-                part1_voxel_indices_tensor = self.part1_voxel_indices.to(voxel_indices.device)
+                part1_voxel_indices_tensor = self.part1_voxel_indices.to(target_device)
             
             # Sort part1_voxel_indices for searchsorted to work correctly
             part1_sorted, sort_permutation = torch.sort(part1_voxel_indices_tensor)
