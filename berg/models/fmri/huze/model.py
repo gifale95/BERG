@@ -295,7 +295,7 @@ class TowPartModel(nn.Module):
             if len(part2_global_indices) > 0:
                 # Create part2's global indices (all indices not in part1)
                 total_voxels = self.model_part1.coords.shape[0] + self.model_part2.coords.shape[0]
-                all_indices = torch.arange(total_voxels, device=x.device)
+                all_indices = torch.arange(total_voxels, device=part1_voxel_indices_tensor.device)
                 part2_global_map = all_indices[~torch.isin(all_indices, part1_voxel_indices_tensor)]
                 part2_global_map_sorted, part2_sort_perm = torch.sort(part2_global_map)
                 
