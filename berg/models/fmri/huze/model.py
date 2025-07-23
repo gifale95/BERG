@@ -264,10 +264,12 @@ class TowPartModel(nn.Module):
         else:
             # Compute only the selected voxels
             # Convert numpy to torch
+            target_device = voxel_indices.device if voxel_indices is not None else x.device
+
             if isinstance(self.part1_voxel_indices, np.ndarray):
-                part1_voxel_indices_tensor = torch.from_numpy(self.part1_voxel_indices).to(voxel_indices.device)
+                part1_voxel_indices_tensor = torch.from_numpy(self.part1_voxel_indices).to(target_device)
             else:
-                part1_voxel_indices_tensor = self.part1_voxel_indices.to(voxel_indices.device)
+                part1_voxel_indices_tensor = self.part1_voxel_indices.to(target_device)
             
             # Sort part1_voxel_indices for searchsorted to work correctly
             part1_sorted, sort_permutation = torch.sort(part1_voxel_indices_tensor)
@@ -293,7 +295,7 @@ class TowPartModel(nn.Module):
             if len(part2_global_indices) > 0:
                 # Create part2's global indices (all indices not in part1)
                 total_voxels = self.model_part1.coords.shape[0] + self.model_part2.coords.shape[0]
-                all_indices = torch.arange(total_voxels, device=x.device)
+                all_indices = torch.arange(total_voxels, device=part1_voxel_indices_tensor.device)
                 part2_global_map = all_indices[~torch.isin(all_indices, part1_voxel_indices_tensor)]
                 part2_global_map_sorted, part2_sort_perm = torch.sort(part2_global_map)
                 
