@@ -124,7 +124,7 @@ parameters:
 performance:
 
   accuracy_plots: 
-    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd/model-vit_b_32/encoding_models_accuracy"
+    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-vit_b_32/encoding_models_accuracy"
   
 references:
     - Model building code: 'https://github.com/gifale95/BERG/tree/main/berg_creation_code'
