@@ -158,7 +158,7 @@ Performance
 
 **Accuracy Plots:**
 
-* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd/model-vit_b_32/encoding_models_accuracy``
+* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-vit_b_32/encoding_models_accuracy``
 
 Example Usage
 ------------

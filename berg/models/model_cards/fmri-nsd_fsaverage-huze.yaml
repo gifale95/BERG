@@ -11,8 +11,8 @@ creator: Huzheng Yang
 description: |
   The encoding model is based on a vision transformer (DINOv2) finetuned on LoRA. During training, the encoding model
   learned which DINOv2 layers and which spatial location of layer features to use to best predict each fMRI vertex.
-  While this feature selection was learn for each voxel, near-by voxels were constrained to select similar features.
-  Finally. the activity of each vertex is linearly predicted from the selected DINOv2 features.
+  While this feature selection was learned for each vertex, nearby vertices were constrained to select similar features.
+  Finally, the activity of each vertex is linearly predicted from the selected DINOv2 features.
 
   The encoding model training pipeline consisted of two steps. The goal of step 1 was to generate a noiseless version of
   fMRI responses, later used in step 2. This was achieved by training a single encoding model that predicted the fMRI
@@ -134,7 +134,7 @@ parameters:
 performance:
 
   accuracy_plots: 
-    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd/model-huze/encoding_models_accuracy"
+    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_accuracy"
       
 references:
 
