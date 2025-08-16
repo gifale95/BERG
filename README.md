@@ -164,7 +164,7 @@ If you use the Brain Encoding Response Generator, please cite:
 > *Gifford AT, Bersch D, Janini D, Roig G, Cichy RM. 2025. The Brain Encoding Response Generator. In preparation. https://github.com/gifale95/BERG*
 
 
-[paper]: https://2025.ccneuro.org/abstract_pdf/Gifford_2025_Catalyzing_silico_neuroscience_toolkit_accurate_encoding.pdf
+[paper]: https://2025.ccneuro.org/poster/?id=dIxr3CPuPR
 [documentation]: https://brain-encoding-response-generator.readthedocs.io/en/latest/
 [berg_structure]: https://brain-encoding-response-generator.readthedocs.io/en/latest/data_storage.html#
 [model_cards]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/overview.html
