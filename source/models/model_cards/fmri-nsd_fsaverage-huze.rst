@@ -157,7 +157,7 @@ Performance
 
 **Accuracy Plots:**
 
-* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd/model-huze/encoding_models_accuracy``
+* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_accuracy``
 
 Example Usage
 ------------
