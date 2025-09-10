@@ -5,6 +5,14 @@ import os
 from tqdm import tqdm
 
 
+# =============================================================================
+# Split training and test data
+# =============================================================================
+# Load raw neural data and split into training and test partitions based on
+# stimulus type. Training data contains single presentations of 22,248 images,
+# while test data contains 30 repetitions of 100 images for noise ceiling estimation.
+
+
 def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
     """Split TVSD neural data into training and test partitions.
     
@@ -71,6 +79,14 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         
         print(f"Training shape: ({n_train}, 300, 1024)")
         print(f"Test shape: {test_data.shape}")
+        
+        
+        
+# =============================================================================
+# Normalize neural responses
+# =============================================================================
+# Apply day-specific z-score normalization using pre-stimulus baseline period
+# (-100 to 0ms) to account for daily recording variations and electrode drift.
 
 
 def load_metadata_and_baseline_info(original_filepath, output_dir, monkey_id):
@@ -302,6 +318,14 @@ def load_things_mapping(mat_file_path):
         test_df = extract_group_data(f, 'test_imgs')
     
     return train_df, test_df
+
+
+
+# =============================================================================
+# Create dataset metadata
+# =============================================================================
+# Generate comprehensive metadata linking stimulus IDs to image files,
+# object categories, and experimental conditions for both training and test sets.
 
 
 def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, monkey_id):
