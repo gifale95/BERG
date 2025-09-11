@@ -5,6 +5,21 @@ using the training images neural data (Y) and feature maps (X).
 The feature maps come from a CLIP vision transformer, and are downsampled to 
 250 principal components using PCA.
 
+
+Pipeline steps:
+1. Model setup: Load CLIP ViT-B/32, wrap with torchextractor for multi-layer access
+2. Feature extraction: Extract CLS tokens from 12 transformer layers (0-11)
+   - Decision: Use CLS tokens only (not all 50 patch tokens) for computational efficiency
+   - Batch processing (512 images) to handle 22,248 training + 100 test images
+3. Preprocessing: StandardScaler normalization + PCA reduction to 250 components
+   - Decision: PCA reduces 9,216 features (12 layers × 768 dims) for Ridge stability
+4. Neural data loading: Chunked loading to prevent memory overflow during training
+5. Model training: 8 separate Ridge models (128 electrodes each, ~38K outputs per model)
+   - Decision: Split models for memory efficiency vs single 307K-output model
+   - Cross-validation over alphas [0.1, 1, 10, 100, 1000]
+6. Prediction: Load all 8 models, predict separately, concatenate results
+7. Output: Neural predictions (300 timepoints × 1,024 electrodes) + saved models
+
 Parameters
 ----------
 monkey : str
@@ -133,9 +148,9 @@ print("Model loaded")
 
 
 # =============================================================================
-# Extract the TVSD training image features
+# Extract the TVSD training and test image features
 # =============================================================================
-print("Extract the TVSD training image features...")
+print("Extract the TVSD training and test image features...")
 
 # Wrap the vision model with torchextractor
 visual = tx.Extractor(model.visual, layer_names)
@@ -145,6 +160,8 @@ data_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset
 metadata_path = os.path.join(data_dir, f'tvsd_{args.monkey}_metadata.npz')
 metadata = np.load(metadata_path)
 
+# Extract training image features
+print("Extracting training features...")
 n_train_images = len(metadata['train_img_files'])
 fmaps_train = []
 
@@ -152,7 +169,7 @@ for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=F
 	end_idx = min(start_idx + args.feature_batch_size, n_train_images)
 	batch_images = []
 	
-	# Load batch of images
+	# Load batch of training images
 	for i in range(start_idx, end_idx):
 		trial_info = map_trial_to_image(i, metadata, args.things_dir)
 		img = Image.open(trial_info['full_path']).convert('RGB')
@@ -169,79 +186,166 @@ for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=F
 		# Extract CLS token from each layer and concatenate
 		batch_features = []
 		for layer_name in layer_names:
-			layer_features = features[layer_name][:, 0, :]  # CLS token only
-			batch_features.append(layer_features)
+			layer_features = features[layer_name]
+			# Shape: (seq_len=50, batch_size, hidden_dim=768)
+			# Extract CLS token (first token in sequence) for all images in batch
+			cls_features = layer_features[0, :, :]  # Shape: (batch_size, hidden_dim)
+			batch_features.append(cls_features)
 		
 		# Concatenate features from all layers
-		ft = torch.cat(batch_features, dim=-1)
+		ft = torch.cat(batch_features, dim=-1)  # Shape: (batch_size, 12*768)
 		fmaps_train.append(ft.detach().cpu().numpy())
 
-# Concatenate all batches
+# Concatenate all training batches
 fmaps_train = np.concatenate(fmaps_train, axis=0)
 
-# Standardize the image features
+# Extract test image features
+print("Extracting test features...")
+test_images = []
+for i in range(len(metadata['test_avg_img_files'])):
+	category = metadata['test_avg_img_concepts'][i]
+	image_file = metadata['test_avg_img_files'][i]
+	full_path = f"{args.things_dir}/{category}/{image_file}"
+	
+	img = Image.open(full_path).convert('RGB')
+	img_tensor = preprocess(img)
+	test_images.append(img_tensor)
+
+# Process all test images at once
+test_tensor = torch.stack(test_images).to(device)
+
+with torch.no_grad():
+	_, features = visual(test_tensor)
+	
+	batch_features = []
+	for layer_name in layer_names:
+		layer_features = features[layer_name]
+		# Shape: (seq_len=50, batch_size=100, hidden_dim=768)
+		# Extract CLS token (first token in sequence) for all images in batch
+		cls_features = layer_features[0, :, :]  # Shape: (batch_size, hidden_dim)
+		batch_features.append(cls_features)
+	
+	fmaps_test = torch.cat(batch_features, dim=-1).detach().cpu().numpy()
+
+# Standardize the image features (fit on training, transform both)
 scaler = StandardScaler()
 scaler.fit(fmaps_train)
 fmaps_train = scaler.transform(fmaps_train)
+print("fmaps_train after transform", fmaps_train.shape)
+fmaps_test = scaler.transform(fmaps_test)
 
-# Downsample the image features using PCA
+# Downsample the image features using PCA (fit on training, transform both)
 pca = PCA(n_components=args.n_pca_components, random_state=seed)
 pca.fit(fmaps_train)
 fmaps_train = pca.transform(fmaps_train)
+fmaps_test = pca.transform(fmaps_test)
+
+print("fmaps_train after fit transform", fmaps_train.shape)
+
+# Convert to float32
 fmaps_train = fmaps_train.astype(np.float32)
+fmaps_test = fmaps_test.astype(np.float32)
 
 
 # =============================================================================
-# Train the encoding models
+# Train separate Ridge models for electrode chunks
 # =============================================================================
 print("Train the encoding models...")
-# Load the training neural responses
-neural_train_path = os.path.join(data_dir, f'tvsd_{args.monkey}_split-train_normalized.h5')
 
-with h5py.File(neural_train_path, 'r') as f:
-	neural_data_shape = f['neural_data_normalized'].shape
-
-n_trials, n_times, n_electrodes = neural_data_shape
-
-# Define alpha values for cross-validation
+# Define chunk parameters
+n_chunks = 8
+electrodes_per_chunk = 1024 // n_chunks  # 128 electrodes per chunk
 alphas = [0.1, 1, 10, 100, 1000]
 
-# Load neural data in chunks and reshape for training
-n_chunks = int(np.ceil(n_trials / args.train_chunk_size))
-neural_train_list = []
-
+# Load neural data shape info
+neural_train_path = os.path.join(data_dir, f'tvsd_{args.monkey}_split-train_normalized.h5')
 with h5py.File(neural_train_path, 'r') as f:
-	for chunk_idx in tqdm(range(n_chunks), leave=False):
-		start_idx = chunk_idx * args.train_chunk_size
-		end_idx = min(start_idx + args.train_chunk_size, n_trials)
-		
-		chunk_data = f['neural_data_normalized'][start_idx:end_idx]
-		# Reshape to (trials, features) where features = times * electrodes
-		chunk_reshaped = chunk_data.reshape(chunk_data.shape[0], -1)
-		neural_train_list.append(chunk_reshaped)
+	n_trials, n_times, n_electrodes = f['neural_data_normalized'].shape
 
-# Concatenate all chunks
-neural_train = np.concatenate(neural_train_list, axis=0)
+print(f"Training {n_chunks} separate Ridge models with {electrodes_per_chunk} electrodes each")
 
-# Fit the Ridge regression
-reg = RidgeCV(alphas=alphas, cv=args.cv_folds, scoring='r2')
-reg.fit(fmaps_train, neural_train)
+# Train each chunk separately
+for chunk_idx in range(n_chunks):
+	start_electrode = chunk_idx * electrodes_per_chunk
+	end_electrode = start_electrode + electrodes_per_chunk
+	
+	print(f"Training chunk {chunk_idx + 1}/{n_chunks}: electrodes {start_electrode}-{end_electrode-1}")
+	
+	# Load neural data for this chunk only
+	neural_chunk = np.empty((n_trials, n_times * electrodes_per_chunk), dtype=np.float32)
+	
+	with h5py.File(neural_train_path, 'r') as f:
+		# Load in batches to avoid memory issues
+		for batch_start in range(0, n_trials, args.train_chunk_size):
+			batch_end = min(batch_start + args.train_chunk_size, n_trials)
+			
+			# Load batch and slice electrodes
+			batch_data = f['neural_data_normalized'][batch_start:batch_end, :, start_electrode:end_electrode]
+			# Reshape to (batch_size, n_times * electrodes_per_chunk)
+			batch_reshaped = batch_data.reshape(batch_data.shape[0], -1)
+			neural_chunk[batch_start:batch_end] = batch_reshaped
+	
+	# Train Ridge model for this chunk
+	chunk_reg = RidgeCV(alphas=alphas, cv=args.cv_folds, scoring='r2')
+	chunk_reg.fit(fmaps_train, neural_chunk)
+	
+	print(f"Chunk {chunk_idx + 1} completed. Best alpha: {chunk_reg.alpha_}")
+	
+	# Save individual model
+	import joblib
+	model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
+		'train_dataset-tvsd_monkey', 'model-clip_vit_b_32', 'chunk_models')
+	if not os.path.isdir(model_dir):
+		os.makedirs(model_dir)
+	
+	model_filename = f'ridge_chunk_{chunk_idx}_{args.monkey}.pkl'
+	joblib.dump(chunk_reg, os.path.join(model_dir, model_filename))
 
-# Store the linear regression weights
-reg_param = {
-	'coef_': reg.coef_,
-	'intercept_': reg.intercept_,
-	'alpha_': reg.alpha_,
-	'cv_values_': reg.cv_values_,
-	'n_features_in_': reg.n_features_in_
-}
-
+print("All chunk models trained and saved!")
 
 # =============================================================================
-# Save the trained encoding models weights
+# Test encoding models on averaged test images
 # =============================================================================
-print("Save the trained encoding models weights...")
-weights = {
+print("Predicting test responses...")
+
+# Load all models and predict
+chunk_predictions = []
+model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
+	'train_dataset-tvsd_monkey', 'model-clip_vit_b_32', 'chunk_models')
+
+for chunk_idx in range(n_chunks):
+	model_filename = f'ridge_chunk_{chunk_idx}_{args.monkey}.pkl'
+	chunk_model = joblib.load(os.path.join(model_dir, model_filename))
+	
+	# Predict for this chunk
+	chunk_pred = chunk_model.predict(fmaps_test)
+	chunk_predictions.append(chunk_pred)
+
+# Combine predictions from all chunks
+combined_predictions = np.concatenate(chunk_predictions, axis=1)
+
+# Reshape to (n_samples, n_times, n_electrodes)
+test_predictions = combined_predictions.reshape(fmaps_test.shape[0], n_times, n_electrodes)
+
+print(f"Test predictions shape: {test_predictions.shape}")
+
+# Save test predictions
+results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
+	'modality-spike', 'train_dataset-tvsd_monkey', 'clip_vit_b_32')
+if not os.path.isdir(results_dir):
+	os.makedirs(results_dir)
+
+test_file_name = f'spike_test_pred_{args.monkey}.npy'
+np.save(os.path.join(results_dir, test_file_name), test_predictions)
+
+print(f"Test predictions saved: {test_predictions.shape}")
+
+# =============================================================================
+# Save preprocessing parameters
+# =============================================================================
+print("Save preprocessing parameters...")
+
+preprocessing_weights = {
 	'scaler_param': {
 		'scale_': scaler.scale_,
 		'mean_': scaler.mean_,
@@ -260,16 +364,23 @@ weights = {
 		'noise_variance_': pca.noise_variance_,
 		'n_features_in_': pca.n_features_in_
 		},
-	'reg_param': reg_param,
-	'monkey_id': args.monkey
+	'model_info': {
+		'model_type': 'chunked_ridge',
+		'n_chunks': n_chunks,
+		'electrodes_per_chunk': electrodes_per_chunk,
+		'n_times': n_times,
+		'n_electrodes': n_electrodes,
+		'monkey_id': args.monkey
+		}
 	}
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
 	'train_dataset-tvsd_monkey', 'model-clip_vit_b_32',
 	'encoding_models_weights')
-if os.path.isdir(save_dir) == False:
+if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)
 
-file_name = f'weights_{args.monkey}.npy'
+file_name = f'preprocessing_{args.monkey}.npy'
+np.save(os.path.join(save_dir, file_name), preprocessing_weights)
 
-np.save(os.path.join(save_dir, file_name), weights)
+print("Model training completed successfully!")

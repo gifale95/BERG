@@ -57,6 +57,9 @@ tvsd_{monkey}_metadata.npz             :
         baseline_indices     : (n_baseline,) - Time indices for baseline
         monkey_id            : str      - Monkey identifier
         n_electrodes         : int      - Number of electrodes (1024)
+        SNR                  : (4, 1024) - Signal-to-noise ratio per day per electrode
+        SNR_max              : (1024,)  - Best SNR across all days per electrode
+        oracle               : (1024,)  - Noise ceiling estimate per electrode
 
 Total: 6 files per monkey
 

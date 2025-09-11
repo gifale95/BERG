@@ -355,7 +355,8 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
     Generate metadata linking neural responses to THINGS database images through
     stimulus ID mapping. Converts MATLAB 1-based indices to Python 0-based indices
     to map trial-by-trial neural responses to specific image files and categories.
-    Includes experimental conditions and baseline normalization parameters.
+    Includes experimental conditions, baseline normalization parameters, and electrode
+    quality metrics from THINGS_normMUA.mat.
     
     Mapping Process: Extract stimulus IDs from ALLMAT → Convert to 0-based indices
     → Lookup image info in THINGS DataFrames → Create aligned metadata arrays
@@ -378,13 +379,24 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
     Output Files
     ------------
     tvsd_{monkey}_metadata.npz : Complete dataset metadata including stimulus
-                                mappings, experimental conditions, and baseline stats
+                                mappings, experimental conditions, baseline stats,
+                                and electrode quality metrics
     """
     print("Creating dataset metadata...")
     
     with h5py.File(original_filepath, 'r') as f:
         ALLMAT = f['ALLMAT'][:]
         tb = f['tb'][:].flatten()
+    
+    # Load electrode quality metrics from THINGS_normMUA.mat
+    norm_mua_filepath = os.path.join(os.path.dirname(original_filepath), "THINGS_normMUA.mat")
+    if not os.path.exists(norm_mua_filepath):
+        raise FileNotFoundError(f"THINGS_normMUA.mat not found at: {norm_mua_filepath}")
+    
+    with h5py.File(norm_mua_filepath, 'r') as f:
+        SNR = f['SNR'][:]
+        SNR_max = f['SNR_max'][:]
+        oracle = f['oracle'][:]
     
     train_df, test_df = load_things_mapping(things_mapping_file)
     
@@ -455,7 +467,10 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         'baseline_stds': baseline_stats['baseline_stds'], 
         'baseline_days': baseline_stats['baseline_days'],
         'baseline_time_range': baseline_stats['baseline_time_range'],
-        'baseline_indices': baseline_stats['baseline_indices']
+        'baseline_indices': baseline_stats['baseline_indices'],
+        'SNR': SNR,
+        'SNR_max': SNR_max,
+        'oracle': oracle
     }
     
     metadata_file = os.path.join(output_dir, f'tvsd_{monkey_id}_metadata.npz')
