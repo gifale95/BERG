@@ -18,6 +18,48 @@ tvsd_dir : str
     Directory of the TVSD dataset.
 batch_size : int
     Batch size for chunked processing to manage memory usage.
+    
+    
+python berg_creation_code/01_prepare_data/train_dataset_tvsd/prepare_tvsd.py \
+    --monkey monkeyF \
+    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
+    --tvsd_dir '/Volumes/Extreme SSD/Datasets/TSVD' \
+    --batch_size 1000    
+    
+    
+Output Files Created (per monkey):
+────────────────────────────────────────────────────────────────
+tvsd_{monkey}_split-train.h5           : (22,248, 300, 1024)
+tvsd_{monkey}_split-test.h5            : (3,000, 300, 1024)
+tvsd_{monkey}_split-train_normalized.h5: (22,248, 300, 1024)
+tvsd_{monkey}_split-test_normalized.h5 : (3,000, 300, 1024)
+tvsd_{monkey}_split-test_averaged.h5   : (100, 300, 1024)
+tvsd_{monkey}_metadata.npz             : 
+
+        train_img_ids        : (22248,) - Training stimulus IDs
+        train_img_files      : (22248,) - Training image filenames
+        train_img_concepts   : (22248,) - Training object categories
+        train_days           : (22248,) - Recording days for training
+        train_sequence_pos   : (22248,) - Position in 4-image sequence
+        test_img_ids         : (3000,)  - Test stimulus IDs (individual trials)
+        test_img_files       : (3000,)  - Test image filenames (individual)
+        test_img_concepts    : (3000,)  - Test object categories (individual)
+        test_days            : (3000,)  - Recording days for test
+        test_sequence_pos    : (3000,)  - Position in sequence for test
+        test_avg_img_ids     : (100,)   - Unique test stimulus IDs
+        test_avg_img_files   : (100,)   - Test image filenames (averaged)
+        test_avg_img_concepts: (100,)   - Test object categories (averaged)
+        times                : (300,)   - Time points (-100 to 199ms)
+        baseline_means       : (n_days, 1024) - Day-specific baseline means
+        baseline_stds        : (n_days, 1024) - Day-specific baseline stds
+        baseline_days        : (n_days,) - Recording days for baselines
+        baseline_time_range  : (2,)     - Baseline period bounds
+        baseline_indices     : (n_baseline,) - Time indices for baseline
+        monkey_id            : str      - Monkey identifier
+        n_electrodes         : int      - Number of electrodes (1024)
+
+Total: 6 files per monkey
+
 """
 
 import argparse
@@ -58,6 +100,8 @@ things_mapping_file = os.path.join(monkey_path, "_logs/things_imgs.mat")
 # Load raw neural data and split into training and test partitions based on
 # stimulus type. Training data contains single presentations of 22,248 images,
 # while test data contains 30 repetitions of 100 images for noise ceiling estimation.
+print("")
+print("Splitting training and testing data")
 split_tvsd_data(things_mua_trials, output_dir, args.monkey, args.batch_size)
 
 # =============================================================================
@@ -65,16 +109,21 @@ split_tvsd_data(things_mua_trials, output_dir, args.monkey, args.batch_size)
 # =============================================================================
 # Apply day-specific z-score normalization using pre-stimulus baseline period
 # (-100 to 0ms) to account for daily recording variations and electrode drift.
-normalize_tvsd_data(things_mua_trials, output_dir, args.monkey, args.batch_size)
+print("")
+print("Normalizing training and testing data")
+baseline_stats = normalize_tvsd_data(things_mua_trials, output_dir, args.monkey, args.batch_size)
 
 # =============================================================================
 # Create dataset metadata
 # =============================================================================
 # Generate comprehensive metadata linking stimulus IDs to image files,
-# object categories, and experimental conditions for both training and test sets.
+# object categories, experimental conditions, and baseline normalization statistics.
+print("")
+print("Creating metadata")
 create_tvsd_metadata(
     original_filepath=things_mua_trials,
     things_mapping_file=things_mapping_file, 
     output_dir=output_dir,
-    monkey_id=args.monkey
+    monkey_id=args.monkey,
+    baseline_stats=baseline_stats
 )

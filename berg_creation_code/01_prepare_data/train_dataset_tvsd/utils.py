@@ -16,9 +16,10 @@ from tqdm import tqdm
 def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
     """Split TVSD neural data into training and test partitions.
     
-    Load the raw neural data and separate trials based on stimulus type.
-    Training trials contain single presentations of THINGS images (test_idx=0),
-    while test trials contain repeated presentations for noise ceiling estimation.
+    Load raw neural recordings (25,248 trials) and separate based on stimulus type.
+    Training trials (test_idx=0) contain single presentations of THINGS images,
+    while test trials (test_idx≠0) contain 30 repetitions of 100 images for 
+    noise ceiling estimation. Uses chunked processing for memory efficiency.
     
     Parameters
     ----------
@@ -30,6 +31,11 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         Monkey identifier for file naming.
     batch_size : int
         Batch size for chunked processing.
+        
+    Output Files
+    ------------
+    tvsd_{monkey}_split-train.h5 : (22,248, 300, 1024)
+    tvsd_{monkey}_split-test.h5  : (3,000, 300, 1024)
     """
     with h5py.File(filepath, 'r') as f:
         ALLMAT = f['ALLMAT'][:]
@@ -227,27 +233,32 @@ def apply_normalization_to_test_data(baseline_stats, original_filepath, output_d
 
 
 def save_baseline_statistics(baseline_stats, tb, baseline_indices, output_dir, monkey_id):
-    """Save baseline normalization statistics and metadata."""
-    stats_file = os.path.join(output_dir, f'tvsd_{monkey_id}_baseline-stats.npz')
-    
+    """Prepare baseline normalization statistics for metadata inclusion."""
     unique_days = sorted(baseline_stats.keys())
     baseline_means = np.array([baseline_stats[day]['mean'] for day in unique_days])
     baseline_stds = np.array([baseline_stats[day]['std'] for day in unique_days])
     
-    np.savez(stats_file,
-             baseline_means=baseline_means,
-             baseline_stds=baseline_stds,
-             days=np.array(unique_days),
-             baseline_time_range=[tb[baseline_indices[0]], tb[baseline_indices[-1]]],
-             baseline_indices=baseline_indices)
+    return {
+        'baseline_means': baseline_means,
+        'baseline_stds': baseline_stds,
+        'baseline_days': np.array(unique_days),
+        'baseline_time_range': [tb[baseline_indices[0]], tb[baseline_indices[-1]]],
+        'baseline_indices': baseline_indices
+    }
 
 
 def normalize_tvsd_data(original_filepath, output_dir, monkey_id, batch_size):
     """Apply day-specific z-score normalization to TVSD neural data.
     
-    Normalize neural responses using baseline period (-100 to 0ms) statistics
-    computed separately for each recording day to account for daily variations
-    and electrode drift.
+    Performs 6-step normalization using baseline period (-100 to 0ms) statistics
+    computed separately for each recording day to account for session variability
+    and electrode drift. Training data normalization uses own statistics to prevent
+    data leakage, while test data uses training-derived parameters.
+    
+    Steps: (1) Load metadata, (2) Identify baseline indices, (3) Compute day-specific
+    baseline stats from training data, (4) Normalize training data with chunked
+    processing, (5) Apply same normalization to test data and average repetitions,
+    (6) Return baseline parameters for metadata inclusion.
     
     Parameters
     ----------
@@ -259,6 +270,17 @@ def normalize_tvsd_data(original_filepath, output_dir, monkey_id, batch_size):
         Monkey identifier for file naming.
     batch_size : int
         Batch size for chunked processing.
+        
+    Returns
+    -------
+    dict
+        Baseline normalization statistics for metadata inclusion.
+        
+    Output Files
+    ------------
+    tvsd_{monkey}_split-train_normalized.h5 : (22,248, 300, 1024)
+    tvsd_{monkey}_split-test_normalized.h5  : (3,000, 300, 1024) 
+    tvsd_{monkey}_split-test_averaged.h5    : (100, 300, 1024)
     """
     # Load metadata and baseline information
     train_days, tb, train_shape, train_file, baseline_indices = load_metadata_and_baseline_info(
@@ -279,10 +301,9 @@ def normalize_tvsd_data(original_filepath, output_dir, monkey_id, batch_size):
         baseline_stats, original_filepath, output_dir, monkey_id)
     
     # Save baseline statistics
-    save_baseline_statistics(baseline_stats, tb, baseline_indices, output_dir, monkey_id)
+    baseline_metadata = save_baseline_statistics(baseline_stats, tb, baseline_indices, output_dir, monkey_id)
     
-    print(f"Training shape: {train_shape}")
-
+    return baseline_metadata
 
 def load_things_mapping(mat_file_path):
     """Load THINGS image mapping from MATLAB file and return as DataFrames."""
@@ -328,11 +349,18 @@ def load_things_mapping(mat_file_path):
 # object categories, and experimental conditions for both training and test sets.
 
 
-def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, monkey_id):
+def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, monkey_id, baseline_stats):
     """Create comprehensive metadata file for TVSD dataset.
     
-    Generate metadata linking stimulus IDs to image files, object categories,
-    and experimental conditions for both training and test data partitions.
+    Generate metadata linking neural responses to THINGS database images through
+    stimulus ID mapping. Converts MATLAB 1-based indices to Python 0-based indices
+    to map trial-by-trial neural responses to specific image files and categories.
+    Includes experimental conditions and baseline normalization parameters.
+    
+    Mapping Process: Extract stimulus IDs from ALLMAT → Convert to 0-based indices
+    → Lookup image info in THINGS DataFrames → Create aligned metadata arrays
+    for training (22,248 trials), test individual (3,000 trials), and test 
+    averaged (100 stimuli) datasets.
     
     Parameters
     ----------
@@ -344,6 +372,13 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         Output directory for processed data files.
     monkey_id : str
         Monkey identifier for file naming.
+    baseline_stats : dict
+        Baseline normalization statistics from normalize_tvsd_data.
+        
+    Output Files
+    ------------
+    tvsd_{monkey}_metadata.npz : Complete dataset metadata including stimulus
+                                mappings, experimental conditions, and baseline stats
     """
     print("Creating dataset metadata...")
     
@@ -415,7 +450,12 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         'test_avg_img_concepts': np.array(test_avg_img_concepts),
         'times': tb,
         'monkey_id': monkey_id,
-        'n_electrodes': 1024
+        'n_electrodes': 1024,
+        'baseline_means': baseline_stats['baseline_means'],
+        'baseline_stds': baseline_stats['baseline_stds'], 
+        'baseline_days': baseline_stats['baseline_days'],
+        'baseline_time_range': baseline_stats['baseline_time_range'],
+        'baseline_indices': baseline_stats['baseline_indices']
     }
     
     metadata_file = os.path.join(output_dir, f'tvsd_{monkey_id}_metadata.npz')
