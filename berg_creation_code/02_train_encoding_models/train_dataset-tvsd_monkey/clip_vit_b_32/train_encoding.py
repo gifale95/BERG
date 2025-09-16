@@ -53,9 +53,10 @@ import copy
 from PIL import Image
 import clip
 import torchextractor as tx
+import torchvision
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import RidgeCV, LinearRegression
 
 
 # =============================================================================
@@ -68,6 +69,12 @@ parser.add_argument('--berg_dir', required=True, type=str,
                    help="Directory of the BERG framework.")
 parser.add_argument('--things_dir', required=True, type=str,
                    help="Directory of the things images.")
+parser.add_argument('--only_cls', type=bool, required=True,
+                   help='If we should only use CLS token or all patches')
+parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
+                   help="Selecting which model to use")
+parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
+                   help="Select type of regression")
 parser.add_argument('--train_chunk_size', type=int, default=2000,
                    help='Number of trials per training chunk')
 parser.add_argument('--feature_batch_size', type=int, default=512,
@@ -81,7 +88,7 @@ args = parser.parse_args()
 print('>>> Train TVSD encoding models <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
-	print('{:16} {}'.format(key, val))
+    print('{:16} {}'.format(key, val))
 
 # Set random seed for reproducible results
 seed = 20200220
@@ -97,24 +104,24 @@ print("Device:", device)
 # Helper function to map trial to image
 # =============================================================================
 def map_trial_to_image(trial_idx, metadata, things_dir=None):
-	"""Map a training trial index to its corresponding THINGS image information."""
-	if trial_idx < 0 or trial_idx >= len(metadata['train_img_files']):
-		raise ValueError(f"Trial index {trial_idx} out of range")
-	
-	image_info = {
-		'trial_idx': trial_idx,
-		'stimulus_id': metadata['train_img_ids'][trial_idx],
-		'image_file': metadata['train_img_files'][trial_idx],
-		'object_category': metadata['train_img_concepts'][trial_idx],
-		'recording_day': metadata['train_days'][trial_idx],
-		'sequence_position': metadata['train_sequence_pos'][trial_idx]
-	}
-	
-	if things_dir:
-		category = metadata['train_img_concepts'][trial_idx]
-		image_info['full_path'] = f"{things_dir}/{category}/{image_info['image_file']}"
-	
-	return image_info
+    """Map a training trial index to its corresponding THINGS image information."""
+    if trial_idx < 0 or trial_idx >= len(metadata['train_img_files']):
+        raise ValueError(f"Trial index {trial_idx} out of range")
+    
+    image_info = {
+        'trial_idx': trial_idx,
+        'stimulus_id': metadata['train_img_ids'][trial_idx],
+        'image_file': metadata['train_img_files'][trial_idx],
+        'object_category': metadata['train_img_concepts'][trial_idx],
+        'recording_day': metadata['train_days'][trial_idx],
+        'sequence_position': metadata['train_sequence_pos'][trial_idx]
+    }
+    
+    if things_dir:
+        category = metadata['train_img_concepts'][trial_idx]
+        image_info['full_path'] = f"{things_dir}/{category}/{image_info['image_file']}"
+    
+    return image_info
 
 
 # =============================================================================
@@ -122,27 +129,53 @@ def map_trial_to_image(trial_idx, metadata, things_dir=None):
 # =============================================================================
 # Load the model
 print("Load model...")
-model, preprocess = clip.load("ViT-B/32", device=device)
 
-if device == 'cuda':
-    model = model.float()
+if args.model == "clip.vit_b_32":
 
-model.eval()
+    model, preprocess = clip.load("ViT-B/32", device=device)
 
-layer_names = [
-    "transformer.resblocks.0",
-    "transformer.resblocks.1",
-    "transformer.resblocks.2",
-    "transformer.resblocks.3",
-    "transformer.resblocks.4",
-    "transformer.resblocks.5",
-    "transformer.resblocks.6",
-    "transformer.resblocks.7",
-    "transformer.resblocks.8",
-    "transformer.resblocks.9",
-    "transformer.resblocks.10",
-    "transformer.resblocks.11",
-]
+    if device == 'cuda':
+        model = model.float()
+
+    model.eval()
+
+    layer_names = [
+        "transformer.resblocks.0",
+        "transformer.resblocks.1",
+        "transformer.resblocks.2",
+        "transformer.resblocks.3",
+        "transformer.resblocks.4",
+        "transformer.resblocks.5",
+        "transformer.resblocks.6",
+        "transformer.resblocks.7",
+        "transformer.resblocks.8",
+        "transformer.resblocks.9",
+        "transformer.resblocks.10",
+        "transformer.resblocks.11",
+    ]
+ 
+    # Wrap the vision model with torchextractor
+    visual = tx.Extractor(model.visual, layer_names)
+ 
+elif args.model == "vit_b_32":
+    model = torchvision.models.vit_b_32(weights='DEFAULT')
+    model.to(device)
+    model.eval()
+
+    layer_names = ['encoder.layers.encoder_layer_0',
+                    'encoder.layers.encoder_layer_1',
+                    'encoder.layers.encoder_layer_2',
+                    'encoder.layers.encoder_layer_3',
+                    'encoder.layers.encoder_layer_4',
+                    'encoder.layers.encoder_layer_5',
+                    'encoder.layers.encoder_layer_6',
+                    'encoder.layers.encoder_layer_7',
+                    'encoder.layers.encoder_layer_8',
+                    'encoder.layers.encoder_layer_9',
+                    'encoder.layers.encoder_layer_10',
+                    'encoder.layers.encoder_layer_11']
+ 
+    visual = tx.Extractor(model,layer_names)
 
 print("Model loaded")
 
@@ -150,10 +183,8 @@ print("Model loaded")
 # =============================================================================
 # Extract the TVSD training and test image features
 # =============================================================================
-print("Extract the TVSD training and test image features...")
 
-# Wrap the vision model with torchextractor
-visual = tx.Extractor(model.visual, layer_names)
+print("Extract the TVSD training and test image features...")
 
 # Load metadata
 data_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-tvsd_monkey')
@@ -166,35 +197,41 @@ n_train_images = len(metadata['train_img_files'])
 fmaps_train = []
 
 for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=False):
-	end_idx = min(start_idx + args.feature_batch_size, n_train_images)
-	batch_images = []
-	
-	# Load batch of training images
-	for i in range(start_idx, end_idx):
-		trial_info = map_trial_to_image(i, metadata, args.things_dir)
-		img = Image.open(trial_info['full_path']).convert('RGB')
-		img_tensor = preprocess(img)
-		batch_images.append(img_tensor)
-	
-	# Process batch
-	batch_tensor = torch.stack(batch_images).to(device)
-	
-	with torch.no_grad():
-		# Extract features using torchextractor
-		_, features = visual(batch_tensor)
-		
-		# Extract CLS token from each layer and concatenate
-		batch_features = []
-		for layer_name in layer_names:
-			layer_features = features[layer_name]
-			# Shape: (seq_len=50, batch_size, hidden_dim=768)
-			# Extract CLS token (first token in sequence) for all images in batch
-			cls_features = layer_features[0, :, :]  # Shape: (batch_size, hidden_dim)
-			batch_features.append(cls_features)
-		
-		# Concatenate features from all layers
-		ft = torch.cat(batch_features, dim=-1)  # Shape: (batch_size, 12*768)
-		fmaps_train.append(ft.detach().cpu().numpy())
+    end_idx = min(start_idx + args.feature_batch_size, n_train_images)
+    batch_images = []
+    
+    # Load batch of training images
+    for i in range(start_idx, end_idx):
+        trial_info = map_trial_to_image(i, metadata, args.things_dir)
+        img = Image.open(trial_info['full_path']).convert('RGB')
+        img_tensor = preprocess(img)
+        batch_images.append(img_tensor)
+    
+    # Process batch
+    batch_tensor = torch.stack(batch_images).to(device)
+    
+    with torch.no_grad():
+        # Extract features using torchextractor
+        _, features = visual(batch_tensor)
+        
+        # Extract CLS token from each layer and concatenate
+        batch_features = []
+        for layer_name in layer_names:
+            layer_features = features[layer_name]
+            # Shape: (seq_len=50, batch_size, hidden_dim=768)
+   
+            # Extract CLS token (first token in sequence) for all images in batch
+            if args.only_cls == True:
+                model_features = layer_features[0, :, :]  # Shape: (batch_size, hidden_dim)
+            else:
+                # Flatten all tokens for each image: (batch_size, seq_len * hidden_dim)
+                model_features = layer_features.permute(1, 0, 2).flatten(1, 2)
+    
+            batch_features.append(model_features)
+        
+        # Concatenate features from all layers
+        ft = torch.cat(batch_features, dim=-1)  # Shape: (batch_size, 12*768)
+        fmaps_train.append(ft.detach().cpu().numpy())
 
 # Concatenate all training batches
 fmaps_train = np.concatenate(fmaps_train, axis=0)
@@ -203,29 +240,29 @@ fmaps_train = np.concatenate(fmaps_train, axis=0)
 print("Extracting test features...")
 test_images = []
 for i in range(len(metadata['test_avg_img_files'])):
-	category = metadata['test_avg_img_concepts'][i]
-	image_file = metadata['test_avg_img_files'][i]
-	full_path = f"{args.things_dir}/{category}/{image_file}"
-	
-	img = Image.open(full_path).convert('RGB')
-	img_tensor = preprocess(img)
-	test_images.append(img_tensor)
+    category = metadata['test_avg_img_concepts'][i]
+    image_file = metadata['test_avg_img_files'][i]
+    full_path = f"{args.things_dir}/{category}/{image_file}"
+    
+    img = Image.open(full_path).convert('RGB')
+    img_tensor = preprocess(img)
+    test_images.append(img_tensor)
 
 # Process all test images at once
 test_tensor = torch.stack(test_images).to(device)
 
 with torch.no_grad():
-	_, features = visual(test_tensor)
-	
-	batch_features = []
-	for layer_name in layer_names:
-		layer_features = features[layer_name]
-		# Shape: (seq_len=50, batch_size=100, hidden_dim=768)
-		# Extract CLS token (first token in sequence) for all images in batch
-		cls_features = layer_features[0, :, :]  # Shape: (batch_size, hidden_dim)
-		batch_features.append(cls_features)
-	
-	fmaps_test = torch.cat(batch_features, dim=-1).detach().cpu().numpy()
+    _, features = visual(test_tensor)
+    
+    batch_features = []
+    for layer_name in layer_names:
+        layer_features = features[layer_name]
+        # Shape: (seq_len=50, batch_size=100, hidden_dim=768)
+        # Extract CLS token (first token in sequence) for all images in batch
+        cls_features = layer_features[0, :, :]  # Shape: (batch_size, hidden_dim)
+        batch_features.append(cls_features)
+    
+    fmaps_test = torch.cat(batch_features, dim=-1).detach().cpu().numpy()
 
 # Standardize the image features (fit on training, transform both)
 scaler = StandardScaler()
@@ -260,46 +297,46 @@ alphas = [0.1, 1, 10, 100, 1000]
 # Load neural data shape info
 neural_train_path = os.path.join(data_dir, f'tvsd_{args.monkey}_split-train_normalized.h5')
 with h5py.File(neural_train_path, 'r') as f:
-	n_trials, n_times, n_electrodes = f['neural_data_normalized'].shape
+    n_trials, n_times, n_electrodes = f['neural_data_normalized'].shape
 
 print(f"Training {n_chunks} separate Ridge models with {electrodes_per_chunk} electrodes each")
 
 # Train each chunk separately
 for chunk_idx in range(n_chunks):
-	start_electrode = chunk_idx * electrodes_per_chunk
-	end_electrode = start_electrode + electrodes_per_chunk
-	
-	print(f"Training chunk {chunk_idx + 1}/{n_chunks}: electrodes {start_electrode}-{end_electrode-1}")
-	
-	# Load neural data for this chunk only
-	neural_chunk = np.empty((n_trials, n_times * electrodes_per_chunk), dtype=np.float32)
-	
-	with h5py.File(neural_train_path, 'r') as f:
-		# Load in batches to avoid memory issues
-		for batch_start in range(0, n_trials, args.train_chunk_size):
-			batch_end = min(batch_start + args.train_chunk_size, n_trials)
-			
-			# Load batch and slice electrodes
-			batch_data = f['neural_data_normalized'][batch_start:batch_end, :, start_electrode:end_electrode]
-			# Reshape to (batch_size, n_times * electrodes_per_chunk)
-			batch_reshaped = batch_data.reshape(batch_data.shape[0], -1)
-			neural_chunk[batch_start:batch_end] = batch_reshaped
-	
-	# Train Ridge model for this chunk
-	chunk_reg = RidgeCV(alphas=alphas, cv=args.cv_folds, scoring='r2')
-	chunk_reg.fit(fmaps_train, neural_chunk)
-	
-	print(f"Chunk {chunk_idx + 1} completed. Best alpha: {chunk_reg.alpha_}")
-	
-	# Save individual model
-	import joblib
-	model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-		'train_dataset-tvsd_monkey', 'model-clip_vit_b_32', 'chunk_models')
-	if not os.path.isdir(model_dir):
-		os.makedirs(model_dir)
-	
-	model_filename = f'ridge_chunk_{chunk_idx}_{args.monkey}.pkl'
-	joblib.dump(chunk_reg, os.path.join(model_dir, model_filename))
+    start_electrode = chunk_idx * electrodes_per_chunk
+    end_electrode = start_electrode + electrodes_per_chunk
+    
+    print(f"Training chunk {chunk_idx + 1}/{n_chunks}: electrodes {start_electrode}-{end_electrode-1}")
+    
+    # Load neural data for this chunk only
+    neural_chunk = np.empty((n_trials, n_times * electrodes_per_chunk), dtype=np.float32)
+    
+    with h5py.File(neural_train_path, 'r') as f:
+        # Load in batches to avoid memory issues
+        for batch_start in range(0, n_trials, args.train_chunk_size):
+            batch_end = min(batch_start + args.train_chunk_size, n_trials)
+            
+            # Load batch and slice electrodes
+            batch_data = f['neural_data_normalized'][batch_start:batch_end, :, start_electrode:end_electrode]
+            # Reshape to (batch_size, n_times * electrodes_per_chunk)
+            batch_reshaped = batch_data.reshape(batch_data.shape[0], -1)
+            neural_chunk[batch_start:batch_end] = batch_reshaped
+    
+    # Train Ridge model for this chunk
+    chunk_reg = RidgeCV(alphas=alphas, cv=args.cv_folds, scoring='r2')
+    chunk_reg.fit(fmaps_train, neural_chunk)
+    
+    print(f"Chunk {chunk_idx + 1} completed. Best alpha: {chunk_reg.alpha_}")
+    
+    # Save individual model
+    import joblib
+    model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
+        'train_dataset-tvsd_monkey', 'model-clip_vit_b_32', 'chunk_models')
+    if not os.path.isdir(model_dir):
+        os.makedirs(model_dir)
+    
+    model_filename = f'ridge_chunk_{chunk_idx}_{args.monkey}.pkl'
+    joblib.dump(chunk_reg, os.path.join(model_dir, model_filename))
 
 print("All chunk models trained and saved!")
 
@@ -311,15 +348,15 @@ print("Predicting test responses...")
 # Load all models and predict
 chunk_predictions = []
 model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-	'train_dataset-tvsd_monkey', 'model-clip_vit_b_32', 'chunk_models')
+    'train_dataset-tvsd_monkey', 'model-clip_vit_b_32', 'chunk_models')
 
 for chunk_idx in range(n_chunks):
-	model_filename = f'ridge_chunk_{chunk_idx}_{args.monkey}.pkl'
-	chunk_model = joblib.load(os.path.join(model_dir, model_filename))
-	
-	# Predict for this chunk
-	chunk_pred = chunk_model.predict(fmaps_test)
-	chunk_predictions.append(chunk_pred)
+    model_filename = f'ridge_chunk_{chunk_idx}_{args.monkey}.pkl'
+    chunk_model = joblib.load(os.path.join(model_dir, model_filename))
+    
+    # Predict for this chunk
+    chunk_pred = chunk_model.predict(fmaps_test)
+    chunk_predictions.append(chunk_pred)
 
 # Combine predictions from all chunks
 combined_predictions = np.concatenate(chunk_predictions, axis=1)
@@ -331,9 +368,9 @@ print(f"Test predictions shape: {test_predictions.shape}")
 
 # Save test predictions
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-	'modality-spike', 'train_dataset-tvsd_monkey', 'clip_vit_b_32')
+    'modality-spike', 'train_dataset-tvsd_monkey', 'clip_vit_b_32')
 if not os.path.isdir(results_dir):
-	os.makedirs(results_dir)
+    os.makedirs(results_dir)
 
 test_file_name = f'spike_test_pred_{args.monkey}.npy'
 np.save(os.path.join(results_dir, test_file_name), test_predictions)
@@ -346,39 +383,39 @@ print(f"Test predictions saved: {test_predictions.shape}")
 print("Save preprocessing parameters...")
 
 preprocessing_weights = {
-	'scaler_param': {
-		'scale_': scaler.scale_,
-		'mean_': scaler.mean_,
-		'var_': scaler.var_,
-		'n_features_in_': scaler.n_features_in_,
-		'n_samples_seen_': scaler.n_samples_seen_
-		},
-	'pca_param': {
-		'components_': pca.components_,
-		'explained_variance_': pca.explained_variance_,
-		'explained_variance_ratio_': pca.explained_variance_ratio_,
-		'singular_values_': pca.singular_values_,
-		'mean_': pca.mean_,
-		'n_components_': pca.n_components_,
-		'n_samples_': pca.n_samples_,
-		'noise_variance_': pca.noise_variance_,
-		'n_features_in_': pca.n_features_in_
-		},
-	'model_info': {
-		'model_type': 'chunked_ridge',
-		'n_chunks': n_chunks,
-		'electrodes_per_chunk': electrodes_per_chunk,
-		'n_times': n_times,
-		'n_electrodes': n_electrodes,
-		'monkey_id': args.monkey
-		}
-	}
+    'scaler_param': {
+        'scale_': scaler.scale_,
+        'mean_': scaler.mean_,
+        'var_': scaler.var_,
+        'n_features_in_': scaler.n_features_in_,
+        'n_samples_seen_': scaler.n_samples_seen_
+        },
+    'pca_param': {
+        'components_': pca.components_,
+        'explained_variance_': pca.explained_variance_,
+        'explained_variance_ratio_': pca.explained_variance_ratio_,
+        'singular_values_': pca.singular_values_,
+        'mean_': pca.mean_,
+        'n_components_': pca.n_components_,
+        'n_samples_': pca.n_samples_,
+        'noise_variance_': pca.noise_variance_,
+        'n_features_in_': pca.n_features_in_
+        },
+    'model_info': {
+        'model_type': 'chunked_ridge',
+        'n_chunks': n_chunks,
+        'electrodes_per_chunk': electrodes_per_chunk,
+        'n_times': n_times,
+        'n_electrodes': n_electrodes,
+        'monkey_id': args.monkey
+        }
+    }
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-	'train_dataset-tvsd_monkey', 'model-clip_vit_b_32',
-	'encoding_models_weights')
+    'train_dataset-tvsd_monkey', 'model-clip_vit_b_32',
+    'encoding_models_weights')
 if not os.path.isdir(save_dir):
-	os.makedirs(save_dir)
+    os.makedirs(save_dir)
 
 file_name = f'preprocessing_{args.monkey}.npy'
 np.save(os.path.join(save_dir, file_name), preprocessing_weights)
