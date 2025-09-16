@@ -322,11 +322,15 @@ for chunk_idx in range(n_chunks):
             batch_reshaped = batch_data.reshape(batch_data.shape[0], -1)
             neural_chunk[batch_start:batch_end] = batch_reshaped
     
-    # Train Ridge model for this chunk
-    chunk_reg = RidgeCV(alphas=alphas, cv=args.cv_folds, scoring='r2')
-    chunk_reg.fit(fmaps_train, neural_chunk)
-    
-    print(f"Chunk {chunk_idx + 1} completed. Best alpha: {chunk_reg.alpha_}")
+    # Train model based on regression type
+    if args.regression == 'ridge':
+        chunk_reg = RidgeCV(alphas=alphas, cv=args.cv_folds, scoring='r2')
+        chunk_reg.fit(fmaps_train, neural_chunk)
+        print(f"Chunk {chunk_idx + 1} completed. Best alpha: {chunk_reg.alpha_}")
+    else:  # linear
+        chunk_reg = LinearRegression()
+        chunk_reg.fit(fmaps_train, neural_chunk)
+        print(f"Chunk {chunk_idx + 1} completed.")
     
     # Save individual model
     import joblib
@@ -335,7 +339,8 @@ for chunk_idx in range(n_chunks):
     if not os.path.isdir(model_dir):
         os.makedirs(model_dir)
     
-    model_filename = f'ridge_chunk_{chunk_idx}_{args.monkey}.pkl'
+    cls_suffix = 'cls' if args.only_cls else 'all'
+    model_filename = f'{args.regression}_{cls_suffix}_chunk_{chunk_idx}_{args.monkey}.pkl'
     joblib.dump(chunk_reg, os.path.join(model_dir, model_filename))
 
 print("All chunk models trained and saved!")
@@ -351,7 +356,7 @@ model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
     'train_dataset-tvsd_monkey', 'model-clip_vit_b_32', 'chunk_models')
 
 for chunk_idx in range(n_chunks):
-    model_filename = f'ridge_chunk_{chunk_idx}_{args.monkey}.pkl'
+    model_filename = f'{args.regression}_chunk_{chunk_idx}_{args.monkey}.pkl'
     chunk_model = joblib.load(os.path.join(model_dir, model_filename))
     
     # Predict for this chunk
@@ -372,7 +377,8 @@ results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 if not os.path.isdir(results_dir):
     os.makedirs(results_dir)
 
-test_file_name = f'spike_test_pred_{args.monkey}.npy'
+cls_suffix = 'cls' if args.only_cls else 'all'
+test_file_name = f'spike_test_pred_{args.regression}_{cls_suffix}_{args.monkey}.npy'
 np.save(os.path.join(results_dir, test_file_name), test_predictions)
 
 print(f"Test predictions saved: {test_predictions.shape}")
@@ -401,14 +407,15 @@ preprocessing_weights = {
         'noise_variance_': pca.noise_variance_,
         'n_features_in_': pca.n_features_in_
         },
-    'model_info': {
-        'model_type': 'chunked_ridge',
-        'n_chunks': n_chunks,
-        'electrodes_per_chunk': electrodes_per_chunk,
-        'n_times': n_times,
-        'n_electrodes': n_electrodes,
-        'monkey_id': args.monkey
-        }
+	'model_info': {
+		'model_type': f'chunked_{args.regression}',
+		'only_cls': args.only_cls,
+		'n_chunks': n_chunks,
+		'electrodes_per_chunk': electrodes_per_chunk,
+		'n_times': n_times,
+		'n_electrodes': n_electrodes,
+		'monkey_id': args.monkey
+		}
     }
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
@@ -417,7 +424,8 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-file_name = f'preprocessing_{args.monkey}.npy'
+cls_suffix = 'cls' if args.only_cls else 'all'
+file_name = f'preprocessing_{args.regression}_{cls_suffix}_{args.monkey}.npy'
 np.save(os.path.join(save_dir, file_name), preprocessing_weights)
 
 print("Model training completed successfully!")
