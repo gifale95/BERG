@@ -11,8 +11,14 @@ berg_dir : str
 	Directory of the Brain Encoding Response Generator (BERG).
 	https://github.com/gifale95/BERG
  
-python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/01_test_encoding.py --monkey monkeyF --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator'
 
+
+python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/01_test_encoding.py \
+    --monkey monkeyF \
+    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
+    --only_cls False \
+    --regression ridge \
+    --model vit_b_32 
 
 """
 
@@ -24,9 +30,17 @@ from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--monkey', type=str, required=True, choices=['monkeyN', 'monkeyF'])
-parser.add_argument('--model', type=str, default='clip_vit_b_32')
+parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
+                   help="Selecting which model to use")
+parser.add_argument('--only_cls', required=True, choices=["True", "False"],
+                    help='If we should only use CLS token or all patches')
+parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
+                   help="Select type of regression")
 parser.add_argument('--berg_dir', required=True, type=str)
+
 args = parser.parse_args()
+
+args.only_cls = args.only_cls == "True"
 
 print('>>> Test TVSD encoding models <<<')
 print('\nInput parameters:')
@@ -59,8 +73,10 @@ print(f"Actual neural test data shape: {neural_test.shape}")
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 	'modality-spike', 'train_dataset-tvsd_monkey', args.model)
-pred_path = os.path.join(results_dir, f'spike_test_pred_{args.monkey}.npy')
 
+
+cls_suffix = 'cls' if args.only_cls else 'all'
+pred_path = os.path.join(results_dir, f'spike_test_pred_{args.regression}_{cls_suffix}_{args.monkey}.npy')
 neural_test_pred = np.load(pred_path)
 
 print(f"Predicted neural test data shape: {neural_test_pred.shape}")
@@ -70,11 +86,12 @@ print(f"Predicted neural test data shape: {neural_test_pred.shape}")
 # Compute the encoding accuracy
 # =============================================================================
 # Correlate the in vivo and in silico neural responses
-correlation_results = np.zeros((neural_test.shape[2], neural_test.shape[1]))
+# Shape: (timepoints, electrodes)
+correlation_results = np.zeros((neural_test.shape[1], neural_test.shape[2]))
 
-for e in range(neural_test.shape[2]):  # electrodes
-	for t in range(neural_test.shape[1]):  # timepoints
-		correlation_results[e, t] = pearsonr(neural_test[:, t, e],
+for t in range(neural_test.shape[1]):  # timepoints
+	for e in range(neural_test.shape[2]):  # electrodes
+		correlation_results[t, e] = pearsonr(neural_test[:, t, e],
 			neural_test_pred[:, t, e])[0]
 
 print(f"Correlation results shape: {correlation_results.shape}")
@@ -114,7 +131,7 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
 if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)
 
-file_name = f'metadata_{args.monkey}.npy'
+file_name = f'metadata_{args.regression}_{cls_suffix}_{args.monkey}.npy'
 np.save(os.path.join(save_dir, file_name), metadata)
 
 print(f"Metadata saved to: {os.path.join(save_dir, file_name)}")

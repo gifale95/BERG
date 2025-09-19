@@ -40,7 +40,18 @@ cv_folds : int
 python berg_creation_code/02_train_encoding_models/train_dataset-tvsd_monkey/clip_vit_b_32/train_encoding.py \
     --monkey monkeyF \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images'
+    --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
+    --only_cls True \
+    --regression linear \
+    --model vit_b_32 
+    
+python berg_creation_code/02_train_encoding_models/train_dataset-tvsd_monkey/clip_vit_b_32/train_encoding.py \
+    --monkey monkeyF \
+    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
+    --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
+    --only_cls False \
+    --regression ridge \
+    --model vit_b_32 
 """
 
 import argparse
@@ -53,6 +64,7 @@ import copy
 from PIL import Image
 import clip
 import torchextractor as tx
+from torchvision import transforms as trn
 import torchvision
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -69,8 +81,8 @@ parser.add_argument('--berg_dir', required=True, type=str,
                    help="Directory of the BERG framework.")
 parser.add_argument('--things_dir', required=True, type=str,
                    help="Directory of the things images.")
-parser.add_argument('--only_cls', type=bool, required=True,
-                   help='If we should only use CLS token or all patches')
+parser.add_argument('--only_cls', required=True, choices=["True", "False"],
+                    help='If we should only use CLS token or all patches')
 parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
                    help="Selecting which model to use")
 parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
@@ -84,6 +96,8 @@ parser.add_argument('--n_pca_components', type=int, default=250,
 parser.add_argument('--cv_folds', type=int, default=5,
                    help='Cross-validation folds for Ridge alpha')
 args = parser.parse_args()
+
+args.only_cls = args.only_cls == "True"
 
 print('>>> Train TVSD encoding models <<<')
 print('\nInput arguments:')
@@ -99,6 +113,10 @@ torch.manual_seed(seed)
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 print("Device:", device)
 
+
+cls_suffix = 'cls' if args.only_cls else 'all'
+print(cls_suffix)
+print(args.only_cls)
 
 # =============================================================================
 # Helper function to map trial to image
@@ -176,6 +194,17 @@ elif args.model == "vit_b_32":
                     'encoder.layers.encoder_layer_11']
  
     visual = tx.Extractor(model,layer_names)
+    
+    preprocess = trn.Compose([
+        trn.Lambda(lambda img: trn.CenterCrop(min(img.size))(img)),
+        trn.Resize((224, 224)),
+        trn.ToTensor(),
+        trn.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
+    
+    
+
 
 print("Model loaded")
 
@@ -218,14 +247,25 @@ for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=F
         batch_features = []
         for layer_name in layer_names:
             layer_features = features[layer_name]
-            # Shape: (seq_len=50, batch_size, hidden_dim=768)
    
             # Extract CLS token (first token in sequence) for all images in batch
             if args.only_cls == True:
-                model_features = layer_features[0, :, :]  # Shape: (batch_size, hidden_dim)
+                if args.model == "clip.vit_b_32":  
+                    # Shape: (seq_len=50, batch_size, hidden_dim=768)
+                    model_features = layer_features[0, :, :]  # Shape: (batch_size, hidden_dim)
+                elif args.model == "vit_b_32":
+                    # Shape: (batch_size, seq_len=50, hidden_dim=768)
+                    model_features = layer_features[:, 0, :] # Shape: (batch_size, hidden_dim)
             else:
                 # Flatten all tokens for each image: (batch_size, seq_len * hidden_dim)
-                model_features = layer_features.permute(1, 0, 2).flatten(1, 2)
+                if args.model == "clip.vit_b_32":
+                    # Shape: (seq_len=50, batch_size, hidden_dim=768)
+                    # Flatten all tokens: (batch_size, seq_len * hidden_dim)
+                    model_features = layer_features.permute(1, 0, 2).flatten(1, 2)
+                elif args.model == "vit_b_32":
+                    # Shape: (batch_size, seq_len=50, hidden_dim=768)
+                    # Flatten: (batch_size, seq_len * hidden_dim)
+                    model_features = layer_features.flatten(1, 2)
     
             batch_features.append(model_features)
         
@@ -257,10 +297,27 @@ with torch.no_grad():
     batch_features = []
     for layer_name in layer_names:
         layer_features = features[layer_name]
-        # Shape: (seq_len=50, batch_size=100, hidden_dim=768)
+                
         # Extract CLS token (first token in sequence) for all images in batch
-        cls_features = layer_features[0, :, :]  # Shape: (batch_size, hidden_dim)
-        batch_features.append(cls_features)
+        if args.only_cls == True:
+            if args.model == "clip.vit_b_32":  
+                # Shape: (seq_len=50, batch_size, hidden_dim=768)
+                model_features = layer_features[0, :, :]  # Shape: (batch_size, hidden_dim)
+            elif args.model == "vit_b_32":
+                # Shape: (batch_size, seq_len=50, hidden_dim=768)
+                model_features = layer_features[:, 0, :] # Shape: (batch_size, hidden_dim)
+        else:
+            # Flatten all tokens for each image: (batch_size, seq_len * hidden_dim)
+            if args.model == "clip.vit_b_32":
+                # Shape: (seq_len=50, batch_size, hidden_dim=768)
+                # Flatten all tokens: (batch_size, seq_len * hidden_dim)
+                model_features = layer_features.permute(1, 0, 2).flatten(1, 2)
+            elif args.model == "vit_b_32":
+                # Shape: (batch_size, seq_len=50, hidden_dim=768)
+                # Flatten: (batch_size, seq_len * hidden_dim)
+                model_features = layer_features.flatten(1, 2)
+        
+        batch_features.append(model_features)
     
     fmaps_test = torch.cat(batch_features, dim=-1).detach().cpu().numpy()
 
@@ -324,10 +381,12 @@ for chunk_idx in range(n_chunks):
     
     # Train model based on regression type
     if args.regression == 'ridge':
+        print("Ridge Reg")
         chunk_reg = RidgeCV(alphas=alphas, cv=args.cv_folds, scoring='r2')
         chunk_reg.fit(fmaps_train, neural_chunk)
         print(f"Chunk {chunk_idx + 1} completed. Best alpha: {chunk_reg.alpha_}")
     else:  # linear
+        print("Linear Reg")
         chunk_reg = LinearRegression()
         chunk_reg.fit(fmaps_train, neural_chunk)
         print(f"Chunk {chunk_idx + 1} completed.")
@@ -335,7 +394,7 @@ for chunk_idx in range(n_chunks):
     # Save individual model
     import joblib
     model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-        'train_dataset-tvsd_monkey', 'model-clip_vit_b_32', 'chunk_models')
+        'train_dataset-tvsd_monkey', f'model-{args.model}', 'chunk_models')
     if not os.path.isdir(model_dir):
         os.makedirs(model_dir)
     
@@ -353,10 +412,10 @@ print("Predicting test responses...")
 # Load all models and predict
 chunk_predictions = []
 model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-    'train_dataset-tvsd_monkey', 'model-clip_vit_b_32', 'chunk_models')
+    'train_dataset-tvsd_monkey', f'model-{args.model}', 'chunk_models')
 
 for chunk_idx in range(n_chunks):
-    model_filename = f'{args.regression}_chunk_{chunk_idx}_{args.monkey}.pkl'
+    model_filename = f'{args.regression}_{cls_suffix}_chunk_{chunk_idx}_{args.monkey}.pkl'
     chunk_model = joblib.load(os.path.join(model_dir, model_filename))
     
     # Predict for this chunk
@@ -373,7 +432,7 @@ print(f"Test predictions shape: {test_predictions.shape}")
 
 # Save test predictions
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-    'modality-spike', 'train_dataset-tvsd_monkey', 'clip_vit_b_32')
+    'modality-spike', 'train_dataset-tvsd_monkey', args.model)
 if not os.path.isdir(results_dir):
     os.makedirs(results_dir)
 
@@ -407,19 +466,19 @@ preprocessing_weights = {
         'noise_variance_': pca.noise_variance_,
         'n_features_in_': pca.n_features_in_
         },
-	'model_info': {
-		'model_type': f'chunked_{args.regression}',
-		'only_cls': args.only_cls,
-		'n_chunks': n_chunks,
-		'electrodes_per_chunk': electrodes_per_chunk,
-		'n_times': n_times,
-		'n_electrodes': n_electrodes,
-		'monkey_id': args.monkey
-		}
+    'model_info': {
+        'model_type': f'chunked_{args.regression}',
+        'only_cls': args.only_cls,
+        'n_chunks': n_chunks,
+        'electrodes_per_chunk': electrodes_per_chunk,
+        'n_times': n_times,
+        'n_electrodes': n_electrodes,
+        'monkey_id': args.monkey
+        }
     }
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-    'train_dataset-tvsd_monkey', 'model-clip_vit_b_32',
+    'train_dataset-tvsd_monkey', f'model-{args.model}',
     'encoding_models_weights')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
