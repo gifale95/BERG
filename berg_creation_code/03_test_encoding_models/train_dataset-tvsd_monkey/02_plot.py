@@ -1,21 +1,21 @@
-"""Plot the encoding models' prediction accuracy for the test stimuli.
+"""Plot the encoding models' prediction accuracy for the test stimuli by brain region.
 
 Parameters
 ----------
 monkeys : list
-	List with all used TVSD monkeys.
+    List with all used TVSD monkeys.
 model : str
-	Name of the used encoding model.
+    Name of the used encoding model.
 berg_dir : str
-	Directory of the Brain Encoding Response Generator (BERG).
-	https://github.com/gifale95/BERG
+    Directory of the Brain Encoding Response Generator (BERG).
+    https://github.com/gifale95/BERG
  
 
 python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/02_plot.py \
-    --monkey monkeyF \
+    --monkey monkeyF monkeyN \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --only_cls False \
-    --regression ridge \
+    --only_cls True \
+    --regression linear \
     --model vit_b_32 
 
 """
@@ -32,7 +32,7 @@ from matplotlib import pyplot as plt
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--monkey', nargs='+', default=['monkeyN', 'monkeyF'],
-	help='List of monkeys to analyze (e.g., --monkey monkeyN monkeyF)')
+    help='List of monkeys to analyze (e.g., --monkey monkeyN monkeyF)')
 parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
                    help="Selecting which model to use")
 parser.add_argument('--only_cls', required=True, choices=["True", "False"],
@@ -48,28 +48,29 @@ cls_suffix = 'cls' if args.only_cls else 'all'
 
 
 # =============================================================================
-# Load the encoding models' encoding accuracy
+# Load the encoding models' encoding accuracy and metadata
 # =============================================================================
 correlation_results = []
-oracle_all = []
+roi_data = []
 
 metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-	'train_dataset-tvsd_monkey', f'model-{args.model}', 'metadata')
+    'train_dataset-tvsd_monkey', f'model-{args.model}', 'metadata')
 
 for monkey in args.monkey:
-	file_name = f'metadata_{args.regression}_{cls_suffix}_{monkey}.npy'
-	metadata = np.load(os.path.join(metadata_dir, file_name),
-		allow_pickle=True).item()
-	correlation_results.append(
-		metadata['encoding_models']['correlation_results'])
-	oracle_all.append(metadata['neural']['oracle'])
-	times = metadata['neural']['times']
+    # Load all data from single metadata file
+    file_name = f'metadata_{args.regression}_{cls_suffix}_{monkey}.npy'
+    metadata = np.load(os.path.join(metadata_dir, file_name),
+        allow_pickle=True).item()
+    
+    correlation_results.append(metadata['correlation_results'])
+    times = metadata['times']
+    roi_assignments = metadata['roi_assignments']
+    roi_labels = metadata['roi_labels']
+    roi_data.append((roi_assignments, roi_labels))
 
 correlation_results = np.asarray(correlation_results)
-oracle_all = np.asarray(oracle_all)
 
 print(f"Correlation results shape: {correlation_results.shape}")
-print(f"Oracle shape: {oracle_all.shape}")
 
 
 # =============================================================================
@@ -92,121 +93,132 @@ matplotlib.rcParams['axes.grid'] = False
 plt.rcParams["text.usetex"] = False
 
 
+roi_colors = {
+    'V1': '#e74c3c',   # Red - vibrant red
+    'V4': '#3498db',   # Blue - bright blue  
+    'IT': '#2ecc71'    # Green - emerald green
+}
+
+
 # =============================================================================
-# Plot the encoding accuracy results
+# Plot the encoding accuracy results by brain region
 # =============================================================================
 n_monkeys = len(args.monkey)
 
-# Create subplot grid based on number of monkeys
+# Create figure with proper layout
 if n_monkeys == 1:
-	# Single monkey: 2 rows x 6 cols (row 0: average plot, row 1: 5 individual electrodes)
-	fig = plt.figure(figsize=(24, 8))
-	n_rows = 2
+    fig, axes = plt.subplots(2, 1, figsize=(10, 12))
+    monkey_axes = [axes[0]]
+    avg_ax = axes[1]
 else:
-	# Two monkeys: 3 rows x 6 cols (row 0: both averages, row 1&2: individual electrodes)
-	fig = plt.figure(figsize=(24, 12))
-	n_rows = 3
+    # Create a figure with proper subplot arrangement
+    fig = plt.figure(figsize=(7 * n_monkeys, 12))
+    
+    # Individual monkey subplots in the top row
+    monkey_axes = []
+    for i in range(n_monkeys):
+        ax = plt.subplot(2, n_monkeys, i + 1)
+        monkey_axes.append(ax)
+    
+    # Average plot spanning the full bottom row
+    avg_ax = plt.subplot(2, 1, 2)
 
-# First row: Average plots
-for m, monkey in enumerate(args.monkey):
-	# Each monkey gets 3 columns (left half or right half)
-	ax_main = plt.subplot2grid((n_rows, 6), (0, m*3), colspan=3)
-	
-	# Average correlation across all electrodes for each timepoint
-	correlation_avg = np.mean(correlation_results[m], axis=1)
-	
-	# Oracle statistics across electrodes
-	oracle_mean = np.mean(oracle_all[m])
-	oracle_std = np.std(oracle_all[m])
-	
-	# Plot oracle bounds
-	ax_main.axhline(oracle_mean, color='darkgray', linewidth=2, 
-		label=f'Oracle (μ={oracle_mean:.3f})')
-	ax_main.axhspan(oracle_mean - oracle_std, oracle_mean + oracle_std, 
-		color='lightgray', alpha=0.3, label=f'Oracle ±σ')
-	
-	# Plot average correlation
-	ax_main.plot(times, correlation_avg, color='blue', linewidth=3,
-		label='Average prediction')
-	
-	# Plot chance and stimulus onset lines
-	ax_main.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
-	ax_main.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
-	
-	# x-axis parameters
-	ax_main.set_xlabel('Time (ms)', fontsize=fontsize)
-	xticks = [-100, -50, 0, 50, 100, 150, 200]
-	ax_main.set_xticks(xticks)
-	ax_main.set_xlim(left=times[0], right=times[-1])
-	
-	# y-axis parameters
-	ax_main.set_ylabel('Pearson\'s r', fontsize=fontsize)
-	ax_main.set_ylim(bottom=-0.1, top=max(oracle_mean + oracle_std + 0.1, 1.0))
-	
-	# Title and legend
-	ax_main.set_title(f'{monkey} - Average', fontsize=fontsize+2, fontweight='bold')
-	ax_main.legend(loc='upper right', fontsize=fontsize-2)
+# Store data for averaging across monkeys
+all_roi_correlations = {roi_label: [] for roi_label in ['V1', 'V4', 'IT']}
 
-# Individual electrode plots for each monkey
+# Individual monkey plots
 for m, monkey in enumerate(args.monkey):
-	if n_monkeys == 1:
-		row_start = 1  # Single monkey: electrodes on row 1
-		col_offset = 0  # Start from left side
-	else:
-		row_start = 1 + m  # Two monkeys: monkey 0 on row 1, monkey 1 on row 2
-		col_offset = 0  # Start from left side
-	
-	# Oracle statistics for y-axis scaling
-	oracle_mean = np.mean(oracle_all[m])
-	oracle_std = np.std(oracle_all[m])
-	
-	for e in range(min(5, correlation_results.shape[2])):
-		ax_ind = plt.subplot2grid((n_rows, 6), (row_start, col_offset + e), colspan=1)
-		
-		electrode_corr = correlation_results[m, :, e]
-		
-		# Oracle for this specific electrode
-		electrode_oracle = oracle_all[m, e, 0] if oracle_all.shape[2] == 1 else oracle_all[m, e]
-		
-		# Plot oracle bounds for this electrode
-		ax_ind.axhline(electrode_oracle, color='darkgray', linewidth=2)
-		
-		# Plot electrode correlation
-		ax_ind.plot(times, electrode_corr, color='red', linewidth=2)
-		
-		# Plot chance and stimulus onset lines
-		ax_ind.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
-		ax_ind.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
-		
-		# x-axis parameters
-		ax_ind.set_xlabel('Time (ms)', fontsize=fontsize)
-		ax_ind.set_xticks(xticks)
-		ax_ind.set_xlim(left=times[0], right=times[-1])
-		
-		# y-axis parameters
-		ax_ind.set_ylim(bottom=-0.1, top=max(oracle_mean + oracle_std + 0.1, 1.0))
-		
-		# Title
-		if n_monkeys == 1:
-			ax_ind.set_title(f'Electrode {e}', fontsize=fontsize)
-		else:
-			ax_ind.set_title(f'{monkey} - Electrode {e}', fontsize=fontsize)
-		
-		# Only show y-axis label on leftmost plot
-		if e == 0:
-			ax_ind.set_ylabel('Pearson\'s r', fontsize=fontsize)
+    ax = monkey_axes[m]
+    
+    roi_assignments, roi_labels = roi_data[m]
+    
+    # Calculate region-averaged correlations
+    for roi_idx, roi_label in enumerate(roi_labels):
+        # Find electrodes belonging to this region
+        region_electrodes = np.where(roi_assignments == roi_idx)[0]
+        
+        if len(region_electrodes) > 0:
+            # Average correlation across electrodes in this region
+            region_correlations = np.mean(correlation_results[m][:, region_electrodes], axis=1)
+            
+            # Store for cross-monkey averaging
+            all_roi_correlations[roi_label].append(region_correlations)
+            
+            # Plot region time course
+            ax.plot(times, region_correlations, 
+                   color=roi_colors[roi_label], 
+                   linewidth=3,
+                   label=f'{roi_label} (n={len(region_electrodes)})')
+    
+    # Plot chance and stimulus onset lines
+    ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
+    ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
+    
+    # x-axis parameters
+    ax.set_xlabel('Time (ms)', fontsize=fontsize)
+    xticks = [-100, -50, 0, 50, 100, 150, 200]
+    ax.set_xticks(xticks)
+    ax.set_xlim(left=times[0], right=times[-1])
+    
+    # y-axis parameters
+    ax.set_ylabel('Pearson\'s r', fontsize=fontsize)
+    ax.set_ylim(bottom=-0.1, top=0.8)
+    ax.set_yticks(np.arange(-0.1, 0.9, 0.1))
+    
+    # Title and legend
+    ax.set_title(f'{monkey} - Brain Region Comparison', fontsize=fontsize+2, fontweight='bold')
+    ax.legend(loc='upper right', fontsize=fontsize)
+
+# Cross-monkey average plot
+# Plot averaged correlations across monkeys for each ROI
+for roi_label in ['V1', 'V4', 'IT']:
+    if all_roi_correlations[roi_label]:  # Check if we have data for this ROI
+        roi_data_array = np.array(all_roi_correlations[roi_label])
+        
+        # Calculate mean and std across monkeys
+        roi_mean = np.mean(roi_data_array, axis=0)
+        roi_std = np.std(roi_data_array, axis=0)
+        
+        # Plot mean line
+        avg_ax.plot(times, roi_mean, 
+                   color=roi_colors[roi_label], 
+                   linewidth=3,
+                   label=f'{roi_label}')
+        
+        # Add error bars (standard deviation across monkeys)
+        avg_ax.fill_between(times, roi_mean - roi_std, roi_mean + roi_std,
+                           color=roi_colors[roi_label], alpha=0.2)
+
+# Plot chance and stimulus onset lines for average plot
+avg_ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
+avg_ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
+
+# x-axis parameters for average plot
+avg_ax.set_xlabel('Time (ms)', fontsize=fontsize)
+xticks = [-100, -50, 0, 50, 100, 150, 200]
+avg_ax.set_xticks(xticks)
+avg_ax.set_xlim(left=times[0], right=times[-1])
+
+# y-axis parameters for average plot
+avg_ax.set_ylabel('Pearson\'s r', fontsize=fontsize)
+avg_ax.set_ylim(bottom=-0.1, top=0.8)
+avg_ax.set_yticks(np.arange(-0.1, 0.9, 0.1))
+
+# Title and legend for average plot
+avg_ax.set_title('Average Across Monkeys - Brain Region Comparison', fontsize=fontsize+2, fontweight='bold')
+avg_ax.legend(loc='upper right', fontsize=fontsize)
 
 # Adjust layout and save
 plt.tight_layout()
 
 # Create save directory
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-	'train_dataset-tvsd_monkey', f'model-{args.model}', 'encoding_models_accuracy')
+    'train_dataset-tvsd_monkey', f'model-{args.model}', 'encoding_models_accuracy')
 if not os.path.isdir(save_dir):
-	os.makedirs(save_dir)
+    os.makedirs(save_dir)
 
 # Save the figure
-save_name = f'encoding_accuracy_model-{args.regression}_{cls_suffix}_{args.model}'
+save_name = f'encoding_accuracy_roi_model-{args.regression}_{cls_suffix}_{args.model}'
 fig.savefig(os.path.join(save_dir, f'{save_name}.png'), dpi=300, bbox_inches='tight', format='png')
 fig.savefig(os.path.join(save_dir, f'{save_name}.jpg'), dpi=300, bbox_inches='tight', format='jpeg')
 

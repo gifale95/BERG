@@ -41,17 +41,19 @@ python berg_creation_code/02_train_encoding_models/train_dataset-tvsd_monkey/cli
     --monkey monkeyF \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
-    --only_cls True \
-    --regression linear \
-    --model vit_b_32 
+    --only_cls False \
+    --regression ridge \
+    --model clip.vit_b_32 
     
+    
+
 python berg_creation_code/02_train_encoding_models/train_dataset-tvsd_monkey/clip_vit_b_32/train_encoding.py \
-    --monkey monkeyF \
+    --monkey monkeyN \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
     --only_cls False \
     --regression ridge \
-    --model vit_b_32 
+    --model clip.vit_b_32 
 """
 
 import argparse
@@ -422,11 +424,14 @@ for chunk_idx in range(n_chunks):
     chunk_pred = chunk_model.predict(fmaps_test)
     chunk_predictions.append(chunk_pred)
 
-# Combine predictions from all chunks
-combined_predictions = np.concatenate(chunk_predictions, axis=1)
+# Reshape each chunk back to (n_samples, n_times, electrodes_per_chunk)
+reshaped_chunks = []
+for chunk_pred in chunk_predictions:
+    reshaped_chunk = chunk_pred.reshape(chunk_pred.shape[0], n_times, electrodes_per_chunk)
+    reshaped_chunks.append(reshaped_chunk)
 
-# Reshape to (n_samples, n_times, n_electrodes)
-test_predictions = combined_predictions.reshape(fmaps_test.shape[0], n_times, n_electrodes)
+# Concatenate along electrode dimension  
+test_predictions = np.concatenate(reshaped_chunks, axis=2)
 
 print(f"Test predictions shape: {test_predictions.shape}")
 

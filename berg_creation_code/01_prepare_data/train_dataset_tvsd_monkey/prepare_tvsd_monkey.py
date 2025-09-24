@@ -20,8 +20,8 @@ batch_size : int
     Batch size for chunked processing to manage memory usage.
     
     
-python berg_creation_code/01_prepare_data/train_dataset_tvsd/prepare_tvsd.py \
-    --monkey monkeyF \
+python berg_creation_code/01_prepare_data/train_dataset_tvsd_monkey/prepare_tvsd_monkey.py \
+    --monkey monkeyN \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --tvsd_dir '/Volumes/Extreme SSD/Datasets/TSVD' \
     --batch_size 1000    
@@ -55,11 +55,15 @@ tvsd_{monkey}_metadata.npz             :
         baseline_days        : (n_days,) - Recording days for baselines
         baseline_time_range  : (2,)     - Baseline period bounds
         baseline_indices     : (n_baseline,) - Time indices for baseline
+        electrode_order      : (1024,)  - Electrode mapping order (0-based)
+        roi_assignments      : (1024,)  - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
+        roi_labels           : (3,)     - ROI label names ['V1', 'V4', 'IT']
         monkey_id            : str      - Monkey identifier
         n_electrodes         : int      - Number of electrodes (1024)
         SNR                  : (4, 1024) - Signal-to-noise ratio per day per electrode
         SNR_max              : (1024,)  - Best SNR across all days per electrode
         oracle               : (1024,)  - Noise ceiling estimate per electrode
+
 
 Total: 6 files per monkey
 
@@ -91,6 +95,7 @@ for key, val in vars(args).items():
 # Create output directory
 output_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-tvsd_monkey')
 os.makedirs(output_dir, exist_ok=True)
+
 
 # Create input paths
 monkey_path = os.path.join(args.tvsd_dir, args.monkey)

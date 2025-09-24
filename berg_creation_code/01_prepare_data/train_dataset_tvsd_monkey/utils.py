@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 from tqdm import tqdm
+import scipy.io
 
 
 # =============================================================================
@@ -355,8 +356,8 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
     Generate metadata linking neural responses to THINGS database images through
     stimulus ID mapping. Converts MATLAB 1-based indices to Python 0-based indices
     to map trial-by-trial neural responses to specific image files and categories.
-    Includes experimental conditions, baseline normalization parameters, and electrode
-    quality metrics from THINGS_normMUA.mat.
+    Includes experimental conditions, baseline normalization parameters, electrode
+    quality metrics, and electrode-to-ROI mapping information.
     
     Mapping Process: Extract stimulus IDs from ALLMAT → Convert to 0-based indices
     → Lookup image info in THINGS DataFrames → Create aligned metadata arrays
@@ -380,13 +381,39 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
     ------------
     tvsd_{monkey}_metadata.npz : Complete dataset metadata including stimulus
                                 mappings, experimental conditions, baseline stats,
-                                and electrode quality metrics
+                                electrode quality metrics, and electrode mapping
     """
+    
     print("Creating dataset metadata...")
     
     with h5py.File(original_filepath, 'r') as f:
         ALLMAT = f['ALLMAT'][:]
         tb = f['tb'][:].flatten()
+    
+    # Load electrode mapping file
+    mapping_file = os.path.join(os.path.dirname(original_filepath), "_logs", "1024chns_mapping_20220105.mat")
+    if not os.path.exists(mapping_file):
+        raise FileNotFoundError(f"Electrode mapping file not found at: {mapping_file}")
+    
+    mapping_data = scipy.io.loadmat(mapping_file)
+    electrode_order = mapping_data["mapping"][0] - 1  # Convert to 0-based indexing
+    
+    # Create ROI assignment array (1024 elements with values 0, 1, 2)
+    roi_assignments = np.zeros(1024, dtype=int)
+    
+    if monkey_id == 'monkeyN':
+        roi_assignments[0:512] = 0    # V1
+        roi_assignments[512:768] = 1  # V4  
+        roi_assignments[768:1024] = 2 # IT
+    elif monkey_id == 'monkeyF':
+        roi_assignments[0:512] = 0    # V1
+        roi_assignments[512:832] = 2  # IT
+        roi_assignments[832:1024] = 1 # V4
+    else:
+        raise ValueError(f"Unknown monkey_id: {monkey_id}")
+    
+    # ROI labels (consistent across monkeys)
+    roi_labels = np.array(['V1', 'V4', 'IT'])
     
     # Load electrode quality metrics from THINGS_normMUA.mat
     norm_mua_filepath = os.path.join(os.path.dirname(original_filepath), "THINGS_normMUA.mat")
@@ -468,6 +495,9 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         'baseline_days': baseline_stats['baseline_days'],
         'baseline_time_range': baseline_stats['baseline_time_range'],
         'baseline_indices': baseline_stats['baseline_indices'],
+        'electrode_order': electrode_order,
+        'roi_assignments': roi_assignments,
+        'roi_labels': roi_labels,
         'SNR': SNR,
         'SNR_max': SNR_max,
         'oracle': oracle
@@ -480,3 +510,4 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
     print(f"Test trials: {len(test_stimulus_ids)}")
     print(f"Unique test stimuli: {len(unique_test_ids)}")
     print(f"Time points: {len(tb)} ({tb[0]:.1f} to {tb[-1]:.1f} ms)")
+    print(f"ROI assignments - V1: {np.sum(roi_assignments == 0)}, V4: {np.sum(roi_assignments == 1)}, IT: {np.sum(roi_assignments == 2)}")

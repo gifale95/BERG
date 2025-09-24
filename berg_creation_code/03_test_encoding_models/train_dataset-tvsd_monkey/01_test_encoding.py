@@ -16,8 +16,8 @@ berg_dir : str
 python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/01_test_encoding.py \
     --monkey monkeyF \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --only_cls False \
-    --regression ridge \
+    --only_cls True \
+    --regression linear \
     --model vit_b_32 
 
 """
@@ -100,30 +100,10 @@ print(f"Correlation results shape: {correlation_results.shape}")
 # =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
-metadata = {}
-
-# Neural-related metadata
-neural = {
-	'times': metadata_tvsd['times'],
-	'n_electrodes': int(metadata_tvsd['n_electrodes']),
-	'monkey_id': str(metadata_tvsd['monkey_id']),
-	'SNR': metadata_tvsd['SNR'],
-	'SNR_max': metadata_tvsd['SNR_max'],
-	'oracle': metadata_tvsd['oracle']
+metadata = {
+    'correlation_results': correlation_results,
+    **{key: metadata_tvsd[key] for key in metadata_tvsd.files}
 }
-metadata['neural'] = neural
-
-# Encoding-models-related metadata
-encoding_models = {
-	'correlation_results': correlation_results,
-	'train_img_ids': metadata_tvsd['train_img_ids'],
-	'train_img_files': metadata_tvsd['train_img_files'],
-	'train_img_concepts': metadata_tvsd['train_img_concepts'],
-	'test_avg_img_ids': metadata_tvsd['test_avg_img_ids'],
-	'test_avg_img_files': metadata_tvsd['test_avg_img_files'],
-	'test_avg_img_concepts': metadata_tvsd['test_avg_img_concepts']
-}
-metadata['encoding_models'] = encoding_models
 
 # Save the metadata
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
