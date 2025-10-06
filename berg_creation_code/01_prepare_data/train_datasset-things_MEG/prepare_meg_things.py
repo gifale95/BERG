@@ -111,7 +111,7 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 # Create output directory
-output_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-meg_things')
+output_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-things_meg')
 os.makedirs(output_dir, exist_ok=True)
 
 # Create input path

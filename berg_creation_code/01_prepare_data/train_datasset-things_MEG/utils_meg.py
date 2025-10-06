@@ -364,7 +364,7 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     sensor_names = np.array(epochs.info['ch_names'])
     
     # Split masks
-    train_mask = metadata['trial_type'] == 'train'
+    train_mask = metadata['trial_type'] == 'exp'
     test_mask = metadata['trial_type'] == 'test'
     
     # Extract training metadata
