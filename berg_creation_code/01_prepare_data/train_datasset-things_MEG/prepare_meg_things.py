@@ -46,6 +46,8 @@ meg_{subject}_metadata.npz             :
         train_sessions        : (22248,) - Session numbers (1-12)
         train_runs            : (22248,) - Run numbers (1-10)
         train_image_paths     : (22248,) - Image file paths
+        train_full_image_path : (22248,) - Relative paths (e.g., vest/vest_10s.jpg)
+    
     
     Test Data (Individual Trials):
         test_things_img_ids   : (2400,)  - THINGS image IDs
@@ -55,12 +57,14 @@ meg_{subject}_metadata.npz             :
         test_sessions         : (2400,)  - Session numbers
         test_runs             : (2400,)  - Run numbers
         test_image_paths      : (2400,)  - Image file paths
+        test_full_image_path  : (2400,)  - Relative paths (e.g., limousine/limousine_15s.jpg)
     
     Test Data (Averaged Across 12 Repetitions):
         test_avg_things_img_ids : (200,)   - Unique THINGS image IDs
         test_avg_image_nr       : (200,)   - Test image numbers 1-200
         test_avg_categories     : (200,)   - Object categories
         test_avg_image_paths    : (200,)   - Image file paths
+        test_avg_full_image_path: (200,)   - Relative paths (e.g., limousine/limousine_15s.jpg)
     
     Temporal Information:
         times                 : (281,)     - Time points (-0.1 to 1.3s)

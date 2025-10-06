@@ -324,10 +324,10 @@ def normalize_meg_data(meg_filepath, output_dir, subject_id, batch_size):
     
     return baseline_metadata
 
-
 # =============================================================================
 # Create dataset metadata
 # =============================================================================
+
 
 def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     """Create comprehensive metadata file for MEG dataset.
@@ -364,7 +364,7 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     sensor_names = np.array(epochs.info['ch_names'])
     
     # Split masks
-    train_mask = metadata['trial_type'] == 'exp'
+    train_mask = metadata['trial_type'] == 'train'
     test_mask = metadata['trial_type'] == 'test'
     
     # Extract training metadata
@@ -376,6 +376,15 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     train_runs = train_metadata['run_nr'].values
     train_image_paths = train_metadata['image_path'].values
     
+    # Create full image paths for training (strip 'images_meg/' prefix)
+    train_full_image_paths = []
+    for path in train_image_paths:
+        if path.startswith('images_meg/'):
+            train_full_image_paths.append(path.replace('images_meg/', '', 1))
+        else:
+            train_full_image_paths.append(path)
+    train_full_image_paths = np.array(train_full_image_paths)
+    
     # Extract test metadata (individual trials)
     test_metadata = metadata[test_mask]
     test_things_img_ids = test_metadata['things_image_nr'].values
@@ -386,11 +395,26 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     test_runs = test_metadata['run_nr'].values
     test_image_paths = test_metadata['image_path'].values
     
+    # Create full image paths for test (reconstruct with concept from filename)
+    test_full_image_paths = []
+    for path in test_image_paths:
+        if path.startswith('images_test_meg/'):
+            # Extract filename: images_test_meg/limousine_15s.jpg -> limousine_15s.jpg
+            filename = path.replace('images_test_meg/', '', 1)
+            # Extract concept from filename: limousine_15s.jpg -> limousine
+            concept = filename.split('_')[0]
+            # Reconstruct: limousine/limousine_15s.jpg
+            test_full_image_paths.append(f"{concept}/{filename}")
+        else:
+            test_full_image_paths.append(path)
+    test_full_image_paths = np.array(test_full_image_paths)
+    
     # Create averaged test metadata (one entry per unique test image)
     unique_test_images = np.unique(test_image_nr)
     test_avg_things_img_ids = []
     test_avg_categories = []
     test_avg_image_paths = []
+    test_avg_full_image_paths = []
     
     for img_nr in unique_test_images:
         img_mask = test_image_nr == img_nr
@@ -399,6 +423,17 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
         test_avg_things_img_ids.append(test_metadata.iloc[idx]['things_image_nr'])
         test_avg_categories.append(test_metadata.iloc[idx]['category_nr'])
         test_avg_image_paths.append(test_metadata.iloc[idx]['image_path'])
+        
+        # Create full image path for this averaged test image
+        path = test_metadata.iloc[idx]['image_path']
+        if path.startswith('images_test_meg/'):
+            filename = path.replace('images_test_meg/', '', 1)
+            concept = filename.split('_')[0]
+            test_avg_full_image_paths.append(f"{concept}/{filename}")
+        else:
+            test_avg_full_image_paths.append(path)
+    
+    test_avg_full_image_paths = np.array(test_avg_full_image_paths)
     
     # Compile metadata dictionary
     metadata_dict = {
@@ -409,6 +444,7 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
         'train_sessions': train_sessions,
         'train_runs': train_runs,
         'train_image_paths': train_image_paths,
+        'train_full_image_path': train_full_image_paths,
         
         # Test data (individual trials)
         'test_things_img_ids': test_things_img_ids,
@@ -418,12 +454,14 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
         'test_sessions': test_sessions,
         'test_runs': test_runs,
         'test_image_paths': test_image_paths,
+        'test_full_image_path': test_full_image_paths,
         
         # Test averaged data
         'test_avg_things_img_ids': np.array(test_avg_things_img_ids),
         'test_avg_image_nr': unique_test_images,
         'test_avg_categories': np.array(test_avg_categories),
         'test_avg_image_paths': np.array(test_avg_image_paths),
+        'test_avg_full_image_path': test_avg_full_image_paths,
         
         # Temporal information
         'times': times,
