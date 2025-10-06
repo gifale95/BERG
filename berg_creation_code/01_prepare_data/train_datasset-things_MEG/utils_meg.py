@@ -113,7 +113,7 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
 # =============================================================================
 
 def load_metadata_and_baseline_info(meg_filepath):
-    """Load MEG epochs and compute baseline period information."""
+    """Load MEG epochs and compute full time window information for normalization."""
     epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
     
     metadata = epochs.metadata
@@ -123,11 +123,11 @@ def load_metadata_and_baseline_info(meg_filepath):
     train_mask = metadata['trial_type'] == 'exp'
     train_sessions = metadata.loc[train_mask, 'session_nr'].values
     
-    # Baseline period: -100ms to -5ms (indices 0-19 at 200Hz)
-    baseline_mask = (times >= -0.1) & (times < 0.0)
-    baseline_indices = np.where(baseline_mask)[0]
+    # Use full time window for normalization (all 281 timepoints)
+    # This accounts for actual response variance, not just baseline noise
+    full_time_indices = np.arange(len(times))
     
-    return metadata, times, train_mask, train_sessions, baseline_indices
+    return metadata, times, train_mask, train_sessions, full_time_indices
 
 
 def compute_session_specific_baseline_stats(output_dir, subject_id, train_sessions, baseline_indices):
