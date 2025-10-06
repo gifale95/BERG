@@ -1,0 +1,145 @@
+"""Preprocess the THINGS-data MEG dataset (Hebart et al., 2023):
+ - split training and test data based on trial type,
+ - session-specific z-score normalization using pre-stimulus baseline,
+ - create comprehensive metadata mapping.
+
+After preprocessing, the MEG data is saved as:
+ - Training data: (Trials x Time points x Sensors)
+ - Test data: (Trials x Time points x Sensors) and averaged version
+
+The data is saved in HDF5 format for efficient loading during model training.
+
+Parameters
+----------
+subject : str
+    Subject identifier ('P1', 'P2', 'P3', or 'P4').
+berg_dir : str
+    Directory of the Brain Encoding Response Generator (BERG).
+meg_data_dir : str
+    Directory containing the preprocessed MEG .fif files.
+batch_size : int
+    Batch size for chunked processing to manage memory usage.
+
+
+Usage
+-----
+python '/Users/domenicbersch/Documents/Repositories/NEST/berg_creation_code/01_prepare_data/train_datasset-things_MEG/prepare_meg_things.py' \
+    --subject P1 \
+    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
+    --meg_data_dir '/Volumes/Extreme SSD/Datasets/THINGS/LOCAL 2/ocontier/thingsmri/openneuro/THINGS-data/THINGS-MEG/ds004212/derivatives/preprocessed' \
+    --batch_size 512
+
+
+Output Files Created (per subject):
+──────────────────────────────────────────────────────────────
+meg_{subject}_split-train.h5           : (N_train, 271, 281)
+meg_{subject}_split-test.h5            : (N_test, 271, 281)
+meg_{subject}_split-train_normalized.h5: (N_train, 271, 281)
+meg_{subject}_split-test_normalized.h5 : (N_test, 271, 281)
+meg_{subject}_split-test_averaged.h5   : (200, 271, 281)
+meg_{subject}_metadata.npz             :
+
+    Training Data:
+        train_things_img_ids  : (N_train,) - THINGS image IDs for ViT linking
+        train_categories      : (N_train,) - Object category numbers (1-1854)
+        train_exemplars       : (N_train,) - Exemplar numbers (1-12)
+        train_sessions        : (N_train,) - Session numbers (1-12)
+        train_runs            : (N_train,) - Run numbers (1-10)
+        train_image_paths     : (N_train,) - Image file paths
+    
+    Test Data (Individual Trials):
+        test_things_img_ids   : (N_test,)  - THINGS image IDs
+        test_image_nr         : (N_test,)  - Test image numbers (1-200)
+        test_categories       : (N_test,)  - Object categories
+        test_exemplars        : (N_test,)  - Exemplar numbers
+        test_sessions         : (N_test,)  - Session numbers
+        test_runs             : (N_test,)  - Run numbers
+        test_image_paths      : (N_test,)  - Image file paths
+    
+    Test Data (Averaged Across 12 Repetitions):
+        test_avg_things_img_ids : (200,)   - Unique THINGS image IDs
+        test_avg_image_nr       : (200,)   - Test image numbers 1-200
+        test_avg_categories     : (200,)   - Object categories
+        test_avg_image_paths    : (200,)   - Image file paths
+    
+    Temporal Information:
+        times                 : (281,)     - Time points (-0.1 to 1.3s)
+    
+    Sensor Information:
+        sensor_names          : (271,)     - MEG sensor name strings
+        n_sensors             : int        - Number of sensors (271)
+    
+    Normalization Parameters:
+        baseline_means        : (12, 271)  - Session-specific baseline means
+        baseline_stds         : (12, 271)  - Session-specific baseline stds
+        baseline_sessions     : (12,)      - Session numbers for baselines
+        baseline_time_range   : (2,)       - Baseline period bounds [start, end]
+        baseline_indices      : (20,)      - Time indices for baseline period
+    
+    Subject Metadata:
+        subject_id            : str        - Subject identifier
+
+
+Total: 6 files per subject
+"""
+
+import argparse
+import os
+from utils_meg import split_meg_data, normalize_meg_data, create_meg_metadata
+
+# =============================================================================
+# Input arguments
+# =============================================================================
+parser = argparse.ArgumentParser()
+parser.add_argument("--subject", required=True, choices=["P1", "P2", "P3", "P4"],
+                    help="Select which subject's data to use.")
+parser.add_argument('--berg_dir', required=True, type=str,
+                    help="Directory of the BERG framework.")
+parser.add_argument('--meg_data_dir', required=True, type=str,
+                    help="Directory containing preprocessed MEG .fif files.")
+parser.add_argument('--batch_size', default=1000, type=int,
+                    help="Batch size for chunked processing.")
+args = parser.parse_args()
+
+print('>>> MEG THINGS-data preprocessing <<<')
+print('\nInput arguments:')
+for key, val in vars(args).items():
+    print('{:16} {}'.format(key, val))
+
+# Create output directory
+output_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-meg_things')
+os.makedirs(output_dir, exist_ok=True)
+
+# Create input path
+meg_file = os.path.join(args.meg_data_dir, f'preprocessed_{args.subject}-epo.fif')
+
+if not os.path.exists(meg_file):
+    raise FileNotFoundError(f"MEG file not found: {meg_file}")
+
+# =============================================================================
+# Split training and test data
+# =============================================================================
+print("")
+print("Splitting training and testing data")
+split_meg_data(meg_file, output_dir, args.subject, args.batch_size)
+
+# =============================================================================
+# Normalize MEG responses
+# =============================================================================
+print("")
+print("Normalizing training and testing data")
+baseline_stats = normalize_meg_data(meg_file, output_dir, args.subject, args.batch_size)
+
+# =============================================================================
+# Create dataset metadata
+# =============================================================================
+print("")
+print("Creating metadata")
+create_meg_metadata(
+    meg_filepath=meg_file,
+    output_dir=output_dir,
+    subject_id=args.subject,
+    baseline_stats=baseline_stats
+)
+
+print("\nPreprocessing complete!")
