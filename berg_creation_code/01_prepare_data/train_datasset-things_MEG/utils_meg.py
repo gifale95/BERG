@@ -29,7 +29,7 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
         
     Output Files
     ------------
-    meg_{subject}_split-train.h5 : (24648, 271, 281)
+    meg_{subject}_split-train.h5 : (22248, 271, 281)
     meg_{subject}_split-test.h5  : (2400, 271, 281)
     """
     print(f"Loading MNE epochs metadata from: {meg_filepath}")
@@ -39,7 +39,7 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
     metadata = epochs.metadata
     
     # Split based on trial_type
-    train_mask = metadata['trial_type'] != 'test'
+    train_mask = metadata['trial_type'] == 'exp'
     test_mask = metadata['trial_type'] == 'test'
     
     train_indices = np.where(train_mask)[0]
@@ -120,7 +120,7 @@ def load_metadata_and_baseline_info(meg_filepath):
     times = epochs.times  # (281,) in seconds
     
     # Identify training trials and their sessions
-    train_mask = metadata['trial_type'] != 'test'
+    train_mask = metadata['trial_type'] == 'exp'
     train_sessions = metadata.loc[train_mask, 'session_nr'].values
     
     # Baseline period: -100ms to -5ms (indices 0-19 at 200Hz)
@@ -140,7 +140,7 @@ def compute_session_specific_baseline_stats(output_dir, subject_id, train_sessio
     # Load training data in read-only mode
     train_file = os.path.join(output_dir, f'meg_{subject_id}_split-train.h5')
     with h5py.File(train_file, 'r') as f:
-        train_data = f['neural_data']  # (24648, 271, 281)
+        train_data = f['neural_data']  # (22248, 271, 281)
         
         for session in tqdm(unique_sessions, desc="Processing sessions"):
             session_mask = train_sessions == session
@@ -284,7 +284,7 @@ def normalize_meg_data(meg_filepath, output_dir, subject_id, batch_size):
         
     Output Files
     ------------
-    meg_{subject}_split-train_normalized.h5 : (24648, 281, 271)
+    meg_{subject}_split-train_normalized.h5 : (22248, 281, 271)
     meg_{subject}_split-test_normalized.h5  : (2400, 281, 271)
     meg_{subject}_split-test_averaged.h5    : (200, 281, 271)
     """
@@ -364,7 +364,7 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     sensor_names = np.array(epochs.info['ch_names'])
     
     # Split masks
-    train_mask = metadata['trial_type'] != 'test'
+    train_mask = metadata['trial_type'] == 'exp'
     test_mask = metadata['trial_type'] == 'test'
     
     # Extract training metadata

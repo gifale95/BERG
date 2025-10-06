@@ -32,20 +32,20 @@ python '/Users/domenicbersch/Documents/Repositories/NEST/berg_creation_code/01_p
 
 Output Files Created (per subject):
 ──────────────────────────────────────────────────────────────
-meg_{subject}_split-train.h5           : (24648, 271, 281)
+meg_{subject}_split-train.h5           : (22248, 271, 281)
 meg_{subject}_split-test.h5            : (2400, 271, 281)
-meg_{subject}_split-train_normalized.h5: (24648, 271, 281)
+meg_{subject}_split-train_normalized.h5: (22248, 271, 281)
 meg_{subject}_split-test_normalized.h5 : (2400, 271, 281)
 meg_{subject}_split-test_averaged.h5   : (200, 271, 281)
 meg_{subject}_metadata.npz             :
 
     Training Data:
-        train_things_img_ids  : (24648,) - THINGS image IDs for ViT linking
-        train_categories      : (24648,) - Object category numbers (1-1854)
-        train_exemplars       : (24648,) - Exemplar numbers (1-12)
-        train_sessions        : (24648,) - Session numbers (1-12)
-        train_runs            : (24648,) - Run numbers (1-10)
-        train_image_paths     : (24648,) - Image file paths
+        train_things_img_ids  : (22248,) - THINGS image IDs for ViT linking
+        train_categories      : (22248,) - Object category numbers (1-1854)
+        train_exemplars       : (22248,) - Exemplar numbers (1-12)
+        train_sessions        : (22248,) - Session numbers (1-12)
+        train_runs            : (22248,) - Run numbers (1-10)
+        train_image_paths     : (22248,) - Image file paths
     
     Test Data (Individual Trials):
         test_things_img_ids   : (2400,)  - THINGS image IDs
