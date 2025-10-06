@@ -29,8 +29,8 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
         
     Output Files
     ------------
-    meg_{subject}_split-train.h5 : (N_train, 271, 281)
-    meg_{subject}_split-test.h5  : (N_test, 271, 281)
+    meg_{subject}_split-train.h5 : (24648, 271, 281)
+    meg_{subject}_split-test.h5  : (2400, 271, 281)
     """
     print(f"Loading MNE epochs metadata from: {meg_filepath}")
     epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
@@ -140,7 +140,7 @@ def compute_session_specific_baseline_stats(output_dir, subject_id, train_sessio
     # Load training data in read-only mode
     train_file = os.path.join(output_dir, f'meg_{subject_id}_split-train.h5')
     with h5py.File(train_file, 'r') as f:
-        train_data = f['neural_data']  # (N_train, 271, 281)
+        train_data = f['neural_data']  # (24648, 271, 281)
         
         for session in tqdm(unique_sessions, desc="Processing sessions"):
             session_mask = train_sessions == session
@@ -216,7 +216,7 @@ def apply_normalization_to_test_data(meg_filepath, output_dir, subject_id, basel
     # Load test data
     test_file = os.path.join(output_dir, f'meg_{subject_id}_split-test.h5')
     with h5py.File(test_file, 'r') as f:
-        test_data = f['neural_data'][:]  # (N_test, 271, 281)
+        test_data = f['neural_data'][:]  # (2400, 271, 281)
     
     normalized_test = np.zeros_like(test_data, dtype='float32')
     
@@ -284,8 +284,8 @@ def normalize_meg_data(meg_filepath, output_dir, subject_id, batch_size):
         
     Output Files
     ------------
-    meg_{subject}_split-train_normalized.h5 : (N_train, 281, 271)
-    meg_{subject}_split-test_normalized.h5  : (N_test, 281, 271)
+    meg_{subject}_split-train_normalized.h5 : (24648, 281, 271)
+    meg_{subject}_split-test_normalized.h5  : (2400, 281, 271)
     meg_{subject}_split-test_averaged.h5    : (200, 281, 271)
     """
     # Load metadata and baseline information
@@ -362,8 +362,6 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     
     # Get sensor information
     sensor_names = np.array(epochs.info['ch_names'])
-    sensor_types = np.array([mne.io.pick.channel_type(epochs.info, i) 
-                            for i in range(len(sensor_names))])
     
     # Split masks
     train_mask = metadata['trial_type'] != 'test'
@@ -432,7 +430,6 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
         
         # Sensor information
         'sensor_names': sensor_names,
-        'sensor_types': sensor_types,
         'n_sensors': len(sensor_names),
         
         # Normalization parameters

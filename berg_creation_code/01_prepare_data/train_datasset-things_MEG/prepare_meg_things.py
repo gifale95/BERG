@@ -32,29 +32,29 @@ python '/Users/domenicbersch/Documents/Repositories/NEST/berg_creation_code/01_p
 
 Output Files Created (per subject):
 ──────────────────────────────────────────────────────────────
-meg_{subject}_split-train.h5           : (N_train, 271, 281)
-meg_{subject}_split-test.h5            : (N_test, 271, 281)
-meg_{subject}_split-train_normalized.h5: (N_train, 271, 281)
-meg_{subject}_split-test_normalized.h5 : (N_test, 271, 281)
+meg_{subject}_split-train.h5           : (24648, 271, 281)
+meg_{subject}_split-test.h5            : (2400, 271, 281)
+meg_{subject}_split-train_normalized.h5: (24648, 271, 281)
+meg_{subject}_split-test_normalized.h5 : (2400, 271, 281)
 meg_{subject}_split-test_averaged.h5   : (200, 271, 281)
 meg_{subject}_metadata.npz             :
 
     Training Data:
-        train_things_img_ids  : (N_train,) - THINGS image IDs for ViT linking
-        train_categories      : (N_train,) - Object category numbers (1-1854)
-        train_exemplars       : (N_train,) - Exemplar numbers (1-12)
-        train_sessions        : (N_train,) - Session numbers (1-12)
-        train_runs            : (N_train,) - Run numbers (1-10)
-        train_image_paths     : (N_train,) - Image file paths
+        train_things_img_ids  : (24648,) - THINGS image IDs for ViT linking
+        train_categories      : (24648,) - Object category numbers (1-1854)
+        train_exemplars       : (24648,) - Exemplar numbers (1-12)
+        train_sessions        : (24648,) - Session numbers (1-12)
+        train_runs            : (24648,) - Run numbers (1-10)
+        train_image_paths     : (24648,) - Image file paths
     
     Test Data (Individual Trials):
-        test_things_img_ids   : (N_test,)  - THINGS image IDs
-        test_image_nr         : (N_test,)  - Test image numbers (1-200)
-        test_categories       : (N_test,)  - Object categories
-        test_exemplars        : (N_test,)  - Exemplar numbers
-        test_sessions         : (N_test,)  - Session numbers
-        test_runs             : (N_test,)  - Run numbers
-        test_image_paths      : (N_test,)  - Image file paths
+        test_things_img_ids   : (2400,)  - THINGS image IDs
+        test_image_nr         : (2400,)  - Test image numbers (1-200)
+        test_categories       : (2400,)  - Object categories
+        test_exemplars        : (2400,)  - Exemplar numbers
+        test_sessions         : (2400,)  - Session numbers
+        test_runs             : (2400,)  - Run numbers
+        test_image_paths      : (2400,)  - Image file paths
     
     Test Data (Averaged Across 12 Repetitions):
         test_avg_things_img_ids : (200,)   - Unique THINGS image IDs
