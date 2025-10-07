@@ -430,11 +430,23 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     test_full_image_paths = []
     for path in test_image_paths:
         if path.startswith('images_test_meg/'):
-            # Extract filename: images_test_meg/limousine_15s.jpg -> limousine_15s.jpg
+            # Extract filename: images_test_meg/coat_rack_13s.jpg -> coat_rack_13s.jpg
             filename = path.replace('images_test_meg/', '', 1)
-            # Extract concept from filename: limousine_15s.jpg -> limousine
-            concept = filename.split('_')[0]
-            # Reconstruct: limousine/limousine_15s.jpg
+            
+            # Extract concept from filename by removing numeric suffix
+            # coat_rack_13s.jpg -> coat_rack
+            # limousine_15s.jpg -> limousine
+            name_without_ext = filename.replace('.jpg', '')
+            parts = name_without_ext.split('_')
+            
+            # Find where the numeric suffix starts (iterate backwards)
+            concept = name_without_ext  # Fallback
+            for i in range(len(parts) - 1, -1, -1):
+                if parts[i] and parts[i][0].isdigit():
+                    concept = '_'.join(parts[:i])
+                    break
+            
+            # Reconstruct: coat_rack/coat_rack_13s.jpg
             test_full_image_paths.append(f"{concept}/{filename}")
         else:
             test_full_image_paths.append(path)
@@ -459,7 +471,17 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
         path = test_metadata.iloc[idx]['image_path']
         if path.startswith('images_test_meg/'):
             filename = path.replace('images_test_meg/', '', 1)
-            concept = filename.split('_')[0]
+            
+            # Extract concept by removing numeric suffix
+            name_without_ext = filename.replace('.jpg', '')
+            parts = name_without_ext.split('_')
+            
+            concept = name_without_ext  # Fallback
+            for i in range(len(parts) - 1, -1, -1):
+                if parts[i] and parts[i][0].isdigit():
+                    concept = '_'.join(parts[:i])
+                    break
+            
             test_avg_full_image_paths.append(f"{concept}/{filename}")
         else:
             test_avg_full_image_paths.append(path)
