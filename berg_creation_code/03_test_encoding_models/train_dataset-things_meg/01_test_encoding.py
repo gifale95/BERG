@@ -15,11 +15,11 @@ regression : str
     Type of regression used ('ridge' or 'linear').
 
 Example usage:
-python 01_test_encoding_meg.py \
+python berg_creation_code/03_test_encoding_models/train_dataset-things_meg/01_test_encoding.py \
     --subject P1 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --only_cls True \
-    --regression ridge \
+    --regression linear \
     --model clip.vit_b_32
 """
 
@@ -56,7 +56,7 @@ data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
     'train_dataset-things_meg')
 
 metadata_path = os.path.join(data_dir, f'meg_{args.subject}_metadata.npz')
-metadata_meg = np.load(metadata_path)
+metadata_meg = np.load(metadata_path, allow_pickle=True)
 
 
 # =============================================================================
@@ -77,7 +77,7 @@ results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 
 cls_suffix = 'cls' if args.only_cls else 'all'
 pred_path = os.path.join(results_dir, f'meg_test_pred_{args.regression}_{cls_suffix}_{args.subject}.npy')
-neural_test_pred = np.load(pred_path)
+neural_test_pred = np.load(pred_path, allow_pickle=True)
 
 print(f"Predicted neural test data shape: {neural_test_pred.shape}")
 
