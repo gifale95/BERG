@@ -49,7 +49,9 @@ python berg_creation_code/02_train_encoding_models/train_dataset-things_meg/trai
     --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
     --only_cls True\
     --regression ridge \
-    --model clip.vit_b_32
+    --n_pca_component 500 \
+    --model clip.vit_b_32 \
+    --normalized False
 """
 
 import argparse
@@ -85,6 +87,8 @@ parser.add_argument('--only_cls', required=True, choices=["True", "False"],
 parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
                    help="Selecting which model to use")
 parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
+                   help="Select type of regression")
+parser.add_argument('--normalized', required=True, choices=["True", "False"],
                    help="Select type of regression")
 parser.add_argument('--train_chunk_size', type=int, default=2000,
                    help='Number of trials per training chunk')
@@ -248,7 +252,7 @@ for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=F
 
 # Concatenate all training batches
 fmaps_train = np.concatenate(fmaps_train, axis=0)
-print(f"Training features shape: {fmaps_train.shape}")
+print(f"Training features shape (fmaps): {fmaps_train.shape}")
 
 # Extract test image features
 print("Extracting test features...")
@@ -308,6 +312,22 @@ pca.fit(fmaps_train)
 fmaps_train = pca.transform(fmaps_train)
 fmaps_test = pca.transform(fmaps_test)
 
+# Re-standardize after PCA
+scaler_post_pca = StandardScaler()
+scaler_post_pca.fit(fmaps_train)
+fmaps_train = scaler_post_pca.transform(fmaps_train)
+fmaps_test = scaler_post_pca.transform(fmaps_test)
+
+print(f"Features after PCA - Train: {fmaps_train.shape}, Test: {fmaps_test.shape}")
+# Verify standardization
+print(f"After re-standardization: mean={fmaps_train.mean():.6f}, std={fmaps_train.std():.6f}")
+
+
+print(f"\n=== PCA Diagnostics ===")
+print(f"Total explained variance: {pca.explained_variance_ratio_.sum():.4f} ({pca.explained_variance_ratio_.sum()*100:.2f}%)")
+print(f"First 10 components explain: {pca.explained_variance_ratio_[:10].sum():.4f}")
+print(f"Variance per component (first 20): {pca.explained_variance_ratio_[:20]}")
+
 print(f"Features after PCA - Train: {fmaps_train.shape}, Test: {fmaps_test.shape}")
 
 # Convert to float32
@@ -322,12 +342,16 @@ print("Train the encoding models...")
 
 # Define chunk parameters
 n_chunks = 16
-alphas = [0.1, 1, 10, 100, 1000]
+alphas = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0]
 
+    
 # Load neural data shape info
-neural_train_path = os.path.join(data_dir, f'meg_{args.subject}_split-train_normalized.h5')
+if args.normalized == "True":
+    neural_train_path = os.path.join(data_dir, f'meg_{args.subject}_split-train_normalized.h5')
+else:
+    neural_train_path = os.path.join(data_dir, f'meg_{args.subject}_split-train.h5')
 with h5py.File(neural_train_path, 'r') as f:
-    n_trials, n_channels, n_times = f['neural_data_normalized'].shape
+    n_trials, n_channels, n_times = f['neural_data'].shape
 
 print(f"Neural data shape: {n_trials} trials, {n_channels} channels, {n_times} timepoints")
 print(f"Total outputs per trial: {n_channels * n_times}")
@@ -359,18 +383,43 @@ for chunk_idx in range(n_chunks):
             batch_end = min(batch_start + args.train_chunk_size, n_trials)
             
             # Load batch and slice channels
-            batch_data = f['neural_data_normalized'][batch_start:batch_end, start_channel:end_channel, :]
+            batch_data = f['neural_data'][batch_start:batch_end, start_channel:end_channel, :]
             # Reshape to (batch_size, chunk_size * n_times)
             batch_reshaped = batch_data.reshape(batch_data.shape[0], -1)
             neural_chunk[batch_start:batch_end] = batch_reshaped
     
     print(f"Chunk data shape: {neural_chunk.shape}")
+    # ADD THESE:
+    print(f"  Neural chunk stats: mean={neural_chunk.mean():.6f}, std={neural_chunk.std():.6f}")
+    print(f"  Neural chunk range: [{neural_chunk.min():.6f}, {neural_chunk.max():.6f}]")
+    print(f"  % of values exactly 0.0: {(neural_chunk == 0).sum() / neural_chunk.size * 100:.2f}%")
     
     # Train model based on regression type
+    print(f"  Feature stats going into model: mean={fmaps_train.mean():.6f}, std={fmaps_train.std():.6f}")
+    print(f"  Feature range: [{fmaps_train.min():.6f}, {fmaps_train.max():.6f}]")
     if args.regression == 'ridge':
-        chunk_reg = RidgeCV(alphas=alphas, cv=args.cv_folds, scoring='r2')
+        chunk_reg = RidgeCV(alphas=alphas, cv=args.cv_folds, scoring='r2')  # No store parameter
         chunk_reg.fit(fmaps_train, neural_chunk)
+        print(f"  Training R² score: {chunk_reg.score(fmaps_train, neural_chunk):.4f}")
+        
         print(f"Chunk {chunk_idx + 1} completed. Best alpha: {chunk_reg.alpha_}")
+        
+        # Try to access CV values if available (won't crash if not there)
+        if hasattr(chunk_reg, 'cv_values_'):
+            cv_values = chunk_reg.cv_values_
+            cv_results = cv_values.mean(axis=0)
+            cv_std = cv_values.std(axis=0)
+            
+            print(f"  Mean CV scores per alpha:")
+            for i, alpha in enumerate(alphas):
+                best_marker = " <-- BEST" if alpha == chunk_reg.alpha_ else ""
+                print(f"    Alpha={alpha:7.2f}: {cv_results[i]:7.4f} ± {cv_std[i]:.4f}{best_marker}")
+        else:
+            print(f"  CV values not stored (sklearn version doesn't support it)")
+        
+        # Check coefficient statistics
+        print(f"  Coefficient stats: mean={chunk_reg.coef_.mean():.6f}, std={chunk_reg.coef_.std():.6f}, max_abs={np.abs(chunk_reg.coef_).max():.6f}")
+
     else:  # linear
         chunk_reg = LinearRegression()
         chunk_reg.fit(fmaps_train, neural_chunk)
@@ -420,6 +469,17 @@ for chunk_idx in range(n_chunks):
 test_predictions = np.concatenate(chunk_predictions, axis=1)
 
 print(f"Test predictions shape: {test_predictions.shape}")
+
+# ADD THESE:
+print(f"\n=== Test Prediction Diagnostics ===")
+print(f"Prediction stats: mean={test_predictions.mean():.6f}, std={test_predictions.std():.6f}")
+print(f"Prediction range: [{test_predictions.min():.6f}, {test_predictions.max():.6f}]")
+
+# Check per timepoint
+pred_per_time = test_predictions.mean(axis=(0, 1))  # Average across images and channels
+print(f"Mean prediction per timepoint (first 40 timepoints):")
+print(pred_per_time[:40])
+
 assert test_predictions.shape == (200, n_channels, n_times), \
     f"Expected shape (200, {n_channels}, {n_times}), got {test_predictions.shape}"
 
@@ -441,7 +501,7 @@ print(f"Test predictions saved: {test_predictions.shape}")
 print("\nSave preprocessing parameters...")
 
 preprocessing_weights = {
-    'scaler_param': {
+    'scaler_pre_pca': {
         'scale_': scaler.scale_,
         'mean_': scaler.mean_,
         'var_': scaler.var_,
@@ -458,6 +518,13 @@ preprocessing_weights = {
         'n_samples_': pca.n_samples_,
         'noise_variance_': pca.noise_variance_,
         'n_features_in_': pca.n_features_in_
+    },
+    'scaler_post_pca': { 
+        'scale_': scaler_post_pca.scale_,
+        'mean_': scaler_post_pca.mean_,
+        'var_': scaler_post_pca.var_,
+        'n_features_in_': scaler_post_pca.n_features_in_,
+        'n_samples_seen_': scaler_post_pca.n_samples_seen_
     },
     'model_info': {
         'model_type': f'chunked_{args.regression}',
