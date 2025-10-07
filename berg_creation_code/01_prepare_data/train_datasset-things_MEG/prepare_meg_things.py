@@ -31,13 +31,14 @@ python '/Users/domenicbersch/Documents/Repositories/NEST/berg_creation_code/01_p
 
 
 Output Files Created (per subject):
-──────────────────────────────────────────────────────────────
-meg_{subject}_split-train.h5           : (22248, 271, 281)
-meg_{subject}_split-test.h5            : (2400, 271, 281)
-meg_{subject}_split-train_normalized.h5: (22248, 271, 281)
-meg_{subject}_split-test_normalized.h5 : (2400, 271, 281)
-meg_{subject}_split-test_averaged.h5   : (200, 271, 281)
-meg_{subject}_metadata.npz             :
+────────────────────────────────────────────────────────────────
+meg_{subject}_split-train.h5                : (22248, 271, 281) - Non-normalized training data
+meg_{subject}_split-test.h5                 : (2400, 271, 281)  - Non-normalized test data
+meg_{subject}_split-train_normalized.h5     : (22248, 271, 281) - Normalized training data
+meg_{subject}_split-test_normalized.h5      : (2400, 271, 281)  - Normalized test data
+meg_{subject}_split-test_averaged.h5        : (200, 271, 281)   - Non-normalized averaged test data
+meg_{subject}_split-test_averaged_normalized.h5 : (200, 271, 281) - Normalized averaged test data
+meg_{subject}_metadata.npz                  :
 
     Training Data:
         train_things_img_ids  : (22248,) - THINGS image IDs for ViT linking
@@ -87,7 +88,10 @@ meg_{subject}_metadata.npz             :
         subject_id            : str        - Subject identifier
 
 
-Total: 6 files per subject
+Total: 7 files per subject (3 non-normalized + 3 normalized + 1 metadata)
+
+Note: All HDF5 files use the key 'neural_data' regardless of normalization status.
+      The filename indicates whether data is normalized or not.
 """
 
 import argparse

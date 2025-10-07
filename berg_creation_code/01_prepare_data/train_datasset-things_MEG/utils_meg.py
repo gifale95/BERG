@@ -177,7 +177,7 @@ def apply_normalization_to_training_data(output_dir, subject_id, train_sessions,
         
         with h5py.File(normalized_file, 'w') as f_out:
             normalized_dataset = f_out.create_dataset(
-                'neural_data_normalized',
+                'neural_data',
                 shape=(n_trials, n_sensors, n_timepoints),
                 dtype='float32'
             )
@@ -203,8 +203,38 @@ def apply_normalization_to_training_data(output_dir, subject_id, train_sessions,
                 normalized_dataset[start_idx:end_idx] = normalized_chunk
 
 
+def create_averaged_test_data(output_dir, subject_id, test_image_nrs, test_data):
+    """Create averaged test data across 12 repetitions.
+    
+    Parameters
+    ----------
+    output_dir : str
+        Output directory for processed data files.
+    subject_id : str
+        Subject identifier for file naming.
+    test_image_nrs : np.ndarray
+        Test image numbers for each trial.
+    test_data : np.ndarray
+        Test data to average (2400, 271, 281).
+        
+    Returns
+    -------
+    np.ndarray
+        Averaged test data (200, 271, 281).
+    """
+    unique_test_images = np.unique(test_image_nrs)
+    n_unique = len(unique_test_images)
+    test_averaged = np.zeros((n_unique, test_data.shape[1], test_data.shape[2]), dtype='float32')
+    
+    for i, img_nr in enumerate(unique_test_images):
+        img_mask = test_image_nrs == img_nr
+        test_averaged[i] = np.mean(test_data[img_mask], axis=0)
+    
+    return test_averaged
+
+
 def apply_normalization_to_test_data(meg_filepath, output_dir, subject_id, baseline_stats):
-    """Apply session-specific normalization to test data and create averaged version."""
+    """Apply session-specific normalization to test data and create averaged versions."""
     # Load metadata to get test sessions
     epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
     metadata = epochs.metadata
@@ -218,6 +248,18 @@ def apply_normalization_to_test_data(meg_filepath, output_dir, subject_id, basel
     with h5py.File(test_file, 'r') as f:
         test_data = f['neural_data'][:]  # (2400, 271, 281)
     
+    # Create non-normalized averaged test data
+    print("Creating non-normalized averaged test data...")
+    test_averaged = create_averaged_test_data(output_dir, subject_id, test_image_nrs, test_data)
+    
+    # Save non-normalized averaged test data
+    averaged_test_file = os.path.join(output_dir, f'meg_{subject_id}_split-test_averaged.h5')
+    with h5py.File(averaged_test_file, 'w') as f:
+        f.create_dataset('neural_data', data=test_averaged)
+    
+    print(f"Non-normalized averaged test shape: {test_averaged.shape}")
+    
+    # Normalize test data
     normalized_test = np.zeros_like(test_data, dtype='float32')
     
     print("Normalizing test data...")
@@ -237,25 +279,19 @@ def apply_normalization_to_test_data(meg_filepath, output_dir, subject_id, basel
     # Save normalized test data
     normalized_test_file = os.path.join(output_dir, f'meg_{subject_id}_split-test_normalized.h5')
     with h5py.File(normalized_test_file, 'w') as f:
-        f.create_dataset('neural_data_normalized', data=normalized_test)
+        f.create_dataset('neural_data', data=normalized_test)
     
-    # Create averaged test data (average across 12 repetitions)
-    unique_test_images = np.unique(test_image_nrs)
-    n_unique = len(unique_test_images)
-    test_averaged = np.zeros((n_unique, test_data.shape[1], test_data.shape[2]), dtype='float32')
+    # Create normalized averaged test data
+    print("Creating normalized averaged test data...")
+    test_averaged_normalized = create_averaged_test_data(output_dir, subject_id, test_image_nrs, normalized_test)
     
-    print("Averaging test data across repetitions...")
-    for i, img_nr in enumerate(tqdm(unique_test_images, desc="Averaging test images")):
-        img_mask = test_image_nrs == img_nr
-        test_averaged[i] = np.mean(normalized_test[img_mask], axis=0)
-    
-    # Save averaged test data
-    averaged_test_file = os.path.join(output_dir, f'meg_{subject_id}_split-test_averaged.h5')
-    with h5py.File(averaged_test_file, 'w') as f:
-        f.create_dataset('neural_data_averaged', data=test_averaged)
+    # Save normalized averaged test data
+    averaged_test_normalized_file = os.path.join(output_dir, f'meg_{subject_id}_split-test_averaged_normalized.h5')
+    with h5py.File(averaged_test_normalized_file, 'w') as f:
+        f.create_dataset('neural_data', data=test_averaged_normalized)
     
     print(f"Normalized test shape: {normalized_test.shape}")
-    print(f"Averaged test shape: {test_averaged.shape}")
+    print(f"Normalized averaged test shape: {test_averaged_normalized.shape}")
 
 
 def normalize_meg_data(meg_filepath, output_dir, subject_id, batch_size):
@@ -284,9 +320,10 @@ def normalize_meg_data(meg_filepath, output_dir, subject_id, batch_size):
         
     Output Files
     ------------
-    meg_{subject}_split-train_normalized.h5 : (22248, 281, 271)
-    meg_{subject}_split-test_normalized.h5  : (2400, 281, 271)
-    meg_{subject}_split-test_averaged.h5    : (200, 281, 271)
+    meg_{subject}_split-train_normalized.h5 : (22248, 271, 281)
+    meg_{subject}_split-test_normalized.h5  : (2400, 271, 281)
+    meg_{subject}_split-test_averaged.h5    : (200, 271, 281) - Non-normalized
+    meg_{subject}_split-test_averaged_normalized.h5 : (200, 271, 281) - Normalized
     """
     # Load metadata and baseline information
     metadata, times, train_mask, train_sessions, baseline_indices = load_metadata_and_baseline_info(meg_filepath)
@@ -304,7 +341,7 @@ def normalize_meg_data(meg_filepath, output_dir, subject_id, batch_size):
         output_dir, subject_id, train_sessions, baseline_stats, batch_size
     )
     
-    # Normalize test data and create averaged version
+    # Normalize test data and create both averaged versions
     apply_normalization_to_test_data(
         meg_filepath, output_dir, subject_id, baseline_stats
     )
