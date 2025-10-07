@@ -14,11 +14,19 @@ regression : str
     Type of regression used ('ridge' or 'linear').
 
 Example usage:
-python 02_plot_meg.py \
+python berg_creation_code/03_test_encoding_models/train_dataset-things_meg/02_plot.py \
     --subject P1 P2 P3 P4 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --only_cls True \
     --regression ridge \
+    --model clip.vit_b_32
+    
+    
+python berg_creation_code/03_test_encoding_models/train_dataset-things_meg/02_plot.py \
+    --subject P1 \
+    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
+    --only_cls True \
+    --regression linear \
     --model clip.vit_b_32
 """
 
