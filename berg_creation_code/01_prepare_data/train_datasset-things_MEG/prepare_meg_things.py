@@ -71,6 +71,9 @@ meg_{subject}_metadata.npz             :
     
     Sensor Information:
         sensor_names          : (271,)     - MEG sensor name strings
+        sensor_prefixes       : (271,)     - Sensor prefixes (e.g., MLF, MRC, MZO)
+        sensor_hemispheres    : (271,)     - Hemisphere labels (Left, Right, Midline)
+        sensor_regions        : (271,)     - Region labels (Frontal, Central, Parietal, Temporal, Occipital)
         n_sensors             : int        - Number of sensors (271)
     
     Normalization Parameters:

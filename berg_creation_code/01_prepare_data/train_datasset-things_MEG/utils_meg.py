@@ -328,7 +328,6 @@ def normalize_meg_data(meg_filepath, output_dir, subject_id, batch_size):
 # Create dataset metadata
 # =============================================================================
 
-
 def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     """Create comprehensive metadata file for MEG dataset.
     
@@ -362,6 +361,38 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     
     # Get sensor information
     sensor_names = np.array(epochs.info['ch_names'])
+    
+    # Extract sensor region information from channel names
+    sensor_prefixes = []
+    sensor_hemispheres = []
+    sensor_regions = []
+    
+    hemisphere_map = {'L': 'Left', 'R': 'Right', 'Z': 'Midline'}
+    region_map = {'F': 'Frontal', 'C': 'Central', 'P': 'Parietal', 
+                  'T': 'Temporal', 'O': 'Occipital'}
+    
+    for name in sensor_names:
+        # Extract prefix (e.g., 'MLT23-1609' -> 'MLT')
+        prefix = name.split('-')[0][:3]
+        sensor_prefixes.append(prefix)
+        
+        # Parse hemisphere (second character: L/R/Z)
+        hemisphere_code = prefix[1]
+        if hemisphere_code not in hemisphere_map:
+            raise ValueError(f"Unknown hemisphere code '{hemisphere_code}' in sensor '{name}'. "
+                           f"Expected L, R, or Z.")
+        sensor_hemispheres.append(hemisphere_map[hemisphere_code])
+        
+        # Parse region (third character: F/C/P/T/O)
+        region_code = prefix[2]
+        if region_code not in region_map:
+            raise ValueError(f"Unknown region code '{region_code}' in sensor '{name}'. "
+                           f"Expected F, C, P, T, or O.")
+        sensor_regions.append(region_map[region_code])
+    
+    sensor_prefixes = np.array(sensor_prefixes)
+    sensor_hemispheres = np.array(sensor_hemispheres)
+    sensor_regions = np.array(sensor_regions)
     
     # Split masks
     train_mask = metadata['trial_type'] == 'exp'
@@ -468,6 +499,9 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
         
         # Sensor information
         'sensor_names': sensor_names,
+        'sensor_prefixes': sensor_prefixes,
+        'sensor_hemispheres': sensor_hemispheres,
+        'sensor_regions': sensor_regions,
         'n_sensors': len(sensor_names),
         
         # Normalization parameters
