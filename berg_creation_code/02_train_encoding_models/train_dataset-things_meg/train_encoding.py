@@ -47,7 +47,7 @@ python berg_creation_code/02_train_encoding_models/train_dataset-things_meg/trai
     --subject P1 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
-    --only_cls False\
+    --only_cls True\
     --regression ridge \
     --model clip.vit_b_32
 """
@@ -196,12 +196,10 @@ n_train_images = len(metadata['train_full_image_path'])
 fmaps_train = []
 
 
-print("hello")
 
 for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=False):
     end_idx = min(start_idx + args.feature_batch_size, n_train_images)
     batch_images = []
-    
     
     # Load batch of training images
     for i in range(start_idx, end_idx):
