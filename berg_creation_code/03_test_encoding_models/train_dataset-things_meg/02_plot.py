@@ -26,7 +26,7 @@ python berg_creation_code/03_test_encoding_models/train_dataset-things_meg/02_pl
     --subject P1 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --only_cls True \
-    --regression linear \
+    --regression ridge \
     --model clip.vit_b_32
 """
 

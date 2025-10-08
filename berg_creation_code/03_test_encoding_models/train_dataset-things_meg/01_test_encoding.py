@@ -19,7 +19,7 @@ python berg_creation_code/03_test_encoding_models/train_dataset-things_meg/01_te
     --subject P1 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --only_cls True \
-    --regression linear \
+    --regression ridge \
     --model clip.vit_b_32
 """
 
@@ -64,7 +64,7 @@ metadata_meg = np.load(metadata_path, allow_pickle=True)
 # =============================================================================
 neural_test_path = os.path.join(data_dir, f'meg_{args.subject}_split-test_averaged.h5')
 with h5py.File(neural_test_path, 'r') as f:
-    neural_test = f['neural_data_averaged'][:]
+    neural_test = f['neural_data'][:]
 
 print(f"Actual neural test data shape: {neural_test.shape}")
 
