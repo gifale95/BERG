@@ -1,12 +1,14 @@
 """Preprocess the THINGS-fMRI dataset (Hebart et al., 2023):
  - split training and test data based on trial type,
+ - normalize data using voxel-wise z-scoring,
  - create comprehensive metadata mapping,
  - generate averaged test data across repeated presentations.
 
 After preprocessing, the fMRI data is saved as:
  - Training data: (Trials x Voxels) = (8640, 211339)   
  - Test data: (Trials x Voxels)    = (1200, 211339)    
- - Averaged test (unique images):  (100, 211339)      
+ - Averaged test (unique images):  (100, 211339)
+ - Normalized versions of all three datasets      
 
 The data is saved in HDF5 format for efficient loading during model training.
 
@@ -31,9 +33,17 @@ python berg_creation_code/01_prepare_data/train_dataset-things_fMRI/prepare_fmri
 
 Output Files Created (per subject):
 ────────────────────────────────────────────────────────────────
+Original Data:
 fmri_{subject}_split-train.h5           : (8640, 211339)           # Training data 
 fmri_{subject}_split-test.h5            : (1200, 211339)           # Test data 
 fmri_{subject}_split-test_averaged.h5   : (100, 211339)            # Averaged test data 
+
+Normalized Data:
+fmri_{subject}_split-train_normalized.h5           : (8640, 211339)  # Normalized training
+fmri_{subject}_split-test_normalized.h5            : (1200, 211339)  # Normalized test
+fmri_{subject}_split-test_averaged_normalized.h5   : (100, 211339)   # Normalized averaged test
+
+Metadata:
 fmri_{subject}_metadata.npz             :
 
     Training Data (sub-01):
@@ -43,16 +53,20 @@ fmri_{subject}_metadata.npz             :
         train_concepts            : (8640,)   object   e.g. ['dog', 'mango', ...]
         train_trial_ids           : (8640,)   int64
 
-    Test Data — Individual Trials (sub-01):
+    Test Data – Individual Trials (sub-01):
         test_sessions             : (1200,)   int64
         test_runs                 : (1200,)   int64
         test_stimuli              : (1200,)   object
         test_concepts             : (1200,)   object
         test_trial_ids            : (1200,)   int64
 
-    Test Data — Averaged Across Repetitions (sub-01):
+    Test Data – Averaged Across Repetitions (sub-01):
         test_avg_stimuli          : (100,)    str
         test_avg_concepts         : (100,)    str
+
+    Normalization Parameters:
+        voxel_mean                : (211339,)     float64  # Mean per voxel from training
+        voxel_std                 : (211339,)     float64  # Std per voxel from training
 
     Voxel Information (common shapes across subjects; values shown for sub-01):
         voxel_coords              : (211339, 3)   int64   # voxel indices
@@ -104,16 +118,17 @@ fmri_{subject}_metadata.npz             :
         Total functional ROIs     : 29
         Total voxels in ROIs      : 17,444
 
-Total: 4 files per subject (3 HDF5 data files + 1 metadata)
+Total: 7 files per subject (6 HDF5 data files + 1 metadata)
 
 Note: All HDF5 files use the key 'neural_data'.
       Data shape is (Trials x Voxels) after transposition from original (Voxels x Trials).
+      Normalized data uses voxel-wise z-scoring: (data - mean) / std, computed from training data.
 """
 
 
 import argparse
 import os
-from utils_fmri import split_fmri_data, create_fmri_metadata
+from utils_fmri import split_fmri_data, normalize_fmri_data, create_fmri_metadata
 
 # =============================================================================
 # Input arguments
@@ -159,6 +174,12 @@ print("Splitting training and testing data")
 split_fmri_data(response_file, stimulus_file, output_dir, args.subject, args.batch_size)
 
 # =============================================================================
+# Normalize fMRI data
+# =============================================================================
+print("")
+norm_stats = normalize_fmri_data(output_dir, args.subject)
+
+# =============================================================================
 # Create dataset metadata
 # =============================================================================
 print("")
@@ -167,7 +188,8 @@ create_fmri_metadata(
     stimulus_filepath=stimulus_file,
     voxel_filepath=voxel_file,
     output_dir=output_dir,
-    subject_id=args.subject
+    subject_id=args.subject,
+    norm_stats=norm_stats
 )
 
 print("\nPreprocessing complete!")
