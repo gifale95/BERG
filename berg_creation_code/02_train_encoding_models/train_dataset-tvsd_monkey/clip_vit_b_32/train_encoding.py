@@ -396,7 +396,7 @@ for chunk_idx in range(n_chunks):
     # Save individual model
     import joblib
     model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-        'train_dataset-tvsd_monkey', f'model-{args.model}', 'chunk_models')
+        'train_dataset-tvsd_monkey', f'model-{args.model}', 'encoding_model_weights')
     if not os.path.isdir(model_dir):
         os.makedirs(model_dir)
     
@@ -414,7 +414,7 @@ print("Predicting test responses...")
 # Load all models and predict
 chunk_predictions = []
 model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-    'train_dataset-tvsd_monkey', f'model-{args.model}', 'chunk_models')
+    'train_dataset-tvsd_monkey', f'model-{args.model}', 'encoding_model_weights')
 
 for chunk_idx in range(n_chunks):
     model_filename = f'{args.regression}_{cls_suffix}_chunk_{chunk_idx}_{args.monkey}.pkl'
