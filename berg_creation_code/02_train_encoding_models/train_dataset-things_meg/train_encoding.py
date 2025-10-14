@@ -51,7 +51,7 @@ python berg_creation_code/02_train_encoding_models/train_dataset-things_meg/trai
     --regression ridge \
     --n_pca_component 500 \
     --model clip.vit_b_32 \
-    --normalized False
+    --normalized True
 """
 
 import argparse
