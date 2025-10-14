@@ -34,6 +34,7 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
     """
     print(f"Loading MNE epochs metadata from: {meg_filepath}")
     epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
+    epochs.apply_baseline((-0.1, 0))
     
     # Get metadata without loading data
     metadata = epochs.metadata
@@ -237,6 +238,8 @@ def apply_normalization_to_test_data(meg_filepath, output_dir, subject_id, basel
     """Apply session-specific normalization to test data and create averaged versions."""
     # Load metadata to get test sessions
     epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
+    epochs.apply_baseline((-0.1, 0))   # ensure baseline subtraction
+    
     metadata = epochs.metadata
     
     test_mask = metadata['trial_type'] == 'test'

@@ -49,6 +49,7 @@ tvsd_{monkey}_metadata.npz             :
         test_avg_img_ids     : (100,)   - Unique test stimulus IDs
         test_avg_img_files   : (100,)   - Test image filenames (averaged)
         test_avg_img_concepts: (100,)   - Test object categories (averaged)
+        
         times                : (300,)   - Time points (-100 to 199ms)
         baseline_means       : (n_days, 1024) - Day-specific baseline means
         baseline_stds        : (n_days, 1024) - Day-specific baseline stds
