@@ -43,15 +43,14 @@ regression : str
     Select type of regression ('ridge' or 'linear').
 
 Example usage:
-python berg_creation_code/02_train_encoding_models/train_dataset-things_meg/train_encoding.py\
+python berg_creation_code/02_train_encoding_models/train_dataset-things_meg1/train_encoding.py\
     --subject P1 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
     --only_cls True\
     --regression ridge \
-    --n_pca_component 500 \
-    --model clip.vit_b_32 \
-    --normalized True
+    --n_pca_component 250 \
+    --model clip.vit_b_32 
 """
 
 import argparse
@@ -87,8 +86,6 @@ parser.add_argument('--only_cls', required=True, choices=["True", "False"],
 parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
                    help="Selecting which model to use")
 parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
-                   help="Select type of regression")
-parser.add_argument('--normalized', required=True, choices=["True", "False"],
                    help="Select type of regression")
 parser.add_argument('--train_chunk_size', type=int, default=2000,
                    help='Number of trials per training chunk')
@@ -188,15 +185,15 @@ print("Extract the THINGS MEG training and test image features...")
 
 # Load metadata
 data_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-things_meg1')
-metadata_path = os.path.join(data_dir, f'meg_{args.subject}_metadata.npz')
-metadata = np.load(metadata_path)
+metadata_path = os.path.join(data_dir, f'meg_{args.subject}_metadata.npy')
+metadata = np.load(metadata_path, allow_pickle=True).item()
 
 
 
 
 # Extract training image features
 print("Extracting training features...")
-n_train_images = len(metadata['train_full_image_path'])
+n_train_images = len(metadata['meg']['train_full_image_path'])
 fmaps_train = []
 
 
@@ -207,7 +204,7 @@ for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=F
     
     # Load batch of training images
     for i in range(start_idx, end_idx):
-        img_path = metadata['train_full_image_path'][i]
+        img_path = metadata['meg']['train_full_image_path'][i]
         full_path = os.path.join(args.things_dir, img_path)
         img = Image.open(full_path).convert('RGB')
         img_tensor = preprocess(img)
@@ -257,8 +254,8 @@ print(f"Training features shape (fmaps): {fmaps_train.shape}")
 # Extract test image features
 print("Extracting test features...")
 test_images = []
-for i in range(len(metadata['test_avg_full_image_path'])):
-    img_path = metadata['test_avg_full_image_path'][i]
+for i in range(len(metadata['meg']['test_avg_full_image_path'])):
+    img_path = metadata['meg']['test_avg_full_image_path'][i]
     full_path = os.path.join(args.things_dir, img_path)
     
     img = Image.open(full_path).convert('RGB')
@@ -312,12 +309,6 @@ pca.fit(fmaps_train)
 fmaps_train = pca.transform(fmaps_train)
 fmaps_test = pca.transform(fmaps_test)
 
-# Re-standardize after PCA
-scaler_post_pca = StandardScaler()
-scaler_post_pca.fit(fmaps_train)
-fmaps_train = scaler_post_pca.transform(fmaps_train)
-fmaps_test = scaler_post_pca.transform(fmaps_test)
-
 print(f"Features after PCA - Train: {fmaps_train.shape}, Test: {fmaps_test.shape}")
 # Verify standardization
 print(f"After re-standardization: mean={fmaps_train.mean():.6f}, std={fmaps_train.std():.6f}")
@@ -346,10 +337,7 @@ alphas = [0.0001, 0.001, 0.01, 0.1, 1.0, 10.0]
 
     
 # Load neural data shape info
-if args.normalized == "True":
-    neural_train_path = os.path.join(data_dir, f'meg_{args.subject}_split-train_normalized.h5')
-else:
-    neural_train_path = os.path.join(data_dir, f'meg_{args.subject}_split-train.h5')
+neural_train_path = os.path.join(data_dir, f'meg_{args.subject}_split-train.h5')
 with h5py.File(neural_train_path, 'r') as f:
     n_trials, n_channels, n_times = f['neural_data'].shape
 
@@ -501,7 +489,7 @@ print(f"Test predictions saved: {test_predictions.shape}")
 print("\nSave preprocessing parameters...")
 
 preprocessing_weights = {
-    'scaler_pre_pca': {
+    'scaler_param': {
         'scale_': scaler.scale_,
         'mean_': scaler.mean_,
         'var_': scaler.var_,
@@ -518,13 +506,6 @@ preprocessing_weights = {
         'n_samples_': pca.n_samples_,
         'noise_variance_': pca.noise_variance_,
         'n_features_in_': pca.n_features_in_
-    },
-    'scaler_post_pca': { 
-        'scale_': scaler_post_pca.scale_,
-        'mean_': scaler_post_pca.mean_,
-        'var_': scaler_post_pca.var_,
-        'n_features_in_': scaler_post_pca.n_features_in_,
-        'n_samples_seen_': scaler_post_pca.n_samples_seen_
     },
     'model_info': {
         'model_type': f'chunked_{args.regression}',
