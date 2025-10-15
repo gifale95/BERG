@@ -34,7 +34,6 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
     """
     print(f"Loading MNE epochs metadata from: {meg_filepath}")
     epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
-    epochs.apply_baseline((-0.1, 0))
     
     # Get metadata without loading data
     metadata = epochs.metadata
@@ -110,265 +109,10 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
 
 
 # =============================================================================
-# Normalize MEG responses
-# =============================================================================
-
-def load_metadata_and_baseline_info(meg_filepath):
-    """Load MEG epochs and compute full time window information for normalization."""
-    epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
-    
-    metadata = epochs.metadata
-    times = epochs.times  # (281,) in seconds
-    
-    # Identify training trials and their sessions
-    train_mask = metadata['trial_type'] == 'exp'
-    train_sessions = metadata.loc[train_mask, 'session_nr'].values
-    
-    # Use full time window for normalization (all 281 timepoints)
-    # This accounts for actual response variance, not just baseline noise
-    full_time_indices = np.arange(len(times))
-    
-    return metadata, times, train_mask, train_sessions, full_time_indices
-
-
-def compute_session_specific_baseline_stats(output_dir, subject_id, train_sessions, baseline_indices):
-    """Compute baseline statistics separately for each recording session."""
-    unique_sessions = np.unique(train_sessions)
-    baseline_stats = {}
-    
-    print("Computing session-specific baseline statistics...")
-    
-    # Load training data in read-only mode
-    train_file = os.path.join(output_dir, f'meg_{subject_id}_split-train.h5')
-    with h5py.File(train_file, 'r') as f:
-        train_data = f['neural_data']  # (22248, 271, 281)
-        
-        for session in tqdm(unique_sessions, desc="Processing sessions"):
-            session_mask = train_sessions == session
-            session_indices = np.where(session_mask)[0]
-            
-            # Load only this session's data
-            session_data = train_data[session_indices]  # (N_session, 271, 281)
-            
-            # Extract baseline period
-            session_baseline = session_data[:, :, baseline_indices]  # (N_session, 271, 20)
-            
-            # Compute mean and std across trials and time
-            session_mean = np.mean(session_baseline, axis=(0, 2))  # (271,)
-            session_std = np.std(session_baseline, axis=(0, 2))    # (271,)
-            session_std = np.maximum(session_std, 1e-8)  # Avoid division by zero
-            
-            baseline_stats[session] = {
-                'mean': session_mean,
-                'std': session_std
-            }
-    
-    return baseline_stats
-
-
-def apply_normalization_to_training_data(output_dir, subject_id, train_sessions, 
-                                        baseline_stats, batch_size):
-    """Apply session-specific z-score normalization to training data."""
-    train_file = os.path.join(output_dir, f'meg_{subject_id}_split-train.h5')
-    normalized_file = os.path.join(output_dir, f'meg_{subject_id}_split-train_normalized.h5')
-    
-    with h5py.File(train_file, 'r') as f_in:
-        train_data = f_in['neural_data']
-        n_trials, n_sensors, n_timepoints = train_data.shape
-        
-        with h5py.File(normalized_file, 'w') as f_out:
-            normalized_dataset = f_out.create_dataset(
-                'neural_data',
-                shape=(n_trials, n_sensors, n_timepoints),
-                dtype='float32'
-            )
-            
-            print("Normalizing training data...")
-            
-            for start_idx in tqdm(range(0, n_trials, batch_size), desc="Normalizing batches"):
-                end_idx = min(start_idx + batch_size, n_trials)
-                
-                chunk_data = train_data[start_idx:end_idx]  # (batch, 271, 281)
-                chunk_sessions = train_sessions[start_idx:end_idx]
-                
-                normalized_chunk = np.zeros_like(chunk_data, dtype='float32')
-                
-                for i, session in enumerate(chunk_sessions):
-                    trial_data = chunk_data[i]  # (271, 281)
-                    session_mean = baseline_stats[session]['mean']  # (271,)
-                    session_std = baseline_stats[session]['std']    # (271,)
-                    
-                    # Z-score: subtract mean and divide by std
-                    normalized_chunk[i] = (trial_data - session_mean[:, None]) / session_std[:, None]
-                
-                normalized_dataset[start_idx:end_idx] = normalized_chunk
-
-
-def create_averaged_test_data(output_dir, subject_id, test_image_nrs, test_data):
-    """Create averaged test data across 12 repetitions.
-    
-    Parameters
-    ----------
-    output_dir : str
-        Output directory for processed data files.
-    subject_id : str
-        Subject identifier for file naming.
-    test_image_nrs : np.ndarray
-        Test image numbers for each trial.
-    test_data : np.ndarray
-        Test data to average (2400, 271, 281).
-        
-    Returns
-    -------
-    np.ndarray
-        Averaged test data (200, 271, 281).
-    """
-    unique_test_images = np.unique(test_image_nrs)
-    n_unique = len(unique_test_images)
-    test_averaged = np.zeros((n_unique, test_data.shape[1], test_data.shape[2]), dtype='float32')
-    
-    for i, img_nr in enumerate(unique_test_images):
-        img_mask = test_image_nrs == img_nr
-        test_averaged[i] = np.mean(test_data[img_mask], axis=0)
-    
-    return test_averaged
-
-
-def apply_normalization_to_test_data(meg_filepath, output_dir, subject_id, baseline_stats):
-    """Apply session-specific normalization to test data and create averaged versions."""
-    # Load metadata to get test sessions
-    epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
-    epochs.apply_baseline((-0.1, 0))   # ensure baseline subtraction
-    
-    metadata = epochs.metadata
-    
-    test_mask = metadata['trial_type'] == 'test'
-    test_sessions = metadata.loc[test_mask, 'session_nr'].values
-    test_image_nrs = metadata.loc[test_mask, 'test_image_nr'].values
-    
-    # Load test data
-    test_file = os.path.join(output_dir, f'meg_{subject_id}_split-test.h5')
-    with h5py.File(test_file, 'r') as f:
-        test_data = f['neural_data'][:]  # (2400, 271, 281)
-    
-    # Create non-normalized averaged test data
-    print("Creating non-normalized averaged test data...")
-    test_averaged = create_averaged_test_data(output_dir, subject_id, test_image_nrs, test_data)
-    
-    # Save non-normalized averaged test data
-    averaged_test_file = os.path.join(output_dir, f'meg_{subject_id}_split-test_averaged.h5')
-    with h5py.File(averaged_test_file, 'w') as f:
-        f.create_dataset('neural_data', data=test_averaged)
-    
-    print(f"Non-normalized averaged test shape: {test_averaged.shape}")
-    
-    # Normalize test data
-    normalized_test = np.zeros_like(test_data, dtype='float32')
-    
-    print("Normalizing test data...")
-    for i, session in enumerate(tqdm(test_sessions, desc="Processing test trials")):
-        if session in baseline_stats:
-            session_mean = baseline_stats[session]['mean']
-            session_std = baseline_stats[session]['std']
-        else:
-            # Fallback to average across all sessions
-            all_means = np.array([baseline_stats[s]['mean'] for s in baseline_stats.keys()])
-            all_stds = np.array([baseline_stats[s]['std'] for s in baseline_stats.keys()])
-            session_mean = np.mean(all_means, axis=0)
-            session_std = np.mean(all_stds, axis=0)
-        
-        normalized_test[i] = (test_data[i] - session_mean[:, None]) / session_std[:, None]
-    
-    # Save normalized test data
-    normalized_test_file = os.path.join(output_dir, f'meg_{subject_id}_split-test_normalized.h5')
-    with h5py.File(normalized_test_file, 'w') as f:
-        f.create_dataset('neural_data', data=normalized_test)
-    
-    # Create normalized averaged test data
-    print("Creating normalized averaged test data...")
-    test_averaged_normalized = create_averaged_test_data(output_dir, subject_id, test_image_nrs, normalized_test)
-    
-    # Save normalized averaged test data
-    averaged_test_normalized_file = os.path.join(output_dir, f'meg_{subject_id}_split-test_averaged_normalized.h5')
-    with h5py.File(averaged_test_normalized_file, 'w') as f:
-        f.create_dataset('neural_data', data=test_averaged_normalized)
-    
-    print(f"Normalized test shape: {normalized_test.shape}")
-    print(f"Normalized averaged test shape: {test_averaged_normalized.shape}")
-
-
-def normalize_meg_data(meg_filepath, output_dir, subject_id, batch_size):
-    """Apply session-specific z-score normalization to MEG data.
-    
-    Performs normalization using baseline period (-100 to 0ms) statistics
-    computed separately for each recording session to account for session 
-    variability. Training data normalization uses own statistics to prevent
-    data leakage, while test data uses training-derived parameters.
-    
-    Parameters
-    ----------
-    meg_filepath : str
-        Path to the preprocessed MNE epochs .fif file.
-    output_dir : str
-        Output directory for processed data files.
-    subject_id : str
-        Subject identifier for file naming.
-    batch_size : int
-        Batch size for chunked processing.
-        
-    Returns
-    -------
-    dict
-        Baseline normalization statistics for metadata inclusion.
-        
-    Output Files
-    ------------
-    meg_{subject}_split-train_normalized.h5 : (22248, 271, 281)
-    meg_{subject}_split-test_normalized.h5  : (2400, 271, 281)
-    meg_{subject}_split-test_averaged.h5    : (200, 271, 281) - Non-normalized
-    meg_{subject}_split-test_averaged_normalized.h5 : (200, 271, 281) - Normalized
-    """
-    # Load metadata and baseline information
-    metadata, times, train_mask, train_sessions, baseline_indices = load_metadata_and_baseline_info(meg_filepath)
-    
-    print(f"Baseline period: {times[baseline_indices[0]]:.3f} to {times[baseline_indices[-1]]:.3f} s")
-    print(f"Baseline indices: {baseline_indices[0]} to {baseline_indices[-1]}")
-    
-    # Compute session-specific baseline statistics
-    baseline_stats = compute_session_specific_baseline_stats(
-        output_dir, subject_id, train_sessions, baseline_indices
-    )
-    
-    # Normalize training data
-    apply_normalization_to_training_data(
-        output_dir, subject_id, train_sessions, baseline_stats, batch_size
-    )
-    
-    # Normalize test data and create both averaged versions
-    apply_normalization_to_test_data(
-        meg_filepath, output_dir, subject_id, baseline_stats
-    )
-    
-    # Prepare baseline statistics for metadata
-    unique_sessions = sorted(baseline_stats.keys())
-    baseline_means = np.array([baseline_stats[s]['mean'] for s in unique_sessions])
-    baseline_stds = np.array([baseline_stats[s]['std'] for s in unique_sessions])
-    
-    baseline_metadata = {
-        'baseline_means': baseline_means,
-        'baseline_stds': baseline_stds,
-        'baseline_sessions': np.array(unique_sessions),
-        'baseline_time_range': np.array([times[baseline_indices[0]], times[baseline_indices[-1]]]),
-        'baseline_indices': baseline_indices
-    }
-    
-    return baseline_metadata
-
-# =============================================================================
 # Create dataset metadata
 # =============================================================================
 
-def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
+def create_meg_metadata(meg_filepath, output_dir, subject_id):
     """Create comprehensive metadata file for MEG dataset.
     
     Generate metadata linking neural responses to THINGS database images through
@@ -383,8 +127,6 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
         Output directory for processed data files.
     subject_id : str
         Subject identifier for file naming.
-    baseline_stats : dict
-        Baseline normalization statistics from normalize_meg_data.
         
     Output Files
     ------------
@@ -530,6 +272,7 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
     
     # Compile metadata dictionary
     metadata_dict = {
+        'meg': {
         # Training data
         'train_things_img_ids': train_things_img_ids,
         'train_categories': train_categories,
@@ -566,20 +309,13 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, baseline_stats):
         'sensor_regions': sensor_regions,
         'n_sensors': len(sensor_names),
         
-        # Normalization parameters
-        'baseline_means': baseline_stats['baseline_means'],
-        'baseline_stds': baseline_stats['baseline_stds'],
-        'baseline_sessions': baseline_stats['baseline_sessions'],
-        'baseline_time_range': baseline_stats['baseline_time_range'],
-        'baseline_indices': baseline_stats['baseline_indices'],
-        
         # Subject metadata
-        'subject_id': subject_id
+        'subject_id': subject_id}
     }
     
     # Save metadata
-    metadata_file = os.path.join(output_dir, f'meg_{subject_id}_metadata.npz')
-    np.savez(metadata_file, **metadata_dict)
+    metadata_file = os.path.join(output_dir, f'meg_{subject_id}_metadata.npy')
+    np.save(metadata_file, metadata, allow_pickle=True)
     
     print(f"Training trials: {len(train_things_img_ids)}")
     print(f"Test trials: {len(test_things_img_ids)}")
