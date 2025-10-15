@@ -52,10 +52,10 @@ for key, val in vars(args).items():
 # Load the responses metadata
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
-	'train_dataset-tvsd_monkey')
+	'train_dataset-tvsd')
 
 metadata_path = os.path.join(data_dir, f'tvsd_{args.monkey}_metadata.npz')
-metadata_tvsd = np.load(metadata_path)
+metadata_tvsd = np.load(metadata_path, allow_pickle=True).item()
 
 
 # =============================================================================
@@ -72,11 +72,11 @@ print(f"Actual neural test data shape: {neural_test.shape}")
 # Load the in silico neural responses for the test images
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-	'modality-spike', 'train_dataset-tvsd_monkey', args.model)
+	'modality-utah_array', 'train_dataset-tvsd', args.model)
 
 
 cls_suffix = 'cls' if args.only_cls else 'all'
-pred_path = os.path.join(results_dir, f'spike_test_pred_{args.regression}_{cls_suffix}_{args.monkey}.npy')
+pred_path = os.path.join(results_dir, f'utah_array_test_pred_{args.regression}_{cls_suffix}_{args.monkey}.npy')
 neural_test_pred = np.load(pred_path)
 
 print(f"Predicted neural test data shape: {neural_test_pred.shape}")
@@ -85,12 +85,10 @@ print(f"Predicted neural test data shape: {neural_test_pred.shape}")
 # =============================================================================
 # Compute the encoding accuracy
 # =============================================================================
-# Correlate the in vivo and in silico neural responses
-# Shape: (timepoints, electrodes)
 correlation_results = np.zeros((neural_test.shape[1], neural_test.shape[2]))
 
-for t in range(neural_test.shape[1]):  # timepoints
-	for e in range(neural_test.shape[2]):  # electrodes
+for t in range(neural_test.shape[1]):
+	for e in range(neural_test.shape[2]):
 		correlation_results[t, e] = pearsonr(neural_test[:, t, e],
 			neural_test_pred[:, t, e])[0]
 
@@ -98,16 +96,34 @@ print(f"Correlation results shape: {correlation_results.shape}")
 
 
 # =============================================================================
+# Compute percent noise ceiling
+# =============================================================================
+oracle = metadata_tvsd['encoding_model']['oracle']
+
+if np.any(oracle <= 0):
+	raise ValueError("Oracle contains values <= 0, cannot compute percent noise ceiling")
+
+percent_noise_ceiling = (correlation_results / oracle) * 100
+
+print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
+
+
+# =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
 metadata = {
-    'correlation_results': correlation_results,
-    **{key: metadata_tvsd[key] for key in metadata_tvsd.files}
+    'utah_array': metadata_tvsd['utah_array'],
+    'encoding_model': {
+        'correlation_results': correlation_results,
+        'percent_noise_ceiling': percent_noise_ceiling,
+        'SNR': metadata_tvsd['encoding_model']['SNR'],
+        'SNR_max': metadata_tvsd['encoding_model']['SNR_max'],
+        'oracle': metadata_tvsd['encoding_model']['oracle']
+    }
 }
 
-# Save the metadata
-save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-	'train_dataset-tvsd_monkey', f'model-{args.model}', 'metadata')
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
+	'train_dataset-tvsd', f'model-{args.model}', 'metadata')
 if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)
 

@@ -18,6 +18,14 @@ python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/02_p
     --regression linear \
     --model vit_b_32 \
     --plot_oracle True
+    
+python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/02_plot.py \
+    --monkey monkeyF \
+    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
+    --only_cls True \
+    --regression linear \
+    --model vit_b_32 \
+    --plot_oracle True
 
 """
 
@@ -66,11 +74,11 @@ for monkey in args.monkey:
     metadata = np.load(os.path.join(metadata_dir, file_name),
         allow_pickle=True).item()
     
-    correlation_results.append(metadata['correlation_results'])
-    times = metadata['times']
-    roi_assignments = metadata['roi_assignments']
-    roi_labels = metadata['roi_labels']
-    oracle = metadata['oracle']
+    correlation_results.append(metadata['encoding_model']['correlation_results'])
+    times = metadata['utah_array']['times']
+    roi_assignments = metadata['utah_array']['roi_assignments']
+    roi_labels = metadata['utah_array']['roi_labels']
+    oracle = metadata['encoding_model']['oracle']
     roi_data.append((roi_assignments, roi_labels))
     oracle_data.append(oracle)
 
@@ -149,14 +157,10 @@ for m, monkey in enumerate(args.monkey):
             if args.plot_oracle:
                 region_oracle = oracle[region_electrodes]
                 oracle_mean = np.mean(region_oracle)
-                oracle_std = np.std(region_oracle)
                 
                 ax.axhline(oracle_mean, color=roi_colors[roi_label], 
                           linestyle='-', linewidth=2, alpha=0.4,
-                          label=f'{roi_label} Oracle')
-                
-                ax.axhspan(oracle_mean - oracle_std, oracle_mean + oracle_std,
-                          color=roi_colors[roi_label], alpha=0.1)
+                          label=f'{roi_label} Avg Oracle')
     
     ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
     ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
@@ -178,15 +182,11 @@ for roi_label in ['V1', 'V4', 'IT']:
         roi_data_array = np.array(all_roi_correlations[roi_label])
         
         roi_mean = np.mean(roi_data_array, axis=0)
-        roi_std = np.std(roi_data_array, axis=0)
         
         avg_ax.plot(times, roi_mean, 
                    color=roi_colors[roi_label], 
                    linewidth=3,
                    label=f'{roi_label}')
-        
-        avg_ax.fill_between(times, roi_mean - roi_std, roi_mean + roi_std,
-                           color=roi_colors[roi_label], alpha=0.2)
 
 avg_ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
 avg_ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
@@ -212,7 +212,6 @@ if not os.path.isdir(save_dir):
 
 oracle_suffix = '_oracle' if args.plot_oracle else ''
 save_name = f'encoding_accuracy_roi_model-{args.regression}_{cls_suffix}_{args.model}{oracle_suffix}'
-fig.savefig(os.path.join(save_dir, f'{save_name}.png'), dpi=300, bbox_inches='tight', format='png')
 fig.savefig(os.path.join(save_dir, f'{save_name}.jpg'), dpi=300, bbox_inches='tight', format='jpeg')
 
 print(f"Plot saved to: {save_dir}/{save_name}.png and {save_dir}/{save_name}.jpg")

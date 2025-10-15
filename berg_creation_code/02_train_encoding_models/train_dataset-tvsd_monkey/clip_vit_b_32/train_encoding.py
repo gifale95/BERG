@@ -37,22 +37,22 @@ n_pca_components : int
 cv_folds : int
     Cross-validation folds for Ridge alpha (default: 5).
 
-python berg_creation_code/02_train_encoding_models/train_dataset-tvsd_monkey/clip_vit_b_32/train_encoding.py \
+python berg_creation_code/02_train_encoding_models/train_dataset-tvsd/clip_vit_b_32/train_encoding.py \
     --monkey monkeyF \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
     --only_cls False \
-    --regression ridge \
+    --regression linear \
     --model clip.vit_b_32 
     
     
 
-python berg_creation_code/02_train_encoding_models/train_dataset-tvsd_monkey/clip_vit_b_32/train_encoding.py \
+python berg_creation_code/02_train_encoding_models/train_dataset-tvsd/clip_vit_b_32/train_encoding.py \
     --monkey monkeyN \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
     --only_cls False \
-    --regression ridge \
+    --regression linear \
     --model clip.vit_b_32 
 """
 
@@ -125,20 +125,20 @@ print(args.only_cls)
 # =============================================================================
 def map_trial_to_image(trial_idx, metadata, things_dir=None):
     """Map a training trial index to its corresponding THINGS image information."""
-    if trial_idx < 0 or trial_idx >= len(metadata['train_img_files']):
+    if trial_idx < 0 or trial_idx >= len(metadata['utah_array']['train_img_files']):
         raise ValueError(f"Trial index {trial_idx} out of range")
     
     image_info = {
         'trial_idx': trial_idx,
-        'stimulus_id': metadata['train_img_ids'][trial_idx],
-        'image_file': metadata['train_img_files'][trial_idx],
-        'object_category': metadata['train_img_concepts'][trial_idx],
-        'recording_day': metadata['train_days'][trial_idx],
-        'sequence_position': metadata['train_sequence_pos'][trial_idx]
+        'stimulus_id': metadata['utah_array']['train_img_ids'][trial_idx],
+        'image_file': metadata['utah_array']['train_img_files'][trial_idx],
+        'object_category': metadata['utah_array']['train_img_concepts'][trial_idx],
+        'recording_day': metadata['utah_array']['train_days'][trial_idx],
+        'sequence_position': metadata['utah_array']['train_sequence_pos'][trial_idx]
     }
     
     if things_dir:
-        category = metadata['train_img_concepts'][trial_idx]
+        category = metadata['utah_array']['train_img_concepts'][trial_idx]
         image_info['full_path'] = f"{things_dir}/{category}/{image_info['image_file']}"
     
     return image_info
@@ -218,13 +218,13 @@ print("Model loaded")
 print("Extract the TVSD training and test image features...")
 
 # Load metadata
-data_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-tvsd_monkey')
-metadata_path = os.path.join(data_dir, f'tvsd_{args.monkey}_metadata.npz')
-metadata = np.load(metadata_path)
+data_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-tvsd')
+metadata_path = os.path.join(data_dir, f'tvsd_{args.monkey}_metadata.npy')
+metadata = np.load(metadata_path, allow_pickle=True).item()
 
 # Extract training image features
 print("Extracting training features...")
-n_train_images = len(metadata['train_img_files'])
+n_train_images = len(metadata['utah_array']['train_img_files'])
 fmaps_train = []
 
 for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=False):
@@ -281,9 +281,9 @@ fmaps_train = np.concatenate(fmaps_train, axis=0)
 # Extract test image features
 print("Extracting test features...")
 test_images = []
-for i in range(len(metadata['test_avg_img_files'])):
-    category = metadata['test_avg_img_concepts'][i]
-    image_file = metadata['test_avg_img_files'][i]
+for i in range(len(metadata['utah_array']['test_avg_img_files'])):
+    category = metadata['utah_array']['test_avg_img_concepts'][i]
+    image_file = metadata['utah_array']['test_avg_img_files'][i]
     full_path = f"{args.things_dir}/{category}/{image_file}"
     
     img = Image.open(full_path).convert('RGB')
@@ -396,7 +396,7 @@ for chunk_idx in range(n_chunks):
     # Save individual model
     import joblib
     model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-        'train_dataset-tvsd_monkey', f'model-{args.model}', 'encoding_model_weights')
+        'train_dataset-tvsd', f'model-{args.model}', 'encoding_model_weights')
     if not os.path.isdir(model_dir):
         os.makedirs(model_dir)
     
@@ -413,8 +413,8 @@ print("Predicting test responses...")
 
 # Load all models and predict
 chunk_predictions = []
-model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-    'train_dataset-tvsd_monkey', f'model-{args.model}', 'encoding_model_weights')
+model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
+    'train_dataset-tvsd', f'model-{args.model}', 'encoding_model_weights')
 
 for chunk_idx in range(n_chunks):
     model_filename = f'{args.regression}_{cls_suffix}_chunk_{chunk_idx}_{args.monkey}.pkl'
@@ -437,12 +437,12 @@ print(f"Test predictions shape: {test_predictions.shape}")
 
 # Save test predictions
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-    'modality-spike', 'train_dataset-tvsd_monkey', args.model)
+    'modality-utah_aray', 'train_dataset-tvsd', args.model)
 if not os.path.isdir(results_dir):
     os.makedirs(results_dir)
 
 cls_suffix = 'cls' if args.only_cls else 'all'
-test_file_name = f'spike_test_pred_{args.regression}_{cls_suffix}_{args.monkey}.npy'
+test_file_name = f'utah_array_test_pred_{args.regression}_{cls_suffix}_{args.monkey}.npy'
 np.save(os.path.join(results_dir, test_file_name), test_predictions)
 
 print(f"Test predictions saved: {test_predictions.shape}")
@@ -482,8 +482,8 @@ preprocessing_weights = {
         }
     }
 
-save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-    'train_dataset-tvsd_monkey', f'model-{args.model}',
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
+    'train_dataset-tvsd', f'model-{args.model}',
     'encoding_models_weights')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
