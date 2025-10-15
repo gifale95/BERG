@@ -50,31 +50,31 @@ cls_suffix = 'cls' if args.only_cls else 'all'
 
 
 # =============================================================================
-# Load the encoding models' correlation results
+# Load the encoding models' metadata (includes correlation and noise ceiling)
 # =============================================================================
 metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-    'train_dataset-things_fmri', f'model-{args.model}', 'metadata')
+    'train_dataset-things_fmri_1', f'model-{args.model}', 'metadata')
 
 file_name = f'metadata_{args.regression}_{cls_suffix}_{args.subject}.npy'
 metadata = np.load(os.path.join(metadata_dir, file_name), allow_pickle=True).item()
 
-correlation_results = metadata['correlation_results']
+# Extract data from metadata
+correlation_results = metadata['encoding_model']['correlation_results']
+noise_ceiling_testset = metadata['fmri']['noise_ceiling_testset']
 
 print(f"Correlation results shape: {correlation_results.shape}")
+print(f"Noise ceiling testset shape: {noise_ceiling_testset.shape}")
 
 
 # =============================================================================
-# Load noise ceiling from preprocessed metadata
+# Load ROI indices from preprocessed metadata
 # =============================================================================
 preprocessed_dir = os.path.join(args.berg_dir, 'model_training_datasets', 
-                                'train_dataset-things_fmri')
+                                'train_dataset-things_fmri_1')
 metadata_file = os.path.join(preprocessed_dir, f'fmri_{args.subject}_metadata.npz')
 
-print(f"\nLoading noise ceiling from: {metadata_file}")
+print(f"\nLoading ROI indices from: {metadata_file}")
 preprocessed_metadata = np.load(metadata_file, allow_pickle=True)
-
-noise_ceiling_testset = preprocessed_metadata['noise_ceiling_testset']
-print(f"Noise ceiling testset shape: {noise_ceiling_testset.shape}")
 
 # Get ROI indices from preprocessed metadata
 roi_indices_dict = {}
@@ -226,7 +226,7 @@ plt.tight_layout()
 
 # Create save directory
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-    'train_dataset-things_fmri', f'model-{args.model}', 'encoding_models_accuracy')
+    'train_dataset-things_fmri_1', f'model-{args.model}', 'encoding_models_accuracy')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 

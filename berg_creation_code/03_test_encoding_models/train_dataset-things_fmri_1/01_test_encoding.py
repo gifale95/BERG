@@ -103,14 +103,32 @@ print(f"Correlation range: [{correlation_results.min():.4f}, {correlation_result
 
 
 # =============================================================================
+# Compute percent noise ceiling reached
+# =============================================================================
+# Get noise ceiling from metadata
+noise_ceiling_testset = metadata_fmri['fmri']['noise_ceiling_testset']
+
+# Calculate percent of noise ceiling reached
+# Handle division by zero: set to NaN where noise ceiling is 0
+percent_noise_ceiling = np.zeros(n_voxels)
+valid_mask = noise_ceiling_testset != 0
+percent_noise_ceiling[valid_mask] = (correlation_results[valid_mask] / noise_ceiling_testset[valid_mask]) * 100
+percent_noise_ceiling[~valid_mask] = np.nan
+
+print(f"\nPercent noise ceiling stats (excluding NaN):")
+print(f"  Mean: {np.nanmean(percent_noise_ceiling):.2f}%")
+print(f"  Std: {np.nanstd(percent_noise_ceiling):.2f}%")
+print(f"  Range: [{np.nanmin(percent_noise_ceiling):.2f}%, {np.nanmax(percent_noise_ceiling):.2f}%]")
+
+
+# =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
-
-
 metadata = {
     'fmri': metadata_fmri['fmri'],
     'encoding_model': {
-        'correlation_results': correlation_results
+        'correlation_results': correlation_results,
+        'percent_noise_ceiling': percent_noise_ceiling
     }
 }
 
