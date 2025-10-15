@@ -15,7 +15,7 @@ regression : str
     Type of regression used ('ridge' or 'linear').
 
 Example usage:
-python berg_creation_code/03_test_encoding_models/train_dataset-things_meg/01_test_encoding.py \
+python berg_creation_code/03_test_encoding_models/train_dataset-things_meg1/01_test_encoding.py \
     --subject P1 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --only_cls True \
@@ -53,10 +53,10 @@ for key, val in vars(args).items():
 # Load the responses metadata
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
-    'train_dataset-things_meg')
+    'train_dataset-things_meg1')
 
-metadata_path = os.path.join(data_dir, f'meg_{args.subject}_metadata.npz')
-metadata_meg = np.load(metadata_path, allow_pickle=True)
+metadata_path = os.path.join(data_dir, f'meg_{args.subject}_metadata.npy')
+metadata_meg = np.load(metadata_path, allow_pickle=True).item()
 
 
 # =============================================================================
@@ -73,7 +73,7 @@ print(f"Actual neural test data shape: {neural_test.shape}")
 # Load the in silico neural responses for the test images
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-    'modality-meg', 'train_dataset-things_meg', args.model)
+    'modality-meg', 'train_dataset-things_meg1', args.model)
 
 cls_suffix = 'cls' if args.only_cls else 'all'
 pred_path = os.path.join(results_dir, f'meg_test_pred_{args.regression}_{cls_suffix}_{args.subject}.npy')
@@ -97,17 +97,20 @@ for c in range(neural_test.shape[1]):  # channels
 print(f"Correlation results shape: {correlation_results.shape}")
 
 
+
 # =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
 metadata = {
-    'correlation_results': correlation_results,
-    **{key: metadata_meg[key] for key in metadata_meg.files}
+    'meg': metadata_meg['meg'],
+    'encoding_model': {
+        'correlation_results': correlation_results
+    }
 }
 
 # Save the metadata
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
-    'train_dataset-things_meg', f'model-{args.model}', 'metadata')
+    'train_dataset-things_meg1', f'model-{args.model}', 'metadata')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
@@ -115,3 +118,6 @@ file_name = f'metadata_{args.regression}_{cls_suffix}_{args.subject}.npy'
 np.save(os.path.join(save_dir, file_name), metadata)
 
 print(f"Metadata saved to: {os.path.join(save_dir, file_name)}")
+
+
+

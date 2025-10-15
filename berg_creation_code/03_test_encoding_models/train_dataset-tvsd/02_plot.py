@@ -66,8 +66,8 @@ correlation_results = []
 roi_data = []
 oracle_data = []
 
-metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-    'train_dataset-tvsd_monkey', f'model-{args.model}', 'metadata')
+metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
+    'train_dataset-tvsd', f'model-{args.model}', 'metadata')
 
 for monkey in args.monkey:
     file_name = f'metadata_{args.regression}_{cls_suffix}_{monkey}.npy'
@@ -205,8 +205,8 @@ avg_ax.legend(loc='upper right', fontsize=fontsize)
 
 plt.tight_layout()
 
-save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
-    'train_dataset-tvsd_monkey', f'model-{args.model}', 'encoding_models_accuracy')
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
+    'train_dataset-tvsd', f'model-{args.model}', 'encoding_models_accuracy')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 

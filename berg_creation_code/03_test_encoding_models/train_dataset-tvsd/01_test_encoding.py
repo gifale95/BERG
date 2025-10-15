@@ -14,11 +14,11 @@ berg_dir : str
 
 
 python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/01_test_encoding.py \
-    --monkey monkeyF \
+    --monkey monkeyN \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --only_cls True \
     --regression linear \
-    --model vit_b_32 
+    --model clip.vit_b_32
 
 """
 
@@ -54,7 +54,7 @@ for key, val in vars(args).items():
 data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
 	'train_dataset-tvsd')
 
-metadata_path = os.path.join(data_dir, f'tvsd_{args.monkey}_metadata.npz')
+metadata_path = os.path.join(data_dir, f'tvsd_{args.monkey}_metadata.npy')
 metadata_tvsd = np.load(metadata_path, allow_pickle=True).item()
 
 
@@ -63,7 +63,7 @@ metadata_tvsd = np.load(metadata_path, allow_pickle=True).item()
 # =============================================================================
 neural_test_path = os.path.join(data_dir, f'tvsd_{args.monkey}_split-test_averaged.h5')
 with h5py.File(neural_test_path, 'r') as f:
-	neural_test = f['neural_data_averaged'][:]
+	neural_test = f['neural_data'][:]
 
 print(f"Actual neural test data shape: {neural_test.shape}")
 
