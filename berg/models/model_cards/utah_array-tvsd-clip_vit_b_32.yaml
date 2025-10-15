@@ -7,7 +7,7 @@ modality: utah_array
 training_dataset: tvsd
 species: Macaque 
 stimuli: Images  # e.g., Images, Sounds, Text, etc.
-model_architecture: Clip trained Vision transformer (Clip.ViT-B/32)
+model_type: Clip trained Vision transformer (Clip.ViT-B/32)
 creator: Domenic Bersch
 
 # General description of the model
