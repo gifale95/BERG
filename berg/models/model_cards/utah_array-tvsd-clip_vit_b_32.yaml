@@ -1,0 +1,141 @@
+# Template YAML file for BERG model specification
+# Replace placeholder values with actual model information
+
+# Basic metadata
+model_id: utah_array-tvsd-clip_vit_b_32
+modality: utah_array 
+training_dataset: tvsd
+species: Macaque 
+stimuli: Images  # e.g., Images, Sounds, Text, etc.
+model_architecture: Clip trained Vision transformer (Clip.ViT-B/32)
+creator: Domenic Bersch
+
+# General description of the model
+description: |
+  These encoding models consist of a linear mapping (through linear regression) of CLIP vision transformer
+  (Radford et al., 2021) image features onto intracortical spiking activity. The CLIP ViT-B/32 model extracts
+  features from all 12 transformer layers, using all 50 patch tokens per layer. Prior to
+  mapping onto neural responses, the image features have been downsampled to 250 principal components using
+  principal component analysis. The encoding models were trained on the THINGS Ventral Stream Spiking Dataset
+  (TVSD) (Papale et al., Neuron 2025), simultaneous intracortical recordings from 1,024 electrodes across
+  macaque ventral stream areas (V1, V4, IT) in response to natural images from the THINGS database
+  (Hebart et al., 2019).
+  **Preprocessing**. The neural data preprocessing is described in detail in Papale et al., Neuron 2025. The
+  data were epoched from -100 ms to +199 ms relative to stimulus onset, resulting in 300 time points. Baseline
+  correction was applied using day-specific statistics from the pre-stimulus interval (-100 to 0 ms), and
+  responses were z-score normalized.
+  **Model training partition.** Spiking responses to 22,248 unique images from the THINGS database, each
+  presented once during passive fixation.
+  **Model testing partition.** Spiking responses to 100 unique images, each repeated 30 times. The test
+  predictions are generated for the averaged responses across repetitions.
+  Independent encoding models were trained for each monkey (monkeyN and monkeyF). For computational efficiency,
+  models were trained in 8 electrode chunks (128 electrodes each), with predictions concatenated to generate
+  full responses across all 1,024 electrodes and 300 time points simultaneously.
+
+# Input stimulus information
+input:
+  type: "numpy.ndarray"
+  shape: [batch_size, 3, height, width]
+  description: "The input should be a batch of RGB images."
+  constraints:
+    - "Image values should be integers in range [0, 255]."
+    - "Image dimensions (height, width) should be equal (square)."
+    - "Minimum recommended image size: 224×224 pixels."
+
+# Output information
+output:
+  type: "numpy.ndarray"
+  shape: [batch_size, 300, n_electrodes]
+  description: |
+    The output is a 3D array containing in silico utah-array responses.
+    The second dimension corresponds to the timepoints.
+    The third dimension (n_electrodes) corresponds to the number of electrodes in the selected ROI,
+    which varies by ROI and monkey. For monkeyN, the number of electrodes per ROI is as follows:
+    
+      - V1: 512
+      - V4: 256
+      - IT: 256
+
+  dimensions:
+    - name: "batch_size"
+      description: "Number of stimuli in the batch"
+    - name: "timepoints"
+      description: "Timepoints of recording"
+    - name: "n_voxels"
+      description: "Number of voxels in the selected ROI, varies by ROI and subject."
+
+# Model parameters and their usage
+parameters:
+  # First parameter
+  subject:
+    type: str
+    required: true
+    valid_values: ["N", "F"]
+    example: "N"
+    description: "Monkey ID"
+    function: "get_encoding_model"
+
+  # Selection parameter to define specific outputs (ROI, channels, timepoints, etc.)
+  selection:
+    type: dict
+    description: |
+      Specifies which outputs to include in the model responses.
+      Can include specific electrodes and/or timepoints. If not provided,
+      utah-array responses are generated for all electrodes and time points.
+    required: false
+    function: get_encoding_model
+    properties:
+      roi:
+        type: list[str]
+        description: List of EEG channel names to include in the output
+        valid_values: ["V1", "V4", "IT"]
+        example: ["V1", "IT"]
+      electrodes:
+        type: numpy.ndarray
+        description: |
+          Binary one-hot encoded vector indicating which electrodes to include.
+          Must have exactly the same length as the number of available electrode (1024).
+          Each position set to 1 indicates that timepoint should be included.
+        example: [0, 0, ..., 1, 1, 0]
+      timepoints:
+        type: numpy.ndarray
+        description: |
+          Binary one-hot encoded vector indicating which timepoints to include.
+          Must have exactly the same length as the number of available timepoints (140).
+          Each position set to 1 indicates that timepoint should be included.
+        example: [0, 0, ..., 1, 1, 0]
+
+  stimulus:
+    type: numpy.ndarray
+    required: true
+    shape: [batch_size, 3, height, width]
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
+    example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+    function: "encode"
+
+  device:
+    type: str
+    required: false
+    valid_values: ["cpu", "cuda", "auto"]
+    default: "auto"
+    example: "auto"
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "encode"
+
+# Performance metrics (if needed) and references
+performance:
+  metrics:
+    - name: "metric_name"
+      value: "metric_value"
+      description: "What this metric represents"
+    
+    # Add more metrics as needed
+    - name: "metric_name"
+      value: "metric_value"
+      description: "What this metric represents"
+  
+  plots: "URL_to_performance_plots"  # URL or path to visualizations
+
+# Add References here
+references:
+    - "Citation for your model or dataset"
