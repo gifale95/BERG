@@ -1,9 +1,8 @@
 """Preprocess the THINGS-data MEG dataset (Hebart et al., 2023):
  - split training and test data based on trial type,
- - session-specific z-score normalization using pre-stimulus baseline,
  - create comprehensive metadata mapping.
 
-After preprocessing, the MEG data is saved as:
+The MEG data is saved as:
  - Training data: (Trials x Time points x Sensors)
  - Test data: (Trials x Time points x Sensors) and averaged version
 
@@ -23,7 +22,7 @@ batch_size : int
 
 Usage
 -----
-python '/Users/domenicbersch/Documents/Repositories/NEST/berg_creation_code/01_prepare_data/train_datasset-things_MEG/prepare_meg_things.py' \
+python '/Users/domenicbersch/Documents/Repositories/NEST/berg_creation_code/01_prepare_data/train_datasset-things_meg1/prepare_meg_things.py' \
     --subject P1 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --meg_data_dir '/Volumes/Extreme SSD/Datasets/THINGS/LOCAL 2/ocontier/thingsmri/openneuro/THINGS-data/THINGS-MEG/ds004212/derivatives/preprocessed' \
@@ -34,10 +33,7 @@ Output Files Created (per subject):
 ────────────────────────────────────────────────────────────────
 meg_{subject}_split-train.h5                : (22248, 271, 281) - Non-normalized training data
 meg_{subject}_split-test.h5                 : (2400, 271, 281)  - Non-normalized test data
-meg_{subject}_split-train_normalized.h5     : (22248, 271, 281) - Normalized training data
-meg_{subject}_split-test_normalized.h5      : (2400, 271, 281)  - Normalized test data
 meg_{subject}_split-test_averaged.h5        : (200, 271, 281)   - Non-normalized averaged test data
-meg_{subject}_split-test_averaged_normalized.h5 : (200, 271, 281) - Normalized averaged test data
 meg_{subject}_metadata.npz                  :
 
     Training Data:
@@ -77,13 +73,6 @@ meg_{subject}_metadata.npz                  :
         sensor_regions        : (271,)     - Region labels (Frontal, Central, Parietal, Temporal, Occipital)
         n_sensors             : int        - Number of sensors (271)
     
-    Normalization Parameters:
-        baseline_means        : (12, 271)  - Session-specific baseline means
-        baseline_stds         : (12, 271)  - Session-specific baseline stds
-        baseline_sessions     : (12,)      - Session numbers for baselines
-        baseline_time_range   : (2,)       - Baseline period bounds [start, end]
-        baseline_indices      : (20,)      - Time indices for baseline period
-    
     Subject Metadata:
         subject_id            : str        - Subject identifier
 
@@ -96,7 +85,7 @@ Note: All HDF5 files use the key 'neural_data' regardless of normalization statu
 
 import argparse
 import os
-from utils_meg import split_meg_data, normalize_meg_data, create_meg_metadata
+from utils_meg import split_meg_data, create_meg_metadata
 
 # =============================================================================
 # Input arguments
@@ -118,7 +107,7 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 # Create output directory
-output_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-things_meg')
+output_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-things_meg1')
 os.makedirs(output_dir, exist_ok=True)
 
 # Create input path
@@ -134,12 +123,6 @@ print("")
 print("Splitting training and testing data")
 split_meg_data(meg_file, output_dir, args.subject, args.batch_size)
 
-# =============================================================================
-# Normalize MEG responses
-# =============================================================================
-print("")
-print("Normalizing training and testing data")
-baseline_stats = normalize_meg_data(meg_file, output_dir, args.subject, args.batch_size)
 
 # =============================================================================
 # Create dataset metadata
@@ -149,8 +132,6 @@ print("Creating metadata")
 create_meg_metadata(
     meg_filepath=meg_file,
     output_dir=output_dir,
-    subject_id=args.subject,
-    baseline_stats=baseline_stats
-)
+    subject_id=args.subject)
 
 print("\nPreprocessing complete!")

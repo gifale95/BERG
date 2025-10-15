@@ -187,7 +187,7 @@ print("Model loaded")
 print("Extract the THINGS MEG training and test image features...")
 
 # Load metadata
-data_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-things_meg')
+data_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-things_meg1')
 metadata_path = os.path.join(data_dir, f'meg_{args.subject}_metadata.npz')
 metadata = np.load(metadata_path)
 
@@ -427,7 +427,7 @@ for chunk_idx in range(n_chunks):
     
     # Save individual model
     model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
-        'train_dataset-things_meg', f'model-{args.model}', 'encoding_model_weights')
+        'train_dataset-things_meg1', f'model-{args.model}', 'encoding_model_weights')
     if not os.path.isdir(model_dir):
         os.makedirs(model_dir)
     
@@ -445,7 +445,7 @@ print("\nPredicting test responses...")
 # Load all models and predict
 chunk_predictions = []
 model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
-    'train_dataset-things_meg', f'model-{args.model}', 'encoding_model_weights')
+    'train_dataset-things_meg1', f'model-{args.model}', 'encoding_model_weights')
 
 for chunk_idx in range(n_chunks):
     model_filename = f'{args.regression}_{cls_suffix}_chunk_{chunk_idx}_{args.subject}.pkl'
@@ -485,7 +485,7 @@ assert test_predictions.shape == (200, n_channels, n_times), \
 
 # Save test predictions
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-    'modality-meg', 'train_dataset-things_meg', args.model)
+    'modality-meg', 'train_dataset-things_meg1', args.model)
 if not os.path.isdir(results_dir):
     os.makedirs(results_dir)
 
@@ -538,7 +538,7 @@ preprocessing_weights = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
-    'train_dataset-things_meg', f'model-{args.model}',
+    'train_dataset-things_meg1', f'model-{args.model}',
     'encoding_models_weights')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
