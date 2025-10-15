@@ -31,6 +31,7 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
     ------------
     meg_{subject}_split-train.h5 : (22248, 271, 281)
     meg_{subject}_split-test.h5  : (2400, 271, 281)
+    meg_{subject}_split-test_averaged.h5 : (200, 271, 281)
     """
     print(f"Loading MNE epochs metadata from: {meg_filepath}")
     epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
@@ -54,6 +55,10 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
     # Get data shape info
     n_channels = len(epochs.info['ch_names'])
     n_times = len(epochs.times)
+    
+    # Get test image numbers for averaging
+    test_metadata = metadata[test_mask]
+    test_image_nrs = test_metadata['test_image_nr'].values
     
     # Create output files with pre-allocated datasets
     train_file = os.path.join(output_dir, f'meg_{subject_id}_split-train.h5')
@@ -106,6 +111,27 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
     
     print(f"Training shape: ({n_train}, {n_channels}, {n_times})")
     print(f"Test shape: ({n_test}, {n_channels}, {n_times})")
+    
+    # Process test data averaged
+    print("Processing test data averaged...")
+    
+    # Load the test data we just saved
+    with h5py.File(test_file, 'r') as f:
+        test_data = f['neural_data'][:]  # (2400, 271, 281)
+    
+    unique_test_images = np.unique(test_image_nrs)
+    test_averaged = np.zeros((len(unique_test_images), n_channels, n_times), dtype='float32')
+    
+    for i, img_nr in enumerate(tqdm(unique_test_images, desc="Averaging test data")):
+        mask = test_image_nrs == img_nr
+        test_averaged[i] = np.mean(test_data[mask], axis=0)
+    
+    averaged_test_file = os.path.join(output_dir, f'meg_{subject_id}_split-test_averaged.h5')
+    
+    with h5py.File(averaged_test_file, 'w') as f_out:
+        f_out.create_dataset('neural_data', data=test_averaged)
+    
+    print(f"Averaged test shape: {test_averaged.shape}")
 
 
 # =============================================================================
@@ -315,7 +341,7 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id):
     
     # Save metadata
     metadata_file = os.path.join(output_dir, f'meg_{subject_id}_metadata.npy')
-    np.save(metadata_file, metadata, allow_pickle=True)
+    np.save(metadata_file, metadata_dict, allow_pickle=True)
     
     print(f"Training trials: {len(train_things_img_ids)}")
     print(f"Test trials: {len(test_things_img_ids)}")

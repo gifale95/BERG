@@ -43,6 +43,7 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         test_idx = ALLMAT[2, :]
         train_mask = test_idx == 0
         test_mask = test_idx != 0
+        test_stimuli = test_idx[test_mask]
         
         n_train = np.sum(train_mask)
         n_test = np.sum(test_mask)
@@ -87,6 +88,24 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         print(f"Training shape: ({n_train}, 300, 1024)")
         print(f"Test shape: {test_data.shape}")
         
+        
+        # Process test data averaged
+        print("Processing test data averaged...")
+        unique_test_ids = np.unique(test_stimuli)
+        test_averaged = np.zeros((len(unique_test_ids), test_data.shape[1], test_data.shape[2]), dtype='float32')
+        
+        for i, stimulus_id in enumerate(tqdm(unique_test_ids, desc="Averaging test data")):
+            mask = test_stimuli == stimulus_id
+            test_averaged[i] = np.mean(test_data[mask], axis=0)
+            
+        averaged_test_file = os.path.join(output_dir, f'tvsd_{monkey_id}_split-test_averaged.h5')
+            
+        with h5py.File(averaged_test_file, 'w') as f_out:
+            f_out.create_dataset('neural_data', data=test_averaged)
+        
+        print(f"Training shape: ({n_train}, 300, 1024)")
+        print(f"Test shape: {test_data.shape}")
+        print(f"Averaged test shape: {test_averaged.shape}")
         
 
 # =============================================================================
