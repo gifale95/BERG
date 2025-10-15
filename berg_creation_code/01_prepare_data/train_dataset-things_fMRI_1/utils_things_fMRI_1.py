@@ -176,64 +176,6 @@ def create_averaged_test_data(test_filepath, stimulus_filepath, output_dir, subj
 
 
 # =============================================================================
-# Normalize fMRI data
-# =============================================================================
-
-def normalize_fmri_data(output_dir, subject_id):
-    """Normalize fMRI data using voxel-wise z-scoring based on training data.
-    
-    Parameters
-    ----------
-    output_dir : str
-        Directory containing the split fMRI data files.
-    subject_id : str
-        Subject identifier for file naming.
-        
-    Returns
-    -------
-    dict
-        Dictionary containing 'voxel_mean' and 'voxel_std' arrays.
-    """
-    print("Normalizing fMRI data...")
-    
-    train_file = os.path.join(output_dir, f'fmri_{subject_id}_split-train.h5')
-    test_file = os.path.join(output_dir, f'fmri_{subject_id}_split-test.h5')
-    test_avg_file = os.path.join(output_dir, f'fmri_{subject_id}_split-test_averaged.h5')
-    
-    # Compute normalization parameters from training data
-    print("Computing normalization parameters from training data...")
-    with h5py.File(train_file, 'r') as f:
-        train_data = f['neural_data'][:]
-        voxel_mean = train_data.mean(axis=0)
-        voxel_std = np.maximum(train_data.std(axis=0), 1e-8)
-    
-    # Normalize and save training data
-    train_normalized = (train_data - voxel_mean) / voxel_std
-    with h5py.File(os.path.join(output_dir, f'fmri_{subject_id}_split-train_normalized.h5'), 'w') as f:
-        f.create_dataset('neural_data', data=train_normalized, dtype='float32')
-    
-    # Normalize and save test data
-    with h5py.File(test_file, 'r') as f:
-        test_data = f['neural_data'][:]
-    test_normalized = (test_data - voxel_mean) / voxel_std
-    with h5py.File(os.path.join(output_dir, f'fmri_{subject_id}_split-test_normalized.h5'), 'w') as f:
-        f.create_dataset('neural_data', data=test_normalized, dtype='float32')
-    
-    # Normalize and save averaged test data
-    with h5py.File(test_avg_file, 'r') as f:
-        test_avg_data = f['neural_data'][:]
-    test_avg_normalized = (test_avg_data - voxel_mean) / voxel_std
-    with h5py.File(os.path.join(output_dir, f'fmri_{subject_id}_split-test_averaged_normalized.h5'), 'w') as f:
-        f.create_dataset('neural_data', data=test_avg_normalized, dtype='float32')
-    
-    
-    return {
-        'voxel_mean': voxel_mean,
-        'voxel_std': voxel_std
-    }
-
-
-# =============================================================================
 # Create dataset metadata
 # =============================================================================
 
@@ -279,13 +221,12 @@ def extract_roi_indices(voxel_df):
     return roi_indices
 
 
-def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_id, norm_stats=None):
+def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_id):
     """Create comprehensive metadata file for fMRI dataset.
     
     Generate metadata linking neural responses to stimulus images and voxel properties.
     Includes experimental conditions, voxel anatomical/functional information, and
-    ROI indices for both training and test sets. Optionally includes normalization
-    statistics if provided.
+    ROI indices for both training and test sets.
     
     Parameters
     ----------
@@ -297,10 +238,6 @@ def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_
         Output directory for processed data files.
     subject_id : str
         Subject identifier for file naming.
-    norm_stats : dict, optional
-        Dictionary containing normalization statistics with keys:
-        - 'voxel_mean': (n_voxels,) array of voxel-wise means
-        - 'voxel_std': (n_voxels,) array of voxel-wise standard deviations
         
     Output Files
     ------------
@@ -370,50 +307,49 @@ def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_
     
     # Compile metadata dictionary
     metadata_dict = {
-        # Training data
-        'train_sessions': train_sessions,
-        'train_runs': train_runs,
-        'train_stimuli': train_stimuli,
-        'train_concepts': train_concepts,
-        'train_trial_ids': train_trial_ids,
-        
-        # Test data (individual trials)
-        'test_sessions': test_sessions,
-        'test_runs': test_runs,
-        'test_stimuli': test_stimuli,
-        'test_concepts': test_concepts,
-        'test_trial_ids': test_trial_ids,
-        
-        # Test averaged data
-        'test_avg_stimuli': test_avg_stimuli,
-        'test_avg_concepts': test_avg_concepts,
-        
-        # Voxel information
-        'voxel_coords': voxel_coords,
-        'noise_ceiling_singletrial': noise_ceiling_singletrial,
-        'noise_ceiling_testset': noise_ceiling_testset,
-        'splithalf_corrected': splithalf_corrected,
-        'splithalf_uncorrected': splithalf_uncorrected,
-        'prf_eccentricity': prf_eccentricity,
-        'prf_polarangle': prf_polarangle,
-        'prf_rsquared': prf_rsquared,
-        'prf_size': prf_size,
-        'n_voxels': len(voxel_metadata),
-        
-        # Normaliazion param
-        'voxel_mean': norm_stats['voxel_mean'],
-        'voxel_std': norm_stats['voxel_std'],
-        
-        # Subject metadata
-        'subject_id': subject_id
+        'fmri': {
+            # Training data
+            'train_sessions': train_sessions,
+            'train_runs': train_runs,
+            'train_stimuli': train_stimuli,
+            'train_concepts': train_concepts,
+            'train_trial_ids': train_trial_ids,
+            
+            # Test data (individual trials)
+            'test_sessions': test_sessions,
+            'test_runs': test_runs,
+            'test_stimuli': test_stimuli,
+            'test_concepts': test_concepts,
+            'test_trial_ids': test_trial_ids,
+            
+            # Test averaged data
+            'test_avg_stimuli': test_avg_stimuli,
+            'test_avg_concepts': test_avg_concepts,
+            
+            # Voxel information
+            'voxel_coords': voxel_coords,
+            'prf_eccentricity': prf_eccentricity,
+            'prf_polarangle': prf_polarangle,
+            'prf_rsquared': prf_rsquared,
+            'prf_size': prf_size,
+            'n_voxels': len(voxel_metadata),
+            
+            # Subject metadata
+            'subject_id': subject_id},
+        'encoding_model':{
+            'noise_ceiling_singletrial': noise_ceiling_singletrial,
+            'noise_ceiling_testset': noise_ceiling_testset,
+            'splithalf_corrected': splithalf_corrected,
+            'splithalf_uncorrected': splithalf_uncorrected,
+        }
     }
     
     # Add ROI indices to metadata
     metadata_dict.update(roi_indices)
     
     # Save metadata
-    metadata_file = os.path.join(output_dir, f'fmri_{subject_id}_metadata.npz')
-    np.savez(metadata_file, **metadata_dict)
+    metadata_file = os.path.join(output_dir, f'fmri_{subject_id}_metadata.npy')
+    np.save(metadata_file, metadata_dict, allow_pickle=True)
     
     print(f"Training trials: {len(train_sessions)}")
     print(f"Test trials: {len(test_sessions)}")
