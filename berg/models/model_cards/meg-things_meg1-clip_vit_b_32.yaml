@@ -64,7 +64,7 @@ output:
 # Model parameters and their usage
 parameters:
   subject:
-    type: int
+    type: str
     required: true
     valid_values: ["P1", "P2", "P3", "P4"]
     example: "P1"

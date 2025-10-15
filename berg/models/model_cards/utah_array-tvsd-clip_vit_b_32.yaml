@@ -122,6 +122,14 @@ parameters:
     description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
     function: "encode"
 
+  show_progress:
+    type: bool
+    required: false
+    default: True
+    example: True
+    description: "Whether to show a progress bar during encoding (for large batches)."
+    function: "encode"
+
 # Performance metrics (if needed) and references
 performance:
   metrics:
