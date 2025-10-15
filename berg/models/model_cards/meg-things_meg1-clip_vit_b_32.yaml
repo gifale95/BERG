@@ -1,0 +1,170 @@
+model_id: meg-things_meg1-clip_vit_b_32
+modality: MEG
+training_dataset:  THINGS MEG 1
+species: Human
+stimuli: Images
+model_type: Clip trained Vision transformer (Clip.ViT-B/32)
+creator: Domenic Bersch
+
+# General description of the model
+description: |
+  These encoding models implement a linear mapping from CLIP Vision Transformer (ViT-B/32; Radford et al., 2021)
+  image features to whole-brain magnetoencephalography (MEG) responses from the THINGS-data MEG dataset
+  (Hebart et al., eLife 2023). The CLIP model provides features from all 12 transformer layers, using the full
+  set of patch tokens per layer to represent each stimulus image.
+
+  **Feature preprocessing.** For each image stimulus, CLIP features are concatenated across all spatial tokens
+  and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve
+  as predictors for MEG responses.
+
+  **Neural data.** MEG data were recorded from four human participants (P1–P4) viewing 1,854 object categories
+  from the THINGS database (~22,000 naturalistic object images). Recordings were acquired with 271 sensors at
+  200 Hz, epoched from −100 ms to +1300 ms relative to stimulus onset. The preprocessing pipeline included
+  band-pass filtering (0.1–40 Hz), epoching, baseline correction (−100 to 0 ms), and exclusion of malfunctioning
+  sensors.
+
+  **Model training partition.** Single-trial responses to approximately 22,000 unique naturalistic images were
+  used for training.
+
+  **Model testing partition.** Two hundred test images, each repeated 12 times, were used for evaluation; the
+  target responses correspond to the average MEG activity across repetitions.
+
+  **Training procedure.** Independent linear regression models were fitted separately for each MEG sensor
+  and time point, predicting the sensor’s time-resolved response from the CLIP feature vectors. The resulting model weights provide a
+  spatiotemporal mapping from visual features to MEG sensor activity.
+
+  **Output.** Each trained model predicts time-resolved MEG responses for all 271 sensors (or user-specified
+  subsets) across 281 time samples (−100 to +1300 ms) for each input image.
+
+
+# Input stimulus information
+input:
+  type: "numpy.ndarray"
+  shape: [batch_size, 3, height, width]
+  description: "The input should be a batch of RGB images."
+  constraints:
+    - "Image values should be integers in range [0, 255]."
+    - "Image dimensions (height, width) should be equal (square)."
+    - "Minimum recommended image size: 224×224 pixels."
+
+# Output information
+output:
+  type: "numpy.ndarray"
+  shape: [batch_size, n_sensors, 281]
+  description: "The output is a 3D array containing in silico MEG responses."
+  dimensions:
+    - name: "batch_size"
+      description: "Number of stimuli in the batch."
+    - name: "n_sensors"
+      description: "Number of MEG sensors (up to 271, based on the number of sensors selected)."
+    - name: "n_timepoints"
+      description: "Number of time points in the MEG epoch (up to 281, based on the number of time points selected)."
+
+
+# Model parameters and their usage
+parameters:
+  subject:
+    type: int
+    required: true
+    valid_values: ["P1", "P2", "P3", "P4"]
+    example: "P1"
+    description: "Subject ID from the THINGS MEG1 dataset."
+    function: "get_encoding_model"
+
+  selection:
+    type: dict
+    description: |
+      Specifies which outputs to include in the model responses.
+      Can include specific senors and/or timepoints. If not provided,
+      MEG responses are generated for all MEG sensors and time points.
+    required: false
+    function: get_encoding_model
+    properties:
+      region:
+        type: list[str]
+        description: |
+          List of anatomical sensor-region labels to include. Each region
+          groups multiple MEG sensors located over a specific cortical area:
+            • Central — midline motor/somatosensory sensors  
+            • Frontal — sensors over frontal cortex  
+            • Occipital — sensors over visual cortex  
+            • Parietal — sensors over parietal cortex  
+            • Temporal — sensors over temporal lobes
+          If multiple regions are listed, their sensors are concatenated.
+        valid_values: ['Central', 'Frontal', 'Occipital', 'Parietal', 'Temporal']
+        example: ['Central', 'Frontal', 'Occipital']
+      sensors:
+        type: list[str]
+        description: |
+          List of MEG sensor prefix codes to include. Each code identifies
+          a cluster of planar gradiometers or magnetometers based on
+          hemisphere (L = left, R = right, Z = midline) and cortical region:
+            • MLC / MRC — Central (motor/somatosensory)
+            • MLF / MRF — Frontal
+            • MLO / MRO — Occipital (visual)
+            • MLP / MRP — Parietal
+            • MLT / MRT — Temporal
+            • MZC / MZF / MZO / MZP — Midline (central, frontal, occipital, parietal)
+          Sensors sharing a prefix (e.g., “MLF”) are typically grouped together
+          for regional analyses or dimensionality reduction.
+        valid_values: ['MLC', 'MLF', 'MLO', 'MLP', 'MLT', 'MRC', 'MRF', 'MRO', 'MRP',
+                       'MRT', 'MZC', 'MZF',  'MZO', 'MZP']
+        example: ['MLC', 'MLF', 'MLO']
+
+      sensor_index:
+        type: numpy.ndarray
+        description: |
+          Binary one-hot encoded vector indicating which sensors to include.
+          Must have exactly the same length as the number of available sensors (271).
+          Each position set to 1 indicates that sensor should be included.
+        example: [0, 0, ..., 1, 1, 0]  
+      timepoints:
+        type: numpy.ndarray
+        description: |
+          Binary one-hot encoded vector indicating which timepoints to include.
+          Length must equal the number of time samples (281). Each 1 indicates
+          a selected timepoint.
+        example: [0, 0, ..., 1, 1, 0]  
+
+  stimulus:
+    type: numpy.ndarray
+    required: true
+    shape: [batch_size, 3, height, width]
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
+    example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+    function: "encode"
+
+  device:
+    type: str
+    required: false
+    valid_values: ["cpu", "cuda", "auto"]
+    default: "auto"
+    example: "auto"
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "encode"
+  
+  show_progress:
+    type: bool
+    required: false
+    default: True
+    example: True
+    description: "Whether to show a progress bar during encoding (for large batches)."
+    function: "encode"
+
+# Performance metrics (if needed) and references
+performance:
+  metrics:
+    - name: "metric_name"
+      value: "metric_value"
+      description: "What this metric represents"
+    
+    # Add more metrics as needed
+    - name: "metric_name"
+      value: "metric_value"
+      description: "What this metric represents"
+  
+  plots: "URL_to_performance_plots"  # URL or path to visualizations
+
+# Add References here
+references:
+    - "Citation for your model or dataset"
