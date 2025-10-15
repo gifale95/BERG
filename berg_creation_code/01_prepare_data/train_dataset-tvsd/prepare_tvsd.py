@@ -1,7 +1,6 @@
 """Preprocess the raw neural data from the THINGS Ventral Stream Spiking Dataset
 (Papale et al., Neuron 2025):
  - split training and test data,
- - day-specific z-score normalization using pre-stimulus baseline,
  - create comprehensive metadata mapping.
 After preprocessing, the neural data is saved as:
  - Training data: (Trials x Time points x Electrodes)
@@ -20,7 +19,7 @@ batch_size : int
     Batch size for chunked processing to manage memory usage.
     
     
-python berg_creation_code/01_prepare_data/train_dataset_tvsd_monkey/prepare_tvsd_monkey.py \
+python berg_creation_code/01_prepare_data/train_dataset-tvsd/prepare_tvsd.py \
     --monkey monkeyN \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --tvsd_dir '/Volumes/Extreme SSD/Datasets/TSVD' \
@@ -31,11 +30,10 @@ Output Files Created (per monkey):
 ────────────────────────────────────────────────────────────────
 tvsd_{monkey}_split-train.h5           : (22,248, 300, 1024)
 tvsd_{monkey}_split-test.h5            : (3,000, 300, 1024)
-tvsd_{monkey}_split-train_normalized.h5: (22,248, 300, 1024)
-tvsd_{monkey}_split-test_normalized.h5 : (3,000, 300, 1024)
 tvsd_{monkey}_split-test_averaged.h5   : (100, 300, 1024)
-tvsd_{monkey}_metadata.npz             : 
+tvsd_{monkey}_metadata.npy             : 
 
+    'utah-array':
         train_img_ids        : (22248,) - Training stimulus IDs
         train_img_files      : (22248,) - Training image filenames
         train_img_concepts   : (22248,) - Training object categories
@@ -49,18 +47,13 @@ tvsd_{monkey}_metadata.npz             :
         test_avg_img_ids     : (100,)   - Unique test stimulus IDs
         test_avg_img_files   : (100,)   - Test image filenames (averaged)
         test_avg_img_concepts: (100,)   - Test object categories (averaged)
-        
         times                : (300,)   - Time points (-100 to 199ms)
-        baseline_means       : (n_days, 1024) - Day-specific baseline means
-        baseline_stds        : (n_days, 1024) - Day-specific baseline stds
-        baseline_days        : (n_days,) - Recording days for baselines
-        baseline_time_range  : (2,)     - Baseline period bounds
-        baseline_indices     : (n_baseline,) - Time indices for baseline
         electrode_order      : (1024,)  - Electrode mapping order (0-based)
         roi_assignments      : (1024,)  - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
         roi_labels           : (3,)     - ROI label names ['V1', 'V4', 'IT']
         monkey_id            : str      - Monkey identifier
         n_electrodes         : int      - Number of electrodes (1024)
+    'encoding_model':
         SNR                  : (4, 1024) - Signal-to-noise ratio per day per electrode
         SNR_max              : (1024,)  - Best SNR across all days per electrode
         oracle               : (1024,)  - Noise ceiling estimate per electrode
@@ -71,7 +64,7 @@ Total: 6 files per monkey
 """
 
 import argparse
-from utils import split_tvsd_data, normalize_tvsd_data, create_tvsd_metadata
+from utils import split_tvsd_data, create_tvsd_metadata
 import os
 
 # =============================================================================
@@ -94,7 +87,7 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 # Create output directory
-output_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-tvsd_monkey')
+output_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-tvsd')
 os.makedirs(output_dir, exist_ok=True)
 
 
@@ -114,15 +107,6 @@ print("Splitting training and testing data")
 split_tvsd_data(things_mua_trials, output_dir, args.monkey, args.batch_size)
 
 # =============================================================================
-# Normalize neural responses
-# =============================================================================
-# Apply day-specific z-score normalization using pre-stimulus baseline period
-# (-100 to 0ms) to account for daily recording variations and electrode drift.
-print("")
-print("Normalizing training and testing data")
-baseline_stats = normalize_tvsd_data(things_mua_trials, output_dir, args.monkey, args.batch_size)
-
-# =============================================================================
 # Create dataset metadata
 # =============================================================================
 # Generate comprehensive metadata linking stimulus IDs to image files,
@@ -133,6 +117,5 @@ create_tvsd_metadata(
     original_filepath=things_mua_trials,
     things_mapping_file=things_mapping_file, 
     output_dir=output_dir,
-    monkey_id=args.monkey,
-    baseline_stats=baseline_stats
+    monkey_id=args.monkey
 )

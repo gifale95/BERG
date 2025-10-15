@@ -132,7 +132,7 @@ def load_things_mapping(mat_file_path):
     return train_df, test_df
 
 
-def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, monkey_id, baseline_stats):
+def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, monkey_id):
     """Create comprehensive metadata file for TVSD dataset.
     
     Generate metadata linking neural responses to THINGS database images through
@@ -156,8 +156,6 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         Output directory for processed data files.
     monkey_id : str
         Monkey identifier for file naming.
-    baseline_stats : dict
-        Baseline normalization statistics from normalize_tvsd_data.
         
     Output Files
     ------------
@@ -256,37 +254,34 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         test_avg_img_concepts.append(row['class'])
     
     metadata = {
-        'train_img_ids': train_stimulus_ids,
-        'train_img_files': np.array(train_img_files),
-        'train_img_concepts': np.array(train_img_concepts),
-        'train_days': train_days,
-        'train_sequence_pos': train_sequence_pos,
-        'test_img_ids': test_stimulus_ids,
-        'test_img_files': np.array(test_img_files),
-        'test_img_concepts': np.array(test_img_concepts),
-        'test_days': test_days,
-        'test_sequence_pos': test_sequence_pos,
-        'test_avg_img_ids': unique_test_ids,
-        'test_avg_img_files': np.array(test_avg_img_files),
-        'test_avg_img_concepts': np.array(test_avg_img_concepts),
-        'times': tb,
-        'monkey_id': monkey_id,
-        'n_electrodes': 1024,
-        'baseline_means': baseline_stats['baseline_means'],
-        'baseline_stds': baseline_stats['baseline_stds'], 
-        'baseline_days': baseline_stats['baseline_days'],
-        'baseline_time_range': baseline_stats['baseline_time_range'],
-        'baseline_indices': baseline_stats['baseline_indices'],
-        'electrode_order': electrode_order,
-        'roi_assignments': roi_assignments,
-        'roi_labels': roi_labels,
-        'SNR': SNR,
-        'SNR_max': SNR_max,
-        'oracle': oracle
+        'utah_array': {
+            'train_img_ids': train_stimulus_ids,
+            'train_img_files': np.array(train_img_files),
+            'train_img_concepts': np.array(train_img_concepts),
+            'train_days': train_days,
+            'train_sequence_pos': train_sequence_pos,
+            'test_img_ids': test_stimulus_ids,
+            'test_img_files': np.array(test_img_files),
+            'test_img_concepts': np.array(test_img_concepts),
+            'test_days': test_days,
+            'test_sequence_pos': test_sequence_pos,
+            'test_avg_img_ids': unique_test_ids,
+            'test_avg_img_files': np.array(test_avg_img_files),
+            'test_avg_img_concepts': np.array(test_avg_img_concepts),
+            'times': tb,
+            'monkey_id': monkey_id,
+            'n_electrodes': 1024,
+            'electrode_order': electrode_order,
+            'roi_assignments': roi_assignments,
+            'roi_labels': roi_labels},
+        'encoding_model': {
+            'SNR': SNR,
+            'SNR_max': SNR_max,
+            'oracle': oracle}
     }
     
-    metadata_file = os.path.join(output_dir, f'tvsd_{monkey_id}_metadata.npz')
-    np.savez(metadata_file, **metadata)
+    metadata_file = os.path.join(output_dir, f'tvsd_{monkey_id}_metadata.npy')  # Changed .npz to .npy
+    np.save(metadata_file, metadata, allow_pickle=True)
     
     print(f"Training trials: {len(train_stimulus_ids)}")
     print(f"Test trials: {len(test_stimulus_ids)}")
