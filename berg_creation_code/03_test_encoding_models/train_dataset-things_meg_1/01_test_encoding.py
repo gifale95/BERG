@@ -15,7 +15,7 @@ regression : str
     Type of regression used ('ridge' or 'linear').
 
 Example usage:
-python berg_creation_code/03_test_encoding_models/train_dataset-things_meg1/01_test_encoding.py \
+python berg_creation_code/03_test_encoding_models/train_dataset-things_meg_1/01_test_encoding.py \
     --subject P1 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --only_cls True \
@@ -53,7 +53,7 @@ for key, val in vars(args).items():
 # Load the responses metadata
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
-    'train_dataset-things_meg1')
+    'train_dataset-things_meg_1')
 
 metadata_path = os.path.join(data_dir, f'meg_{args.subject}_metadata.npy')
 metadata_meg = np.load(metadata_path, allow_pickle=True).item()
@@ -73,7 +73,7 @@ print(f"Actual neural test data shape: {neural_test.shape}")
 # Load the in silico neural responses for the test images
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-    'modality-meg', 'train_dataset-things_meg1', args.model)
+    'modality-meg', 'train_dataset-things_meg_1', args.model)
 
 cls_suffix = 'cls' if args.only_cls else 'all'
 pred_path = os.path.join(results_dir, f'meg_test_pred_{args.regression}_{cls_suffix}_{args.subject}.npy')
@@ -110,7 +110,7 @@ metadata = {
 
 # Save the metadata
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
-    'train_dataset-things_meg1', f'model-{args.model}', 'metadata')
+    'train_dataset-things_meg_1', f'model-{args.model}', 'metadata')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 

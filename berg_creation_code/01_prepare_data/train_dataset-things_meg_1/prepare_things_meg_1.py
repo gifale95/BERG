@@ -22,7 +22,7 @@ batch_size : int
 
 Usage
 -----
-python '/Users/domenicbersch/Documents/Repositories/NEST/berg_creation_code/01_prepare_data/train_dataset-things_MEG1/prepare_things_meg1.py' \
+python '/Users/domenicbersch/Documents/Repositories/NEST/berg_creation_code/01_prepare_data/train_dataset-things_meg_1/prepare_things_meg_1.py' \
     --subject P1 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --meg_data_dir '/Volumes/Extreme SSD/Datasets/THINGS/LOCAL 2/ocontier/thingsmri/openneuro/THINGS-data/THINGS-MEG/ds004212/derivatives/preprocessed' \
@@ -107,7 +107,7 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 # Create output directory
-output_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-things_meg1')
+output_dir = os.path.join(args.berg_dir, 'model_training_datasets', 'train_dataset-things_meg_1')
 os.makedirs(output_dir, exist_ok=True)
 
 # Create input path
