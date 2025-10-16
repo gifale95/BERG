@@ -1,9 +1,10 @@
 """Plot the encoding models' prediction accuracy for the test stimuli by ROI.
+Multi-subject version with average plot.
 
 Parameters
 ----------
-subject : str
-    Subject to analyze (e.g., 'sub-01').
+subjects : list of str
+    List of subjects to analyze (e.g., 'sub-01 sub-02 sub-03').
 model : str
     Name of the used encoding model.
 berg_dir : str
@@ -14,11 +15,11 @@ regression : str
     Type of regression used ('ridge' or 'linear').
 
 Example usage:
-python berg_creation_code/03_test_encoding_models/train_dataset-things_fmri/02_plot.py \
-    --subject sub-01 \
+python berg_creation_code/03_test_encoding_models/train_dataset-things_fmri_1/02_plot.py \
+    --subjects sub-01 sub-02 sub-03 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --only_cls True \
-    --regression ridge \
+    --regression linear \
     --model clip.vit_b_32
 """
 
@@ -33,8 +34,8 @@ from matplotlib import pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--subject', type=str, required=True,
-                   help="Subject ID (e.g., 'sub-01')")
+parser.add_argument('--subjects', type=str, nargs='+', required=True,
+                   help="List of subject IDs (e.g., 'sub-01 sub-02 sub-03')")
 parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32", "huze"],
                    help="Selecting which model to use")
 parser.add_argument('--only_cls', required=True, choices=["True", "False"],
@@ -45,42 +46,10 @@ parser.add_argument('--berg_dir', required=True, type=str)
 args = parser.parse_args()
 
 args.only_cls = args.only_cls == "True"
-
 cls_suffix = 'cls' if args.only_cls else 'all'
 
-
-# =============================================================================
-# Load the encoding models' metadata (includes correlation and noise ceiling)
-# =============================================================================
-metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-    'train_dataset-things_fmri_1', f'model-{args.model}', 'metadata')
-
-file_name = f'metadata_{args.regression}_{cls_suffix}_{args.subject}.npy'
-metadata = np.load(os.path.join(metadata_dir, file_name), allow_pickle=True).item()
-
-# Extract data from metadata
-correlation_results = metadata['encoding_model']['correlation_results']
-noise_ceiling_testset = metadata['fmri']['noise_ceiling_testset']
-
-print(f"Correlation results shape: {correlation_results.shape}")
-print(f"Noise ceiling testset shape: {noise_ceiling_testset.shape}")
-
-
-# =============================================================================
-# Load ROI indices from preprocessed metadata
-# =============================================================================
-preprocessed_dir = os.path.join(args.berg_dir, 'model_training_datasets', 
-                                'train_dataset-things_fmri_1')
-metadata_file = os.path.join(preprocessed_dir, f'fmri_{args.subject}_metadata.npz')
-
-print(f"\nLoading ROI indices from: {metadata_file}")
-preprocessed_metadata = np.load(metadata_file, allow_pickle=True)
-
-# Get ROI indices from preprocessed metadata
-roi_indices_dict = {}
-for key in preprocessed_metadata.files:
-    if key.startswith('roi_'):
-        roi_indices_dict[key] = preprocessed_metadata[key]
+n_subjects = len(args.subjects)
+print(f"Processing {n_subjects} subjects: {', '.join(args.subjects)}")
 
 
 # =============================================================================
@@ -98,55 +67,102 @@ roi_groups = {
 
 # Flatten ROI list in order
 all_rois = []
-group_boundaries = [0]  # Track where each group starts
+group_boundaries = [0]
 for group_name, rois in roi_groups.items():
     all_rois.extend(rois)
     group_boundaries.append(len(all_rois))
 
 
 # =============================================================================
-# Compute ROI-averaged correlations and noise ceilings
+# Load data for all subjects
 # =============================================================================
-roi_correlations = []
-roi_noise_ceilings = []
-roi_n_voxels = []
-roi_labels = []
+all_subject_data = {}
 
-print("\n" + "="*80)
-print("ROI-WISE RESULTS")
-print("="*80)
-print(f"{'ROI':<15} {'N Voxels':<12} {'Model Corr':<15} {'Noise Ceiling':<15} {'Gap':<10}")
-print("-"*80)
-
-for roi_name in all_rois:
-    # Get ROI indices from preprocessed metadata
-    roi_key = f'roi_{roi_name}'
+for subject in args.subjects:
+    print(f"\n{'='*80}")
+    print(f"Loading data for {subject}")
+    print('='*80)
     
-    if roi_key in roi_indices_dict:
-        roi_indices = roi_indices_dict[roi_key]
+    # Load encoding model metadata
+    metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
+        'train_dataset-things_fmri_1', f'model-{args.model}', 'metadata')
+    file_name = f'metadata_{args.regression}_{cls_suffix}_{subject}.npy'
+    metadata = np.load(os.path.join(metadata_dir, file_name), allow_pickle=True).item()
+    
+    correlation_results = metadata['encoding_model']['correlation_results']
+    noise_ceiling_testset = metadata['encoding_model']['noise_ceiling_testset']
+    noise_ceiling_correlation = np.sqrt(noise_ceiling_testset / 100)
+    
+    # Load ROI indices from preprocessed metadata
+    preprocessed_dir = os.path.join(args.berg_dir, 'model_training_datasets',
+                                    'train_dataset-things_fmri_1')
+    metadata_file = os.path.join(preprocessed_dir, f'fmri_{subject}_metadata.npy')
+    preprocessed_metadata = np.load(metadata_file, allow_pickle=True).item()
+    
+    roi_indices_dict = {}
+    for key in preprocessed_metadata['fmri'].keys():
+        if key.startswith('roi_'):
+            roi_indices_dict[key] = preprocessed_metadata['fmri'][key]
+    
+    # Compute ROI-averaged correlations and noise ceilings
+    roi_correlations = []
+    roi_noise_ceilings = []
+    roi_n_voxels = []
+    roi_labels = []
+    
+    print(f"{'ROI':<15} {'N Voxels':<12} {'Model Corr':<15} {'Noise Ceiling':<15} {'Gap':<10}")
+    print("-"*80)
+    
+    for roi_name in all_rois:
+        roi_key = f'roi_{roi_name}'
         
-        if len(roi_indices) > 0:
-            # Average correlation and noise ceiling across voxels in this ROI
-            roi_corr = np.mean(correlation_results[roi_indices])
-            roi_nc = np.mean(noise_ceiling_testset[roi_indices])
-            gap = roi_nc - roi_corr
+        if roi_key in roi_indices_dict:
+            roi_indices = roi_indices_dict[roi_key]
             
-            roi_correlations.append(roi_corr)
-            roi_noise_ceilings.append(roi_nc)
-            roi_n_voxels.append(len(roi_indices))
-            roi_labels.append(roi_name)
-            
-            print(f"{roi_name:<15} {len(roi_indices):<12} {roi_corr:<15.4f} {roi_nc:<15.4f} {gap:<10.4f}")
-        else:
-            print(f"Warning: ROI {roi_name} has no voxels")
-    else:
-        print(f"Warning: ROI {roi_name} not found in metadata")
+            if len(roi_indices) > 0:
+                roi_corr = np.mean(correlation_results[roi_indices])
+                roi_nc = np.mean(noise_ceiling_correlation[roi_indices])
+                gap = roi_nc - roi_corr
+                
+                roi_correlations.append(roi_corr)
+                roi_noise_ceilings.append(roi_nc)
+                roi_n_voxels.append(len(roi_indices))
+                roi_labels.append(roi_name)
+                
+                print(f"{roi_name:<15} {len(roi_indices):<12} {roi_corr:<15.4f} {roi_nc:<15.4f} {gap:<10.4f}")
+    
+    # Store data for this subject
+    all_subject_data[subject] = {
+        'roi_correlations': np.array(roi_correlations),
+        'roi_noise_ceilings': np.array(roi_noise_ceilings),
+        'roi_n_voxels': np.array(roi_n_voxels),
+        'roi_labels': roi_labels
+    }
 
-roi_correlations = np.array(roi_correlations)
-roi_noise_ceilings = np.array(roi_noise_ceilings)
 
-print("-"*80)
-print(f"\nNumber of ROIs plotted: {len(roi_labels)}")
+# =============================================================================
+# Compute average across subjects
+# =============================================================================
+print(f"\n{'='*80}")
+print("Computing average across subjects")
+print('='*80)
+
+# Stack correlations and noise ceilings from all subjects
+all_corrs = np.stack([all_subject_data[s]['roi_correlations'] for s in args.subjects])
+all_ncs = np.stack([all_subject_data[s]['roi_noise_ceilings'] for s in args.subjects])
+
+# Compute mean and SEM
+mean_corrs = np.mean(all_corrs, axis=0)
+sem_corrs = np.std(all_corrs, axis=0) / np.sqrt(n_subjects)
+
+mean_ncs = np.mean(all_ncs, axis=0)
+sem_ncs = np.std(all_ncs, axis=0) / np.sqrt(n_subjects)
+
+# Use the first subject's ROI labels (they should all be the same)
+roi_labels = all_subject_data[args.subjects[0]]['roi_labels']
+
+print(f"Mean correlation across subjects: {mean_corrs.mean():.4f}")
+print(f"Mean noise ceiling across subjects: {mean_ncs.mean():.4f}")
 
 
 # =============================================================================
@@ -169,22 +185,79 @@ plt.rcParams["text.usetex"] = False
 
 
 # =============================================================================
-# Create the plot
+# Create the multi-panel plot
 # =============================================================================
-fig, ax = plt.subplots(1, 1, figsize=(18, 7))
+n_rows = n_subjects + 1  # Individual subjects + average
+fig, axes = plt.subplots(n_rows, 1, figsize=(18, 7 * n_rows))
+
+# Ensure axes is always a list
+if n_rows == 1:
+    axes = [axes]
 
 x_positions = np.arange(len(roi_labels))
 
-# Plot bars for model correlations
-bars = ax.bar(x_positions, roi_correlations, color='#3498db', alpha=0.8, 
-              label='Model Correlation', width=0.7)
 
-# Plot noise ceiling as horizontal lines per ROI
-for i, (x, nc) in enumerate(zip(x_positions, roi_noise_ceilings)):
+# Plot individual subjects
+for idx, subject in enumerate(args.subjects):
+    ax = axes[idx]
+    data = all_subject_data[subject]
+    
+    # Plot bars for model correlations
+    bars = ax.bar(x_positions, data['roi_correlations'], color='#3498db', alpha=0.8,
+                  label='Model Correlation', width=0.7)
+    
+    # Plot noise ceiling as horizontal lines per ROI
+    for i, (x, nc) in enumerate(zip(x_positions, data['roi_noise_ceilings'])):
+        ax.plot([x-0.35, x+0.35], [nc, nc], color='#e74c3c', linewidth=3, alpha=0.8)
+    
+    # Add one legend entry for noise ceiling
+    ax.plot([], [], color='#e74c3c', linewidth=3, alpha=0.8, label='Noise Ceiling (testset)')
+    
+    # Add vertical lines to separate groups
+    current_pos = 0
+    for i, group_name in enumerate(roi_groups.keys()):
+        group_size = len(roi_groups[group_name])
+        
+        # Add group label
+        group_center = current_pos + group_size / 2 - 0.5
+        ax.text(group_center, -0.15, group_name, ha='center', va='top',
+                fontsize=fontsize, fontweight='bold', transform=ax.get_xaxis_transform())
+        
+        # Add separator line (except after last group)
+        if i < len(roi_groups) - 1:
+            separator_pos = current_pos + group_size - 0.5
+            ax.axvline(separator_pos, color='black', linewidth=1.5, alpha=0.3, linestyle='--')
+        
+        current_pos += group_size
+    
+    # Axis labels and formatting
+    ax.set_ylabel("Pearson's r", fontsize=fontsize+2, fontweight='bold')
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(roi_labels, rotation=45, ha='right')
+    ax.set_xlim(-0.5, len(roi_labels) - 0.5)
+    ax.set_title(f'{subject} - Encoding Accuracy by ROI',
+                 fontsize=fontsize+4, fontweight='bold', pad=20)
+    ax.legend(loc='upper right', fontsize=fontsize)
+    ax.axhline(0, color='black', linewidth=0.8, alpha=0.3)
+
+
+# Plot average across subjects
+ax = axes[-1]
+
+# Plot bars with error bars for model correlations
+bars = ax.bar(x_positions, mean_corrs, yerr=sem_corrs, color='#3498db', alpha=0.8,
+              label='Model Correlation (mean ± SEM)', width=0.7, capsize=3, 
+              error_kw={'linewidth': 1.5, 'alpha': 0.7})
+
+# Plot noise ceiling with error bars as error regions
+for i, (x, nc, sem) in enumerate(zip(x_positions, mean_ncs, sem_ncs)):
+    # Central line
     ax.plot([x-0.35, x+0.35], [nc, nc], color='#e74c3c', linewidth=3, alpha=0.8)
+    # Error region
+    ax.fill_between([x-0.35, x+0.35], nc-sem, nc+sem, color='#e74c3c', alpha=0.2)
 
-# Add one legend entry for noise ceiling
-ax.plot([], [], color='#e74c3c', linewidth=3, alpha=0.8, label='Noise Ceiling (testset)')
+# Add legend entry for noise ceiling
+ax.plot([], [], color='#e74c3c', linewidth=3, alpha=0.8, label='Noise Ceiling (mean ± SEM)')
 
 # Add vertical lines to separate groups
 current_pos = 0
@@ -193,7 +266,7 @@ for i, group_name in enumerate(roi_groups.keys()):
     
     # Add group label
     group_center = current_pos + group_size / 2 - 0.5
-    ax.text(group_center, -0.15, group_name, ha='center', va='top', 
+    ax.text(group_center, -0.15, group_name, ha='center', va='top',
             fontsize=fontsize, fontweight='bold', transform=ax.get_xaxis_transform())
     
     # Add separator line (except after last group)
@@ -203,35 +276,30 @@ for i, group_name in enumerate(roi_groups.keys()):
     
     current_pos += group_size
 
-# Axis labels and limits
+# Axis labels and formatting
 ax.set_xlabel('ROI', fontsize=fontsize+2, fontweight='bold', labelpad=40)
 ax.set_ylabel("Pearson's r", fontsize=fontsize+2, fontweight='bold')
-ax.set_ylim(bottom=0, top=1.0)
-ax.set_yticks(np.arange(0, 1.1, 0.1))
-
-# X-axis ROI labels
 ax.set_xticks(x_positions)
 ax.set_xticklabels(roi_labels, rotation=45, ha='right')
 ax.set_xlim(-0.5, len(roi_labels) - 0.5)
-
-# Title and legend
-ax.set_title(f'{args.subject} - Encoding Accuracy by ROI', 
+ax.set_title(f'Average Across Subjects (N={n_subjects}) - Encoding Accuracy by ROI',
              fontsize=fontsize+4, fontweight='bold', pad=20)
 ax.legend(loc='upper right', fontsize=fontsize)
-
-# Add horizontal line at 0
 ax.axhline(0, color='black', linewidth=0.8, alpha=0.3)
 
 plt.tight_layout()
 
-# Create save directory
+
+# =============================================================================
+# Save the figure
+# =============================================================================
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
     'train_dataset-things_fmri_1', f'model-{args.model}', 'encoding_models_accuracy')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-# Save the figure
-save_name = f'encoding_accuracy_roi_model-{args.regression}_{cls_suffix}_{args.model}_{args.subject}'
+subject_str = '_'.join(args.subjects)
+save_name = f'encoding_accuracy_roi_multisubject_{args.regression}_{cls_suffix}_{args.model}_{subject_str}'
 fig.savefig(os.path.join(save_dir, f'{save_name}.png'), dpi=300, bbox_inches='tight', format='png')
 fig.savefig(os.path.join(save_dir, f'{save_name}.jpg'), dpi=300, bbox_inches='tight', format='jpeg')
 
@@ -242,16 +310,15 @@ print(f"\nPlot saved to: {save_dir}/{save_name}.png and {save_dir}/{save_name}.j
 # Print summary statistics
 # =============================================================================
 print("\n" + "="*80)
-print("SUMMARY STATISTICS BY GROUP")
+print("SUMMARY STATISTICS - AVERAGE ACROSS SUBJECTS")
 print("="*80)
 
 for i, group_name in enumerate(roi_groups.keys()):
-    group_rois = roi_groups[group_name]
     group_start = group_boundaries[i]
     group_end = group_boundaries[i+1]
     
-    group_corrs = roi_correlations[group_start:group_end]
-    group_ncs = roi_noise_ceilings[group_start:group_end]
+    group_corrs = mean_corrs[group_start:group_end]
+    group_ncs = mean_ncs[group_start:group_end]
     
     print(f"\n{group_name}:")
     print(f"  Mean correlation: {group_corrs.mean():.4f} ± {group_corrs.std():.4f}")
@@ -260,7 +327,7 @@ for i, group_name in enumerate(roi_groups.keys()):
 
 print(f"\n{'='*80}")
 print(f"Overall:")
-print(f"  Mean correlation: {roi_correlations.mean():.4f} ± {roi_correlations.std():.4f}")
-print(f"  Mean noise ceiling: {roi_noise_ceilings.mean():.4f} ± {roi_noise_ceilings.std():.4f}")
-print(f"  Gap to ceiling: {(roi_noise_ceilings.mean() - roi_correlations.mean()):.4f}")
+print(f"  Mean correlation: {mean_corrs.mean():.4f} ± {mean_corrs.std():.4f}")
+print(f"  Mean noise ceiling: {mean_ncs.mean():.4f} ± {mean_ncs.std():.4f}")
+print(f"  Gap to ceiling: {(mean_ncs.mean() - mean_corrs.mean()):.4f}")
 print("="*80)

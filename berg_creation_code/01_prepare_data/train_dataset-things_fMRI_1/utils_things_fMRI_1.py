@@ -345,7 +345,7 @@ def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_
     }
     
     # Add ROI indices to metadata
-    metadata_dict.update(roi_indices)
+    metadata_dict['fmri'].update(roi_indices)
     
     # Save metadata
     metadata_file = os.path.join(output_dir, f'fmri_{subject_id}_metadata.npy')
