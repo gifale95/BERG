@@ -99,18 +99,12 @@ parameters:
           Region of Interest (ROI) for voxel prediction.
           Early visual areas (V1-V3), category-selective regions (EBA, FFA, etc.),
           or composite regions (lateral, ventral).
-        valid_values: ["V1", "V2", "V3", "hV4", "EBA", "FBA-2", "OFA", "FFA-1", "FFA-2", "PPA",
-        "RSC", "OPA", "OWFA", "VWFA-1", "VWFA-2", "mfs-words", "early",
-        "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral"]
+        valid_values: ["V1", "V2", "V3", "hV4", "EBA", "FBA-2", "OFA", "FFA-1",
+          "FFA-2", "PPA", "RSC", "OPA", "OWFA", "VWFA-1", "VWFA-2", "mfs-words",
+          "early", "midventral", "midlateral", "midparietal", "parietal",
+          "lateral", "ventral"]
         example: "V1"
-
-  stimulus:
-    type: numpy.ndarray
-    required: true
-    shape: [batch_size, 3, height, width]
-    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
-    example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
-    function: "encode"
+    function: "get_encoding_model"
 
   device:
     type: str
@@ -119,6 +113,20 @@ parameters:
     default: "auto"
     example: "auto"
     description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "get_encoding_model"
+
+  model:
+    type: BaseModelInterface
+    required: true
+    description: An instantiated and loaded encoding model.
+    function: "encode"
+
+  stimulus:
+    type: numpy.ndarray
+    required: true
+    shape: [batch_size, 3, height, width]
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
+    example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
     function: "encode"
 
 # Performance metrics and references

@@ -67,13 +67,11 @@ For detailed instructions and folder structure, see the [documentation](https://
 
 The following table shows the encoding models currently available in BERG. For more details on these models, please refer to the [documentation][model_cards].
 
-| Model ID | Training dataset | Acquisition device | Species | Stimuli |
-|----------|------------------|--------------------|---------|---------|
-| [fmri-nsd_fsaverage-huze][fmri-nsd_fsaverage-huze] | [NSD (surface space)][allen] | fMRI | Human | Images |
-| [fmri-nsd_fsaverage-vit_b_32][fmri-nsd_fsaverage-vit_b_32] | [NSD (surface space)][allen] | fMRI | Human | Images |
-| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD (volume space)][allen] | fMRI | Human | Images |
-| [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | EEG | Human | Images |
- 
+| Model ID | Training dataset | Acquisition device | Species | Stimuli | Encoding accuracy |
+|----------|------------------|--------------------|---------|---------|-------------------|
+| [fmri-nsd_fsaverage-huze][fmri-nsd_fsaverage-huze] | [NSD (surface space)][allen] | fMRI | Human | Images | [Accuracy plots][acc-fmri-nsd_fsaverage-huze] |
+| [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD (volume space)][allen] | fMRI | Human | Images | [Accuracy plots][acc-fmri-nsd-fwrf] |
+| [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | EEG | Human | Images | [Accuracy plots][acc-eeg-things_eeg_2-vit_b_32] |
 
 
 ### ✨ BERG functions
@@ -201,3 +199,8 @@ If you use the Brain Encoding Response Generator, please cite:
 [test_encoding]: https://github.com/gifale95/BERG/tree/main/berg_creation_code/03_test_encoding_models
 [metadata]: https://github.com/gifale95/BERG/tree/main/berg_creation_code/03_create_metadata
 [synthesize]: https://github.com/gifale95/BERG/tree/main/berg_creation_code/04_synthesize_neural_responses
+
+
+[acc-eeg-things_eeg_2-vit_b_32]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy/
+[acc-fmri-nsd-fwrf]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy/
+[acc-fmri-nsd_fsaverage-huze]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_accuracy/
