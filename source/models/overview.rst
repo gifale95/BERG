@@ -94,10 +94,11 @@ Encoding models trained on neural responses recorded with Electroencephalography
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 55 20 10 10
+   :widths: 3 60 40 20 10 10 10
    :class: wrap-table
 
-   * - Model ID
+   * - Best model
+     - Model ID
      - Description
      - Training dataset
      - Species
