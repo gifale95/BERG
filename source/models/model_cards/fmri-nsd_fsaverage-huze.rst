@@ -130,6 +130,13 @@ This function loads the encoding model.
        | **rh_vertices**
        |     **Type:** numpy.ndarray
        |     **Description:** Binary one-hot encoded vector with ones indicating the right hemisphere (RH) vertices for which the in silico fMRI responses are generated. This vector must have exactly the same length as the number of RH fsaverage vertices (163,842). The vertices from the one-hot encoded vector are only selected if the "roi" key is not provided, or has value None.
+   * - **device**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Valid Values:** 'cpu', 'cuda', 'auto'
+       | **Example:** 'auto'
+
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -140,17 +147,15 @@ This function generates in silico neural responses using the encoding model prev
    :widths: 20 80
    :header-rows: 0
 
+   * - **model**
+     - | **Type:** BaseModelInterface
+       | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
    * - **stimulus**
      - | **Type:** numpy.ndarray
        | **Required:** Yes
        | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
        | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
-   * - **device**
-     - | **Type:** str
-       | **Required:** No
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
 
 Performance
 ----------

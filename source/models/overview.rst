@@ -45,7 +45,7 @@ You can get detailed information about any model using:
 Available models
 ----------------------
 
-Following is a list of all available models, grouped by ``modality`` and ``dataset``.
+Following is a list of all available models, grouped by ``modality`` and ``dataset``. The ✅ icon indicates the best model for each dataset and modality.
 
 modality-fmri
 ~~~~~~~~~~
@@ -57,26 +57,34 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
    :widths: 20 55 20 10 10
    :class: wrap-table
 
-   * - Model ID
+   * - Best model
+     - Model ID
      - Description
      - Training dataset
      - Species
      - Stimuli
-   * - :doc:`model_cards/fmri-nsd_fsaverage-huze`
+     - Encoding accuracy
+   * - ✅
+     - :doc:`model_cards/fmri-nsd_fsaverage-huze`
      - Mapping of vision transformer image features onto fMRI responses.
      - Natural Scenes Dataset (surface space)
      - Human
      - Images
-   * - :doc:`model_cards/fmri-nsd_fsaverage-vit_b_32`
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_accuracy/>`_
+   * - 
+     - :doc:`model_cards/fmri-nsd_fsaverage-vit_b_32`
      - Linear mapping of vision transformer image features onto fMRI responses.
      - Natural Scenes Dataset(surface space)
      - Human
      - Images
-   * - :doc:`model_cards/fmri-nsd-fwrf`
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-vit_b_32/encoding_models_accuracy/>`_
+   * - ✅
+     - :doc:`model_cards/fmri-nsd-fwrf`
      - Feature-weighted receptive fields, convolutional neural networks trained end-to-end to predict fMRI responses from input images.
      - Natural Scenes Dataset (volume space)
      - Human
      - Images
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy/>`_
 
 
 modality-eeg
@@ -94,11 +102,14 @@ Encoding models trained on neural responses recorded with Electroencephalography
      - Training dataset
      - Species
      - Stimuli
-   * - :doc:`model_cards/eeg-things_eeg_2-vit_b_32`
+     - Encoding accuracy
+   * - ✅
+     - :doc:`model_cards/eeg-things_eeg_2-vit_b_32`
      - Linear mapping of vision transformer image features onto EEG responses.
      - THINGS EEG2
      - Human
      - Images
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy/>`_
 
 .. raw:: html
 
