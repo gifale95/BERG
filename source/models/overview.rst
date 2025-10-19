@@ -54,7 +54,7 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
 
 .. list-table::
    :header-rows: 1
-   :widths: 20 55 20 10 10
+   :widths: 3 60 40 20 10 10 10
    :class: wrap-table
 
    * - Best model
