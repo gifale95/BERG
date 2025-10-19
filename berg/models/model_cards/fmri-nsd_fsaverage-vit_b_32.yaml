@@ -102,13 +102,12 @@ parameters:
           The vertices from the one-hot encoded vector are only selected if the "roi" key
           is not provided, or has value None.
         example_vertices: [0, 0, ..., 1, 1, 0]
+    function: "get_encoding_model"
 
-  stimulus:
-    type: numpy.ndarray
+  model:
+    type: BaseModelInterface
     required: true
-    shape: [batch_size, 3, height, width]
-    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
-    example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+    description: An instantiated and loaded encoding model.
     function: "encode"
 
   device:
@@ -118,6 +117,14 @@ parameters:
     default: "auto"
     example: "auto"
     description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "get_encoding_model"
+
+  stimulus:
+    type: numpy.ndarray
+    required: true
+    shape: [batch_size, 3, height, width]
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
+    example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
     function: "encode"
 
 # Performance metrics and references
