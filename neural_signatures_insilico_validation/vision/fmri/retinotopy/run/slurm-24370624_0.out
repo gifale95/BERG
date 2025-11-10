@@ -1,0 +1,15 @@
+SLURM_ARRAY_JOB_ID: 0
+GRID_RES: 40
+PROBE_SIGMA: 0.5
+BG_VALUE: 0.5
+>>> Create retinotopy stimuli <<<
+
+Input parameters:
+FIELD_SIZE       16.8
+GRID_RES         40
+PROBE_SIGMA      0.5
+IMG_SIZE         224
+BG_VALUE         0.5
+nsd_dir          /scratch/giffordale95/datasets/natural-scenes-dataset
+berg_dir         /scratch/giffordale95/projects/brain-encoding-response-generator
+  0%|          | 0/515 [00:00<?, ?it/s]

@@ -1,5 +1,7 @@
-"""Generate the retinotopic mapping stimuli used to define polar angle and
-eccentricity maps.
+"""Create the retinotopic mapping stimuli used to define polar angle and
+eccentricity maps. One set of retinotopic mapping stimuli is created for each
+of NSD's 515 shared images that all subjects viewed for 3 times during the NSD
+experiment. These images were also used to test the encoding models.
 
 Parameters
 ----------
@@ -18,12 +20,10 @@ IMG_SIZE : int
     size of the stimulus fed into the encoding model.
 BG_VALUE : float
     The background (baseline) pixel intensity value of the probe image.
-N_SPLITS : int
-    Number of splits for reliability estimation. The probe set is randomly
-    split into this many subsets, and separate retinotopy estimates are
-    computed for each.
-project_dir : str
-    Directory of the project folder.
+nsd_dir : str
+    Directory of the NSD.
+berg_dir : str
+    Directory of the BERG.
 
 """
 
@@ -32,7 +32,10 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
+import h5py
 from PIL import Image
+from berg import BERG
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--FIELD_SIZE', type=float, default=16.8)
@@ -40,14 +43,36 @@ parser.add_argument('--GRID_RES', type=int, default=40)
 parser.add_argument('--PROBE_SIGMA', type=float, default=0.5) # !!! Try smaller/larger values!
 parser.add_argument('--IMG_SIZE', type=int, default=224)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)
-parser.add_argument('--N_SPLITS', type=int, default=2)
-parser.add_argument('--project_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
+parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Create retinotopy stimuli <<<')
 print('\nInput parameters:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
+
+
+# =============================================================================
+# Get the encoding model image test image condition number
+# =============================================================================
+# Initialize BERG
+berg = BERG(berg_dir=args.berg_dir)
+
+# Get the metadata for the NSD huze encoding model
+metadata = berg.get_model_metadata('fmri-nsd_fsaverage-huze', subject=1)
+
+# Get the test image condition number
+test_img_cond = metadata['encoding_models']['test_img_num']
+
+
+# =============================================================================
+# Access the NSD stimulus images
+# =============================================================================
+sf = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli', 'stimuli', 'nsd',
+    'nsd_stimuli.hdf5'), 'r')
+
+sdataset = sf.get('imgBrick')
 
 
 # =============================================================================
@@ -60,17 +85,8 @@ n_probes = len(centers)
 
 
 # =============================================================================
-# Generate probe images (RGB Gaussian crops from a natural image)
+# Image generation functions
 # =============================================================================
-# !!! Convert images to RGB, and replace white probes with naturalistic stimuli.
-
-# --- INPUT: naturalistic image ---
-# Replace this path with your own image (RGB)
-image_path = "example_natural_image.jpg"
-img_rgb = Image.open(image_path).convert("RGB")
-img_rgb = img_rgb.resize((args.IMG_SIZE, args.IMG_SIZE))
-img_rgb = np.asarray(img_rgb).astype(np.float32) / 255.0  # normalize to [0,1]
-
 # Define Gaussian mask generator
 def make_gaussian_mask(center, sigma_deg=args.PROBE_SIGMA,
     field_size=args.FIELD_SIZE, img_size=args.IMG_SIZE):
@@ -85,7 +101,7 @@ def make_gaussian_mask(center, sigma_deg=args.PROBE_SIGMA,
     return mask.astype(np.float32)
 
 # Define probe generator using Gaussian-masked image patches
-def make_gaussian_crop(center):
+def make_gaussian_crop(center, img_rgb):
     """
     Create an RGB probe by applying a Gaussian transparency mask centered at
     the specified visual field coordinates.
@@ -97,23 +113,48 @@ def make_gaussian_crop(center):
     probe_rgb = img_rgb * mask + bg * (1 - mask)
     return probe_rgb.astype(np.float32)
 
-# Generate all probes
-probes = np.stack([make_gaussian_crop(c) for c in centers], axis=0)  # shape [n_probes, H, W, 3]
-print(f"Generated {probes.shape[0]} RGB probes of size {args.IMG_SIZE}×{args.IMG_SIZE}")
+
+# =============================================================================
+# Generate the probe images (RGB Gaussian crops from natural images)
+# =============================================================================
+# Loop across the 515 NSD test images
+for i, img in enumerate(tqdm(test_img_cond)):
+
+    # Create the saving directory
+    save_dir = os.path.join(args.berg_dir,
+        'neural_signatures_insilico_validation', 'vision', 'fmri',
+        'retinotopy', 'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+
+        str(args.PROBE_SIGMA)+'_BG_VALUE-'+str(args.BG_VALUE), 'stimuli',
+        'test_img-'+str(i).zfill(4))
+    if os.path.isdir(save_dir) == False:
+        os.makedirs(save_dir)
+
+    # Load the image
+    img_rgb = Image.fromarray(sdataset[img]).convert('RGB')
+    img_rgb = img_rgb.resize((args.IMG_SIZE, args.IMG_SIZE))
+    img_rgb = np.asarray(img_rgb).astype(np.float32) / 255.0  # normalize to [0,1]
+
+    # Loop across all probe centers
+    for c, center in enumerate(centers):
+
+        # Create the probe image
+        probe_img = make_gaussian_crop(center, img_rgb)
+
+        # Save the probe image
+        probe_fname = 'center-' + str(c).zfill(5)+'.npy'
+        np.save(os.path.join(save_dir, probe_fname), probe_img)
+        del probe_img
+
+    del img_rgb
 
 
 # =============================================================================
-# Optional: visualize a few probes # !!!
+# Visualize a few probes
 # =============================================================================
-plt.figure(figsize=(12, 3))
-for i in range(5):
-    plt.subplot(1, 5, i+1)
-    plt.imshow(probes[i])
-    plt.axis('off')
-plt.suptitle("Example Gaussian crops from natural image")
-plt.show()
-
-
-# =============================================================================
-# Save the probe stimuli # !!!
-# =============================================================================
+# plt.figure(figsize=(12, 3))
+# for i in range(5):
+#     plt.subplot(1, 5, i+1)
+#     plt.imshow(probes[i])
+#     plt.axis('off')
+# plt.suptitle("Example Gaussian crops from natural image")
+# plt.show()
