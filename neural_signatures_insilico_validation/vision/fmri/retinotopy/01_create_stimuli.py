@@ -40,7 +40,7 @@ from tqdm import tqdm
 parser = argparse.ArgumentParser()
 parser.add_argument('--FIELD_SIZE', type=float, default=16.8)
 parser.add_argument('--GRID_RES', type=int, default=40)
-parser.add_argument('--PROBE_SIGMA', type=float, default=0.5) # !!! Try smaller/larger values!
+parser.add_argument('--PROBE_SIGMA', type=float, default=0.5)
 parser.add_argument('--IMG_SIZE', type=int, default=224)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)
 parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
