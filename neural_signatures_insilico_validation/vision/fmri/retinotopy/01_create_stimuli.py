@@ -88,7 +88,7 @@ n_probes = len(centers)
 # Image generation functions
 # =============================================================================
 # Define Gaussian mask generator
-def make_gaussian_mask(center, sigma_deg=args.PROBE_SIGMA,
+def make_gaussian_masks(center, sigma_deg=args.PROBE_SIGMA,
     field_size=args.FIELD_SIZE, img_size=args.IMG_SIZE):
     """Return a 2D Gaussian mask centered at (x_deg, y_deg) in visual
     coordinates."""
@@ -101,13 +101,11 @@ def make_gaussian_mask(center, sigma_deg=args.PROBE_SIGMA,
     return mask.astype(np.float32)
 
 # Define probe generator using Gaussian-masked image patches
-def make_gaussian_crop(center, img_rgb):
+def make_gaussian_crop(mask, img_rgb):
     """
     Create an RGB probe by applying a Gaussian transparency mask centered at
     the specified visual field coordinates.
     """
-    mask = make_gaussian_mask(center)
-    mask = mask[..., None]  # shape [H,W,1]
     # Blend natural image with background color
     bg = np.ones_like(img_rgb) * args.BG_VALUE  # neutral background
     probe_rgb = img_rgb * mask + bg * (1 - mask)
@@ -117,6 +115,10 @@ def make_gaussian_crop(center, img_rgb):
 # =============================================================================
 # Generate the probe images (RGB Gaussian crops from natural images)
 # =============================================================================
+# Make the Gaussian masks
+masks = np.array([make_gaussian_masks(center) for center in centers])
+masks = masks[..., None]  # shape [n_probes, H, W, 1]
+
 # Loop across the 515 NSD test images
 for i, img in enumerate(tqdm(test_img_cond)):
 
@@ -134,15 +136,16 @@ for i, img in enumerate(tqdm(test_img_cond)):
     img_rgb = img_rgb.resize((args.IMG_SIZE, args.IMG_SIZE))
     img_rgb = np.asarray(img_rgb).astype(np.float32) / 255.0  # normalize to [0,1]
 
-    # Loop across all probe centers
-    for c, center in enumerate(centers):
+    # Loop across all masks
+    for m, mask in enumerate(tqdm(masks)):
 
         # Create the probe image
-        probe_img = make_gaussian_crop(center, img_rgb)
+        probe_img = make_gaussian_crop(mask, img_rgb)
+        probe_img = Image.fromarray((probe_img * 255).astype(np.uint8))
 
         # Save the probe image
-        probe_fname = 'center-' + str(c).zfill(5)+'.npy'
-        np.save(os.path.join(save_dir, probe_fname), probe_img)
+        probe_fname = 'mask-' + str(m).zfill(5)+'.png'
+        probe_img.save(os.path.join(save_dir, probe_fname))
         del probe_img
 
     del img_rgb
