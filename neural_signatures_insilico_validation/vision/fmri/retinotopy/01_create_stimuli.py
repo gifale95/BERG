@@ -137,7 +137,7 @@ for i, img in enumerate(tqdm(test_img_cond)):
     img_rgb = np.asarray(img_rgb).astype(np.float32) / 255.0  # normalize to [0,1]
 
     # Loop across all masks
-    for m, mask in enumerate(tqdm(masks)):
+    for m, mask in enumerate(masks):
 
         # Create the probe image
         probe_img = make_gaussian_crop(mask, img_rgb)
