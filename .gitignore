@@ -166,3 +166,6 @@ cython_debug/
 debug.ipynb
 debug_1.ipynb
 debug_2.ipynb
+
+# SLURM .out files
+*.out
