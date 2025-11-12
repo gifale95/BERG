@@ -25,9 +25,6 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 
-# =============================================================================
-# Input arguments
-# =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--image_background', type=str, default='artificial')

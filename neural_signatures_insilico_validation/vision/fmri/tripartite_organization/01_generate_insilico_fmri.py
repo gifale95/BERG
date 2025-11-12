@@ -25,10 +25,6 @@ from tqdm import tqdm
 import gc
 import torch
 
-
-# =============================================================================
-# Input arguments
-# =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
