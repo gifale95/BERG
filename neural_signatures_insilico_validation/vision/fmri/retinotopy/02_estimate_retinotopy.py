@@ -1,6 +1,6 @@
 """Use BERG to generate the in silico fMRI responses to the retinotopic mapping
 stimuli. Then, for each vertex estimate the retinotopic maps (polar angle and
-eccentricity) from the in silico fMRI responses using a max-response method.
+eccentricity) from the in silico fMRI responses.
 
 Parameters
 ----------
