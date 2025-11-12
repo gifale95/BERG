@@ -114,7 +114,7 @@ This function loads the encoding model.
        |     **Type:** str
        |     **Description:** The region-of-interest (ROI) for which the in silico fMRI responses (of both
        |     hemispherese) are generated.
-       |     **Valid values:** "V1d", "V1v", "V2d", "V2v", "V3d", "V3v", "hV4", "OFA", "FFA-1", "FFA-2", "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words", "OPA", "PPA", "RSC", "EBA", "FBA-1", "FBA-2", "mTL-bodies", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral"
+       |     **Valid values:** "V1d", "V1v", "V2d", "V2v", "V3d", "V3v", "hV4", "OFA", "FFA-1", "FFA-2", "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words", "OPA", "PPA", "RSC", "EBA", "FBA-1", "FBA-2", "mTL-bodies", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral", "nsdgeneral"
        | 
        | **lh_vertices**
        |     **Type:** numpy.ndarray

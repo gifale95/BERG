@@ -175,6 +175,16 @@ for r1 in range(len(lh_roi_files)):
 			lh_fsaverage_rois[r2[1]] = np.where(lh_fsaverage_roi == r2[0])[0]
 			rh_fsaverage_rois[r2[1]] = np.where(rh_fsaverage_roi == r2[0])[0]
 
+# Add the NSDgeneral ROI
+lh_nsdgeneral = np.squeeze(nib.load(os.path.join(args.nsd_dir,
+	'nsddata/freesurfer/fsaverage/label/lh.nsdgeneral.mgz')).get_fdata())
+rh_nsdgeneral = np.squeeze(nib.load(os.path.join(args.nsd_dir,
+	'nsddata/freesurfer/fsaverage/label/rh.nsdgeneral.mgz')).get_fdata())
+lh_indices = np.where(lh_nsdgeneral == 1)[0].astype(np.int64)
+rh_indices = np.where(rh_nsdgeneral == 1)[0].astype(np.int64)
+lh_fsaverage_rois['nsdgeneral'] = lh_indices
+rh_fsaverage_rois['nsdgeneral'] = rh_indices
+
 
 # =============================================================================
 # Save the metadata

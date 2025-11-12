@@ -92,7 +92,7 @@ parameters:
           "V1d", "V1v", "V2d", "V2v", "V3d", "V3v", "hV4", "OFA", "FFA-1", "FFA-2",
           "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words",
           "OPA","PPA","RSC","EBA","FBA-1","FBA-2","mTL-bodies","early", "midventral",
-          "midlateral", "midparietal", "parietal", "lateral", "ventral"]
+          "midlateral", "midparietal", "parietal", "lateral", "ventral", "nsdgeneral"]
         example_roi: "V1v"
       lh_vertices:
         type: numpy.ndarray
