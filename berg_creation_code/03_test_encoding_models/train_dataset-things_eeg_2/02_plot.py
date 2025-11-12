@@ -180,6 +180,6 @@ for s, sub in enumerate(args.subjects):
 
 # Save the figure
 fig.savefig('encoding_accuracy_channels-' + args.channels + '.svg',
-	bbox_inches='tight', transparent=True, format='svg')
+	bbox_inches='tight', transparent=False, format='svg')
 fig.savefig('encoding_accuracy_channels-' + args.channels + '.png',
-	dpi=300, bbox_inches='tight', transparent=True, format='png')
+	dpi=300, bbox_inches='tight', transparent=False, format='png')
