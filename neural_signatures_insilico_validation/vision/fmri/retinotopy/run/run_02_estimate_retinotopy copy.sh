@@ -5,6 +5,11 @@
 #SBATCH --mem=1000
 #SBATCH --time=03:00:00
 #SBATCH --qos=prio
+#SBATCH --partition=agcichy
+#SBATCH --gres=gpu:1 # number of GPUs
+
+# CUDA module
+module add CUDA/12.4.0
 
 # Create the parameters combinations
 declare -a subjects_all
@@ -41,7 +46,7 @@ echo BG_VALUE: $BG_VALUE
 sleep 8
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/fmri/retinotopy/run
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/fmri/retinotopy
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh

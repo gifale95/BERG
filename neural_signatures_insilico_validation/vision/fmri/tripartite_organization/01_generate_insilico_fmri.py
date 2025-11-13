@@ -1,5 +1,5 @@
-"""Test the tripartite organization effect (Konkle & Caramazza, 2013) on in
-silico fMRI responses.
+"""Use BERG to generate the in silico fMRI responses used to test the
+tripartite organization effect (Konkle & Caramazza, 2013).
 
 Parameters
 ----------
@@ -8,7 +8,7 @@ encoding_model : str
     in silico fMRI responses in surface space.
 subjects : list
     List of the subject identifiers for the fMRI encoding models. Since the
-	used encoding models are trained on NSD data, valid subject identifiers are
+    used encoding models are trained on NSD data, valid subject identifiers are
     integers from 1 to 8.
 berg_dir : str
     Directory of the BERG.
@@ -97,7 +97,7 @@ rh_big_objects = []
 lh_small_objects = []
 rh_small_objects = []
 metadata = []
-for sub in args.subjects:
+for sub in tqdm(args.subjects):
       
     # Load the encoding model
     model = berg.get_encoding_model(args.encoding_model, subject=sub)
