@@ -4,13 +4,15 @@ ImageNet images (100 animate categories, and 100 inanimate categories).
 Parameters
 ----------
 subject : int
-    Used subject.
+    The subject identifier for the EEG encoding models. Since the used
+    encoidng models are trained on THINGS EEG2 data, valid subject identifiers
+    are integers from 1 to 10.
 channels : str
     Whether to retain occipital ['O'], posterior ['P'], temporal ['T'],
     central ['C'], frontal ['F'], occipital/parital ['OP'], or all ['all']
-    channels.
-nest_dir : str
-    Neural encoding simulation toolkit directory.
+    channels for the analyses.
+berg_dir : str
+    Directory of the BERG.
 imagenet_dir : str
     Directory of the ImageNet image set.
     https://www.image-net.org/challenges/LSVRC/2012/index.php
@@ -29,21 +31,14 @@ from nltk.corpus import wordnet as wn
 import torchvision
 from torchvision import transforms as trn
 
-
-# =============================================================================
-# Input arguments
-# =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--subject', default=1, type=int) # [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-parser.add_argument('--channels', default='OP', type=str) # ['O', 'P', 'T', 'C', 'F', 'OP', 'all']
-#parser.add_argument('--nest_dir', default='/home/ale/aaa_stuff/PhD/projects/neural_encoding_simulation_toolkit', type=str)
-#parser.add_argument('--imagenet_dir', default='/home/ale/Downloads/imagenet_val', type=str)
-#parser.add_argument('--nest_dir', default='/home/ale/scratch/projects/neural_encoding_simulation_toolkit', type=str)
-parser.add_argument('--nest_dir', default='/scratch/giffordale95/projects/neural_encoding_simulation_toolkit', type=str)
+parser.add_argument('--subject', default=1, type=int)
+parser.add_argument('--channels', default='OP', type=str)
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/giffordale95/datasets/image_sets/ILSVRC2012/', type=str)
 args = parser.parse_args()
 
-print('>>> Pairwise decoding | In silico EEG data <<<')
+print('>>> Pairwise decoding <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -52,51 +47,6 @@ for key, val in vars(args).items():
 seed = 20200220
 random.seed(seed)
 np.random.seed(seed)
-
-
-# =============================================================================
-# Define the 200 ImageNet images used
-# =============================================================================
-# # List the imagenet synsets
-# synsets = os.listdir(os.path.join(args.imagenet_dir, 'val'))
-# synsets.sort()
-
-# # List the categories
-# categories = [
-# 	'animal.n.01', # 398 (* 50 = 19,900)
-# 	'food.n.01', # 26 (* 50 = 1,300)
-# 	'device.n.01', # 130 (* 50 = 6,500)
-# 	'geological_formation.n.01' # 10 (* 50 = 500)
-# 	]
-
-# # Categorize each synset
-# synset_categories = np.zeros((len(synsets), len(categories)), dtype=np.int16)
-# for s, synset in enumerate(tqdm(synsets)):
-# 	synset_name = wn.synset_from_pos_and_offset('n', int(synset[1:]))
-# 	synset_name = synset_name.name()
-# 	synset_name = wn.synset(synset_name)
-# 	synset_cat = synset_name.hypernym_paths()
-# 	for c, category in enumerate(categories):
-# 		category_name = wn.synset(category)
-# 		for sc in synset_cat:
-# 			if np.isin(category_name, sc):
-# 				synset_categories[s,c] = 1
-
-# # Get the indices of 100 animate categories ('animal.n.01')
-# idx_animate = np.where(synset_categories[:,0])[0][:100]
-
-# # Get the indices of 100 inanimate categories ('device.n.01')
-# idx_inanimate = np.where(synset_categories[:,2])[0][:100]
-
-# # Multiply the indices by 50, since the ILSVRC-2012 validation split has 50
-# # images per category (and we will only use one image per each of the 200
-# # cateogries)
-# idx_animate *= 50
-# idx_inanimate *= 50
-# idx_all = np.append(idx_animate, idx_inanimate)
-
-# # Access the ILSVRC-2012 validation split
-# dataset = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='val')
 
 
 # =============================================================================
