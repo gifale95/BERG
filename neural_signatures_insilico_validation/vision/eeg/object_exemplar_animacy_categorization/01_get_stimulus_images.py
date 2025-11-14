@@ -20,6 +20,8 @@ from tqdm import tqdm
 from nltk.corpus import wordnet as wn
 import torchvision
 from torchvision import transforms as trn
+from sklearn.utils import resample
+import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -31,6 +33,11 @@ print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
+# Set random seed for reproducible results
+seed = 20200220
+np.random.seed(seed)
+random.seed(seed)
+
 
 # =============================================================================
 # Define the 200 ImageNet images used
@@ -39,32 +46,29 @@ for key, val in vars(args).items():
 synsets = os.listdir(os.path.join(args.imagenet_dir, 'val'))
 synsets.sort()
 
-# List the categories
-categories = [
-    'animal.n.01', # 398 (* 50 = 19,900)
-    'food.n.01', # 26 (* 50 = 1,300)
-    'device.n.01', # 130 (* 50 = 6,500)
-    'geological_formation.n.01' # 10 (* 50 = 500)
-    ]
-
-# Categorize each synset
-synset_categories = np.zeros((len(synsets), len(categories)), dtype=np.int16)
-for s, synset in enumerate(tqdm(synsets)):
+# Get the indices of animate and inanimate categories
+animate_categories = np.zeros(len(synsets), dtype=np.int16)
+inanimate_categories = np.zeros(len(synsets), dtype=np.int16)
+animate_cat = wn.synset('animal.n.01')
+for s, synset in enumerate(synsets):
     synset_name = wn.synset_from_pos_and_offset('n', int(synset[1:]))
-    synset_name = synset_name.name()
-    synset_name = wn.synset(synset_name)
     synset_cat = synset_name.hypernym_paths()
-    for c, category in enumerate(categories):
-        category_name = wn.synset(category)
-        for sc in synset_cat:
-            if np.isin(category_name, sc):
-                synset_categories[s,c] = 1
+    if any(animate_cat in cat for cat in synset_cat):
+        animate_categories[s] = 1
+    else:
+        inanimate_categories[s] = 1
 
-# Get the indices of 100 animate categories ('animal.n.01')
-idx_animate = np.where(synset_categories[:,0])[0][:100]
+# Get the indices of 100 randomly selected animate categories ('animal.n.01')
+idx_animate = np.where(animate_categories == 1)[0]
+idx_animate = resample(idx_animate, replace=False, n_samples=100,
+    random_state=seed)
 
-# Get the indices of 100 inanimate categories ('device.n.01')
-idx_inanimate = np.where(synset_categories[:,2])[0][:100]
+# Get the indices of the inanimate categories (all which are not an animal).
+# Since some of these images might still contain humans/animals, we save all
+# possible inanimate categories and then manually retain the first 100 images
+# that do not contain any humans/animals.
+idx_inanimate = np.where(inanimate_categories == 1)[0]
+idx_inanimate = resample(idx_inanimate, replace=False, random_state=seed)
 
 # Multiply the indices by 50, since the ILSVRC-2012 validation split has 50
 # images per category (and we will only use one image per each of the 200
@@ -100,7 +104,7 @@ for i in tqdm(range(len(idx_all))):
     img = image_transform(img)
     if i < 100:
         img.save(os.path.join(image_path, 'animate',
-            'img-{:04d}_imagenet_label-{}.png'.format(i+1, label)))
+            'img-{:04d}_imagenet_label-{:04d}.png'.format(i+1, label)))
     else:
         img.save(os.path.join(image_path, 'inanimate',
-            'img-{:04d}_imagenet_label-{}.png'.format(i-99, label)))
+            'img-{:04d}_imagenet_label-{:04d}.png'.format(i-99, label)))
