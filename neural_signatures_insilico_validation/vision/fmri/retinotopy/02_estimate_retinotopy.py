@@ -75,7 +75,7 @@ test_img_list = os.listdir(test_img_dir)
 test_img_list.sort()
 
 # Loop across test images
-for i, test_img in enumerate(tqdm(test_img_list[:5])): # !!! USE ALL IMAGES
+for i, test_img in enumerate(tqdm(test_img_list[:10])): # !!! USE FIRST 100 IMAGES
 
     # Get the probe image condition numbers
     probe_img_list = os.listdir(os.path.join(test_img_dir, test_img))

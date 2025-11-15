@@ -6,7 +6,7 @@ pairwise decoding peaks.
 Parameters
 ----------
 subjects : list
-    The subject identifier for the EEG encoding models. Since the used
+    The subject identifiers for the EEG encoding models. Since the used
     encoding models are trained on THINGS EEG2 data, valid subject identifiers
     are integers from 1 to 10.
 channels : list
@@ -69,7 +69,7 @@ for sub in args.subjects:
     # Get the exemplars decoding results
     idx_tril = np.tril_indices(len(results['decoding_exemplars']), -1)
     decoding_exemplars.append(np.mean(
-        results['pairwise_decoding_exemplars'][idx_tril], 0))
+        results['decoding_exemplars'][idx_tril], 0))
 
     # Get the animacy decoding results
     decoding_animacy.append(results['decoding_animacy'])
@@ -140,6 +140,7 @@ results = {
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'eeg', 'object_exemplar_animacy_categorization',
-    'pairwise_decoding_results', 'stats.npy')
+    'pairwise_decoding_results', 'stats_'+'channels-'+
+    ''.join(args.channels)+'.npy')
 
 np.save(save_dir, results) # type: ignore
