@@ -5,11 +5,11 @@ eccentricity) from the in silico fMRI responses.
 Parameters
 ----------
 encoding_model : str
-    The name of the fMRI encoding model in BERG to use for generating the
-    in silico fMRI responses in surface space.
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in surface space.
 subject : int
     The subject identifier for the fMRI encoding models. Since the used
-    encoidng models are trained on NSD data, valid subject identifiers are
+    encoding models are trained on NSD data, valid subject identifiers are
     integers from 1 to 8.
 FIELD_SIZE : float
     The total width and height of the simulated visual field in degrees of
@@ -38,7 +38,6 @@ import torch
 from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
-
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--FIELD_SIZE', type=float, default=16.8)
@@ -76,7 +75,7 @@ test_img_list = os.listdir(test_img_dir)
 test_img_list.sort()
 
 # Loop across test images
-for i, test_img in enumerate(tqdm(test_img_list)):
+for i, test_img in enumerate(tqdm(test_img_list[:5])): # !!! USE ALL IMAGES
 
     # Get the probe image condition numbers
     probe_img_list = os.listdir(os.path.join(test_img_dir, test_img))
@@ -136,6 +135,14 @@ eccentricity_rh = np.sqrt(x0s_rh**2 + y0s_rh**2)
 # =============================================================================
 # Save the retinotopic maps
 # =============================================================================
+results = {
+    'polar_angle_lh': polar_angle_lh,
+    'eccentricity_lh': eccentricity_lh,
+    'polar_angle_rh': polar_angle_rh,
+    'eccentricity_rh': eccentricity_rh
+    }
+
+# Create the saving directory
 save_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri', 'retinotopy',
     'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
@@ -144,10 +151,9 @@ save_dir = os.path.join(args.berg_dir,
 if os.path.isdir(save_dir) == False:
     os.makedirs(save_dir)
 
-# Save LH maps
-np.savez_compressed(os.path.join(save_dir, 'lh_retinotopic_maps.npz'),
-    polar_angle_lh=polar_angle_lh, eccentricity_lh=eccentricity_lh)
+# Save the results
+np.savez_compressed(os.path.join(save_dir, 'retinotopic_maps.npz'),
+    data=results) # type: ignore
 
-# Save RH maps  
-np.savez_compressed(os.path.join(save_dir, 'rh_retinotopic_maps.npz'),
-    polar_angle_rh=polar_angle_rh, eccentricity_rh=eccentricity_rh)
+#data = np.load(os.path.join(save_dir, 'retinotopic_maps.npz'),
+#    allow_pickle=True)["data"].item() # !!! PLOT

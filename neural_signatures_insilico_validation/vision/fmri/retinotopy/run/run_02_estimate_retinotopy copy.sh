@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-retinotopy-02_estimate_retinotopy
 #SBATCH --mail-type=end
-#SBATCH --mem=1000
-#SBATCH --time=03:00:00
+#SBATCH --mem=10000
+#SBATCH --time=06:00:00
 #SBATCH --qos=prio
 #SBATCH --partition=agcichy
 #SBATCH --gres=gpu:1 # number of GPUs

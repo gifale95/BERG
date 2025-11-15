@@ -20,14 +20,13 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import nilearn
-from nilearn.plotting import view_surf
-from nilearn.datasets import load_fsaverage # type: ignore
-
+#from nilearn.plotting import view_surf
+#from nilearn.datasets import load_fsaverage # type: ignore
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 
 
 # =============================================================================

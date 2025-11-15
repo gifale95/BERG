@@ -29,7 +29,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 
 print('>>> Tripartite organization <<<')
 print('\nInput arguments:')
@@ -157,7 +157,7 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri_tripartite_organization', 'insilico_fmri_responses')
+    'vision', 'fmri' 'tripartite_organization', 'insilico_fmri_responses')
 if os.path.isdir(save_dir) == False:
     os.makedirs(save_dir)
 

@@ -52,7 +52,7 @@ inanimate_categories = np.zeros(len(synsets), dtype=np.int16)
 animate_cat = wn.synset('animal.n.01')
 for s, synset in enumerate(synsets):
     synset_name = wn.synset_from_pos_and_offset('n', int(synset[1:]))
-    synset_cat = synset_name.hypernym_paths()
+    synset_cat = synset_name.hypernym_paths() # type: ignore
     if any(animate_cat in cat for cat in synset_cat):
         animate_categories[s] = 1
     else:
@@ -73,8 +73,8 @@ idx_inanimate = resample(idx_inanimate, replace=False, random_state=seed)
 # Multiply the indices by 50, since the ILSVRC-2012 validation split has 50
 # images per category (and we will only use one image per each of the 200
 # cateogries)
-idx_animate *= 50
-idx_inanimate *= 50
+idx_animate *= 50 # type: ignore
+idx_inanimate *= 50 # type: ignore
 idx_all = np.append(idx_animate, idx_inanimate)
 
 # Access the ILSVRC-2012 validation split
