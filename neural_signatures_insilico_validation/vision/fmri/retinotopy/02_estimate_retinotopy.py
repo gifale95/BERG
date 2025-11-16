@@ -75,7 +75,7 @@ test_img_list = os.listdir(test_img_dir)
 test_img_list.sort()
 
 # Loop across test images
-for i, test_img in enumerate(tqdm(test_img_list[:10])): # !!! USE FIRST 100 IMAGES
+for i, test_img in enumerate(tqdm(test_img_list)):
 
     # Get the probe image condition numbers
     probe_img_list = os.listdir(os.path.join(test_img_dir, test_img))
@@ -123,6 +123,9 @@ y0s_rh = centers[max_idx_rh, 1]
 # =============================================================================
 # Estimate the retinotopic maps (polar angle and eccentricity)
 # =============================================================================
+# arctan2 outputs values in the range [−π +π], but here polar angles set to the
+# range [0 2π] to facilitate later color-coded visualization.
+
 # LH
 polar_angle_lh = np.mod(np.arctan2(y0s_lh, x0s_lh), 2 * np.pi)
 eccentricity_lh = np.sqrt(x0s_lh**2 + y0s_lh**2)
@@ -154,6 +157,3 @@ if os.path.isdir(save_dir) == False:
 # Save the results
 np.savez_compressed(os.path.join(save_dir, 'retinotopic_maps.npz'),
     data=results) # type: ignore
-
-#data = np.load(os.path.join(save_dir, 'retinotopic_maps.npz'),
-#    allow_pickle=True)["data"].item() # !!! PLOT

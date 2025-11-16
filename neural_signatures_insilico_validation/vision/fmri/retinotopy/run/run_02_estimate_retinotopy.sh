@@ -17,9 +17,9 @@ declare -a GRID_RES_all
 declare -a PROBE_SIGMA_all
 declare -a BG_VALUE_all
 index=0
-for sub in `seq 1 8` ; do
+for sub in `seq 1 1` ; do
     for g in '40' ; do
-        for s in '0.5' ; do
+        for s in '0.1' '0.25' '0.5' '0.75' '1' ; do
             for b in '0.5' ; do
                 subjects_all[$index]=$sub
                 GRID_RES_all[$index]=$g

@@ -104,7 +104,8 @@ for sub in tqdm(args.subjects):
 
     # Generate the in silico fMRI responses for the animal images, and average
     # them across images from the same condition
-    fmri_animals, metadata_sub = berg.encode(model, animal_img)
+    fmri_animals, metadata_sub = berg.encode(model, animal_img,
+        return_metadata=True)
     lh_animals.append(np.mean(fmri_animals[0], 0).astype(np.float32))
     rh_animals.append(np.mean(fmri_animals[1], 0).astype(np.float32))
     metadata.append(metadata_sub)
@@ -157,7 +158,7 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri' 'tripartite_organization', 'insilico_fmri_responses')
+    'vision', 'fmri', 'tripartite_organization', 'insilico_fmri_responses')
 if os.path.isdir(save_dir) == False:
     os.makedirs(save_dir)
 

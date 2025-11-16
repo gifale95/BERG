@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg_insilico_validation-tripartite_organization-01_generate_insilico_fmri
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
-#SBATCH --time=03:00:00
+#SBATCH --time=00:15:00
 #SBATCH --qos=hiprio
 #SBATCH --partition=agcichy
 #SBATCH --gres=gpu:1 # number of GPUs

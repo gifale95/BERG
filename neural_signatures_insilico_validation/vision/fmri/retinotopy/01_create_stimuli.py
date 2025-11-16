@@ -1,7 +1,8 @@
 """Create the retinotopic mapping stimuli used to define polar angle and
 eccentricity maps. One set of retinotopic mapping stimuli is created for each
-of NSD's 515 shared images that all subjects viewed for 3 times during the NSD
-experiment. These images were also used to test the encoding models.
+of NSD's 100 shared images that all subjects viewed for 3 times during the NSD
+experiment. These images were also part of the 515 NSD shared images used to
+test the encoding models.
 
 Parameters
 ----------
@@ -62,8 +63,8 @@ berg = BERG(berg_dir=args.berg_dir)
 # Get the metadata for the NSD huze encoding model
 metadata = berg.get_model_metadata('fmri-nsd_fsaverage-huze', subject=1)
 
-# Get the test image condition number
-test_img_cond = metadata['encoding_models']['test_img_num']
+# Get the test image condition number of the first 100 test images
+test_img_cond = metadata['encoding_models']['test_img_num'][:100]
 
 
 # =============================================================================
@@ -119,7 +120,7 @@ def make_gaussian_crop(mask, img_rgb):
 masks = np.array([make_gaussian_masks(center) for center in centers])
 masks = masks[..., None]  # shape [n_probes, H, W, 1]
 
-# Loop across the 515 NSD test images
+# Loop across the 100 NSD test images
 for i, img in enumerate(tqdm(test_img_cond)):
 
     # Create the saving directory
@@ -149,15 +150,3 @@ for i, img in enumerate(tqdm(test_img_cond)):
         del probe_img
 
     del img_rgb
-
-
-# =============================================================================
-# Visualize a few probes
-# =============================================================================
-# plt.figure(figsize=(12, 3))
-# for i in range(5):
-#     plt.subplot(1, 5, i+1)
-#     plt.imshow(probes[i])
-#     plt.axis('off')
-# plt.suptitle("Example Gaussian crops from natural image")
-# plt.show()
