@@ -149,9 +149,10 @@ eccentricity_rh_norm[idx_nan] = np.nan
 data = np.append(polar_angle_lh_norm, polar_angle_rh_norm)
 
 # Create the flat brain surface
+subject = 'fsaverage_nsd_sub-' + str(args.subject)
 vertex_data = cortex.Vertex(
     data,
-    subject='fsaverage',
+    subject=subject,
     cmap='hsv',
     vmin=0,
     vmax=1,
@@ -164,8 +165,7 @@ fig = cortex.quickshow(
 #	height=500, # Increase resolution of map and ROI contours
     with_curvature=True,
     with_rois=True,
-    #roi_list=['FFA', 'PPA', 'OFA'],
-    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
+    roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4'],
     linewidth=5,
     linecolor=(1, 1, 1),
     with_labels=False,
@@ -188,9 +188,10 @@ fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: i
 data = np.append(eccentricity_lh_norm, eccentricity_rh_norm)
 
 # Create the flat brain surface
+subject = 'fsaverage_nsd_sub-' + str(args.subject)
 vertex_data = cortex.Vertex(
     data,
-    subject='fsaverage',
+    subject=subject,
     cmap='gist_rainbow',
     vmin=0,
     vmax=1,
@@ -203,8 +204,7 @@ fig = cortex.quickshow(
 #	height=500, # Increase resolution of map and ROI contours
     with_curvature=True,
     with_rois=True,
-    #roi_list=['FFA', 'PPA', 'OFA'],
-    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
+    roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4'],
     linewidth=5,
     linecolor=(1, 1, 1),
     with_labels=False,
