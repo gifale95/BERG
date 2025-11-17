@@ -249,8 +249,7 @@ S = np.ones_like(H)          # full saturation
 V = np.ones_like(H)          # full brightness
 HSV = np.stack((H, S, V), axis=-1)
 RGB = hsv_to_rgb(HSV)
-# Mask outside wheel → white background
-RGB[~mask] = 1.0
+RGB[~mask] = np.nan  # transparent background outside circle
 
 # Plot color wheel
 plt.figure(figsize=(6, 6))
@@ -258,12 +257,53 @@ plt.imshow(RGB, origin="lower")
 plt.axis("off")
 plt.show()
 
-# Save the color wheel
+# Save the polar angle color wheel
 file_name = os.path.join(save_dir, 'polar_angle_colorwheel.svg')
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
     format='svg')
 
 
 # =============================================================================
-# Plot the eccentricity map # !!!
+# Plot the eccentricity map
 # =============================================================================
+# Parameters
+size = 2000
+max_ecc = 12
+square_ecc = 8.4
+cmap = "gist_rainbow"
+
+# Create coordinate grid
+x = np.linspace(-1, 1, size)
+y = np.linspace(-1, 1, size)
+X, Y = np.meshgrid(x, y)
+
+# Convert to polar coordinates
+R = np.sqrt(X**2 + Y**2)  # radius (0 at center, 1 at boundary)
+
+# Normalize R to 0–1, then scale to max_ecc if desired
+ecc = np.clip(R, 0, 1) * max_ecc
+
+# Mask outside the circle
+mask = R > 1
+
+# Compute square boundary in normalized img space
+s = square_ecc / max_ecc # e.g. 8.4/12 = 0.7
+
+# Prepare the image
+ecc_img = ecc.copy()
+ecc_img[mask] = np.nan  # transparent background outside circle
+
+# Plot the colormap
+fig, ax = plt.subplots(figsize=(6,6))
+ax.imshow(ecc_img, cmap=cmap, origin="lower", extent=[-1,1,-1,1])
+ax.axis("off")
+# Draw dashed square
+ax.plot([-s,  s], [ s,  s], 'k--', linewidth=2)
+ax.plot([-s,  s], [-s,-s], 'k--', linewidth=2)
+ax.plot([-s,-s], [-s, s], 'k--', linewidth=2)
+ax.plot([ s, s], [-s, s], 'k--', linewidth=2)
+
+# Save the eccentricity map
+file_name = os.path.join(save_dir, 'eccentricity_map.svg')
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+    format='svg')
