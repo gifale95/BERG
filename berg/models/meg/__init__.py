@@ -1,1 +1,1 @@
-import berg.models.eeg.things_meg
+import berg.models.meg.things_meg

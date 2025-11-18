@@ -209,6 +209,19 @@ fig, axes = plt.subplots(n_rows, 1, figsize=(18, 7 * n_rows))
 if n_rows == 1:
     axes = [axes]
 
+# Determine global y-axis limits across all subjects and average
+all_values = []
+for subject in args.subjects:
+    all_values.extend(all_subject_data[subject]['roi_correlations'])
+    all_values.extend(all_subject_data[subject]['roi_noise_ceilings'])
+# Add average data (excluding NaNs)
+all_values.extend(mean_corrs[~np.isnan(mean_corrs)])
+all_values.extend(mean_ncs[~np.isnan(mean_ncs)])
+
+# Calculate global limits with some padding
+y_min = 0  # Start at 0 for correlations
+y_max = max(all_values) * 1.05  # Add 5% padding at top
+
 
 # Plot individual subjects
 for idx, subject in enumerate(args.subjects):
@@ -253,6 +266,7 @@ for idx, subject in enumerate(args.subjects):
     
     # Axis labels and formatting
     ax.set_ylabel("Pearson's r", fontsize=fontsize+2, fontweight='bold')
+    ax.set_ylim(y_min, y_max)  # Set shared y-axis limits
     ax.set_xticks(subject_x_positions)
     ax.set_xticklabels(subject_roi_labels, rotation=45, ha='right')
     ax.set_xlim(-0.5, len(subject_roi_labels) - 0.5)
@@ -304,6 +318,7 @@ for i, group_name in enumerate(roi_groups.keys()):
 # Axis labels and formatting
 ax.set_xlabel('ROI', fontsize=fontsize+2, fontweight='bold', labelpad=40)
 ax.set_ylabel("Pearson's r", fontsize=fontsize+2, fontweight='bold')
+ax.set_ylim(y_min, y_max)  # Set shared y-axis limits
 ax.set_xticks(x_positions)
 ax.set_xticklabels(all_rois, rotation=45, ha='right')
 ax.set_xlim(-0.5, len(all_rois) - 0.5)

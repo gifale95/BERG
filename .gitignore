@@ -166,3 +166,13 @@ cython_debug/
 debug.ipynb
 debug_1.ipynb
 debug_2.ipynb
+/sub-01
+berg_creation_code/02_train_encoding_models/train_dataset-things_fmri_1/config.yaml
+berg_creation_code/02_train_encoding_models/train_dataset-things_fmri_1/train_encoding_huze_fmri.py
+TVSD.ipynb
+epochs_metadata.csv
+testy.ipynb
+THINGS_fmri.ipynb
+THINGS_MEG.ipynb
+understand_eeg.ipynb
+video_creator.ipynb

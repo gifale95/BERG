@@ -395,7 +395,7 @@ for chunk_idx in range(n_chunks):
     
     # Save individual model
     import joblib
-    model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-spike',
+    model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
         'train_dataset-tvsd', f'model-{args.model}', 'encoding_model_weights')
     if not os.path.isdir(model_dir):
         os.makedirs(model_dir)

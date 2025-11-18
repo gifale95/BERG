@@ -73,9 +73,9 @@ for subject in args.subject:
     metadata = np.load(os.path.join(metadata_dir, file_name),
         allow_pickle=True).item()
     
-    correlation_results.append(metadata['correlation_results'])
-    times = metadata['times']
-    sensor_regions = metadata['sensor_regions']
+    correlation_results.append(metadata['encoding_model']['correlation_results'])
+    times = metadata['meg']['times']
+    sensor_regions = metadata['meg']['sensor_regions']
     region_data.append(sensor_regions)
 
 correlation_results = np.asarray(correlation_results)
