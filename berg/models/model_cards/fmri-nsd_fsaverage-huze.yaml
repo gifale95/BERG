@@ -11,8 +11,8 @@ creator: Huzheng Yang
 description: |
   The encoding model is based on a vision transformer (DINOv2) finetuned on LoRA. During training, the encoding model
   learned which DINOv2 layers and which spatial location of layer features to use to best predict each fMRI vertex.
-  While this feature selection was learn for each voxel, near-by voxels were constrained to select similar features.
-  Finally. the activity of each vertex is linearly predicted from the selected DINOv2 features.
+  While this feature selection was learned for each vertex, nearby vertices were constrained to select similar features.
+  Finally, the activity of each vertex is linearly predicted from the selected DINOv2 features.
 
   The encoding model training pipeline consisted of two steps. The goal of step 1 was to generate a noiseless version of
   fMRI responses, later used in step 2. This was achieved by training a single encoding model that predicted the fMRI
@@ -92,7 +92,7 @@ parameters:
           "V1d", "V1v", "V2d", "V2v", "V3d", "V3v", "hV4", "OFA", "FFA-1", "FFA-2",
           "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words",
           "OPA","PPA","RSC","EBA","FBA-1","FBA-2","mTL-bodies","early", "midventral",
-          "midlateral", "midparietal", "parietal", "lateral", "ventral"]
+          "midlateral", "midparietal", "parietal", "lateral", "ventral", "nsdgeneral"]
         example_roi: "V1v"
       lh_vertices:
         type: numpy.ndarray
@@ -112,6 +112,22 @@ parameters:
           The vertices from the one-hot encoded vector are only selected if the "roi" key
           is not provided, or has value None.
         example_vertices: [0, 0, ..., 1, 1, 0]
+    function: "get_encoding_model"
+
+  device:
+    type: str
+    required: false
+    valid_values: ["cpu", "cuda", "auto"]
+    default: "auto"
+    example: "auto"
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "get_encoding_model"
+
+  model:
+    type: BaseModelInterface
+    required: true
+    description: An instantiated and loaded encoding model.
+    function: "encode"
 
   stimulus:
     type: numpy.ndarray
@@ -121,20 +137,11 @@ parameters:
     example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
     function: "encode"
 
-  device:
-    type: str
-    required: false
-    valid_values: ["cpu", "cuda", "auto"]
-    default: "auto"
-    example: "auto"
-    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
-    function: "encode"
-
 # Performance metrics and references
 performance:
 
   accuracy_plots: 
-    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd/model-huze/encoding_models_accuracy"
+    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_accuracy"
       
 references:
 

@@ -27,8 +27,8 @@ Description
 
 The encoding model is based on a vision transformer (DINOv2) finetuned on LoRA. During training, the encoding model
 learned which DINOv2 layers and which spatial location of layer features to use to best predict each fMRI vertex.
-While this feature selection was learn for each voxel, near-by voxels were constrained to select similar features.
-Finally. the activity of each vertex is linearly predicted from the selected DINOv2 features.
+While this feature selection was learned for each vertex, nearby vertices were constrained to select similar features.
+Finally, the activity of each vertex is linearly predicted from the selected DINOv2 features.
 
 The encoding model training pipeline consisted of two steps. The goal of step 1 was to generate a noiseless version of
 fMRI responses, later used in step 2. This was achieved by training a single encoding model that predicted the fMRI
@@ -121,7 +121,7 @@ This function loads the encoding model.
        | **roi**
        |     **Type:** str
        |     **Description:** The region-of-interest (ROI) for which the in silico fMRI responses (of both hemispherese) are generated.
-       |     **Valid values:** "V1d", "V1v", "V2d", "V2v", "V3d", "V3v", "hV4", "OFA", "FFA-1", "FFA-2", "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words", "OPA", "PPA", "RSC", "EBA", "FBA-1", "FBA-2", "mTL-bodies", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral"
+       |     **Valid values:** "V1d", "V1v", "V2d", "V2v", "V3d", "V3v", "hV4", "OFA", "FFA-1", "FFA-2", "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words", "OPA", "PPA", "RSC", "EBA", "FBA-1", "FBA-2", "mTL-bodies", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral", "nsdgeneral"
        | 
        | **lh_vertices**
        |     **Type:** numpy.ndarray
@@ -130,6 +130,13 @@ This function loads the encoding model.
        | **rh_vertices**
        |     **Type:** numpy.ndarray
        |     **Description:** Binary one-hot encoded vector with ones indicating the right hemisphere (RH) vertices for which the in silico fMRI responses are generated. This vector must have exactly the same length as the number of RH fsaverage vertices (163,842). The vertices from the one-hot encoded vector are only selected if the "roi" key is not provided, or has value None.
+   * - **device**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Valid Values:** 'cpu', 'cuda', 'auto'
+       | **Example:** 'auto'
+
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -140,24 +147,22 @@ This function generates in silico neural responses using the encoding model prev
    :widths: 20 80
    :header-rows: 0
 
+   * - **model**
+     - | **Type:** BaseModelInterface
+       | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
    * - **stimulus**
      - | **Type:** numpy.ndarray
        | **Required:** Yes
        | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
        | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
-   * - **device**
-     - | **Type:** str
-       | **Required:** No
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
 
 Performance
 ----------
 
 **Accuracy Plots:**
 
-* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd/model-huze/encoding_models_accuracy``
+* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_accuracy``
 
 Example Usage
 ------------
