@@ -10,6 +10,8 @@ subjects : list
     List of the subject identifiers for the fMRI encoding models. Since the
     used encoding models are trained on NSD data, valid subject identifiers are
     integers from 1 to 8.
+images : str
+    Whether to use 'naturalistic' or 'texforms' images.
 berg_dir : str
     Directory of the BERG.
 
@@ -28,6 +30,7 @@ import torch
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
+parser.add_argument('--images', type=str, default='naturalistic')
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -41,7 +44,7 @@ for key, val in vars(args).items():
 # Load the stimulus images
 # =============================================================================
 img_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'tripartite_organization', 'stimuli')
+    'vision', 'fmri', 'tripartite_organization', 'stimuli', args.images)
 
 # Animals
 dir_animals = 'Tripartite-Animals'
@@ -159,9 +162,8 @@ results = {
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'fmri', 'tripartite_organization', 'insilico_fmri_responses')
-if os.path.isdir(save_dir) == False:
-    os.makedirs(save_dir)
+os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'insilico_fmri_responses.npy'
+file_name = 'insilico_fmri_responses_images-' + args.images + '.npy'
 
 np.save(os.path.join(save_dir, file_name), results) # type: ignore

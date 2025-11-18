@@ -162,14 +162,14 @@ vertex_data = cortex.Vertex(
 # Plot the flat brain surface
 fig = cortex.quickshow(
     vertex_data,
-#	height=500, # Increase resolution of map and ROI contours
+    height=2000, # Increase resolution of map and ROI contours
     with_curvature=True,
     with_rois=True,
     roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4'],
-    linewidth=5,
+    linewidth=2,
     linecolor=(1, 1, 1),
-    with_labels=False,
-    labelsize=20,
+    with_labels=True,
+    labelsize=15,
     curvature_brightness=0.5,
     with_colorbar=False
     )
@@ -201,14 +201,14 @@ vertex_data = cortex.Vertex(
 # Plot the flat brain surface
 fig = cortex.quickshow(
     vertex_data,
-#	height=500, # Increase resolution of map and ROI contours
+    height=2000, # Increase resolution of map and ROI contours
     with_curvature=True,
     with_rois=True,
     roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4'],
-    linewidth=5,
+    linewidth=2,
     linecolor=(1, 1, 1),
-    with_labels=False,
-    labelsize=20,
+    with_labels=True,
+    labelsize=15,
     curvature_brightness=0.5,
     with_colorbar=False
     )
@@ -252,7 +252,7 @@ RGB = hsv_to_rgb(HSV)
 RGB[~mask] = np.nan  # transparent background outside circle
 
 # Plot color wheel
-plt.figure(figsize=(6, 6))
+fig = plt.figure(figsize=(6, 6))
 plt.imshow(RGB, origin="lower")
 plt.axis("off")
 plt.show()

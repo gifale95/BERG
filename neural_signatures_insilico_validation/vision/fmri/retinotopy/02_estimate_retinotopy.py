@@ -151,8 +151,7 @@ save_dir = os.path.join(args.berg_dir,
     'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
     '_BG_VALUE-'+str(args.BG_VALUE), 'retinotopic_maps',
     'encoding_model-'+args.encoding_model+'_subject-'+str(args.subject))
-if os.path.isdir(save_dir) == False:
-    os.makedirs(save_dir)
+os.makedirs(save_dir, exist_ok=True)
 
 # Save the results
 np.savez_compressed(os.path.join(save_dir, 'retinotopic_maps.npz'),

@@ -129,8 +129,7 @@ for i, img in enumerate(tqdm(test_img_cond)):
         'retinotopy', 'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+
         str(args.PROBE_SIGMA)+'_BG_VALUE-'+str(args.BG_VALUE), 'stimuli',
         'test_img-'+str(i).zfill(4))
-    if os.path.isdir(save_dir) == False:
-        os.makedirs(save_dir)
+    os.makedirs(save_dir, exist_ok=True)
 
     # Load the image
     img_rgb = Image.fromarray(sdataset[img]).convert('RGB') # type: ignore

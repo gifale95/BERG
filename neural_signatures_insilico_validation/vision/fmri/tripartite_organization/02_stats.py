@@ -1,14 +1,19 @@
 """Test the tripartite organization effect (Konkle & Caramazza, 2013) on in
-silico fMRI responses, and plot the results.
+silico fMRI responses.
 
 Parameters
 ----------
+images : str
+    Whether to use 'naturalistic' or 'texforms' images.
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) to
     consider a vertex for the tripartite organization analysis.
 encoding_threshold : float
     The threshold on the encoding models explained variance to consider a
     vertex for the tripartite organization analysis (in % units).
+n_iter : int
+    Amount of iterations for creating the confidence intervals bootstrapped
+    distribution.
 berg_dir : str
     Directory of the BERG.
 
@@ -17,41 +22,23 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-import cortex
-import cortex.polyutils
-import matplotlib
-import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
-import nilearn
-#from nilearn.plotting import view_surf
-#from nilearn.datasets import load_fsaverage # type: ignore
+from tqdm import tqdm
+import random
+from sklearn.utils import resample
+from scipy.stats import ttest_rel
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--images', type=str, default='naturalistic')
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
+parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-
-# =============================================================================
-# Create the plots save directory
-# =============================================================================
-save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'tripartite_organization', 'plots')
-os.makedirs(save_dir, exist_ok=True)
-
-
-# =============================================================================
-# Plot parameters
-# =============================================================================
-subject = 'fsaverage'
-plt.rc('xtick', labelsize=30)
-plt.rc('ytick', labelsize=30)
-matplotlib.use("svg")
-plt.rcParams["text.usetex"] = False
-plt.rcParams['svg.fonttype'] = 'none'
-custom_cmap = mcolors.ListedColormap([(143/255, 25/255, 250/255),
-    (43/255, 141/255, 248/255), (243/255, 85/255, 20/255)])
+# Set random seed for reproducible results
+seed = 20200220
+random.seed(seed)
+np.random.seed(seed)
 
 
 # =============================================================================
@@ -59,7 +46,7 @@ custom_cmap = mcolors.ListedColormap([(143/255, 25/255, 250/255),
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'fmri', 'tripartite_organization', 'insilico_fmri_responses',
-    'insilico_fmri_responses.npy')
+    'insilico_fmri_responses_images-'+args.images+'.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 
@@ -114,13 +101,12 @@ rois = ['FFA', 'OFA', 'EBA', 'FBA', 'PPA', 'OPA', 'RSC']
 categories = ['animals', 'small_objects', 'big_objects']
 vertex_overlap = {}
 
-# Loop across ROIs
+# Loop across ROIs and categories
 for roi in rois:
 
     # Empty arrays of shape (n_subjects,) for face/body-selective ROIs
-    vertex_overlap[roi] = {}
     for cat in categories:
-        vertex_overlap[roi][cat] = np.zeros((len(metadata)))
+        vertex_overlap[roi+'_'+cat] = np.zeros((len(metadata)))
 
     # Loop across subjects
     for s in range(len(metadata)):
@@ -145,8 +131,8 @@ for roi in rois:
                 # Get the vertex indices for the ROI
                 lh_idx = metadata[s]['fmri'][hem+'_fsaverage_rois'][roi]
 
-            # Calculate the count of vertices selective for animals or big
-            # objects
+            # Calculate the count of vertices selective for animals, big
+            # objects, or small objects
             for v in lh_idx:
                 if np.isnan(lh_animals[s,v]):
                     continue
@@ -160,18 +146,65 @@ for roi in rois:
                         count_small_objects += 1
 
         # Store the vertex overlap results
-        vertex_overlap[roi]['animals'][s] = count_animals / tot_vertices * 100
-        vertex_overlap[roi]['small_objects'][s] = \
+        vertex_overlap[roi+'_animals'][s] = count_animals / tot_vertices * 100
+        vertex_overlap[roi+'_small_objects'][s] = \
             count_small_objects / tot_vertices * 100
-        vertex_overlap[roi]['big_objects'][s] = \
+        vertex_overlap[roi+'_big_objects'][s] = \
             count_big_objects / tot_vertices * 100
 
-# Print results
+
+# =============================================================================
+# Compute the significance
+# =============================================================================
+# Empty results dictionary
+pval_vertex_overlap = {}
+
+# Compute the significance (animal preference ROIs)
+animal_rois = ['FFA', 'OFA', 'EBA', 'FBA']
+for a_roi in animal_rois:
+    pval_vertex_overlap[a_roi+'_animals>small_objects'] = \
+        ttest_rel(vertex_overlap[a_roi+'_animals'],
+        vertex_overlap[a_roi+'_small_objects'], alternative='greater')[1]
+    pval_vertex_overlap[a_roi+'_animals>big_objects'] = \
+        ttest_rel(vertex_overlap[a_roi+'_animals'],
+        vertex_overlap[a_roi+'_big_objects'], alternative='greater')[1]
+
+# Compute the significance (big object preference ROIs)
+bigobject_rois = ['PPA', 'OPA', 'RSC']
+for bo_roi in bigobject_rois:
+    pval_vertex_overlap[bo_roi+'_big_objects>animals'] = \
+        ttest_rel(vertex_overlap[bo_roi+'_big_objects'],
+        vertex_overlap[bo_roi+'_animals'], alternative='greater')[1]
+    pval_vertex_overlap[bo_roi+'_big_objects>small_objects'] = \
+        ttest_rel(vertex_overlap[bo_roi+'_big_objects'],
+        vertex_overlap[bo_roi+'_small_objects'], alternative='greater')[1]
+
+
+# =============================================================================
+# Bootstrap the confidence intervals (CIs)
+# =============================================================================
+# Empty result variables
+ci_vertex_overlap = {}
+dist = {}
 for roi in rois:
     for cat in categories:
-        message = roi + ' vertices in ' + cat + ' zones: ' + \
-            str(np.round(np.mean(vertex_overlap[roi][cat]), 2))
-        print(message)
+        ci_vertex_overlap[roi+'_'+cat] = np.zeros((2)) # type: ignore
+        dist[roi+'_'+cat] = np.zeros((args.n_iter)) # type: ignore
+
+# Create the bootstrap distribution
+for i in tqdm(range(args.n_iter)):
+    idx = resample(np.arange(len(metadata)))
+    for roi in rois:
+        for cat in categories:
+            dist[roi+'_'+cat][i] = np.mean(vertex_overlap[roi+'_'+cat][idx])
+
+# Compute the CIs from the bootstrap distribution
+for roi in rois:
+    for cat in categories:
+        ci_vertex_overlap[roi+'_'+cat][0] = \
+            np.percentile(dist[roi+'_'+cat], 2.5)
+        ci_vertex_overlap[roi+'_'+cat][1] = \
+            np.percentile(dist[roi+'_'+cat], 97.5)
 
 
 # =============================================================================
@@ -209,43 +242,22 @@ rh_idx_nan = np.where(np.isnan(rh_animals_avg))[0]
 lh_tripartite_organization[lh_idx_nan] = np.nan
 rh_tripartite_organization[rh_idx_nan] = np.nan
 
-# Append the results across left and right hemispheres
-data = np.append(lh_tripartite_organization, rh_tripartite_organization)
 
-# Plot the results on flat surfaces
-vertex_data = cortex.Vertex(data, subject, cmap=custom_cmap, vmin=0, vmax=2,
-    with_colorbar=False)
-fig = cortex.quickshow(vertex_data,
-#	height=500, # Increase resolution of map and ROI contours
-    with_curvature=True,
-    with_rois=True,
-    #roi_list=['FFA', 'PPA', 'OFA'],
-    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-    linewidth=5,
-    linecolor=(1, 1, 1),
-    with_labels=False,
-    labelsize=20,
-    curvature_brightness=0.5,
-    with_colorbar=False
-    )
-# Save the figure
-file_name = os.path.join(save_dir, 'tripartite_organization_flat.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
-    format='svg')
+# =============================================================================
+# Save the results
+# =============================================================================
+results = {
+    'vertex_overlap': vertex_overlap,
+    'pval_vertex_overlap': pval_vertex_overlap,
+    'ci_vertex_overlap': ci_vertex_overlap,
+    'lh_tripartite_organization': lh_tripartite_organization,
+    'rh_tripartite_organization': rh_tripartite_organization
+    }
 
-# Plot results on inflated surfaces # !!!
-# Get the fsaverage mesh
-fsaverage_meshes = load_fsaverage(mesh='fsaverage')
-# Create the inflated surface plot
-view = view_surf(
-    surf_mesh=fsaverage_meshes["inflated"],
-    surf_map=data,
-    hemi="both", # type: ignore
-    title=None
-)
-view
-view.save_as_html("inflated_surface_plot.html")
-# Save the figure
-file_name = os.path.join(save_dir, 'tripartite_organization_inflated.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
-    format='svg')
+save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
+    'vision', 'fmri', 'tripartite_organization', 'stats')
+os.makedirs(save_dir, exist_ok=True)
+
+file_name = 'stats_images-' + args.images + '.npy'
+
+np.save(os.path.join(save_dir, file_name), results) # type: ignore
