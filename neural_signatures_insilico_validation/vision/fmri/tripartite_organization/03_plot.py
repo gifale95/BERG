@@ -55,70 +55,155 @@ custom_cmap = mcolors.ListedColormap([(143/255, 25/255, 250/255),
 
 
 # =============================================================================
-# Load the results # !!!
+# Load the results
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'tripartite_organization', 'insilico_fmri_responses',
-    'insilico_fmri_responses_images-'+args.images+'.npy')
+    'vision', 'fmri', 'tripartite_organization', 'stats', 'stats_images-'+
+    args.images+'.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 
-lh_animals = data['lh_animals']
-rh_animals = data['rh_animals']
-lh_big_objects = data['lh_big_objects']
-rh_big_objects = data['rh_big_objects']
-lh_small_objects = data['lh_small_objects']
-rh_small_objects = data['rh_small_objects']
-metadata = data['metadata']
-del data
+vertex_overlap = data['vertex_overlap']
+pval_vertex_overlap = data['pval_vertex_overlap']
+ci_vertex_overlap = data['ci_vertex_overlap']
+lh_tripartite_organization = data['lh_tripartite_organization']
+rh_tripartite_organization = data['rh_tripartite_organization']
 
 
 # =============================================================================
 # Plot the ROI vertex overlap with categorical zones # !!!
 # =============================================================================
+rois = ['FFA', 'OFA', 'EBA', 'FBA', 'PPA', 'OPA', 'RSC']
+categories = ['animals', 'big_objects', 'small_objects']
+n_sub = 8
+
+# Plot parameters
+x_coord = np.arange(len(rois))
+dist = 0.4
+x_dist = np.asarray((-0.5, 0, 0.5)) * dist
+x_dist_sig = np.asarray((-.75, -0.25, 0.25, .75)) * dist
+alpha = 0.2
+fontsize_sig = 20
+marker = 'o'
+s = 500
+s_mean = 750
+sig_offset = 7
+sig_bar_length = 3
+linewidth_sig_bar = 1
+sig_star_offset_top = 2
+category_labels = ['Animals', 'Big objects', 'Small objects']
+fontsize = 30
+matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams['font.size'] = fontsize
+plt.rc('xtick', labelsize=fontsize)
+plt.rc('ytick', labelsize=fontsize)
+matplotlib.rcParams['axes.linewidth'] = 1
+matplotlib.rcParams['xtick.major.width'] = 1
+matplotlib.rcParams['xtick.major.size'] = 5
+matplotlib.rcParams['ytick.major.width'] = 1
+matplotlib.rcParams['ytick.major.size'] = 5
+matplotlib.rcParams['axes.spines.right'] = False
+matplotlib.rcParams['axes.spines.top'] = False
+matplotlib.rcParams['lines.markersize'] = 3
+matplotlib.rcParams['axes.grid'] = False
+matplotlib.rcParams['grid.linewidth'] = 2
+matplotlib.rcParams['grid.alpha'] = .3
+matplotlib.use("svg")
+plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
+colors = [(143/255, 25/255, 250/255), (43/255, 141/255, 248/255),
+    (243/255, 85/255, 20/255)]
+
+# Plot
+fig = plt.figure(figsize=(20,9))
+
+for r, roi in enumerate(rois):
+    for c, cat in enumerate(categories):
+
+        # Encoding accuracy scores
+        x = np.repeat(r+x_dist[c], n_sub)
+        y = vertex_overlap[roi+'_'+cat]
+        plt.scatter(x, y, s=s, color=colors[c], alpha=alpha,
+            edgecolors='none', label='_nolegend_')
+        if r == 0:
+            plt.scatter(x[0], np.mean(y), s=s_mean, color=colors[c],
+            edgecolors='none', label=category_labels[c])
+        else:
+            plt.scatter(x[0], np.mean(y), s=s_mean, color=colors[c],
+            edgecolors='none', label='_nolegend_')
+
+        # Confidence intervals
+        ci = np.zeros(2)
+        ci[0] = np.mean(y) - ci_vertex_overlap[roi+'_'+cat][0]
+        ci[1] = ci_vertex_overlap[roi+'_'+cat][1] - np.mean(y)
+        plt.errorbar(x[0], np.mean(y), yerr=np.reshape(ci, (-1,1)),
+            fmt="none", ecolor=colors[c], elinewidth=5, capsize=0)
+
+# Significance 1 # !!! ADD
+# if all(sig_gt1tr_gt1tr_vs_gt1tr_gt2tr < 0.05):
+#     res = np.append(acc_gt1tr_gt1tr, acc_gt1tr_gt2tr)
+#     y_max = max(res) + sig_offset
+#     plt.plot([x_coord[0], x_coord[0]], [y_max, y_max+sig_bar_length],
+#         'k-', [x_coord[0], x_coord[1]],
+#         [y_max+sig_bar_length, y_max+sig_bar_length], 'k-',
+#         [x_coord[1], x_coord[1]], [y_max+sig_bar_length, y_max], 'k-',
+#         linewidth=linewidth_sig_bar)
+#     x_mean = np.mean(np.asarray((x_coord[0], x_coord[1])))
+#     y = y_max + sig_bar_length + sig_star_offset_top
+#     for r, roi in enumerate(evc_rois):
+#         plt.text(x_mean+x_dist_sig[r], y, s='*', fontsize=fontsize_sig,
+#             color=colors_2[r], fontweight='bold', ha='center', va='center')
+
+# Significance 2 # !!! ADD
+# if all(sig_gt1tr_gt2tr_vs_gt1tr_synt < 0.05):
+#     res = np.append(acc_gt1tr_gt2tr, acc_gt1tr_synt)
+#     y_max = max(res) + sig_offset
+#     plt.plot([x_coord[1], x_coord[1]], [y_max, y_max+sig_bar_length],
+#         'k-', [x_coord[1], x_coord[2]],
+#         [y_max+sig_bar_length, y_max+sig_bar_length], 'k-',
+#         [x_coord[2], x_coord[2]], [y_max+sig_bar_length, y_max], 'k-',
+#         linewidth=linewidth_sig_bar)
+#     x_mean = np.mean(np.asarray((x_coord[1], x_coord[2])))
+#     y = y_max + sig_bar_length + sig_star_offset_top
+# for r, roi in enumerate(evc_rois):
+#     plt.text(x_mean+x_dist_sig[r], y, s='*', fontsize=fontsize_sig,
+#         color=colors_2[r], fontweight='bold', ha='center', va='center')
+
+# x-axis parameters
+xticks = x_coord
+plt.xticks(ticks=xticks, labels=rois, rotation=0)
+xlabel = 'ROIs'
+#plt.xlabel(xlabel, fontsize=fontsize)
+plt.xlim(left=-0.5, right=6.5)
+
+# y-axis parameters
+yticks = [0, 20, 40, 60, 80, 100]
+ylabels = [0, 20, 40, 60, 80, 100]
+plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
+ylabel = 'Vertex overlap (%)'
+plt.ylabel(ylabel, fontsize=fontsize)
+plt.ylim(bottom=0, top=100)
+
+# Legend
+plt.legend(loc=2, ncol=2, fontsize=fontsize, frameon=False)
+
+# Save the figure
+file_name = os.path.join(save_dir, 'vertex_overlap_images-'+args.images+'.svg')
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+    format='svg')
 
 
 # =============================================================================
-# Plot the tripartite organization results on a brain surface # !!!
+# Plot the tripartite organization results on a brain surface
 # =============================================================================
-# Perform the tripartite organization analysis on the fMRI responses averaged
-# across subjects.
-
-# Average the responses across subjects
-lh_animals_avg = np.nanmean(lh_animals, 0)
-rh_animals_avg = np.nanmean(rh_animals, 0)
-lh_big_objects_avg = np.nanmean(lh_big_objects, 0)
-rh_big_objects_avg = np.nanmean(rh_big_objects, 0)
-lh_small_objects_avg = np.nanmean(lh_small_objects, 0)
-rh_small_objects_avg = np.nanmean(rh_small_objects, 0)
-
-# Append the in silico fMRI responses for the three conditions
-lh_data = np.array([lh_animals_avg, lh_big_objects_avg, lh_small_objects_avg])
-rh_data = np.array([rh_animals_avg, rh_big_objects_avg, rh_small_objects_avg])
-
-# For each vertex, select the condition leading to highest response
-lh_tripartite_organization = np.argsort(lh_data, axis=0)[-1].astype(np.float32)
-rh_tripartite_organization = np.argsort(rh_data, axis=0)[-1].astype(np.float32)
-
-# Threshold with univariate response magnitude
-threshold_resp = -.25
-lh_idx_nan = np.where(np.max(lh_data, 0) < threshold_resp)[0]
-rh_idx_nan = np.where(np.max(rh_data, 0) < threshold_resp)[0]
-lh_tripartite_organization[lh_idx_nan] = np.nan
-rh_tripartite_organization[rh_idx_nan] = np.nan
-
-# Threshold with ncsnr
-lh_idx_nan = np.where(np.isnan(lh_animals_avg))[0]
-rh_idx_nan = np.where(np.isnan(rh_animals_avg))[0]
-lh_tripartite_organization[lh_idx_nan] = np.nan
-rh_tripartite_organization[rh_idx_nan] = np.nan
-
 # Append the results across left and right hemispheres
 data = np.append(lh_tripartite_organization, rh_tripartite_organization)
 
-# Plot the results on flat surfaces
+# Create the surface maps
 vertex_data = cortex.Vertex(data, subject, cmap=custom_cmap, vmin=0, vmax=2,
     with_colorbar=False)
+
+# Plot the results on a flat surface
 fig = cortex.quickshow(vertex_data,
     height=2000, # Increase resolution of map and ROI contours
     with_curvature=True,
@@ -131,6 +216,7 @@ fig = cortex.quickshow(vertex_data,
     curvature_brightness=0.5,
     with_colorbar=False
     )
+
 # Save the figure
 file_name = os.path.join(save_dir, 'tripartite_organization_flat_images-'+
     args.images+'.svg')
