@@ -116,7 +116,8 @@ Note: All HDF5 files use the key 'neural_data'.
 
 import argparse
 import os
-from utils_things_fMRI_1 import split_fmri_data, create_fmri_metadata
+from utils_things_fMRI_1 import split_fmri_data, create_fmri_metadata, normalize_fmri_data, create_averaged_test_data
+import pandas as pd
 
 # =============================================================================
 # Input arguments
@@ -162,6 +163,39 @@ print("Splitting training and testing data")
 split_fmri_data(response_file, stimulus_file, output_dir, args.subject, args.batch_size)
 
 
+
+# =============================================================================
+# Normalize data using session-wise z-scores
+# =============================================================================
+print("")
+print("Normalizing data using session-wise z-scores")
+
+train_file = os.path.join(output_dir, f'fmri_{args.subject}_split-train.h5')
+test_file = os.path.join(output_dir, f'fmri_{args.subject}_split-test.h5')
+
+train_means, train_stds, unique_sessions = normalize_fmri_data(
+    train_filepath=train_file,
+    test_filepath=test_file,
+    stimulus_filepath=stimulus_file,
+    subject_id=args.subject
+)
+
+
+# =============================================================================
+# Create averaged test data (from normalized individual trials)
+# =============================================================================
+print("")
+print("Creating averaged test data from normalized trials")
+
+# Need to recreate test_mask for create_averaged_test_data
+stim_metadata = pd.read_csv(stimulus_file)
+test_mask = stim_metadata['trial_type'] == 'test'
+
+create_averaged_test_data(test_file, stimulus_file, output_dir, args.subject, test_mask)
+
+
+
+
 # =============================================================================
 # Create dataset metadata
 # =============================================================================
@@ -171,7 +205,8 @@ create_fmri_metadata(
     stimulus_filepath=stimulus_file,
     voxel_filepath=voxel_file,
     output_dir=output_dir,
-    subject_id=args.subject
+    subject_id=args.subject,
+    train_means=train_means,
+    train_stds=train_stds,
+    unique_sessions=unique_sessions
 )
-
-print("\nPreprocessing complete!")

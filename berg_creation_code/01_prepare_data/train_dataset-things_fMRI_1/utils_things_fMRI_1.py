@@ -33,7 +33,6 @@ def split_fmri_data(response_filepath, stimulus_filepath, output_dir, subject_id
     ------------
     fmri_{subject}_split-train.h5 : (n_train, 211339)
     fmri_{subject}_split-test.h5  : (n_test, 211339)
-    fmri_{subject}_split-test_averaged.h5 : (n_unique_test, 211339)
     """
     print(f"Loading stimulus metadata from: {stimulus_filepath}")
     stim_metadata = pd.read_csv(stimulus_filepath)
@@ -106,10 +105,6 @@ def split_fmri_data(response_filepath, stimulus_filepath, output_dir, subject_id
     
     print(f"Training shape: ({n_train}, {n_voxels})")
     print(f"Test shape: ({n_test}, {n_voxels})")
-    
-    # Create averaged test data
-    print("Creating averaged test data...")
-    create_averaged_test_data(test_file, stimulus_filepath, output_dir, subject_id, test_mask)
 
 
 def create_averaged_test_data(test_filepath, stimulus_filepath, output_dir, subject_id, test_mask):
@@ -176,6 +171,114 @@ def create_averaged_test_data(test_filepath, stimulus_filepath, output_dir, subj
 
 
 # =============================================================================
+# Normalize data
+# =============================================================================
+
+
+
+def normalize_fmri_data(train_filepath, test_filepath, stimulus_filepath, subject_id):
+    """Normalize fMRI data using session-wise z-score normalization.
+    
+    Computes mean and std per voxel per session from training data, then applies
+    normalization to train and test data in-place. Test data uses training statistics.
+    
+    Parameters
+    ----------
+    train_filepath : str
+        Path to training data HDF5 file
+    test_filepath : str
+        Path to test data HDF5 file
+    stimulus_filepath : str
+        Path to stimulus metadata CSV
+    subject_id : str
+        Subject identifier
+        
+    Returns
+    -------
+    tuple
+        (train_session_means, train_session_stds, unique_sessions)
+        Arrays of shape (n_sessions, n_voxels) and (n_sessions,)
+    """
+    print("Loading stimulus metadata for session info...")
+    stim_metadata = pd.read_csv(stimulus_filepath)
+    
+    train_mask = stim_metadata['trial_type'] == 'train'
+    test_mask = stim_metadata['trial_type'] == 'test'
+    
+    train_sessions = stim_metadata[train_mask]['session'].values
+    test_sessions = stim_metadata[test_mask]['session'].values
+    
+    unique_sessions = np.unique(train_sessions)
+    n_sessions = len(unique_sessions)
+    
+    print(f"Found {n_sessions} unique sessions")
+    
+    # Load training data and compute statistics on them
+    print("Computing session-wise statistics on training data...")
+    with h5py.File(train_filepath, 'r+') as f_train:
+        train_data = f_train['neural_data']
+        n_train, n_voxels = train_data.shape
+        
+        # Initialize statistics arrays
+        train_session_means = np.zeros((n_sessions, n_voxels), dtype=np.float32)
+        train_session_stds = np.zeros((n_sessions, n_voxels), dtype=np.float32)
+        
+        # Iterate through sessions and compute mean and std
+        for i, session in enumerate(unique_sessions):
+            session_mask = train_sessions == session
+            session_indices = np.where(session_mask)[0]
+            
+            print(f"  Session {session}: {len(session_indices)} trials")
+            
+            # Load session data
+            session_data = train_data[session_indices, :]
+            
+            # Compute mean and std per voxel
+            session_mean = np.mean(session_data, axis=0)
+            session_std = np.std(session_data, axis=0)
+            
+            # Handle zero std
+            session_std[session_std == 0] = 1
+            
+            train_session_means[i, :] = session_mean
+            train_session_stds[i, :] = session_std
+        
+        # Normalize training data in-place
+        print("Normalizing training data...")
+        for i, session in enumerate(tqdm(unique_sessions, desc="Normalizing train sessions")):
+            session_mask = train_sessions == session
+            session_indices = np.where(session_mask)[0]
+            
+            session_data = train_data[session_indices, :]
+            session_mean = train_session_means[i, :]
+            session_std = train_session_stds[i, :]
+            normalized_data = (session_data - session_mean) / session_std
+            train_data[session_indices, :] = normalized_data
+            
+    
+    # Normalize test data using training statistics
+    print("Normalizing test data...")
+    with h5py.File(test_filepath, 'r+') as f_test:
+        test_data = f_test['neural_data']
+        
+        for i, session in enumerate(tqdm(unique_sessions, desc="Normalizing test sessions")):
+            session_mask = test_sessions == session
+            session_indices = np.where(session_mask)[0]
+            
+            if len(session_indices) > 0:
+                session_data = test_data[session_indices, :]
+                session_mean = train_session_means[i, :]
+                session_std = train_session_stds[i, :]
+                normalized_data = (session_data - session_mean) / session_std
+                test_data[session_indices, :] = normalized_data
+    
+    
+    return train_session_means, train_session_stds, unique_sessions
+
+
+
+
+# =============================================================================
 # Create dataset metadata
 # =============================================================================
 
@@ -221,7 +324,8 @@ def extract_roi_indices(voxel_df):
     return roi_indices
 
 
-def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_id):
+def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_id,
+                        train_means=None, train_stds=None, unique_sessions=None):
     """Create comprehensive metadata file for fMRI dataset.
     
     Generate metadata linking neural responses to stimulus images and voxel properties.
@@ -274,6 +378,8 @@ def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_
     test_concepts = test_data['concept'].values
     test_trial_ids = test_data['trial_id'].values
     
+    
+
     # Create averaged test metadata (one entry per unique stimulus)
     unique_test_stimuli = np.unique(test_stimuli)
     test_avg_stimuli = []
@@ -304,6 +410,9 @@ def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_
     # Extract ROI indices
     print("Extracting ROI indices...")
     roi_indices = extract_roi_indices(voxel_metadata)
+    
+    # In the 'fmri' section:
+
     
     # Compile metadata dictionary
     metadata_dict = {
@@ -343,6 +452,11 @@ def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_
             'splithalf_uncorrected': splithalf_uncorrected,
         }
     }
+    
+    if train_means is not None:
+        metadata_dict['fmri']['train_session_means'] = train_means
+        metadata_dict['fmri']['train_session_stds'] = train_stds
+        metadata_dict['fmri']['unique_sessions'] = unique_sessions
     
     # Add ROI indices to metadata
     metadata_dict['fmri'].update(roi_indices)
