@@ -1,9 +1,8 @@
-"""Plot the tripartite organization effect (Konkle & Caramazza, 2013) results.
+"""Plot the vertex-mean responses of high-level visual cortex ROIs for images
+of different categories.
 
 Parameters
 ----------
-images : str
-    Whether to use 'naturalistic' or 'texforms' images.
 berg_dir : str
     Directory of the BERG.
 
@@ -12,14 +11,11 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-import cortex
-import cortex.polyutils
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--images', type=str, default='naturalistic')
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -28,7 +24,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'tripartite_organization', 'plots')
+    'vision', 'fmri', 'hvc_selectivity', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -36,23 +32,24 @@ os.makedirs(save_dir, exist_ok=True)
 # Load the results
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'tripartite_organization', 'stats', 'stats_images-'+
-    args.images+'.npy')
+    'vision', 'fmri', 'hvc_selectivity', 'stats', 'stats.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 
-vertex_overlap = data['vertex_overlap']
-pval_vertex_overlap = data['pval_vertex_overlap']
-ci_vertex_overlap = data['ci_vertex_overlap']
-lh_tripartite_organization = data['lh_tripartite_organization']
-rh_tripartite_organization = data['rh_tripartite_organization']
+insilico_fmri = data['insilico_fmri']
+vertex_mean_resp = data['vertex_mean_resp']
+pval_cat_diff = data['pval_cat_diff']
+ci_vertex_mean_resp = data['ci_vertex_mean_resp']
 
 
 # =============================================================================
-# Plot the ROI vertex overlap with categorical zones
+# Plot the vertex-mean responses of each ROI # !!!
 # =============================================================================
-rois = ['FFA', 'OFA', 'EBA', 'FBA', 'PPA', 'OPA', 'RSC']
-categories = ['animals', 'big_objects', 'small_objects']
+ONLY PLOT THE UNIVARIATE RESPONSES (NOT THE PERCENTAGE OF VERTICES).
+
+
+categories = ['Bodies', 'Faces', 'Objects', 'Scenes']
+rois = ['EBA', 'FBA', 'FFA', 'OFA', 'PPA', 'OPA', 'RSC']
 n_sub = 8
 
 # Plot parameters
@@ -169,65 +166,3 @@ plt.legend(loc=2, ncol=2, fontsize=fontsize, frameon=False)
 file_name = os.path.join(save_dir, 'vertex_overlap_images-'+args.images+'.svg')
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
     format='svg')
-
-
-# =============================================================================
-# Plot the tripartite organization results on a brain surface
-# =============================================================================
-# Plot parameters
-subject = 'fsaverage'
-plt.rc('xtick', labelsize=30)
-plt.rc('ytick', labelsize=30)
-matplotlib.use("svg")
-plt.rcParams["text.usetex"] = False
-plt.rcParams['svg.fonttype'] = 'none'
-custom_cmap = mcolors.ListedColormap([(143/255, 25/255, 250/255),
-    (43/255, 141/255, 248/255), (243/255, 85/255, 20/255)])
-
-# Append the results across left and right hemispheres
-data = np.append(lh_tripartite_organization, rh_tripartite_organization)
-
-# Create the surface maps
-vertex_data = cortex.Vertex(data, subject, cmap=custom_cmap, vmin=0, vmax=2,
-    with_colorbar=False)
-
-# Plot the results on a flat surface
-fig = cortex.quickshow(vertex_data,
-    height=2000, # Increase resolution of map and ROI contours
-    with_curvature=True,
-    with_rois=True,
-    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-    linewidth=2,
-    linecolor=(1, 1, 1),
-    with_labels=True,
-    labelsize=15,
-    curvature_brightness=0.5,
-    with_colorbar=False
-    )
-
-# Save the figure
-file_name = os.path.join(save_dir, 'tripartite_organization_flat_images-'+
-    args.images+'.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
-    format='svg')
-
-# Plot results on inflated surfaces # !!! DELETE?
-#import nilearn
-#from nilearn.plotting import view_surf
-#from nilearn.datasets import load_fsaverage # type: ignore
-# # Get the fsaverage mesh
-# fsaverage_meshes = load_fsaverage(mesh='fsaverage')
-# # Create the inflated surface plot
-# view = view_surf(
-#     surf_mesh=fsaverage_meshes["inflated"],
-#     surf_map=data,
-#     hemi="both", # type: ignore
-#     title=None
-# )
-# view
-# view.save_as_html("inflated_surface_plot.html")
-# # Save the figure
-# file_name = os.path.join(save_dir, 'tripartite_organization_inflated_images-'+
-#     args.images+'.svg')
-# fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
-#     format='svg')

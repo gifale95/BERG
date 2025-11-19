@@ -50,12 +50,15 @@ data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
 
 data = np.load(data_dir, allow_pickle=True).item()
 
-lh_animals = data['lh_animals']
-rh_animals = data['rh_animals']
-lh_big_objects = data['lh_big_objects']
-rh_big_objects = data['rh_big_objects']
-lh_small_objects = data['lh_small_objects']
-rh_small_objects = data['rh_small_objects']
+animals = {}
+animals['lh'] = data['lh_animals']
+animals['rh'] = data['rh_animals']
+big_objects = {}
+big_objects['lh'] = data['lh_big_objects']
+big_objects['rh'] = data['rh_big_objects']
+small_objects = {}
+small_objects['lh'] = data['lh_small_objects']
+small_objects['rh'] = data['rh_small_objects']
 metadata = data['metadata']
 del data
 
@@ -66,27 +69,21 @@ del data
 # Only retain vertices that have above threshold (i) NCSNR AND (ii) encoding
 # prediction accuracy.
 
-for s in range(len(metadata)):
+# Loop across hemispheres
+hemispheres = ['lh', 'rh']
+for hem in hemispheres:
 
-    # Left hemisphere
-    lh_ncsnr = metadata[s]['fmri']['lh_ncsnr']
-    idx_ncsnr = lh_ncsnr > args.ncsnr_threshold
-    lh_encoding = metadata[s]['encoding_models']['lh_explained_variance_nsdcore']
-    idx_encoding = lh_encoding > args.encoding_threshold
-    idx_nan = ~np.logical_and(idx_ncsnr, idx_ncsnr)
-    lh_animals[s,idx_nan] = np.nan
-    lh_big_objects[s,idx_nan] = np.nan
-    lh_small_objects[s,idx_nan] = np.nan
+    # Loop across subjects
+    for s in range(len(metadata)):
 
-    # Right hemisphere
-    rh_ncsnr = metadata[s]['fmri']['rh_ncsnr']
-    idx_ncsnr = rh_ncsnr > args.ncsnr_threshold
-    rh_encoding = metadata[s]['encoding_models']['rh_explained_variance_nsdcore']
-    idx_encoding = rh_encoding > args.encoding_threshold
-    idx_nan = ~np.logical_and(idx_ncsnr, idx_ncsnr)
-    rh_animals[s,idx_nan] = np.nan
-    rh_big_objects[s,idx_nan] = np.nan
-    rh_small_objects[s,idx_nan] = np.nan
+        ncsnr = metadata[s]['fmri'][hem+'_ncsnr']
+        idx_ncsnr = ncsnr > args.ncsnr_threshold
+        encoding = metadata[s]['encoding_models'][hem+'_explained_variance_nsdcore']
+        idx_encoding = encoding > args.encoding_threshold
+        idx_nan = ~np.logical_and(idx_ncsnr, idx_ncsnr)
+        animals[hem][s,idx_nan] = np.nan
+        small_objects[hem][s,idx_nan] = np.nan
+        big_objects[hem][s,idx_nan] = np.nan
 
 
 # =============================================================================
@@ -123,26 +120,26 @@ for roi in rois:
             # Get the vertex indices for the ROI
             if roi == 'FFA' or roi == 'FBA':
                 # Get the vertex indices for both parts of the ROI
-                lh_idx = np.append(
+                idx = np.append(
                     metadata[s]['fmri'][hem+'_fsaverage_rois'][f'{roi}-1'],
                     metadata[s]['fmri'][hem+'_fsaverage_rois'][f'{roi}-2'])
-                lh_idx.sort()
+                idx.sort()
             else:
                 # Get the vertex indices for the ROI
-                lh_idx = metadata[s]['fmri'][hem+'_fsaverage_rois'][roi]
+                idx = metadata[s]['fmri'][hem+'_fsaverage_rois'][roi]
 
             # Calculate the count of vertices selective for animals, big
             # objects, or small objects
-            for v in lh_idx:
-                if np.isnan(lh_animals[s,v]):
+            for v in idx:
+                if np.isnan(animals[hem][s,v]):
                     continue
                 else:
                     tot_vertices += 1
-                    if lh_animals[s,v] > lh_small_objects[s,v] and lh_animals[s,v] > lh_big_objects[s,v]:
+                    if animals[hem][s,v] > small_objects[hem][s,v] and animals[hem][s,v] > big_objects[hem][s,v]:
                         count_animals += 1
-                    if lh_big_objects[s,v] > lh_small_objects[s,v] and lh_big_objects[s,v] > lh_animals[s,v]:
+                    if big_objects[hem][s,v] > small_objects[hem][s,v] and big_objects[hem][s,v] > animals[hem][s,v]:
                         count_big_objects += 1
-                    if lh_small_objects[s,v] > lh_big_objects[s,v] and lh_small_objects[s,v] > lh_animals[s,v]:
+                    if small_objects[hem][s,v] > big_objects[hem][s,v] and small_objects[hem][s,v] > animals[hem][s,v]:
                         count_small_objects += 1
 
         # Store the vertex overlap results
@@ -214,12 +211,12 @@ for roi in rois:
 # across subjects.
 
 # Average the responses across subjects
-lh_animals_avg = np.nanmean(lh_animals, 0)
-rh_animals_avg = np.nanmean(rh_animals, 0)
-lh_big_objects_avg = np.nanmean(lh_big_objects, 0)
-rh_big_objects_avg = np.nanmean(rh_big_objects, 0)
-lh_small_objects_avg = np.nanmean(lh_small_objects, 0)
-rh_small_objects_avg = np.nanmean(rh_small_objects, 0)
+lh_animals_avg = np.nanmean(animals['lh'], 0)
+rh_animals_avg = np.nanmean(animals['rh'], 0)
+lh_big_objects_avg = np.nanmean(big_objects['lh'], 0)
+rh_big_objects_avg = np.nanmean(big_objects['rh'], 0)
+lh_small_objects_avg = np.nanmean(small_objects['lh'], 0)
+rh_small_objects_avg = np.nanmean(small_objects['rh'], 0)
 
 # Append the in silico fMRI responses for the three conditions
 lh_data = np.array([lh_animals_avg, lh_big_objects_avg, lh_small_objects_avg])
