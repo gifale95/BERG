@@ -197,10 +197,10 @@ fig = cortex.quickshow(vertex_data,
     with_curvature=True,
     with_rois=True,
     roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-    linewidth=2,
+    linewidth=5,
     linecolor=(1, 1, 1),
     with_labels=True,
-    labelsize=15,
+    labelsize=25,
     curvature_brightness=0.5,
     with_colorbar=False
     )
