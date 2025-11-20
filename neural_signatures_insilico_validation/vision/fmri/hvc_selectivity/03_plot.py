@@ -45,17 +45,14 @@ ci_vertex_mean_resp = data['ci_vertex_mean_resp']
 # =============================================================================
 # Plot the vertex-mean responses of each ROI # !!!
 # =============================================================================
-ONLY PLOT THE UNIVARIATE RESPONSES (NOT THE PERCENTAGE OF VERTICES).
-
-
 categories = ['Bodies', 'Faces', 'Objects', 'Scenes']
 rois = ['EBA', 'FBA', 'FFA', 'OFA', 'PPA', 'OPA', 'RSC']
 n_sub = 8
 
 # Plot parameters
 x_coord = np.arange(len(rois))
-dist = 0.4
-x_dist = np.asarray((-0.5, 0, 0.5)) * dist
+dist = 0.3
+x_dist = np.asarray((-0.75, -0.25, 0.25, 0.75)) * dist
 x_dist_sig = np.asarray((-.75, -0.25, 0.25, .75)) * dist
 alpha = 0.2
 fontsize_sig = 20
@@ -66,7 +63,6 @@ sig_offset = 7
 sig_bar_length = 3
 linewidth_sig_bar = 1
 sig_star_offset_top = 2
-category_labels = ['Animals', 'Big objects', 'Small objects']
 fontsize = 30
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams['font.size'] = fontsize
@@ -86,8 +82,8 @@ matplotlib.rcParams['grid.alpha'] = .3
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-colors = [(143/255, 25/255, 250/255), (43/255, 141/255, 248/255),
-    (243/255, 85/255, 20/255)]
+colors = [(204/255, 102/255, 119/255), (230/255, 159/255, 0/255),
+    (86/255, 180/255, 233/255), (17/255, 119/255, 51/255)]
 
 # Plot
 fig = plt.figure(figsize=(20,9))
@@ -97,20 +93,20 @@ for r, roi in enumerate(rois):
 
         # Encoding accuracy scores
         x = np.repeat(r+x_dist[c], n_sub)
-        y = vertex_overlap[roi+'_'+cat]
+        y = vertex_mean_resp[roi+'_'+cat]
         plt.scatter(x, y, s=s, color=colors[c], alpha=alpha,
             edgecolors='none', label='_nolegend_')
         if r == 0:
             plt.scatter(x[0], np.mean(y), s=s_mean, color=colors[c],
-            edgecolors='none', label=category_labels[c])
+            edgecolors='none', label=cat)
         else:
             plt.scatter(x[0], np.mean(y), s=s_mean, color=colors[c],
             edgecolors='none', label='_nolegend_')
 
         # Confidence intervals
         ci = np.zeros(2)
-        ci[0] = np.mean(y) - ci_vertex_overlap[roi+'_'+cat][0]
-        ci[1] = ci_vertex_overlap[roi+'_'+cat][1] - np.mean(y)
+        ci[0] = np.mean(y) - ci_vertex_mean_resp[roi+'_'+cat][0]
+        ci[1] = ci_vertex_mean_resp[roi+'_'+cat][1] - np.mean(y)
         plt.errorbar(x[0], np.mean(y), yerr=np.reshape(ci, (-1,1)),
             fmt="none", ecolor=colors[c], elinewidth=5, capsize=0)
 
@@ -152,17 +148,17 @@ xlabel = 'ROIs'
 plt.xlim(left=-0.5, right=6.5)
 
 # y-axis parameters
-yticks = [0, 20, 40, 60, 80, 100]
-ylabels = [0, 20, 40, 60, 80, 100]
+yticks = [-1, -0.5, 0, 0.5, 1]
+ylabels = ['-1', '-0.5', '0', '0.5', '1']
 plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
-ylabel = 'Vertex overlap (%)'
+ylabel = 'Univariate response'
 plt.ylabel(ylabel, fontsize=fontsize)
-plt.ylim(bottom=0, top=100)
+plt.ylim(bottom=-.85, top=.85)
 
 # Legend
 plt.legend(loc=2, ncol=2, fontsize=fontsize, frameon=False)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'vertex_overlap_images-'+args.images+'.svg')
+file_name = os.path.join(save_dir, 'roi_univariate_resposes.svg')
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
     format='svg')

@@ -35,6 +35,11 @@ parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
+print('>>> Tripartite organization - Stats <<<')
+print('\nInput arguments:')
+for key, val in vars(args).items():
+    print('{:16} {}'.format(key, val))
+
 # Set random seed for reproducible results
 seed = 20200220
 random.seed(seed)

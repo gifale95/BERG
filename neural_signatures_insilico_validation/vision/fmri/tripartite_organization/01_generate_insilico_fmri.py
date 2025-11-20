@@ -34,7 +34,7 @@ parser.add_argument('--images', type=str, default='naturalistic')
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Tripartite organization <<<')
+print('>>> Generate in silico fMRI <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))

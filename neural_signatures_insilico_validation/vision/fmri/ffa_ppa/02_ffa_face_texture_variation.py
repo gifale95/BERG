@@ -1,0 +1,222 @@
+"""Test the sensitivity to face shapes across texture variations of FFA. The
+hypothesis is that images of faces across different textures will drive FFA
+more than images of objects.
+
+Parameters
+----------
+ncsnr_threshold : float
+    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) to
+    consider a vertex for the tripartite organization analysis.
+encoding_threshold : float
+    The threshold on the encoding models explained variance to consider a
+    vertex for the tripartite organization analysis (in % units).
+n_iter : int
+    Amount of iterations for creating the confidence intervals bootstrapped
+    distribution.
+berg_dir : str
+    Directory of the BERG.
+
+"""
+
+import argparse
+import os
+import numpy as np
+from tqdm import tqdm
+import random
+from sklearn.utils import resample
+from scipy.stats import ttest_rel
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
+parser.add_argument('--encoding_threshold', default=20, type=float)
+parser.add_argument('--n_iter', default=100000, type=int)
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
+args, unknown = parser.parse_known_args()
+
+print('>>> FFA face texture variation <<<')
+print('\nInput arguments:')
+for key, val in vars(args).items():
+    print('{:16} {}'.format(key, val))
+
+# Set random seed for reproducible results
+seed = 20200220
+random.seed(seed)
+np.random.seed(seed)
+
+
+# =============================================================================
+# Load the in silico fMRI responses
+# =============================================================================
+data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
+    'vision', 'fmri', 'ffa_ppa', 'insilico_fmri_responses',
+    'insilico_fmri_responses.npy')
+
+data = np.load(data_dir, allow_pickle=True).item()
+
+insilico_fmri = {}
+insilico_fmri['FFA-1'] = {}
+insilico_fmri['FFA-1']['lh'] = \
+    data['lh_insilico_fmri_ffa1']['ffa_face_texture']
+insilico_fmri['FFA-1']['rh'] = \
+    data['rh_insilico_fmri_ffa1']['ffa_face_texture']
+insilico_fmri['FFA-2'] = {}
+insilico_fmri['FFA-2']['lh'] = \
+    data['lh_insilico_fmri_ffa2']['ffa_face_texture']
+insilico_fmri['FFA-2']['rh'] = \
+    data['rh_insilico_fmri_ffa2']['ffa_face_texture']
+metadata = data['metadata']
+del data
+
+
+# =============================================================================
+# NCSNR and prediction accuracy thresholding
+# =============================================================================
+# Retain vertices that have above threshold (i) NCSNR AND (ii) encoding
+# prediction accuracy.
+
+# Loop across ROIs and hemispheres
+rois = ['FFA-1', 'FFA-2']
+hemispheres = ['lh', 'rh']
+for roi in rois:
+    for hem in hemispheres:
+
+        # Loop across subjects
+        for s in range(len(metadata)):
+
+            # Get the vertex indices of the ROI of interest
+            roi_idx = metadata[s]['fmri'][hem+'_fsaverage_rois'][roi]
+
+            # NCSNR and noise ceiling vertex selection
+            ncsnr = metadata[s]['fmri'][hem+'_ncsnr'][roi_idx]
+            idx_ncsnr = ncsnr > args.ncsnr_threshold
+            encoding = metadata[s]['encoding_models']\
+                [hem+'_explained_variance_nsdcore'][roi_idx]
+            idx_encoding = encoding > args.encoding_threshold
+            idx_nan = ~np.logical_and(idx_ncsnr, idx_ncsnr)
+
+            # Loop across image types and threshold vertices
+            for key in insilico_fmri[roi][hem].keys():
+                insilico_fmri[roi][hem][key][s][idx_nan] = np.nan
+
+
+# =============================================================================
+# Get the mean ROI response across vertices for each image type
+# =============================================================================
+# Empty results dictionary
+vertex_mean_resp = {}
+
+# Loop across image types
+image_types = ['Faces-Animals', 'Faces-Blank', 'Faces-Cartoon',
+    'Faces-EyesOnly', 'Faces-Inverted', 'Faces-Rearranged', 'Objects',
+    'Pareidolia-Face']
+for itype in image_types:
+
+    # Empty arrays of shape (n_subjects,)
+    vertex_mean_resp[itype] = np.zeros((len(metadata)))
+
+    # Loop across subjects
+    for s in range(len(metadata)):
+
+        # Empty subject response list
+        vertex_mean_resp_sub = []
+
+        # Loop across hemispheres
+        for hem in hemispheres:
+
+            # Get the vertex responses for both parts of FFA
+            vertex_mean_resp_sub.append(np.append(
+                insilico_fmri['FFA-1'][hem][itype][s],
+                insilico_fmri['FFA-2'][hem][itype][s]))
+
+        # Compute the mean ROI response across vertices
+        vertex_mean_resp[itype][s] = np.nanmean(np.concatenate(
+            vertex_mean_resp_sub))
+
+
+# =============================================================================
+# Compute significant difference between responses for different image types
+# =============================================================================
+# Empty results dictionary
+pval_diff = {}
+
+# Faces-Animals > Objects
+pval_diff['Faces-Animals>Objects'] = ttest_rel(
+    vertex_mean_resp['Faces-Animals'],
+    vertex_mean_resp['Objects'],
+    alternative='greater')[1]
+
+# Faces-Blank > Objects
+pval_diff['Faces-Blank>Objects'] = ttest_rel(
+    vertex_mean_resp['Faces-Blank'],
+    vertex_mean_resp['Objects'],
+    alternative='greater')[1]
+
+# Faces-Cartoon > Objects
+pval_diff['Faces-Cartoon>Objects'] = ttest_rel(
+    vertex_mean_resp['Faces-Cartoon'],
+    vertex_mean_resp['Objects'],
+    alternative='greater')[1]
+
+# Faces-EyesOnly > Objects
+pval_diff['Faces-EyesOnly>Objects'] = ttest_rel(
+    vertex_mean_resp['Faces-EyesOnly'],
+    vertex_mean_resp['Objects'],
+    alternative='greater')[1]
+
+# Faces-Inverted > Objects
+pval_diff['Faces-Inverted>Objects'] = ttest_rel(
+    vertex_mean_resp['Faces-Inverted'],
+    vertex_mean_resp['Objects'],
+    alternative='greater')[1]
+
+# Faces-Rearranged > Objects
+pval_diff['Faces-Rearranged>Objects'] = ttest_rel(
+    vertex_mean_resp['Faces-Rearranged'],
+    vertex_mean_resp['Objects'],
+    alternative='greater')[1]
+
+# Pareidolia-Face > Objects
+pval_diff['Pareidolia-Face>Objects'] = ttest_rel(
+    vertex_mean_resp['Pareidolia-Face'],
+    vertex_mean_resp['Objects'],
+    alternative='greater')[1]
+
+
+# =============================================================================
+# Bootstrap the confidence intervals (CIs)
+# =============================================================================
+# Empty result variables
+ci_vertex_mean_resp = {}
+dist = {}
+for itype in image_types:
+    ci_vertex_mean_resp[itype] = np.zeros((2))
+    dist[itype] = np.zeros((args.n_iter))
+
+# Create the bootstrap distribution
+for i in tqdm(range(args.n_iter)):
+    idx = resample(np.arange(len(metadata)))
+    for itype in image_types:
+        dist[itype][i] = np.mean(vertex_mean_resp[itype][idx])
+
+# Compute the CIs from the bootstrap distribution
+for itype in image_types:
+    ci_vertex_mean_resp[itype][0] = np.percentile(dist[itype], 2.5)
+    ci_vertex_mean_resp[itype][1] = np.percentile(dist[itype], 97.5)
+
+
+# =============================================================================
+# Save the results
+# =============================================================================
+results = {
+    'vertex_mean_resp': vertex_mean_resp,
+    'pval_diff': pval_diff,
+    'ci_vertex_mean_resp': ci_vertex_mean_resp,
+    }
+
+save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
+    'vision', 'fmri', 'ffa_ppa', 'stats')
+os.makedirs(save_dir, exist_ok=True)
+
+file_name = 'ffa_face_texture.npy'
+
+np.save(os.path.join(save_dir, file_name), results) # type: ignore

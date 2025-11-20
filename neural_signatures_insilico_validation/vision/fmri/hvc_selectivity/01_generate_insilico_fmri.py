@@ -31,7 +31,7 @@ parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Tripartite organization <<<')
+print('>>> Generate in silico fMRI <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -85,7 +85,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
     # Loop across image categories
     for c, cat in enumerate(categories):
 
-        # Create empy lists inside the result dicionaries
+        # Create empty lists inside the result dicionaries
         if s == 0:
             lh_insilico_fmri[cat] = []
             rh_insilico_fmri[cat] = []

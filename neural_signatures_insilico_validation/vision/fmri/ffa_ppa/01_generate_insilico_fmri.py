@@ -1,5 +1,5 @@
-"""Use BERG to generate the in silico fMRI responses used to the face, body,
-and scene images.
+"""Use BERG to generate the in silico fMRI responses used to test FFA- and
+PPA-specific effects.
 
 Parameters
 ----------
@@ -31,7 +31,7 @@ parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Tripartite organization <<<')
+print('>>> Generate in silico fMRI <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -42,27 +42,37 @@ for key, val in vars(args).items():
 # =============================================================================
 # Image directories
 img_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'stimuli')
-categories = ['Bodies', 'Faces', 'Objects', 'Scenes']
-img_type = ['Sel', 'Test']
+    'vision', 'fmri', 'ffa_ppa', 'stimuli')
 
-# Loop across image categories and types
+# Loop across image effects
 images = {}
-for cat in tqdm(categories):
-    img_cat = []
+effects = os.listdir(img_dir)
+effects.sort()
+for effect in tqdm(effects):
+
+    # Loop across image types
+    images[effect] = {}
+    img_type = os.listdir(os.path.join(img_dir, effect))
+    img_type.sort()
     for itype in img_type:
-        # Load the images
-        img_list = os.listdir(os.path.join(img_dir, cat+'-'+itype))
+
+        # Loop across images
+        img_cat = []
+        img_list = os.listdir(os.path.join(img_dir, effect, itype))
         img_list.sort()
         for img_name in img_list:
-            img_path = os.path.join(img_dir, cat+'-'+itype, img_name)
+
+            # Load the images
+            img_path = os.path.join(img_dir, effect, itype, img_name)
             img = Image.open(img_path).convert('RGB')
             img = np.array(img)
             img_cat.append(img)
-    img_cat = np.array(img_cat)
-    img_cat = np.swapaxes(img_cat, 1, 3)  # BHWC to BCHW
-    images[cat] = img_cat
-    del img_cat
+
+        # Store the images
+        img_cat = np.array(img_cat)
+        img_cat = np.swapaxes(img_cat, 1, 3)  # BHWC to BCHW
+        images[effect][itype] = img_cat
+        del img_cat
 
 
 # =============================================================================
@@ -72,56 +82,108 @@ for cat in tqdm(categories):
 berg = BERG(berg_dir=args.berg_dir)
 
 # Empty result dictionaries
-lh_insilico_fmri = {}
-rh_insilico_fmri = {}
+lh_insilico_fmri_ffa1 = {}
+lh_insilico_fmri_ffa2 = {}
+lh_insilico_fmri_ppa = {}
+rh_insilico_fmri_ffa1 = {}
+rh_insilico_fmri_ffa2 = {}
+rh_insilico_fmri_ppa = {}
 metadata = []
 
 # Loop across subjects
 for s, sub in enumerate(tqdm(args.subjects)):
 
-    # Load the encoding model
-    model = berg.get_encoding_model(args.encoding_model, subject=sub)
+    # Load the encoding models for FFA and PPA
+    model_ffa1 = berg.get_encoding_model(
+        args.encoding_model,
+        subject=sub,
+        selection={'roi': 'FFA-1'})
+    model_ffa2 = berg.get_encoding_model(
+        args.encoding_model,
+        subject=sub,
+        selection={'roi': 'FFA-2'})
+    model_ppa = berg.get_encoding_model(
+        args.encoding_model,
+        subject=sub,
+        selection={'roi': 'PPA'})
 
-    # Loop across image categories
-    for c, cat in enumerate(categories):
+    # Loop across image effects
+    for e, effect in enumerate(images.keys()):
 
-        # Create empy lists inside the result dicionaries
+        # Create nested result dicionaries
         if s == 0:
-            lh_insilico_fmri[cat] = []
-            rh_insilico_fmri[cat] = []
+            lh_insilico_fmri_ffa1[effect] = {}
+            lh_insilico_fmri_ffa2[effect] = {}
+            lh_insilico_fmri_ppa[effect] = {}
+            rh_insilico_fmri_ffa1[effect] = {}
+            rh_insilico_fmri_ffa2[effect] = {}
+            rh_insilico_fmri_ppa[effect] = {}
 
-        # Generate the in silico fMRI responses, and average them across images
-        fmri, metadata_sub = berg.encode(model, images[cat],
-            return_metadata=True)
-        lh_insilico_fmri[cat].append(np.mean(fmri[0], 0).astype(np.float32))
-        rh_insilico_fmri[cat].append(np.mean(fmri[1], 0).astype(np.float32))
-        if c == 0:
-            metadata.append(metadata_sub)
-        del fmri, metadata_sub
-        torch.cuda.empty_cache()
-        gc.collect()
+        # Loop across image types
+        for i, itype in enumerate(images[effect].keys()):
 
-    del model
+            # Create empty result lists
+            if s == 0:
+                lh_insilico_fmri_ffa1[effect][itype] = []
+                lh_insilico_fmri_ffa2[effect][itype] = []
+                lh_insilico_fmri_ppa[effect][itype] = []
+                rh_insilico_fmri_ffa1[effect][itype] = []
+                rh_insilico_fmri_ffa2[effect][itype] = []
+                rh_insilico_fmri_ppa[effect][itype] = []
+
+            # Generate the in silico fMRI responses
+            fmri_ffa1, metadata_sub = berg.encode(model_ffa1,
+                images[effect][itype], return_metadata=True)
+            fmri_ffa2, metadata_sub = berg.encode(model_ffa2,
+                images[effect][itype], return_metadata=True)
+            fmri_ppa, metadata_sub = berg.encode(model_ppa,
+                images[effect][itype], return_metadata=True)
+
+            # Average the in silico fMRI responses across images, and store
+            # them
+            lh_insilico_fmri_ffa1[effect][itype].append(
+                np.mean(fmri_ffa1[0], 0))
+            rh_insilico_fmri_ffa1[effect][itype].append(
+                np.mean(fmri_ffa1[1], 0))
+            lh_insilico_fmri_ffa2[effect][itype].append(
+                np.mean(fmri_ffa2[0], 0))
+            rh_insilico_fmri_ffa2[effect][itype].append(
+                np.mean(fmri_ffa2[1], 0))
+            lh_insilico_fmri_ppa[effect][itype].append(
+                np.mean(fmri_ppa[0], 0))
+            rh_insilico_fmri_ppa[effect][itype].append(
+                np.mean(fmri_ppa[1], 0))
+
+            # Store the metadata
+            if e == 0 and i == 0:
+                metadata.append(metadata_sub)
+
+            # Delete unused variables
+            del fmri_ffa1, fmri_ffa2, fmri_ppa, metadata_sub
+            torch.cuda.empty_cache()
+            gc.collect()
+
+    # Delete models
+    del model_ffa1, model_ffa2, model_ppa
     torch.cuda.empty_cache()
     gc.collect()
 
-# Convert to numpy arrays
-for cat in categories:
-    lh_insilico_fmri[cat] = np.array(lh_insilico_fmri[cat])                    
-    rh_insilico_fmri[cat] = np.array(rh_insilico_fmri[cat])  
- 
 
 # =============================================================================
 # Save the results
 # =============================================================================
 results = {
-    'lh_insilico_fmri': lh_insilico_fmri,
-    'rh_insilico_fmri': rh_insilico_fmri,
+    'lh_insilico_fmri_ffa1': lh_insilico_fmri_ffa1,
+    'rh_insilico_fmri_ffa1': rh_insilico_fmri_ffa1,
+    'lh_insilico_fmri_ffa2': lh_insilico_fmri_ffa2,
+    'rh_insilico_fmri_ffa2': rh_insilico_fmri_ffa2,
+    'lh_insilico_fmri_ppa': lh_insilico_fmri_ppa,
+    'rh_insilico_fmri_ppa': rh_insilico_fmri_ppa,
     'metadata': metadata
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'insilico_fmri_responses')
+    'vision', 'fmri', 'ffa_ppa', 'insilico_fmri_responses')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'insilico_fmri_responses.npy'
