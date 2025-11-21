@@ -91,7 +91,7 @@ fig = plt.figure(figsize=(20,9))
 for r, roi in enumerate(rois):
     for c, cat in enumerate(categories):
 
-        # Encoding accuracy scores
+        # Univariate response scores
         x = np.repeat(r+x_dist[c], n_sub)
         y = vertex_mean_resp[roi+'_'+cat]
         plt.scatter(x, y, s=s, color=colors[c], alpha=alpha,
@@ -151,7 +151,7 @@ plt.xlim(left=-0.5, right=6.5)
 yticks = [-1, -0.5, 0, 0.5, 1]
 ylabels = ['-1', '-0.5', '0', '0.5', '1']
 plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
-ylabel = 'Univariate response'
+ylabel = 'Univariate response ($z$-scored)'
 plt.ylabel(ylabel, fontsize=fontsize)
 plt.ylim(bottom=-.85, top=.85)
 

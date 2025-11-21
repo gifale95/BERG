@@ -98,7 +98,7 @@ fig = plt.figure(figsize=(20,9))
 for r, roi in enumerate(rois):
     for c, cat in enumerate(categories):
 
-        # Encoding accuracy scores
+        # Vertex overlap scores
         x = np.repeat(r+x_dist[c], n_sub)
         y = vertex_overlap[roi+'_'+cat]
         plt.scatter(x, y, s=s, color=colors[c], alpha=alpha,
