@@ -2,28 +2,29 @@
 # Replace placeholder values with actual model information
 
 # Basic metadata
-model_id: utah_array-tvsd-clip_vit_b_32
+model_id: utah_array-tvsd-vit_b_32
 modality: utah_array 
 training_dataset: tvsd
 species: Macaque 
 stimuli: Images  # e.g., Images, Sounds, Text, etc.
-model_type: Clip trained Vision transformer (Clip.ViT-B/32)
+model_type: Vision transformer (ViT-B/32)
 creator: Domenic Bersch
 
 # General description of the model
 description: |
-  These encoding models consist of a linear mapping (through linear regression) of CLIP vision transformer
-  (Radford et al., 2021) image features onto intracortical spiking activity. The CLIP ViT-B/32 model extracts
+  These encoding models consist of a linear mapping through linear regression of a vision transformer
+  (Dosovitskiy et al., 2020) image features onto intracortical spiking activity. The ViT-B/32 model extracts
   features from all 12 transformer layers, using all 50 patch tokens per layer. Prior to
   mapping onto neural responses, the image features have been downsampled to 250 principal components using
   principal component analysis. The encoding models were trained on the THINGS Ventral Stream Spiking Dataset
   (TVSD) (Papale et al., Neuron 2025), simultaneous intracortical recordings from 1,024 electrodes across
   macaque ventral stream areas (V1, V4, IT) in response to natural images from the THINGS database
   (Hebart et al., 2019).
-  **Preprocessing**. The neural data preprocessing is described in detail in Papale et al., Neuron 2025. The
-  data were epoched from -100 ms to +199 ms relative to stimulus onset, resulting in 300 time points. Baseline
-  correction was applied using day-specific statistics from the pre-stimulus interval (-100 to 0 ms), and
-  responses were z-score normalized.
+  **Preprocessing**. Raw broadband signals (30 kHz) were band-pass filtered to extract high-frequency spiking activity, 
+  and multi-unit activity (MUA) was obtained using threshold-based spike detection and smoothing, following the official TVSD pipeline. 
+  Responses were baseline-corrected and normalized per session, with area-specific time windows aligned to peak latencies (V1: 25–125 ms, V4: 50–150 ms, IT: 75–175 ms).
+  The data were epoched from -100 ms to +199 ms relative to stimulus onset, resulting in 300 time points.
+  More detailed preprocessing steps are described in the TVSD paper.
   **Model training partition.** Spiking responses to 22,248 unique images from the THINGS database, each
   presented once during passive fixation.
   **Model testing partition.** Spiking responses to 100 unique images, each repeated 30 times. The test
@@ -31,6 +32,35 @@ description: |
   Independent encoding models were trained for each monkey (monkeyN and monkeyF). For computational efficiency,
   models were trained in 8 electrode chunks (128 electrodes each), with predictions concatenated to generate
   full responses across all 1,024 electrodes and 300 time points simultaneously.
+
+
+metadata: |
+    'utah-array':
+        train_img_ids        : (22248,) - Training stimulus IDs
+        train_img_files      : (22248,) - Training image filenames
+        train_img_concepts   : (22248,) - Training object categories
+        train_days           : (22248,) - Recording days for training
+        train_sequence_pos   : (22248,) - Position in 4-image sequence
+        test_img_ids         : (3000,)  - Test stimulus IDs (individual trials)
+        test_img_files       : (3000,)  - Test image filenames (individual)
+        test_img_concepts    : (3000,)  - Test object categories (individual)
+        test_days            : (3000,)  - Recording days for test
+        test_sequence_pos    : (3000,)  - Position in sequence for test
+        test_avg_img_ids     : (100,)   - Unique test stimulus IDs
+        test_avg_img_files   : (100,)   - Test image filenames (averaged)
+        test_avg_img_concepts: (100,)   - Test object categories (averaged)
+        times                : (300,)   - Time points (-100 to 199ms)
+        electrode_order      : (1024,)  - Electrode mapping order (0-based)
+        roi_assignments      : (1024,)  - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
+        roi_labels           : (3,)     - ROI label names ['V1', 'V4', 'IT']
+        monkey_id            : str      - Monkey identifier
+        n_electrodes         : int      - Number of electrodes (1024)
+    'encoding_model':
+        SNR                  : (4, 1024) - Signal-to-noise ratio per day per electrode
+        SNR_max              : (1024,)  - Best SNR across all days per electrode
+        oracle               : (1024,)  - Noise ceiling estimate per electrode from paper
+        ncsnr                : (300, 1024) - Calculated neural signal-to-noise ratio
+        noise_ceiling        : (300, 1024) - Calculated noise Ceiling per timepoint for all electrodes
 
 # Input stimulus information
 input:

@@ -37,6 +37,7 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
     ------------
     tvsd_{monkey}_split-train.h5 : (22,248, 300, 1024)
     tvsd_{monkey}_split-test.h5  : (3,000, 300, 1024)
+    tvsd_{monkey}_split-test_averaged.h5   : (100, 300, 1024)
     """
     with h5py.File(filepath, 'r') as f:
         ALLMAT = f['ALLMAT'][:]
@@ -61,7 +62,7 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         with h5py.File(train_file, 'w') as train_h5:
             train_dataset = train_h5.create_dataset('neural_data', 
                                                    shape=(n_train, 300, 1024), 
-                                                   dtype='float64')
+                                                   dtype='float32')
             
             train_idx = 0
             for start_idx in tqdm(range(0, total_trials, batch_size), desc="Training batches"):
@@ -106,6 +107,98 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         print(f"Training shape: ({n_train}, 300, 1024)")
         print(f"Test shape: {test_data.shape}")
         print(f"Averaged test shape: {test_averaged.shape}")
+        
+        
+        
+# =============================================================================
+# Compute Noise Ceiling
+# =============================================================================
+
+
+def compute_noise_ceiling(original_filepath, test_filepath, monkey_id):
+    """Compute ncsnr and noise ceiling from test data with repeated presentations.
+    
+    Estimates noise ceiling using the variance across 30 repeated presentations
+    of 100 test images. The noise ceiling represents the maximum achievable
+    prediction accuracy given measurement noise.
+    
+    Parameters
+    ----------
+    original_filepath : str
+        Path to THINGS_MUA_trials.mat to extract stimulus IDs from ALLMAT.
+    test_filepath : str
+        Path to the processed test HDF5 file (3,000, 300, 1024).
+    monkey_id : str
+        Monkey identifier for saving results.
+        
+    Returns
+    -------
+    dict
+        'ncsnr': (300, 1024) - Neural signal-to-noise ratio per timepoint/electrode
+        'noise_ceiling': (300, 1024) - Noise ceiling in r² percentage units (0-100)
+    """
+    # =============================================================================
+    # Load the TVSD neural responses for the test images
+    # =============================================================================
+    # Load test stimulus IDs from ALLMAT
+    with h5py.File(original_filepath, 'r') as f:
+        ALLMAT = f['ALLMAT'][:]
+        trial_type = ALLMAT[2, :]
+        test_mask = trial_type != 0
+        stimulus_ids = trial_type[test_mask].astype(int)
+    
+    # Load test neural data
+    with h5py.File(test_filepath, 'r') as f:
+        neural_data = f['neural_data'][:].astype(np.float32)
+    
+    unique_test_images = np.unique(stimulus_ids)
+    
+    # Reshape the data to (samples, features)
+    n_timepoints = neural_data.shape[1]
+    n_electrodes = neural_data.shape[2]
+    n_features = n_timepoints * n_electrodes
+    neural_data = neural_data.reshape(neural_data.shape[0], n_features)
+    
+    # =============================================================================
+    # Compute the ncsnr and noise ceiling
+    # =============================================================================
+    # Estimate the noise standard deviation (calculate the variance of the
+    # responses across the 30 presentations of each test image).
+    var = []
+    for img in unique_test_images:
+        idx = np.where(stimulus_ids == img)[0]
+        var.append(np.nanvar(neural_data[idx], axis=0, ddof=1))
+    # Average the variance across images and compute the square root of the
+    # result
+    sigma_noise = np.sqrt(np.nanmean(var, 0))
+    
+    # Estimate the signal standard deviation (total variance - noise variance)
+    tot_var_data = np.nanvar(neural_data, axis=0, ddof=1)
+    sigma_signal = tot_var_data - (sigma_noise ** 2)
+    sigma_signal[sigma_signal<0] = 0
+    sigma_signal = np.sqrt(sigma_signal)
+    
+    # Compute the ncsnr
+    ncsnr = sigma_signal / sigma_noise
+    
+    # Convert the ncsnr to noise ceiling (the noise ceiling is in r² explained
+    # variance units)
+    img_reps = 30
+    noise_ceiling = 100 * (ncsnr ** 2) / ((ncsnr ** 2) + (1 / img_reps))
+    
+    # Reshape the scores to (n_timepoints, n_electrodes)
+    ncsnr = ncsnr.reshape(n_timepoints, n_electrodes)
+    noise_ceiling = noise_ceiling.reshape(n_timepoints, n_electrodes)
+    
+    # =============================================================================
+    # Return the ncsnr and noise ceiling
+    # =============================================================================
+    results = {
+        'ncsnr': ncsnr,
+        'noise_ceiling': noise_ceiling
+    }
+    
+    return results
         
 
 # =============================================================================
@@ -157,7 +250,7 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
     Generate metadata linking neural responses to THINGS database images through
     stimulus ID mapping. Converts MATLAB 1-based indices to Python 0-based indices
     to map trial-by-trial neural responses to specific image files and categories.
-    Includes experimental conditions, baseline normalization parameters, electrode
+    Includes experimental conditions, electrode
     quality metrics, and electrode-to-ROI mapping information.
     
     Mapping Process: Extract stimulus IDs from ALLMAT → Convert to 0-based indices
@@ -208,10 +301,8 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         roi_assignments[0:512] = 0    # V1
         roi_assignments[512:832] = 2  # IT
         roi_assignments[832:1024] = 1 # V4
-    else:
-        raise ValueError(f"Unknown monkey_id: {monkey_id}")
-    
-    # ROI labels (consistent across monkeys)
+
+    # ROI labels 
     roi_labels = np.array(['V1', 'V4', 'IT'])
     
     # Load electrode quality metrics from THINGS_normMUA.mat
@@ -271,6 +362,13 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         row = test_df.iloc[stim_id - 1]
         test_avg_img_files.append(row['things_path'].split('\\')[-1])
         test_avg_img_concepts.append(row['class'])
+        
+        
+    # Compute noise ceilings
+    test_filepath = os.path.join(output_dir, f'tvsd_{monkey_id}_split-test.h5')
+    nc_data = compute_noise_ceiling(original_filepath, test_filepath, monkey_id)
+    ncsnr = nc_data["ncsnr"]
+    noise_ceiling = nc_data["noise_ceiling"]
     
     metadata = {
         'utah_array': {
@@ -296,7 +394,9 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         'encoding_model': {
             'SNR': SNR,
             'SNR_max': SNR_max,
-            'oracle': oracle}
+            'oracle': oracle,
+            'ncsnr': ncsnr,
+            'noise_ceiling': noise_ceiling}
     }
     
     metadata_file = os.path.join(output_dir, f'tvsd_{monkey_id}_metadata.npy')  # Changed .npz to .npy

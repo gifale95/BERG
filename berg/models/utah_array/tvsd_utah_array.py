@@ -3,10 +3,13 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import torch
 import yaml
-import clip
 import torchextractor as tx
 from tqdm import tqdm
+from torchvision import transforms as trn
+from torchvision.models import vit_b_32, ViT_B_32_Weights
+import timm
 import joblib
+import torchvision
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from berg.core.exceptions import (
@@ -26,7 +29,7 @@ from berg.interfaces.base_model import BaseModelInterface
 
 # Load model info from YAML
 def load_model_model_info():
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "utah_array-tvsd-clip_vit_b_32.yaml")
+    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "utah_array-tvsd-vit_b_32.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -39,13 +42,13 @@ register_model(
     class_name="UtahArrayEncodingModel",
     modality=model_info.get("modality", "utah_array"),
     training_dataset=model_info.get("training_dataset", "tvsd"),
-    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "utah_array-tvsd-clip_vit_b_32.yaml")
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "utah_array-tvsd-vit_b_32.yaml")
 )
 
 
 class UtahArrayEncodingModel(BaseModelInterface):
     """
-    Utah Array encoding model using CLIP vision transformer to generate
+    Utah Array encoding model using vision transformer to generate
     in silico spiking responses for the TVSD dataset.
     """
     
@@ -163,17 +166,21 @@ class UtahArrayEncodingModel(BaseModelInterface):
             # Get the EEG channels and time points dimensions
             metadata_dir = os.path.join(
                 self.berg_dir, 'encoding_models', 'modality-utah_array',
-                'train_dataset-tvsd', 'model-clip_vit_b_32',
-                'metadata', f'metadata_subject-{self.subject:02d}.npy'
+                'train_dataset-tvsd', 'model-vit_b_32',
+                'metadata', f'metadata_monkey{self.subject}.npy'
             )
             self.metadata = np.load(metadata_dir, allow_pickle=True).item()
             
             # Get electrode mapping if ROI selection is specified
             if self.selected_rois is not None:
-                self.selected_electrodes = []
+                if self.selected_electrodes is None:
+                    self.selected_electrodes = np.array([])
+                electrode_indices = self.metadata['utah_array']['roi_assignments']
                 for roi in self.selected_rois:
-                    roi_electrodes = self.metadata['utah_array']['roi_electrodes'][roi]
-                    self.selected_electrodes.extend(roi_electrodes)
+
+                    roi_index = list(self.metadata['utah_array']['roi_labels']).index(roi)
+                    roi_electrodes = np.where(electrode_indices==roi_index)[0]
+                    self.selected_electrodes = np.append(self.selected_electrodes,roi_electrodes).astype(int)
                 self.selected_electrodes = sorted(list(set(self.selected_electrodes)))
             
             # If no electrodes selected, use all
@@ -184,11 +191,8 @@ class UtahArrayEncodingModel(BaseModelInterface):
             if self.selected_timepoints is None:
                 self.selected_timepoints = list(range(self.TIMEPOINTS_LENGTH))
             
-            # Load the CLIP vision transformer
-            self.feature_extractor = self._load_feature_extractor(self.device)
-            
-            # Define the image preprocessing transform (from CLIP)
-            _, self.transform = clip.load("ViT-B/32", device=self.device)
+            # Load the vision transformer
+            self.feature_extractor = self._load_feature_extractor(self.device)        
             
             # Load the scaler, PCA, and trained regression weights
             self.scaler, self.pca, self.chunk_models = self._load_encoding_weights()
@@ -201,7 +205,7 @@ class UtahArrayEncodingModel(BaseModelInterface):
 
     def _load_feature_extractor(self, device):
         """
-        Load the CLIP ViT feature extractor for all 12 transformer layers.
+        Load the ViT feature extractor for all 12 transformer layers.
         
         Parameters
         ----------
@@ -214,31 +218,35 @@ class UtahArrayEncodingModel(BaseModelInterface):
             Torchextractor wrapped model configured to extract 
             representations from all 12 transformer layers.
         """
-        # Load CLIP model
-        model, _ = clip.load("ViT-B/32", device=device)
+        # Load ViT model
+        weights = ViT_B_32_Weights.DEFAULT
+        model = vit_b_32(weights=weights)
+        model.to(device)
         
         if device == 'cuda':
             model = model.float()
         
         model.eval()
+
         
         # Define layer names for all 12 transformer blocks
-        layer_names = [
-        "transformer.resblocks.0",
-        "transformer.resblocks.1",
-        "transformer.resblocks.2",
-        "transformer.resblocks.3",
-        "transformer.resblocks.4",
-        "transformer.resblocks.5",
-        "transformer.resblocks.6",
-        "transformer.resblocks.7",
-        "transformer.resblocks.8",
-        "transformer.resblocks.9",
-        "transformer.resblocks.10",
-        "transformer.resblocks.11"]
+        layer_names = ['encoder.layers.encoder_layer_0',
+                            'encoder.layers.encoder_layer_1',
+                            'encoder.layers.encoder_layer_2',
+                            'encoder.layers.encoder_layer_3',
+                            'encoder.layers.encoder_layer_4',
+                            'encoder.layers.encoder_layer_5',
+                            'encoder.layers.encoder_layer_6',
+                            'encoder.layers.encoder_layer_7',
+                            'encoder.layers.encoder_layer_8',
+                            'encoder.layers.encoder_layer_9',
+                            'encoder.layers.encoder_layer_10',
+                            'encoder.layers.encoder_layer_11']
         
         # Wrap the visual encoder with torchextractor
-        feature_extractor = tx.Extractor(model.visual, layer_names)
+        feature_extractor = tx.Extractor(model, layer_names)
+        
+        self.transform = weights.transforms()
         
         return feature_extractor
 
@@ -262,7 +270,7 @@ class UtahArrayEncodingModel(BaseModelInterface):
             'encoding_models', 
             'modality-utah_array',
             'train_dataset-tvsd', 
-            'model-clip.vit_b_32',
+            'model-vit_b_32',
             'encoding_models_weights',
             f'preprocessing_linear_all_monkey{self.subject}.npy'
         )
@@ -293,10 +301,10 @@ class UtahArrayEncodingModel(BaseModelInterface):
         model_dir = os.path.join(
             self.berg_dir, 
             'encoding_models', 
-            'modality-spike',
-            'train_dataset-tvsd_monkey', 
-            'model-clip.vit_b_32',
-            'encoding_model_weights'
+            'modality-utah_array',
+            'train_dataset-tvsd', 
+            'model-vit_b_32',
+            'encoding_models_weights'
         )
         
         for chunk_idx in range(self.N_CHUNKS):
@@ -367,13 +375,13 @@ class UtahArrayEncodingModel(BaseModelInterface):
                 batch_features = []
                 for layer_name in features.keys():
                     layer_features = features[layer_name]
-                    # CLIP output: (seq_len=50, batch_size, hidden_dim=768)
-                    # Flatten all tokens: (batch_size, seq_len * hidden_dim)
-                    layer_flat = layer_features.permute(1, 0, 2).flatten(1, 2)
+                    # ViT output: (batch_size, n_patches, hidden_dim)
+                    # Flatten all tokens: (batch_size, n_patches * hidden_dim)
+                    layer_flat = layer_features.flatten(1, 2)
                     batch_features.append(layer_flat)
-                
+
                 # Concatenate features from all layers
-                # Shape: (batch_size, 12 * 50 * 768)
+                # Shape: (batch_size, 13_layers * 196_patches * 768_dim)
                 ft = torch.cat(batch_features, dim=-1)
                 ft = ft.detach().cpu().numpy()
                 
@@ -486,10 +494,14 @@ class UtahArrayEncodingModel(BaseModelInterface):
         # Build metadata path
         file_name = os.path.join(
             berg_dir,
-            'model_training_datasets',
-            'train_dataset-tvsd_monkey',
-            f'tvsd_monkey{subject}_metadata.npy'
+            'encoding_models',
+            'modality-utah_array',
+            'train_dataset-tvsd',
+            'model-vit_b_32',
+            'metadata',
+            f'metadata_monkey{subject}.npy'
         )
+
         
         # Load metadata if file exists
         if os.path.exists(file_name):

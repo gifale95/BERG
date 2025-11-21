@@ -57,9 +57,8 @@ tvsd_{monkey}_metadata.npy             :
         SNR                  : (4, 1024) - Signal-to-noise ratio per day per electrode
         SNR_max              : (1024,)  - Best SNR across all days per electrode
         oracle               : (1024,)  - Noise ceiling estimate per electrode
-
-
-Total: 6 files per monkey
+        ncsnr                : (300, 1024) - Neural signal-to-noise ratio
+        noise_ceiling        : (300, 1024) - Noise Ceiling per timepoint for all electrodes
 
 """
 

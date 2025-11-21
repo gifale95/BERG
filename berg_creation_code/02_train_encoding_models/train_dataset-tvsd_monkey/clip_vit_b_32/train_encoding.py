@@ -1,15 +1,13 @@
-"""Train a Ridge regression model to predict TVSD neural data using CLIP 
-vision transformer feature maps as predictors. The Ridge regression is trained 
+"""Train a regression model to predict TVSD neural data using vision transformer feature maps as predictors. The regression is trained 
 using the training images neural data (Y) and feature maps (X).
 
-The feature maps come from a CLIP vision transformer, and are downsampled to 
+The feature maps come from a vision transformer, and are downsampled to 
 250 principal components using PCA.
 
 
 Pipeline steps:
-1. Model setup: Load CLIP ViT-B/32, wrap with torchextractor for multi-layer access
-2. Feature extraction: Extract CLS tokens from 12 transformer layers (0-11)
-   - Decision: Use CLS tokens only (not all 50 patch tokens) for computational efficiency
+1. Model setup: Load ViT-B/32, wrap with torchextractor for multi-layer access
+2. Feature extraction: Extract tokens from 12 transformer layers (0-11)
    - Batch processing (512 images) to handle 22,248 training + 100 test images
 3. Preprocessing: StandardScaler normalization + PCA reduction to 250 components
    - Decision: PCA reduces 9,216 features (12 layers × 768 dims) for Ridge stability
@@ -43,17 +41,7 @@ python berg_creation_code/02_train_encoding_models/train_dataset-tvsd/clip_vit_b
     --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
     --only_cls False \
     --regression linear \
-    --model clip.vit_b_32 
-    
-    
-
-python berg_creation_code/02_train_encoding_models/train_dataset-tvsd/clip_vit_b_32/train_encoding.py \
-    --monkey monkeyN \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images' \
-    --only_cls False \
-    --regression linear \
-    --model clip.vit_b_32 
+    --model vit_b_32 
 """
 
 import argparse
@@ -65,8 +53,10 @@ from tqdm import tqdm
 import copy
 from PIL import Image
 import clip
+import joblib
 import torchextractor as tx
 from torchvision import transforms as trn
+from torchvision.models import vit_b_32, ViT_B_32_Weights
 import torchvision
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
@@ -178,34 +168,29 @@ if args.model == "clip.vit_b_32":
     visual = tx.Extractor(model.visual, layer_names)
  
 elif args.model == "vit_b_32":
-    model = torchvision.models.vit_b_32(weights='DEFAULT')
+    # Load with explicit weights
+    weights = ViT_B_32_Weights.DEFAULT
+    model = vit_b_32(weights=weights)
     model.to(device)
     model.eval()
-
+    
     layer_names = ['encoder.layers.encoder_layer_0',
-                    'encoder.layers.encoder_layer_1',
-                    'encoder.layers.encoder_layer_2',
-                    'encoder.layers.encoder_layer_3',
-                    'encoder.layers.encoder_layer_4',
-                    'encoder.layers.encoder_layer_5',
-                    'encoder.layers.encoder_layer_6',
-                    'encoder.layers.encoder_layer_7',
-                    'encoder.layers.encoder_layer_8',
-                    'encoder.layers.encoder_layer_9',
-                    'encoder.layers.encoder_layer_10',
-                    'encoder.layers.encoder_layer_11']
- 
-    visual = tx.Extractor(model,layer_names)
+                   'encoder.layers.encoder_layer_1',
+                   'encoder.layers.encoder_layer_2',
+                   'encoder.layers.encoder_layer_3',
+                   'encoder.layers.encoder_layer_4',
+                   'encoder.layers.encoder_layer_5',
+                   'encoder.layers.encoder_layer_6',
+                   'encoder.layers.encoder_layer_7',
+                   'encoder.layers.encoder_layer_8',
+                   'encoder.layers.encoder_layer_9',
+                   'encoder.layers.encoder_layer_10',
+                   'encoder.layers.encoder_layer_11']
     
-    preprocess = trn.Compose([
-        trn.Lambda(lambda img: trn.CenterCrop(min(img.size))(img)),
-        trn.Resize((224, 224)),
-        trn.ToTensor(),
-        trn.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
-
+    visual = tx.Extractor(model, layer_names)
     
-    
+    # Use official preprocessing
+    preprocess = weights.transforms()
 
 
 print("Model loaded")
@@ -354,9 +339,9 @@ electrodes_per_chunk = 1024 // n_chunks  # 128 electrodes per chunk
 alphas = [0.1, 1, 10, 100, 1000]
 
 # Load neural data shape info
-neural_train_path = os.path.join(data_dir, f'tvsd_{args.monkey}_split-train_normalized.h5')
+neural_train_path = os.path.join(data_dir, f'tvsd_{args.monkey}_split-train.h5')
 with h5py.File(neural_train_path, 'r') as f:
-    n_trials, n_times, n_electrodes = f['neural_data_normalized'].shape
+    n_trials, n_times, n_electrodes = f['neural_data'].shape
 
 print(f"Training {n_chunks} separate Ridge models with {electrodes_per_chunk} electrodes each")
 
@@ -376,7 +361,7 @@ for chunk_idx in range(n_chunks):
             batch_end = min(batch_start + args.train_chunk_size, n_trials)
             
             # Load batch and slice electrodes
-            batch_data = f['neural_data_normalized'][batch_start:batch_end, :, start_electrode:end_electrode]
+            batch_data = f['neural_data'][batch_start:batch_end, :, start_electrode:end_electrode]
             # Reshape to (batch_size, n_times * electrodes_per_chunk)
             batch_reshaped = batch_data.reshape(batch_data.shape[0], -1)
             neural_chunk[batch_start:batch_end] = batch_reshaped
@@ -394,9 +379,8 @@ for chunk_idx in range(n_chunks):
         print(f"Chunk {chunk_idx + 1} completed.")
     
     # Save individual model
-    import joblib
     model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
-        'train_dataset-tvsd', f'model-{args.model}', 'encoding_model_weights')
+        'train_dataset-tvsd', f'model-{args.model}', 'encoding_models_weights')
     if not os.path.isdir(model_dir):
         os.makedirs(model_dir)
     
@@ -414,7 +398,7 @@ print("Predicting test responses...")
 # Load all models and predict
 chunk_predictions = []
 model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
-    'train_dataset-tvsd', f'model-{args.model}', 'encoding_model_weights')
+    'train_dataset-tvsd', f'model-{args.model}', 'encoding_models_weights')
 
 for chunk_idx in range(n_chunks):
     model_filename = f'{args.regression}_{cls_suffix}_chunk_{chunk_idx}_{args.monkey}.pkl'
@@ -437,7 +421,7 @@ print(f"Test predictions shape: {test_predictions.shape}")
 
 # Save test predictions
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-    'modality-utah_aray', 'train_dataset-tvsd', args.model)
+    'modality-utah_array', 'train_dataset-tvsd', args.model)
 if not os.path.isdir(results_dir):
     os.makedirs(results_dir)
 

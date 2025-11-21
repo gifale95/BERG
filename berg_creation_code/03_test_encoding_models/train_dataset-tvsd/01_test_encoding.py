@@ -98,12 +98,10 @@ print(f"Correlation results shape: {correlation_results.shape}")
 # =============================================================================
 # Compute percent noise ceiling
 # =============================================================================
-oracle = metadata_tvsd['encoding_model']['oracle']
+noise_ceiling = metadata_tvsd['encoding_model']['noise_ceiling']
 
-if np.any(oracle <= 0):
-	raise ValueError("Oracle contains values <= 0, cannot compute percent noise ceiling")
-
-percent_noise_ceiling = (correlation_results / oracle) * 100
+noise_ceiling_r2 = noise_ceiling / 100 
+percent_noise_ceiling = (correlation_results**2 / noise_ceiling_r2) * 100
 
 print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
 
@@ -118,7 +116,9 @@ metadata = {
         'percent_noise_ceiling': percent_noise_ceiling,
         'SNR': metadata_tvsd['encoding_model']['SNR'],
         'SNR_max': metadata_tvsd['encoding_model']['SNR_max'],
-        'oracle': metadata_tvsd['encoding_model']['oracle']
+        'oracle': metadata_tvsd['encoding_model']['oracle'],
+        'ncsnr': metadata_tvsd['encoding_model']['ncsnr'],
+        'noise_ceiling': metadata_tvsd['encoding_model']['noise_ceiling']
     }
 }
 

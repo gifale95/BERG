@@ -66,6 +66,82 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         rst_content.append(line)
     rst_content.append("")
     
+    # Metadata section
+    if "metadata" in data:
+        rst_content.extend(["Metadata", "--------", ""])
+        metadata = data.get("metadata", "").strip()
+        
+        # Parse metadata structure
+        lines = metadata.split("\n")
+        current_section = None
+        section_data = {}
+        
+        for line in lines:
+            line_stripped = line.strip()
+            if not line_stripped:
+                continue
+            
+            # Check if this is a top-level key (ends with : and no -)
+            if line_stripped.endswith(":") and " - " not in line_stripped:
+                # Save previous section if exists
+                if current_section and current_section in section_data:
+                    # Create table for previous section
+                    rst_content.append(f"**{current_section}**")
+                    rst_content.append("")
+                    rst_content.append(".. list-table::")
+                    rst_content.append("   :widths: 30 20 50")
+                    rst_content.append("   :header-rows: 1")
+                    rst_content.append("")
+                    rst_content.append("   * - Key")
+                    rst_content.append("     - Shape/Type")
+                    rst_content.append("     - Description")
+                    
+                    for key, shape, desc in section_data[current_section]:
+                        rst_content.append(f"   * - {key}")
+                        rst_content.append(f"     - ``{shape}``")
+                        rst_content.append(f"     - {desc}")
+                    
+                    rst_content.append("")
+                
+                # Start new section
+                current_section = line_stripped.rstrip(":")
+                section_data[current_section] = []
+            else:
+                # Parse the line: key : shape - description
+                if ":" in line_stripped and " - " in line_stripped:
+                    # Split on first : to get key
+                    key_part, rest = line_stripped.split(":", 1)
+                    key = key_part.strip()
+                    
+                    # Split on - to get shape and description
+                    shape_part, desc_part = rest.split(" - ", 1)
+                    shape = shape_part.strip()
+                    desc = desc_part.strip()
+                    
+                    if current_section:
+                        section_data[current_section].append((key, shape, desc))
+        
+        # Handle the last section
+        if current_section and current_section in section_data:
+            rst_content.append(f"**{current_section}**")
+            rst_content.append("")
+            rst_content.append(".. list-table::")
+            rst_content.append("   :widths: 30 20 50")
+            rst_content.append("   :header-rows: 1")
+            rst_content.append("")
+            rst_content.append("   * - Key")
+            rst_content.append("     - Shape/Type")
+            rst_content.append("     - Description")
+            
+            for key, shape, desc in section_data[current_section]:
+                rst_content.append(f"   * - {key}")
+                rst_content.append(f"     - ``{shape}``")
+                rst_content.append(f"     - {desc}")
+            
+            rst_content.append("")
+        
+        rst_content.append("")
+    
     # Input section
     rst_content.extend(["Input", "-----", ""])
     input_data = data.get("input", {})
