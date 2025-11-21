@@ -590,5 +590,5 @@ if __name__ == "__main__":
 # 2. Convert a YAML file to RST with specific output path:
 #    python yaml_to_rst.py fmri_nsd_fwrf.yaml docs/model_cards/fmri_nsd_fwrf.rst
     
-# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-nsd-fwrf.yaml source/models/model_cards/fmri-nsd-fwrf.rst
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/utah_array-tvsd-vit_b_32.yaml source/models/model_cards/utah_array-tvsd-vit_b_32.rst
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml source/models/model_cards/eeg-things_eeg_2-vit_b_32.rst
