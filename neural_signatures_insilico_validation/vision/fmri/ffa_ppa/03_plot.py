@@ -240,7 +240,7 @@ for roi in ['FFA', 'PPA']:
     file_name = os.path.join(save_dir, roi+'_curvature.svg')
     fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
         format='svg')
-    
+
 
 # =============================================================================
 # Plot FFA and PPA's visual size versus category effects
