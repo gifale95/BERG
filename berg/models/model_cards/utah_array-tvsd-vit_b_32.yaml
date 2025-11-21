@@ -1,12 +1,10 @@
-# Template YAML file for BERG model specification
-# Replace placeholder values with actual model information
 
 # Basic metadata
 model_id: utah_array-tvsd-vit_b_32
 modality: utah_array 
 training_dataset: tvsd
 species: Macaque 
-stimuli: Images  # e.g., Images, Sounds, Text, etc.
+stimuli: Images  
 model_type: Vision transformer (ViT-B/32)
 creator: Domenic Bersch
 
@@ -162,17 +160,9 @@ parameters:
 
 # Performance metrics (if needed) and references
 performance:
-  metrics:
-    - name: "metric_name"
-      value: "metric_value"
-      description: "What this metric represents"
-    
-    # Add more metrics as needed
-    - name: "metric_name"
-      value: "metric_value"
-      description: "What this metric represents"
   
-  plots: "URL_to_performance_plots"  # URL or path to visualizations
+  accuracy_plots: 
+    - "brain-encoding-response-generator/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy"
 
 # Add References here
 references:
