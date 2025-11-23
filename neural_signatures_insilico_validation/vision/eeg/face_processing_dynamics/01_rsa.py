@@ -1,5 +1,5 @@
-"""Perform exemplar and animacy pairwise decoding on in silico EEG responses
-for 200 ImageNet images (100 animate categories, and 100 inanimate categories).
+"""Perfom RSA on in silico EEG responses to reveal the dynamics of identity,
+gender, and age processing of faces (Dobs et al., 2019).
 
 Parameters
 ----------
@@ -28,8 +28,8 @@ from PIL import Image
 from tqdm import tqdm
 from berg import BERG
 from sklearn.svm import SVC
-import torchvision
-from torchvision import transforms as trn
+from sklearn.linear_model import LinearRegression
+from scipy.stats import spearmanr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
@@ -38,7 +38,7 @@ parser.add_argument('--channels', default=['O', 'P'], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Pairwise decoding <<<')
+print('>>> RSA <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -82,30 +82,20 @@ model = berg.get_encoding_model(
 # =============================================================================
 # Load the stimulus images
 # =============================================================================
-images = []
 image_path = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'object_exemplar_animacy_categorization', 'stimuli')
+    'face_processing_dynamics', 'stimuli')
 
-# Animate images
-animate_imgs = os.listdir(os.path.join(image_path, 'animate'))
-animate_imgs.sort()
-for img_file in animate_imgs:
+img_files = os.listdir(image_path)
+img_files.sort()
+
+images = []
+for img_file in tqdm(img_files):
     img = Image.open(os.path.join(image_path, 'animate', img_file))
     img = np.asarray(img)
     img = np.swapaxes(np.swapaxes(img, 0, 2), 1, 2)
     images.append(img)
 
-# Inanimate images
-inanimate_imgs = os.listdir(os.path.join(image_path, 'inanimate'))
-inanimate_imgs.sort()
-for img_file in inanimate_imgs:
-    img = Image.open(os.path.join(image_path, 'inanimate', img_file))
-    img = np.asarray(img)
-    img = np.swapaxes(np.swapaxes(img, 0, 2), 1, 2)
-    images.append(img)
-
-# Convert to numpy array
 images = np.asarray(images)
 
 
@@ -124,7 +114,7 @@ eeg = berg.encode(
 # =============================================================================
 # Results array of shape:
 # (Image conditions × Image conditions × EEG time points)
-decoding_exemplars = np.zeros((len(eeg), len(eeg), len(times)),
+rdm_eeg = np.zeros((len(eeg), len(eeg), len(times)),
     dtype=np.float32)
 
 # Loop over EEG time points and image-conditions
@@ -160,79 +150,104 @@ for t in tqdm(range(len(times))):
                 scores[r] = sum(y_pred == y_test) / len(y_test)
 
             # Store the accuracy
-            decoding_exemplars[i1,i2,t] = np.mean(scores)
-            decoding_exemplars[i2,i1,t] = decoding_exemplars[i1,i2,t]
+            rdm_eeg[i1,i2,t] = np.mean(scores)
+            rdm_eeg[i2,i1,t] = rdm_eeg[i1,i2,t]
 
 
 # =============================================================================
-# Pairwise decoding (animacy)
+# Create the stimulus RDMs
 # =============================================================================
-# Select the used animate conditions
-animate_conditions = np.arange(100)
+rdm_stimuli = {}
 
-# Select the used inanimate conditions
-inanimate_conditions = np.arange(100, 200)
+# Face identity RDM
+identity = np.repeat(np.arange(16), 5)
+rdm_identity = np.zeros((len(identity), len(identity)), dtype=np.int8)
+for i1 in range(len(identity)):
+    for i2 in range(i1):
+        if identity[i1] != identity[i2]:
+            rdm_identity[i1,i2] = 1
+            rdm_identity[i2,i1] = rdm_identity[i1,i2]
+rdm_stimuli['identity'] = rdm_identity
 
-# Results array of shape: (EEG time points)
-decoding_animacy = np.zeros((len(times)), dtype=np.float32)
+# Gender RDM
+rdm_gender = np.zeros((len(img_files), len(img_files)), dtype=np.int8)
+for i1 in range(len(img_files)):
+    for i2 in range(i1):
+        if img_files[i1][0] != img_files[i2][0]:
+            rdm_gender[i1,i2] = 1
+            rdm_gender[i2,i1] = rdm_gender[i1,i2]
+rdm_stimuli['gender'] = rdm_gender
 
-# Loop over EEG time points
-for t in tqdm(range(len(times))):
+# Age RDM
+rdm_age = np.zeros((len(img_files), len(img_files)), dtype=np.int8)
+for i1 in range(len(img_files)):
+    for i2 in range(i1):
+        if img_files[i1][2] != img_files[i2][2]:
+            rdm_age[i1,i2] = 1
+            rdm_age[i2,i1] = rdm_age[i1,i2]
+rdm_stimuli['age'] = rdm_age
 
-    # Select the image condition data
-    eeg_cond_1 = eeg[animate_conditions,:,:,t] # type: ignore
-    eeg_cond_2 = eeg[inanimate_conditions,:,:,t] # type: ignore
 
-    # Loop over EEG repeats (to avoid false positives, the SVMs should be
-    # trained and tested on independent in silico EEG response repeats, that
-    # is, in silico EEG repeats generated using different encoding models)
-    scores = []
-    for r in range(eeg_cond_1.shape[1]):
+# =============================================================================
+# Create the DNN RDM # !!!
+# =============================================================================
+# VGG Face (see paper)
 
-        # Define the train partitions
-        eeg_cond_1_train = np.delete(eeg_cond_1, r, 1)
-        eeg_cond_2_train = np.delete(eeg_cond_2, r, 1)
-        eeg_cond_1_train = np.reshape(eeg_cond_1_train, (-1, len(kept_ch_names)))
-        eeg_cond_2_train = np.reshape(eeg_cond_2_train, (-1, len(kept_ch_names)))
-        X_train = np.append(eeg_cond_1_train, eeg_cond_2_train, 0)
+rdm_stimuli['dnn'] = rdm_dnn
 
-        # Define the test partitions
-        X_test = np.append(eeg_cond_1[:,r], eeg_cond_2[:,r], 0)
 
-        # SVM target vectors
-        y_train = np.zeros(len(X_train))
-        y_train[int(len(X_train)/2):] = 1
-        y_test = np.zeros(len(X_test))
-        y_test[int(len(X_test)/2):] = 1
+# =============================================================================
+# Compute the RSA scores between EEG and model RDMs
+# =============================================================================
+rsa = {}
 
-        # Train the classifier
-        dec_svm = SVC(kernel='linear')
-        dec_svm.fit(X_train, y_train)
+# Loop across models
+for key_target, val_target in tqdm(rdm_stimuli.items()):
 
-        # Test the classifier
-        y_pred = dec_svm.predict(X_test)
-        scores.append(sum(y_pred == y_test) / len(y_test))
+    # Get the lower triangle of the model RDMs
+    idx = np.tril_indices(len(val_target), -1)
+    model = np.reshape(val_target[idx], (-1,1))
+    model_control = []
+    for key_other, val_other in rdm_stimuli.items():
+        if key_other != key_target:
+            model_control.append(val_other[idx])
+    model_control = np.transpose(np.array(model_control))
 
-    # Store the accuracy
-    decoding_animacy[t] = np.mean(scores)
+    # Regress out the model variance explained by the control models
+    reg_model = LinearRegression().fit(model_control, model)
+    model_res = model - reg_model.predict(model_control)
+
+    # Get the lower triangle of the EEG RDM
+    eeg = rdm_eeg[idx]
+
+    # Regress out the EEG variance explained by the control models
+    reg_eeg = LinearRegression().fit(model_control, eeg)
+    eeg_res = eeg - reg_eeg.predict(model_control)
+
+    # Compute the timewise partial correlation between EEG and model RDMs
+    rsa_model = np.zeros(times)
+    for t in range(len(times)):
+        rsa_model[t] = spearmanr(eeg_res[:,t], model_res)[0]
+    rsa[key_target] = rsa_model
+    del rsa_model
 
 
 # =============================================================================
 # Save the results
 # =============================================================================
 results = {
-    'decoding_exemplars': decoding_exemplars,
-    'decoding_animacy': decoding_animacy,
+    'rdm_eeg': rdm_eeg,
+    'rdm_stimuli': rdm_stimuli,
+    'rsa': rsa,
     'times': times,
     'kept_ch_names': kept_ch_names
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_exemplar_animacy_categorization',
-    'pairwise_decoding_results')
+    'vision', 'eeg', 'face_processing_dynamics', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'pairwise_decoding_sub-' + format(args.subject, '02') + \
-    '_channels-' + ''.join(args.channels) + '.npy'
+file_name = 'rsa_sub-' + format(args.subject, '02') + '_channels-' + \
+    ''.join(args.channels) + '.npy'
 
 np.save(os.path.join(save_dir, file_name), results) # type: ignore

@@ -1,37 +1,37 @@
-"""Use BERG to generate the in silico fMRI responses used to the face, body,
-and scene images.
+"""Generate in silico EEG responses for images of faces and objects, and
+compute their ERPs.
 
 Parameters
 ----------
 encoding_model : str
-    The name of the fMRI encoding model in BERG to use for generating the
-    in silico fMRI responses in surface space.
+    The name of BERG's encoding model used for generating the in silico EEG
+    responses.
 subjects : list
-    List of the subject identifiers for the fMRI encoding models. Since the
-    used encoding models are trained on NSD data, valid subject identifiers are
-    integers from 1 to 8.
+    List of the subject identifiers for the EEG encoding models. Since the
+    used encoding models are trained on THINGS EEG2 data, valid subject
+    identifiers are integers from 1 to 10.
 berg_dir : str
     Directory of the BERG.
 
 """
 
 import argparse
-import numpy as np
 import os
+import random
+import numpy as np
 from PIL import Image
-import torch
-from berg import BERG
 from tqdm import tqdm
+from berg import BERG
 import gc
 import torch
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
-parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
+parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Generate in silico fMRI <<<')
+print('>>> EEG N170 - Compute ERPs <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -42,8 +42,8 @@ for key, val in vars(args).items():
 # =============================================================================
 # Image directories
 img_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'stimuli')
-categories = ['Bodies', 'Faces', 'Objects', 'Scenes']
+    'vision', 'eeg', 'n170_faces', 'stimuli')
+categories = ['Faces', 'Objects']
 img_type = ['Sel', 'Test']
 
 # Loop across image categories and types
@@ -66,14 +66,13 @@ for cat in tqdm(categories):
 
 
 # =============================================================================
-# Generate the in silico fMRI responses using BERG
+# Generate the in silico EEG responses using BERG
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
 # Empty result dictionaries
-lh_insilico_fmri = {}
-rh_insilico_fmri = {}
+insilico_eeg = {}
 metadata = []
 
 # Loop across subjects
@@ -87,17 +86,16 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
         # Create empty lists inside the result dicionaries
         if s == 0:
-            lh_insilico_fmri[cat] = []
-            rh_insilico_fmri[cat] = []
+            insilico_eeg[cat] = []
 
-        # Generate the in silico fMRI responses, and average them across images
-        fmri, metadata_sub = berg.encode(model, images[cat],
+        # Generate the in silico EEG responses, and compute the ERPs by
+        # averaging them across images and repeats
+        eeg, metadata_sub = berg.encode(model, images[cat],
             return_metadata=True)
-        lh_insilico_fmri[cat].append(np.mean(fmri[0], 0).astype(np.float32))
-        rh_insilico_fmri[cat].append(np.mean(fmri[1], 0).astype(np.float32))
+        insilico_eeg[cat].append(np.mean(np.mean(eeg, 0), 0))
         if c == 0:
             metadata.append(metadata_sub)
-        del fmri, metadata_sub
+        del eeg, metadata_sub
         torch.cuda.empty_cache()
         gc.collect()
 
@@ -107,23 +105,21 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
 # Convert to numpy arrays
 for cat in categories:
-    lh_insilico_fmri[cat] = np.array(lh_insilico_fmri[cat])
-    rh_insilico_fmri[cat] = np.array(rh_insilico_fmri[cat])
+    insilico_eeg[cat] = np.array(insilico_eeg[cat])
  
 
 # =============================================================================
 # Save the results
 # =============================================================================
 results = {
-    'lh_insilico_fmri': lh_insilico_fmri,
-    'rh_insilico_fmri': rh_insilico_fmri,
+    'insilico_eeg': insilico_eeg,
     'metadata': metadata
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'insilico_fmri_responses')
+    'vision', 'eeg', 'n170_faces', 'insilico_eeg_responses')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'insilico_fmri_responses.npy'
+file_name = 'insilico_eeg_responses.npy'
 
 np.save(os.path.join(save_dir, file_name), results) # type: ignore

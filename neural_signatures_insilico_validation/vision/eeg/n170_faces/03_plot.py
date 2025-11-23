@@ -1,5 +1,4 @@
-"""Plot the of object exemplar and animacy decoding accuracy of in silico EEG
-responses.
+"""Plot the ERPs for faces and objects.
 
 Parameters
 ----------
@@ -29,7 +28,7 @@ from matplotlib import pyplot as plt
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
-parser.add_argument('--channels', default=['O', 'P'], type=list)
+parser.add_argument('--channels', default=['P7', 'P8', 'PO7', 'PO8', 'TP7', 'TP8'], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -38,7 +37,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_exemplar_animacy_categorization', 'plots')
+    'vision', 'eeg', 'n170_faces', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -46,20 +45,20 @@ os.makedirs(save_dir, exist_ok=True)
 # Load the pairwise decoding results
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'object_exemplar_animacy_categorization', 'stats', 'stats_'+'channels-'+
-    ''.join(args.channels)+'.npy')
+    'neural_signatures_insilico_validation', 'vision', 'eeg',  'n170_faces',
+    'stats', 'stats_'+'channels-'+'-'.join(args.channels)+'.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
-decoding_exemplars = results['decoding_exemplars'] * 100
-decoding_animacy = results['decoding_animacy'] * 100
-ci_exemplars = results['ci_exemplars'] * 100
-ci_animacy = results['ci_animacy'] * 100
-peak_latency_diff = results['peak_latency_diff']
-ci_peak_latency_diff = results['ci_peak_latency_diff']
-pval_peak_latency_diff = results['pval_peak_latency_diff']
-times = results['times']
+erp_faces = results['erp_faces']
+erp_objects = results['erp_objects']
+erp_diff = results['erp_diff']
+ci_erp_faces = results['ci_erp_faces']
+ci_erp_objects = results['ci_erp_objects']
+pval_erp_diff = results['pval_erp_diff']
+pval_erp_diff_corrected = results['pval_erp_diff_corrected']
+sig_erp_diff = results['sig_erp_diff']
+times = results['metadata'][0]['eeg']['times']
 
 
 # =============================================================================
@@ -84,69 +83,53 @@ matplotlib.rcParams['grid.alpha'] = .3
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-colors = [(169/255, 5/255, 3/255), (170/255, 118/255, 186/255)]
+colors = [(139/255, 0/255, 0/255), (0/255, 0/255, 0/255)]
 
 
 # =============================================================================
-# Plot the encoding accuracy results
+# Plot the ERPs
 # =============================================================================
-fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(13, 7))
-axs = np.reshape(axs, (-1)) # type: ignore
+fig= plt.figure(figsize=(13, 7))
 
-# Plot the chance and stimulus onset dashed lines
-axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
-    linewidth=3, alpha=.5, label='_nolegend_')
+# Plot the stimulus onset dashed line
+plt.plot([0, 0], [100, -100], 'k--', linewidth=3, alpha=.5, label='_nolegend_')
 
-# Plot the decoding subject-average results
-# Exemplar decoding
-label = 'Exemplar'
-peak = times[np.argsort(np.mean(decoding_exemplars, 0))[::-1][0]]
-max_dec = max(np.mean(decoding_exemplars, 0))
-axs[0].plot([peak, peak], [max_dec, -100], '--', linewidth=3, color=colors[0],
-    alpha=.5)
-axs[0].plot(times, np.mean(decoding_exemplars, 0), color=colors[0], linewidth=3,
-    label=label)
-axs[0].fill_between(times, ci_exemplars[1], ci_exemplars[0], color=colors[0],
+# Plot the ERPs
+plt.plot(times, np.mean(erp_faces, 0), color=colors[0], linewidth=3,
+    label='Faces')
+plt.plot(times, np.mean(erp_objects, 0), color=colors[1], linewidth=3,
+    label='Objects')
+
+# Plot the CIs
+plt.fill_between(times, ci_erp_faces[1], ci_erp_faces[0], color=colors[0],
     alpha=.2)
-# Animacy decoding
-label = 'Animacy'
-peak = times[np.argsort(np.mean(decoding_animacy, 0))[::-1][0]]
-max_dec = max(np.mean(decoding_animacy, 0))
-axs[0].plot([peak, peak], [max_dec, -100], '--', linewidth=3, color=colors[1],
-    alpha=.5)
-axs[0].plot(times, np.mean(decoding_animacy, 0), color=colors[1], linewidth=3,
-    label=label)
-axs[0].fill_between(times, ci_animacy[1], ci_animacy[0], color=colors[1],
+plt.fill_between(times, ci_erp_objects[1], ci_erp_objects[0], color=colors[1],
     alpha=.2)
+
+# Plot the significance markers
+sig = np.empty(len(times))
+sig[:] = np.nan
+sig[sig_erp_diff] = -1.25
+plt.scatter(times, sig, s=100, color=colors[0])
 
 # x-axis parameters
-axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
+plt.xlabel('Time (ms)', fontsize=fontsize)
 xticks = [0, .1, .2, .3, .4, .5]
 xlabels = [0, 100, 200, 300, 400, 500]
 plt.xticks(ticks=xticks, labels=xlabels) # type: ignore
-axs[0].set_xlim(left=min(times), right=max(times))
+plt.xlim(left=min(times), right=max(times))
 
 # y-axis parameters
-axs[0].set_ylabel('Decoding accuracy (%)', fontsize=fontsize)
-yticks = [50, 60, 70, 80, 90, 100]
-ylabels = [50, 60, 70, 80, 90, 100]
+plt.ylabel('μV', fontsize=fontsize)
+yticks = [-1.5, -1, -.5, 0, .5]
+ylabels = [-1.5, -1, -.5, 0, .5]
 plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
-axs[0].set_ylim(bottom=45, top=100)
+plt.ylim(bottom=-1.5, top=.5)
 
 # Legend
-axs[0].legend(ncol=1, fontsize=fontsize, loc=1, frameon=False)
+plt.legend(ncol=1, fontsize=fontsize, loc=4, frameon=False)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'decoding_accuray_channels-'+
-    ''.join(args.channels)+'.svg')
+file_name = os.path.join(save_dir, 'erps_channels-'+'-'.join(args.channels)+
+    '.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-
-
-# =============================================================================
-# Print the peak latency stats
-# =============================================================================
-print('>>> Mean peak latency diff (seconds): ' + \
-    str(np.round(np.mean(peak_latency_diff), 3)))
-print('>>> CI peak latency diff (seconds): ' + str(ci_peak_latency_diff))
-print('>>> P-val peak latency diff: ' + str(pval_peak_latency_diff))
