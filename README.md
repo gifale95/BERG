@@ -6,15 +6,17 @@ Dear Users,
 
 We would be grateful if you could take a few minutes to share your feedback on BERG. Your input will contribute to improving BERG’s usefulness and reliability!
 
-Link to survey: [https://forms.gle/pybrqcaqdso2LJK88][https://forms.gle/pybrqcaqdso2LJK88]
+- **Link to survey:** [https://forms.gle/pybrqcaqdso2LJK88](https://forms.gle/pybrqcaqdso2LJK88)
 
-We would also appreciate it if you could share the survey by forwarding this message to your colleagues, and/or by sharing the corresponding Bluesky/X posts.
+We would also appreciate it if you could share the survey by forwarding this message to your colleagues, and/or by sharing the corresponding Bluesky/X posts:
 
-Blusesky post: [https://bsky.app/profile/alessandrogifford.bsky.social/post/3m6f5nm5wb22l][https://bsky.app/profile/alessandrogifford.bsky.social/post/3m6f5nm5wb22l]
-X post: [https://x.com/AlgonautsProj/status/1992980825160483019?s=20][https://x.com/AlgonautsProj/status/1992980825160483019?s=20]
+- **Blusesky post:** [https://bsky.app/profile/alessandrogifford.bsky.social/post/3m6f5nm5wb22l](https://bsky.app/profile/alessandrogifford.bsky.social/post/3m6f5nm5wb22l)
+
+- **X post:** [https://x.com/AlgonautsProj/status/1992980825160483019?s=20](https://x.com/AlgonautsProj/status/1992980825160483019?s=20)
 
 We thank you and look forward to your input!
-The BERG Team
+
+*The BERG Team*
 
 ---
 
