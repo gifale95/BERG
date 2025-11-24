@@ -88,11 +88,10 @@ for s, sub in enumerate(tqdm(args.subjects)):
         if s == 0:
             insilico_eeg[cat] = []
 
-        # Generate the in silico EEG responses, and compute the ERPs by
-        # averaging them across images and repeats
+        # Generate the in silico EEG responses, and average them across repeats
         eeg, metadata_sub = berg.encode(model, images[cat],
             return_metadata=True)
-        insilico_eeg[cat].append(np.mean(np.mean(eeg, 0), 0))
+        insilico_eeg[cat].append(np.mean(eeg, 1))
         if c == 0:
             metadata.append(metadata_sub)
         del eeg, metadata_sub

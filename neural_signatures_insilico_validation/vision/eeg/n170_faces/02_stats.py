@@ -62,8 +62,8 @@ data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
 
 data = np.load(data_dir, allow_pickle=True).item()
 
-erp_faces = data['insilico_eeg']['Faces']
-erp_objects = data['insilico_eeg']['Objects']
+eeg_faces = data['insilico_eeg']['Faces']
+eeg_objects = data['insilico_eeg']['Objects']
 metadata = data['metadata']
 del data
 
@@ -80,42 +80,44 @@ for c, chan in enumerate(ch_names):
             kept_chan_idx.append(c)
             break
 
-# Average the ERPs across the chosen channels
-erp_faces = np.mean(erp_faces[:,kept_chan_idx], 1)
-erp_objects = np.mean(erp_objects[:,kept_chan_idx], 1)
-
-# Compute the difference between face and object absolute ERPs
-erp_diff = erp_faces - erp_objects
+# Average the EEG responses across the chosen channels
+eeg_faces = np.mean(eeg_faces[:,:,kept_chan_idx], 2)
+eeg_objects = np.mean(eeg_objects[:,:,kept_chan_idx], 2)
 
 
 # =============================================================================
-# Bootstrap the confidence intervals (CIs)
+# Compute the ERPs (average across images from the same condition)
+# =============================================================================
+erp_faces = np.mean(eeg_faces, 1)
+erp_objects = np.mean(eeg_objects, 1)
+
+
+# =============================================================================
+# Bootstrap the ERP confidence intervals (CIs)
 # =============================================================================
 ci_erp_faces = np.zeros((2, erp_faces.shape[1]))
 ci_erp_objects = np.zeros((ci_erp_faces.shape))
-ci_erp_diff = np.zeros((ci_erp_faces.shape))
 
 faces_dist = np.zeros((args.n_iter, erp_faces.shape[1]))
 objects_dist = np.zeros((faces_dist.shape))
-diff_dist = np.zeros((faces_dist.shape))
 
 for i in tqdm(range(args.n_iter)):
     idx = resample(np.arange(len(args.subjects)))
     faces_dist[i] = np.mean(erp_faces[idx], 0)
     objects_dist[i] = np.mean(erp_objects[idx], 0)
-    diff_dist[i] = np.mean(erp_diff[idx])
 
 ci_erp_faces[0] = np.percentile(faces_dist, 2.5, axis=0)
 ci_erp_faces[1] = np.percentile(faces_dist, 97.5, axis=0)
 ci_erp_objects[0] = np.percentile(objects_dist, 2.5, axis=0)
 ci_erp_objects[1] = np.percentile(objects_dist, 97.5, axis=0)
-ci_erp_diff[0] = np.percentile(diff_dist, 2.5, axis=0)
-ci_erp_diff[1] = np.percentile(diff_dist, 97.5, axis=0)
 
 
 # =============================================================================
-# Compute the significance of the peak latency difference
+# Statistical significance
 # =============================================================================
+# Compute the difference between face and object absolute ERPs
+erp_diff = erp_faces - erp_objects
+
 # Compute the p-value
 pval_erp_diff = ttest_rel(erp_faces, erp_objects, axis=0,
     alternative='less')[1]
@@ -131,10 +133,8 @@ sig_erp_diff, pval_erp_diff_corrected, _, _ = multipletests(pval_erp_diff,
 results = {
     'erp_faces': erp_faces,
     'erp_objects': erp_objects,
-    'erp_diff': erp_diff,
     'ci_erp_faces': ci_erp_faces,
     'ci_erp_objects': ci_erp_objects,
-    'ci_erp_diff': ci_erp_diff,
     'pval_erp_diff': pval_erp_diff,
     'pval_erp_diff_corrected': pval_erp_diff_corrected,
     'sig_erp_diff': sig_erp_diff,

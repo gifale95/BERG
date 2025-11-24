@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-eeg_decoding-02_pairwise_decoding
+#SBATCH --job-name=berg_insilico_validation-eeg_face_dynamics-01_rsa
 #SBATCH --mail-type=end
 #SBATCH --mem=3000
-#SBATCH --time=05:00:00
+#SBATCH --time=00:30:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -27,7 +27,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/eeg/object_exemplar_animacy_categorization
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/eeg/face_processing_dynamics
 
 # Run the job
-python 02_pairwise_decoding.py --subject $subject
+python 01_rsa.py --subject $subject
