@@ -1,6 +1,6 @@
 # Brain Encoding Response Generator (BERG)
 
-📋 **Survey** 📋
+📋 **BERG Survey** 📋
 
 Dear Users,
 
