@@ -105,18 +105,17 @@ print(f"Correlation range: [{correlation_results.min():.4f}, {correlation_result
 # =============================================================================
 # Compute percent noise ceiling reached
 # =============================================================================
-# Get noise ceiling from metadata
+# Get noise ceiling from metadata (in R² percentage scale, 0-100)
 noise_ceiling_testset = metadata_fmri['encoding_model']['noise_ceiling_singletrial']
 
-# Convert noise ceiling from percentage scale to correlation scale
-# (divide by 100 and take square root to convert from R² to R)
-noise_ceiling_correlation = np.sqrt(noise_ceiling_testset / 100)
+# Square correlation results to get R² for comparison with R² noise ceiling
+correlation_r2 = correlation_results ** 2
 
 # Calculate percent of noise ceiling reached
 # Handle division by zero: set to NaN where noise ceiling is 0
 percent_noise_ceiling = np.zeros(n_voxels)
-valid_mask = noise_ceiling_correlation != 0
-percent_noise_ceiling[valid_mask] = (correlation_results[valid_mask] / noise_ceiling_correlation[valid_mask]) * 100
+valid_mask = noise_ceiling_testset != 0
+percent_noise_ceiling[valid_mask] = (correlation_r2[valid_mask] / (noise_ceiling_testset[valid_mask] / 100)) * 100
 percent_noise_ceiling[~valid_mask] = np.nan
 
 print(f"\nPercent noise ceiling stats (excluding NaN):")

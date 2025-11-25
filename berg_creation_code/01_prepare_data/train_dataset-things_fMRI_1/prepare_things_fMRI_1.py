@@ -24,99 +24,64 @@ batch_size : int
 Usage
 -----
 python berg_creation_code/01_prepare_data/train_dataset-things_fMRI_1/prepare_things_fMRI_1.py \
-    --subject sub-01 \
+    --subject sub-02 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --fmri_data_dir '/Volumes/Extreme SSD/Datasets/THINGS/betas_csv' \
     --batch_size 1000
 
 Output Files Created (per subject):
-────────────────────────────────────────────────────────────────
-Original Data:
-fmri_{subject}_split-train.h5           : (8640, 211339)           # Training data 
-fmri_{subject}_split-test.h5            : (1200, 211339)           # Test data 
-fmri_{subject}_split-test_averaged.h5   : (100, 211339)            # Averaged test data 
+────────────────────────────────────────────────────────────────────────────
+Neural Data:
+fmri_{subject}_split-train.h5           : (8640, 211339)
+    Training trials with session-wise z-score normalization
+    
+fmri_{subject}_split-test.h5            : (1200, 211339)
+    Individual test trials with session-wise z-score normalization
+    
+fmri_{subject}_split-test_averaged.h5   : (100, 211339)
+    Test data averaged across repetitions of the same stimulus
 
 Metadata:
-fmri_{subject}_metadata.npz             :
+fmri_{subject}_metadata.npy             :
+    'fmri':
+        voxel_coords         : (211339, 3) - Voxel coordinates in volume space (x, y, z indices)
+        n_voxels             : int         - Total number of voxels (scalar = 211339)
+        subject_id           : str         - Subject identifier (e.g., 'sub-01')
 
-    Training Data (sub-01):
-        train_sessions            : (8640,)   int64
-        train_runs                : (8640,)   int64
-        train_stimuli             : (8640,)   object   e.g. ['dog_12s.jpg', 'mango_12s.jpg', ...]
-        train_concepts            : (8640,)   object   e.g. ['dog', 'mango', ...]
-        train_trial_ids           : (8640,)   int64
+    'encoding_model':
+        train_stimuli        : (8640,)  - Stimulus filenames for training trials
+        train_concepts       : (8640,)  - Concept labels for training trials
+        test_stimuli         : (1200,)  - Stimulus filenames for individual test trials
+        test_concepts        : (1200,)  - Concept labels for individual test trials
+        test_avg_stimuli     : (100,)   - Stimulus filenames for unique test images (after averaging)
+        test_avg_concepts    : (100,)   - Concept labels for unique test images (after averaging)
+        noise_ceiling_singletrial : (211339,) - Max explainable variance per voxel based on single-trial repeat reliability
+        noise_ceiling_testset     : (211339,) - Max explainable variance per voxel based on averaged test-set repeats
+        splithalf_corrected       : (211339,) - Raw split-half voxel reliability without correction
+        splithalf_uncorrected     : (211339,) - Split-half reliability corrected to estimate full-data consistency
 
-    Test Data – Individual Trials (sub-01):
-        test_sessions             : (1200,)   int64
-        test_runs                 : (1200,)   int64
-        test_stimuli              : (1200,)   object
-        test_concepts             : (1200,)   object
-        test_trial_ids            : (1200,)   int64
+    'prf':
+        prf_eccentricity     : (211339,) - Distance of receptive field center from fixation (deg)
+        prf_polarangle       : (211339,) - Angular position of receptive field center (0–360°)
+        prf_rsquared         : (211339,) - Variance explained by pRF model (fit quality)
+        prf_size             : (211339,) - Estimated receptive field size (deg)
 
-    Test Data – Averaged Across Repetitions (sub-01):
-        test_avg_stimuli          : (100,)    str
-        test_avg_concepts         : (100,)    str
+    'roi':
+        V1, V2, V3, hV4, VO1, VO2, LO1_prf, LO2_prf, TO1, TO2, V3b, V3a,
+        lFFA, rFFA, lOFA, rOFA, lEBA, rEBA, lPPA, rPPA, lRSC, rRSC, 
+        lTOS, rTOS, lLOC, rLOC, IT, lSTS, rSTS
+            Each ROI entry contains voxel indices (variable length) for that functional region
 
-    Voxel Information (common shapes across subjects; values shown for sub-01):
-        voxel_coords              : (211339, 3)   int64   # voxel indices
-        noise_ceiling_singletrial : (211339,)     float64
-        noise_ceiling_testset     : (211339,)     float64
-        splithalf_corrected       : (211339,)     float64
-        splithalf_uncorrected     : (211339,)     float64
-        prf_eccentricity          : (211339,)     float64
-        prf_polarangle            : (211339,)     float64
-        prf_rsquared              : (211339,)     float64
-        prf_size                  : (211339,)     float64
-        n_voxels                  : int = 211339
-
-    ROI Indices (Functional ROIs; counts shown for sub-01):
-        roi_V1        : (1049,)   int64
-        roi_V2        : (774,)    int64
-        roi_V3        : (762,)    int64
-        roi_hV4       : (613,)    int64
-        roi_VO1       : (287,)    int64
-        roi_VO2       : (149,)    int64
-        roi_LO1_prf   : (349,)    int64
-        roi_LO2_prf   : (348,)    int64
-        roi_TO1       : (369,)    int64
-        roi_TO2       : (316,)    int64
-        roi_V3b       : (402,)    int64
-        roi_V3a       : (642,)    int64
-        roi_lFFA      : (154,)    int64
-        roi_rFFA      : (399,)    int64
-        roi_lOFA      : (69,)     int64
-        roi_rOFA      : (250,)    int64
-        roi_lEBA      : (563,)    int64
-        roi_rEBA      : (640,)    int64
-        roi_lPPA      : (395,)    int64
-        roi_rPPA      : (414,)    int64
-        roi_lRSC      : (420,)    int64
-        roi_rRSC      : (558,)    int64
-        roi_lTOS      : (38,)     int64
-        roi_rTOS      : (121,)    int64
-        roi_lLOC      : (1573,)   int64
-        roi_rLOC      : (1127,)   int64
-        roi_IT        : (4145,)   int64
-        roi_lSTS      : (69,)     int64
-        roi_rSTS      : (449,)    int64
-
-    Subject Metadata:
-        subject_id                : 'sub-01'
-
-    ROI Summary (sub-01):
-        Total functional ROIs     : 29
-        Total voxels in ROIs      : 17,444
-
-Total: 7 files per subject (6 HDF5 data files + 1 metadata)
 
 Note: All HDF5 files use the key 'neural_data'.
       Data shape is (Trials x Voxels) after transposition from original (Voxels x Trials).
+      Session-wise z-score normalization is applied: (trial - session_mean) / session_std
 """
 
 
 import argparse
 import os
-from utils_things_fMRI_1 import split_fmri_data, create_fmri_metadata, normalize_fmri_data, create_averaged_test_data
+from utils_things_fMRI_1 import split_fmri_data, create_fmri_metadata, create_averaged_test_data
 import pandas as pd
 
 # =============================================================================
@@ -160,24 +125,8 @@ if not os.path.exists(voxel_file):
 # =============================================================================
 print("")
 print("Splitting training and testing data")
-split_fmri_data(response_file, stimulus_file, output_dir, args.subject, args.batch_size)
-
-
-
-# =============================================================================
-# Normalize data using session-wise z-scores
-# =============================================================================
-print("")
-print("Normalizing data using session-wise z-scores")
-
-train_file = os.path.join(output_dir, f'fmri_{args.subject}_split-train.h5')
-test_file = os.path.join(output_dir, f'fmri_{args.subject}_split-test.h5')
-
-train_means, train_stds, unique_sessions = normalize_fmri_data(
-    train_filepath=train_file,
-    test_filepath=test_file,
-    stimulus_filepath=stimulus_file,
-    subject_id=args.subject
+split_fmri_data(
+    response_file, stimulus_file, output_dir, args.subject, args.batch_size
 )
 
 
@@ -186,6 +135,7 @@ train_means, train_stds, unique_sessions = normalize_fmri_data(
 # =============================================================================
 print("")
 print("Creating averaged test data from normalized trials")
+test_file = os.path.join(output_dir, f'fmri_{args.subject}_split-test.h5')
 
 # Need to recreate test_mask for create_averaged_test_data
 stim_metadata = pd.read_csv(stimulus_file)
@@ -205,8 +155,5 @@ create_fmri_metadata(
     stimulus_filepath=stimulus_file,
     voxel_filepath=voxel_file,
     output_dir=output_dir,
-    subject_id=args.subject,
-    train_means=train_means,
-    train_stds=train_stds,
-    unique_sessions=unique_sessions
+    subject_id=args.subject
 )

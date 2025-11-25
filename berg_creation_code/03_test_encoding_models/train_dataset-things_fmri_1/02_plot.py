@@ -99,10 +99,8 @@ for subject in args.subjects:
     metadata_file = os.path.join(preprocessed_dir, f'fmri_{subject}_metadata.npy')
     preprocessed_metadata = np.load(metadata_file, allow_pickle=True).item()
     
-    roi_indices_dict = {}
-    for key in preprocessed_metadata['fmri'].keys():
-        if key.startswith('roi_'):
-            roi_indices_dict[key] = preprocessed_metadata['fmri'][key]
+    # ROIs are now directly in the 'roi' dictionary
+    roi_indices_dict = preprocessed_metadata['roi']
     
     # Compute ROI-averaged correlations and noise ceilings
     roi_correlations = []
@@ -114,7 +112,7 @@ for subject in args.subjects:
     print("-"*80)
     
     for roi_name in all_rois:
-        roi_key = f'roi_{roi_name}'
+        roi_key = roi_name
         
         if roi_key in roi_indices_dict:
             roi_indices = roi_indices_dict[roi_key]

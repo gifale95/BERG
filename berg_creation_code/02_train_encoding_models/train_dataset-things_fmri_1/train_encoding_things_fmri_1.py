@@ -1,19 +1,17 @@
-"""Train a Ridge regression model to predict THINGS fMRI neural data using CLIP 
-vision transformer feature maps as predictors. The Ridge regression is trained 
+"""Train a Regression model to predict THINGS fMRI neural data using Vision transformer feature maps as predictors. Th Regression is trained 
 using the training images neural data (Y) and feature maps (X).
 
-The feature maps come from a CLIP vision transformer, and are downsampled to 
+The feature maps come from a vision transformer, and are downsampled to 
 250 principal components using PCA.
 
 Pipeline steps:
 1. Model setup: Load CLIP ViT-B/32 or ViT-B/32, wrap with torchextractor for multi-layer access
-2. Feature extraction: Extract CLS tokens from 12 transformer layers (0-11)
-   - Decision: Use CLS tokens only (not all 50 patch tokens) for computational efficiency
+2. Feature extraction: Extract tokens from 12 transformer layers (0-11)
    - Batch processing (512 images) to handle training + test images
 3. Preprocessing: StandardScaler normalization + PCA reduction to 250 components
    - Decision: PCA reduces 9,216 features (12 layers × 768 dims) for Ridge stability
 4. Neural data loading: Chunked loading to prevent memory overflow during training
-5. Model training: 32 separate Ridge models (~6,604 voxels each)
+5. Model training: 32 separate models (~6,604 voxels each)
    - Decision: Split models for memory efficiency with 211,339 total voxels
    - Cross-validation over alphas [0.0001, 0.001, 0.01, 0.1, 1, 10]
 6. Prediction: Load all 32 models, predict separately, concatenate results
@@ -65,6 +63,7 @@ import clip
 import torchextractor as tx
 from torchvision import transforms as trn
 import torchvision
+from torchvision.models import vit_b_32, ViT_B_32_Weights
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.linear_model import RidgeCV, LinearRegression
@@ -149,7 +148,9 @@ if args.model == "clip.vit_b_32":
     visual = tx.Extractor(model.visual, layer_names)
 
 elif args.model == "vit_b_32":
-    model = torchvision.models.vit_b_32(weights='DEFAULT')
+    # Load with explicit weights
+    weights = ViT_B_32_Weights.DEFAULT
+    model = vit_b_32(weights=weights)
     model.to(device)
     model.eval()
     
@@ -168,12 +169,7 @@ elif args.model == "vit_b_32":
     
     visual = tx.Extractor(model, layer_names)
     
-    preprocess = trn.Compose([
-        trn.Lambda(lambda img: trn.CenterCrop(min(img.size))(img)),
-        trn.Resize((224, 224)),
-        trn.ToTensor(),
-        trn.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
+    preprocess = weights.transforms()
 
 print("Model loaded")
 
@@ -190,7 +186,7 @@ metadata = np.load(metadata_path, allow_pickle=True).item()
 
 # Extract training image features
 print("Extracting training features...")
-n_train_images = len(metadata["fmri"]['train_stimuli'])
+n_train_images = len(metadata["encoding_model"]['train_stimuli']) 
 fmaps_train = []
 
 for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=False):
@@ -199,8 +195,8 @@ for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=F
     
     # Load batch of training images
     for i in range(start_idx, end_idx):
-        concept = metadata["fmri"]['train_concepts'][i]
-        stimulus = metadata["fmri"]['train_stimuli'][i]
+        concept = metadata["encoding_model"]['train_concepts'][i]
+        stimulus = metadata["encoding_model"]['train_stimuli'][i]
         full_path = os.path.join(args.things_dir, concept, stimulus)
         img = Image.open(full_path).convert('RGB')
         img_tensor = preprocess(img)
@@ -250,9 +246,9 @@ print(f"Training features shape (fmaps): {fmaps_train.shape}")
 # Extract test image features
 print("Extracting test features...")
 test_images = []
-for i in range(len(metadata["fmri"]['test_avg_stimuli'])):
-    concept = metadata["fmri"]['test_avg_concepts'][i]
-    stimulus = metadata["fmri"]['test_avg_stimuli'][i]
+for i in range(len(metadata["encoding_model"]['test_avg_stimuli'])): 
+    concept = metadata["encoding_model"]['test_avg_concepts'][i]    
+    stimulus = metadata["encoding_model"]['test_avg_stimuli'][i] 
     full_path = os.path.join(args.things_dir, concept, stimulus)
     
     img = Image.open(full_path).convert('RGB')
@@ -306,16 +302,6 @@ pca.fit(fmaps_train)
 fmaps_train = pca.transform(fmaps_train)
 fmaps_test = pca.transform(fmaps_test)
 
-
-print(f"Features after PCA - Train: {fmaps_train.shape}, Test: {fmaps_test.shape}")
-# Verify standardization
-print(f"After re-standardization: mean={fmaps_train.mean():.6f}, std={fmaps_train.std():.6f}")
-
-print(f"\n=== PCA Diagnostics ===")
-print(f"Total explained variance: {pca.explained_variance_ratio_.sum():.4f} ({pca.explained_variance_ratio_.sum()*100:.2f}%)")
-print(f"First 10 components explain: {pca.explained_variance_ratio_[:10].sum():.4f}")
-print(f"Variance per component (first 20): {pca.explained_variance_ratio_[:20]}")
-
 # Convert to float32
 fmaps_train = fmaps_train.astype(np.float32)
 fmaps_test = fmaps_test.astype(np.float32)
@@ -367,22 +353,10 @@ for chunk_idx in range(n_chunks):
             batch_data = f['neural_data'][batch_start:batch_end, start_voxel:end_voxel]
             neural_chunk[batch_start:batch_end] = batch_data
     
-    print(f"Chunk data shape: {neural_chunk.shape}")
-    print(f"  Neural chunk stats: mean={neural_chunk.mean():.6f}, std={neural_chunk.std():.6f}")
-    print(f"  Neural chunk range: [{neural_chunk.min():.6f}, {neural_chunk.max():.6f}]")
-    print(f"  % of values exactly 0.0: {(neural_chunk == 0).sum() / neural_chunk.size * 100:.2f}%")
-    
-    # Train model based on regression type
-    print(f"  Feature stats going into model: mean={fmaps_train.mean():.6f}, std={fmaps_train.std():.6f}")
-    print(f"  Feature range: [{fmaps_train.min():.6f}, {fmaps_train.max():.6f}]")
-    
     if args.regression == 'ridge':
         chunk_reg = RidgeCV(alphas=alphas, cv=args.cv_folds, scoring='r2')
         chunk_reg.fit(fmaps_train, neural_chunk)
-        print(f"  Training R² score: {chunk_reg.score(fmaps_train, neural_chunk):.4f}")
-        
-        print(f"Chunk {chunk_idx + 1} completed. Best alpha: {chunk_reg.alpha_}")
-        
+ 
         # Try to access CV values if available
         if hasattr(chunk_reg, 'cv_values_'):
             cv_values = chunk_reg.cv_values_
@@ -396,9 +370,6 @@ for chunk_idx in range(n_chunks):
         else:
             print(f"  CV values not stored (sklearn version doesn't support it)")
         
-        # Check coefficient statistics
-        print(f"  Coefficient stats: mean={chunk_reg.coef_.mean():.6f}, std={chunk_reg.coef_.std():.6f}, max_abs={np.abs(chunk_reg.coef_).max():.6f}")
-
     else:  # linear
         chunk_reg = LinearRegression()
         chunk_reg.fit(fmaps_train, neural_chunk)
@@ -406,7 +377,7 @@ for chunk_idx in range(n_chunks):
     
     # Save individual model
     model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-        'train_dataset-things_fmri_1', f'model-{args.model}', 'encoding_model_weights')
+        'train_dataset-things_fmri_1', f'model-{args.model}', 'encoding_models_weights')
     if not os.path.isdir(model_dir):
         os.makedirs(model_dir)
     
@@ -424,7 +395,7 @@ print("\nPredicting test responses...")
 # Load all models and predict
 chunk_predictions = []
 model_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-    'train_dataset-things_fmri_1', f'model-{args.model}', 'encoding_model_weights')
+    'train_dataset-things_fmri_1', f'model-{args.model}', 'encoding_models_weights')
 
 for chunk_idx in range(n_chunks):
     model_filename = f'{args.regression}_{cls_suffix}_chunk_{chunk_idx}_{args.subject}.pkl'
@@ -438,13 +409,6 @@ for chunk_idx in range(n_chunks):
 test_predictions = np.concatenate(chunk_predictions, axis=1)
 
 print(f"Test predictions shape: {test_predictions.shape}")
-
-print(f"\n=== Test Prediction Diagnostics ===")
-print(f"Prediction stats: mean={test_predictions.mean():.6f}, std={test_predictions.std():.6f}")
-print(f"Prediction range: [{test_predictions.min():.6f}, {test_predictions.max():.6f}]")
-
-assert test_predictions.shape == (100, n_voxels), \
-    f"Expected shape (100, {n_voxels}), got {test_predictions.shape}"
 
 # Save test predictions
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
