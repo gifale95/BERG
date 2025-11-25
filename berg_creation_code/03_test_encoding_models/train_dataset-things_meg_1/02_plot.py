@@ -62,6 +62,7 @@ cls_suffix = 'cls' if args.only_cls else 'all'
 # Load the encoding models' encoding accuracy and metadata
 # =============================================================================
 correlation_results = []
+noise_ceiling_results = []
 region_data = []
 
 metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
@@ -74,13 +75,16 @@ for subject in args.subject:
         allow_pickle=True).item()
     
     correlation_results.append(metadata['encoding_model']['correlation_results'])
+    noise_ceiling_results.append(metadata['encoding_model']['noise_ceiling'])
     times = metadata['meg']['times']
     sensor_regions = metadata['meg']['sensor_regions']
     region_data.append(sensor_regions)
 
 correlation_results = np.asarray(correlation_results)
+noise_ceiling_results = np.asarray(noise_ceiling_results)
 
 print(f"Correlation results shape: {correlation_results.shape}")
+print(f"Noise ceiling results shape: {noise_ceiling_results.shape}")
 
 
 # =============================================================================
@@ -91,10 +95,10 @@ matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
-matplotlib.rcParams['axes.linewidth'] = 1
-matplotlib.rcParams['xtick.major.width'] = 1
+matplotlib.rcParams['axes.linewidth'] = 1.5
+matplotlib.rcParams['xtick.major.width'] = 1.5
 matplotlib.rcParams['xtick.major.size'] = 5
-matplotlib.rcParams['ytick.major.width'] = 1
+matplotlib.rcParams['ytick.major.width'] = 1.5
 matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
@@ -128,7 +132,7 @@ if n_subjects == 1:
 elif n_subjects == 4:
     # All 4 subjects: 2x2 grid on top + grand average on bottom
     fig = plt.figure(figsize=(20, 16))
-    gs = GridSpec(3, 2, figure=fig, height_ratios=[1, 1, 0.67], hspace=0.3)
+    gs = GridSpec(3, 2, figure=fig, height_ratios=[1, 1, 0.67], hspace=0.35, wspace=0.25)
     
     # Create 2x2 grid for individual subjects
     axes = [
@@ -152,7 +156,7 @@ for s, subject in enumerate(args.subject):
     
     sensor_regions = region_data[s]
     
-    # Calculate region-averaged correlations
+    # Calculate region-averaged correlations and noise ceilings
     for region_label in region_order:
         # Find sensors belonging to this region
         region_sensors = np.where(sensor_regions == region_label)[0]
@@ -162,28 +166,50 @@ for s, subject in enumerate(args.subject):
             # correlation_results shape: (n_subjects, n_channels, n_timepoints)
             region_correlations = np.mean(correlation_results[s, region_sensors, :], axis=0)
             
-            # Plot region time course
-            ax.plot(times * 1000, region_correlations,  # Convert times to ms
+            # Square correlations to get r²
+            region_r2 = region_correlations ** 2
+            
+            # Average noise ceiling across sensors in this region
+            # Convert from r² percentage (0-100) to proportion (0-1)
+            region_noise_ceiling_r2 = np.mean(noise_ceiling_results[s, region_sensors, :], axis=0)
+            region_noise_ceiling = region_noise_ceiling_r2 / 100
+            
+            # Plot region time course (r²)
+            ax.plot(times * 1000, region_r2,  # Convert times to ms
                    color=region_colors[region_label], 
-                   linewidth=3,
-                   label=f'{region_label} (n={len(region_sensors)})')
+                   linewidth=2.5,
+                   label=f'{region_label} (n={len(region_sensors)})',
+                   alpha=0.9)
+            
+            # Plot noise ceiling as subtle line
+            ax.plot(times * 1000, region_noise_ceiling,
+                   color=region_colors[region_label],
+                   linestyle='--',
+                   linewidth=1.2,
+                   alpha=0.5)
     
     # Plot chance and stimulus onset lines
-    ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
-    ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
+    ax.axhline(0, color='gray', linestyle='--', linewidth=1.5, alpha=0.7, zorder=1)
+    ax.axvline(0, color='gray', linestyle='--', linewidth=1.5, alpha=0.7, zorder=1)
     
     # x-axis parameters
-    ax.set_xlabel('Time (ms)', fontsize=fontsize)
+    ax.set_xlabel('Time (ms)', fontsize=fontsize+1, fontweight='bold')
     ax.set_xlim(left=times[0] * 1000, right=times[-1] * 1000)
     
     # y-axis parameters
-    ax.set_ylabel('Pearson\'s r', fontsize=fontsize)
-    ax.set_ylim(bottom=-0.1, top=0.8)
-    ax.set_yticks(np.arange(-0.1, 0.9, 0.1))
+    ax.set_ylabel('r² (Explained Variance)', fontsize=fontsize+1, fontweight='bold')
+    ax.set_ylim(bottom=-0.05, top=1.0)
+    ax.set_yticks(np.arange(0, 1.1, 0.1))
+    
+    # Grid for better readability
+    ax.grid(True, alpha=0.2, linestyle='-', linewidth=0.5)
+    ax.set_axisbelow(True)
     
     # Title and legend
-    ax.set_title(f'{subject} - Brain Region Comparison', fontsize=fontsize+2, fontweight='bold')
-    ax.legend(loc='upper right', fontsize=fontsize-1)
+    ax.set_title(f'{subject} - Brain Region Encoding Accuracy', 
+                fontsize=fontsize+3, fontweight='bold', pad=15)
+    ax.legend(loc='upper right', fontsize=fontsize, framealpha=0.95, 
+             edgecolor='gray', fancybox=True)
 
 # Hide unused subplots if we have fewer than 4 subjects
 if n_subjects < 4 and avg_ax is None:
@@ -195,6 +221,7 @@ if avg_ax is not None:
     # Calculate grand average across subjects for each region
     for region_label in region_order:
         region_avg_correlations = []
+        region_avg_noise_ceilings = []
         total_sensors = 0
         
         for s in range(n_subjects):
@@ -205,35 +232,60 @@ if avg_ax is not None:
                 # Average correlation across sensors in this region for this subject
                 region_correlations = np.mean(correlation_results[s, region_sensors, :], axis=0)
                 region_avg_correlations.append(region_correlations)
+                
+                # Average noise ceiling across sensors in this region for this subject
+                region_noise_ceiling_r2 = np.mean(noise_ceiling_results[s, region_sensors, :], axis=0)
+                region_avg_noise_ceilings.append(region_noise_ceiling_r2)
+                
                 total_sensors += len(region_sensors)
         
         if len(region_avg_correlations) > 0:
             # Average across subjects
-            grand_avg = np.mean(region_avg_correlations, axis=0)
+            grand_avg_corr = np.mean(region_avg_correlations, axis=0)
+            grand_avg_nc_r2 = np.mean(region_avg_noise_ceilings, axis=0)
             
-            # Plot grand average
-            avg_ax.plot(times * 1000, grand_avg,
+            # Square correlations to get r²
+            grand_avg_r2 = grand_avg_corr ** 2
+            
+            # Convert noise ceiling from percentage to proportion
+            grand_avg_nc = grand_avg_nc_r2 / 100
+            
+            # Plot grand average (r²)
+            avg_ax.plot(times * 1000, grand_avg_r2,
                        color=region_colors[region_label],
                        linewidth=3,
-                       label=f'{region_label} (n={total_sensors})')
+                       label=f'{region_label} (n={total_sensors})',
+                       alpha=0.9)
+            
+            # Plot noise ceiling as subtle line
+            avg_ax.plot(times * 1000, grand_avg_nc,
+                       color=region_colors[region_label],
+                       linestyle='--',
+                       linewidth=1.2,
+                       alpha=0.5)
     
     # Plot chance and stimulus onset lines
-    avg_ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
-    avg_ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
+    avg_ax.axhline(0, color='gray', linestyle='--', linewidth=1.5, alpha=0.7, zorder=1)
+    avg_ax.axvline(0, color='gray', linestyle='--', linewidth=1.5, alpha=0.7, zorder=1)
     
     # x-axis parameters
-    avg_ax.set_xlabel('Time (ms)', fontsize=fontsize)
+    avg_ax.set_xlabel('Time (ms)', fontsize=fontsize+2, fontweight='bold')
     avg_ax.set_xlim(left=times[0] * 1000, right=times[-1] * 1000)
     
     # y-axis parameters
-    avg_ax.set_ylabel('Pearson\'s r', fontsize=fontsize)
-    avg_ax.set_ylim(bottom=-0.1, top=0.8)
-    avg_ax.set_yticks(np.arange(-0.1, 0.9, 0.1))
+    avg_ax.set_ylabel('r² (Explained Variance)', fontsize=fontsize+2, fontweight='bold')
+    avg_ax.set_ylim(bottom=-0.05, top=1.0)
+    avg_ax.set_yticks(np.arange(0, 1.1, 0.1))
+    
+    # Grid for better readability
+    avg_ax.grid(True, alpha=0.2, linestyle='-', linewidth=0.5)
+    avg_ax.set_axisbelow(True)
     
     # Title and legend
-    avg_ax.set_title('Grand Average Across All Subjects - Brain Region Comparison', 
-                     fontsize=fontsize+2, fontweight='bold')
-    avg_ax.legend(loc='upper right', fontsize=fontsize-1)
+    avg_ax.set_title('Grand Average Across All Subjects - Brain Region Encoding Accuracy', 
+                     fontsize=fontsize+3, fontweight='bold', pad=15)
+    avg_ax.legend(loc='upper right', fontsize=fontsize+1, framealpha=0.95,
+                 edgecolor='gray', fancybox=True)
 
 # Adjust layout
 if n_subjects == 1 or avg_ax is None:

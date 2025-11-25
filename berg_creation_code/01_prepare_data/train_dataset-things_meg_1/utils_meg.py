@@ -68,14 +68,14 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
         train_dataset = f_train.create_dataset(
             'neural_data', 
             shape=(n_train, n_channels, n_times),
-            dtype='float64'
+            dtype='float32'
         )
         
         with h5py.File(test_file, 'w') as f_test:
             test_dataset = f_test.create_dataset(
                 'neural_data',
                 shape=(n_test, n_channels, n_times), 
-                dtype='float64'
+                dtype='float32'
             )
             
             print("Processing data in batches...")
@@ -135,6 +135,98 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size):
 
 
 # =============================================================================
+# Compute Noise Ceiling
+# =============================================================================
+
+
+def compute_noise_ceiling(meg_filepath, test_filepath, subject_id):
+    """Compute ncsnr and noise ceiling from test data with repeated presentations.
+    
+    Estimates noise ceiling using the variance across 12 repeated presentations
+    of 200 test images. The noise ceiling represents the maximum achievable
+    prediction accuracy given measurement noise.
+    
+    Parameters
+    ----------
+    meg_filepath : str
+        Path to the preprocessed MNE epochs .fif file to extract metadata.
+    test_filepath : str
+        Path to the processed test HDF5 file (2400, 271, 281).
+    subject_id : str
+        Subject identifier for saving results.
+        
+    Returns
+    -------
+    dict
+        'ncsnr': (271, 281) - Neural signal-to-noise ratio per sensor/timepoint
+        'noise_ceiling': (271, 281) - Noise ceiling in r² percentage units (0-100)
+    """
+    # =============================================================================
+    # Load the THINGS MEG responses for the test images
+    # =============================================================================
+    # Load test stimulus IDs from metadata
+    data = mne.read_epochs(meg_filepath, preload=False, verbose=False)
+    metadata = data.metadata
+    test_mask = metadata['trial_type'] == 'test'
+    test_metadata = metadata[test_mask]
+    stimulus_ids = test_metadata['test_image_nr'].values
+    
+    # Load test neural data
+    with h5py.File(test_filepath, 'r') as f:
+        meg_data = f['neural_data'][:].astype(np.float32)
+    
+    # Get the unique image number
+    unique_test_images = np.unique(stimulus_ids)
+    
+    # Reshape the MEG data to (samples, features)
+    n_sensors = meg_data.shape[1]
+    n_timepoints = meg_data.shape[2]
+    n_features = n_sensors * n_timepoints
+    neural_data = meg_data.reshape(meg_data.shape[0], n_features)
+    
+    # =============================================================================
+    # Compute the ncsnr and noise ceiling
+    # =============================================================================
+    # Estimate the noise standard deviation (calculate the variance of the
+    # responses across the 30 presentations of each test image).
+    var = []
+    for img in unique_test_images:
+        idx = np.where(stimulus_ids == img)[0]
+        var.append(np.nanvar(neural_data[idx], axis=0, ddof=1))
+    # Average the variance across images and compute the square root of the
+    # result
+    sigma_noise = np.sqrt(np.nanmean(var, 0))
+
+    # Estimate the signal standard deviation (total variance - noise variance)
+    tot_var_data = np.nanvar(neural_data, axis=0, ddof=1)
+    sigma_signal = tot_var_data - (sigma_noise ** 2)
+    sigma_signal[sigma_signal<0] = 0
+    sigma_signal = np.sqrt(sigma_signal)
+
+    # Compute the ncsnr
+    ncsnr = sigma_signal / sigma_noise
+
+    # Convert the ncsnr to noise ceiling (the noise ceiling is in r² explained
+    # variance units)
+    img_reps = 12
+    noise_ceiling = 100 * (ncsnr ** 2) / ((ncsnr ** 2) + (1 / img_reps))
+
+    # Reshape the scores to (n_sensors, n_timepoints)
+    ncsnr = ncsnr.reshape(n_sensors, n_timepoints)
+    noise_ceiling = noise_ceiling.reshape(n_sensors, n_timepoints)
+
+    # =============================================================================
+    # Return the ncsnr and noise ceiling
+    # =============================================================================
+    results = {
+        'ncsnr': ncsnr,
+        'noise_ceiling': noise_ceiling
+    }
+    
+    return results
+
+
+# =============================================================================
 # Create dataset metadata
 # =============================================================================
 
@@ -142,8 +234,7 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id):
     """Create comprehensive metadata file for MEG dataset.
     
     Generate metadata linking neural responses to THINGS database images through
-    things_image_nr. Includes experimental conditions, baseline normalization
-    parameters, and sensor information for both training and test sets.
+    things_image_nr. Includes experimental conditions and sensor information for both training and test sets.
     
     Parameters
     ----------
@@ -296,10 +387,15 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id):
     
     test_avg_full_image_paths = np.array(test_avg_full_image_paths)
     
+    # Compute noise ceilings
+    test_filepath = os.path.join(output_dir, f'meg_{subject_id}_split-test.h5')
+    nc_data = compute_noise_ceiling(meg_filepath, test_filepath, subject_id)
+    ncsnr = nc_data["ncsnr"]
+    noise_ceiling = nc_data["noise_ceiling"]
+    
     # Compile metadata dictionary
     metadata_dict = {
         'meg': {
-        # Training data
         'train_things_img_ids': train_things_img_ids,
         'train_categories': train_categories,
         'train_exemplars': train_exemplars,
@@ -307,8 +403,6 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id):
         'train_runs': train_runs,
         'train_image_paths': train_image_paths,
         'train_full_image_path': train_full_image_paths,
-        
-        # Test data (individual trials)
         'test_things_img_ids': test_things_img_ids,
         'test_image_nr': test_image_nr,
         'test_categories': test_categories,
@@ -317,26 +411,22 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id):
         'test_runs': test_runs,
         'test_image_paths': test_image_paths,
         'test_full_image_path': test_full_image_paths,
-        
-        # Test averaged data
         'test_avg_things_img_ids': np.array(test_avg_things_img_ids),
         'test_avg_image_nr': unique_test_images,
         'test_avg_categories': np.array(test_avg_categories),
         'test_avg_image_paths': np.array(test_avg_image_paths),
         'test_avg_full_image_path': test_avg_full_image_paths,
-        
-        # Temporal information
         'times': times,
-        
-        # Sensor information
         'sensor_names': sensor_names,
         'sensor_prefixes': sensor_prefixes,
         'sensor_hemispheres': sensor_hemispheres,
         'sensor_regions': sensor_regions,
         'n_sensors': len(sensor_names),
+        'subject_id': subject_id},
         
-        # Subject metadata
-        'subject_id': subject_id}
+        'encoding_model': {
+            'ncsnr': ncsnr,
+            'noise_ceiling': noise_ceiling}
     }
     
     # Save metadata

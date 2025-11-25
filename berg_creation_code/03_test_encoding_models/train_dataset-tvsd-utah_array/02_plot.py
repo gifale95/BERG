@@ -147,7 +147,7 @@ for m, monkey in enumerate(args.monkey):
         region_electrodes = np.where(roi_assignments == roi_idx)[0]
         
         if len(region_electrodes) > 0:
-            region_correlations_r2 = np.mean(correlation_results[m][:, region_electrodes]**2, axis=1)
+            region_correlations_r2 = np.mean(correlation_results[m][region_electrodes, :]**2, axis=0)
             
             all_roi_correlations[roi_label].append(region_correlations_r2)
             
@@ -157,7 +157,7 @@ for m, monkey in enumerate(args.monkey):
                    label=f'{roi_label} (n={len(region_electrodes)})')
             
             if args.plot_noise_ceiling:
-                region_noise_ceiling = np.mean(noise_ceiling[:, region_electrodes], axis=1) / 100
+                region_noise_ceiling = np.mean(noise_ceiling[region_electrodes, :], axis=0) / 100
                 all_roi_noise_ceilings[roi_label].append(region_noise_ceiling)
                 
                 ax.plot(times, region_noise_ceiling, 

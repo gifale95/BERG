@@ -97,6 +97,16 @@ for c in range(neural_test.shape[1]):  # channels
 print(f"Correlation results shape: {correlation_results.shape}")
 
 
+# =============================================================================
+# Compute percent noise ceiling
+# =============================================================================
+noise_ceiling = metadata_meg['encoding_model']['noise_ceiling']
+
+noise_ceiling_r2 = noise_ceiling / 100 
+percent_noise_ceiling = (correlation_results**2 / noise_ceiling_r2) * 100
+
+print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
+
 
 # =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
@@ -104,7 +114,10 @@ print(f"Correlation results shape: {correlation_results.shape}")
 metadata = {
     'meg': metadata_meg['meg'],
     'encoding_model': {
-        'correlation_results': correlation_results
+        'correlation_results': correlation_results,
+        'percent_noise_ceiling': percent_noise_ceiling,
+        'ncsnr': metadata_meg['encoding_model']['ncsnr'],
+        'noise_ceiling': metadata_meg['encoding_model']['noise_ceiling']
     }
 }
 
@@ -118,6 +131,3 @@ file_name = f'metadata_{args.regression}_{cls_suffix}_{args.subject}.npy'
 np.save(os.path.join(save_dir, file_name), metadata)
 
 print(f"Metadata saved to: {os.path.join(save_dir, file_name)}")
-
-
-

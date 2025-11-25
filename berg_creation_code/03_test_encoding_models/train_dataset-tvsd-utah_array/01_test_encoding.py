@@ -85,12 +85,12 @@ print(f"Predicted neural test data shape: {neural_test_pred.shape}")
 # =============================================================================
 # Compute the encoding accuracy
 # =============================================================================
-correlation_results = np.zeros((neural_test.shape[1], neural_test.shape[2]))
+correlation_results = np.zeros((neural_test.shape[1], neural_test.shape[2]))  
 
-for t in range(neural_test.shape[1]):
-	for e in range(neural_test.shape[2]):
-		correlation_results[t, e] = pearsonr(neural_test[:, t, e],
-			neural_test_pred[:, t, e])[0]
+for e in range(neural_test.shape[1]):
+	for t in range(neural_test.shape[2]):
+		correlation_results[e, t] = pearsonr(neural_test[:, e, t],
+			neural_test_pred[:, e, t])[0]
 
 print(f"Correlation results shape: {correlation_results.shape}")
 

@@ -3,9 +3,10 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import torch
 import yaml
-import clip
 import torchextractor as tx
 from tqdm import tqdm
+from torchvision import transforms as trn
+from torchvision.models import vit_b_32, ViT_B_32_Weights
 import joblib
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -31,7 +32,7 @@ def load_model_info():
         os.path.dirname(__file__), 
         "..", 
         "model_cards", 
-        "meg-things_meg1-clip_vit_b_32.yaml"
+        "meg-things_meg_1-vit_b_32.yaml"
     )
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
@@ -42,23 +43,23 @@ model_info = load_model_info()
 
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.meg.meg_things_meg1",
+    module_path="berg.models.meg.things_meg_1",
     class_name="MEGEncodingModel",
     modality=model_info.get("modality", "MEG"),
-    training_dataset=model_info.get("training_dataset", "things_meg1"),
+    training_dataset=model_info.get("training_dataset", "things_meg_1"),
     yaml_path=os.path.join(
         os.path.dirname(__file__), 
         "..", 
         "model_cards", 
-        "meg-things_meg1-clip_vit_b_32.yaml"
+        "meg-things_meg_1-vit_b_32.yaml"
     )
 )
 
 
 class MEGEncodingModel(BaseModelInterface):
     """
-    MEG encoding model using CLIP vision transformer to generate
-    in silico MEG responses for the THINGS MEG1 dataset.
+    MEG encoding model using vision transformer to generate
+    in silico MEG responses for the THINGS meg_1 dataset.
     """
     
     MODEL_ID = model_info["model_id"]
@@ -181,7 +182,7 @@ class MEGEncodingModel(BaseModelInterface):
         """
         Load model weights, preprocessing pipeline, and regression layers.
         
-        Loads the CLIP vision transformer backbone, preprocessing components 
+        Loads the vision transformer backbone, preprocessing components 
         (scalers, PCA), and trained regression weights for the specified
         subject. Sets up all necessary components for generating MEG
         responses.
@@ -192,8 +193,8 @@ class MEGEncodingModel(BaseModelInterface):
                 self.berg_dir, 
                 'encoding_models',
                 'modality-meg',
-                'train_dataset-things_meg1',
-                'model-clip.vit_b_32',
+                'train_dataset-things_meg_1',
+                'model-vit_b_32',
                 'metadata',
                 f'metadata_{self.subject}.npy'
             )
@@ -233,14 +234,11 @@ class MEGEncodingModel(BaseModelInterface):
             if self.selected_timepoints is None:
                 self.selected_timepoints = list(range(self.TIMEPOINTS_LENGTH))
             
-            # Load the CLIP vision transformer
+            # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)
             
-            # Define the image preprocessing transform (from CLIP)
-            _, self.transform = clip.load("ViT-B/32", device=self.device)
-            
             # Load the scalers, PCA, and trained regression weights
-            self.scaler_pre_pca, self.pca, self.chunk_models = \
+            self.scaler, self.pca, self.chunk_models = \
                 self._load_encoding_weights()
             
             print(f"Model loaded on {self.device} for subject {self.subject}")
@@ -250,7 +248,7 @@ class MEGEncodingModel(BaseModelInterface):
     
     def _load_feature_extractor(self, device):
         """
-        Load the CLIP ViT feature extractor for all 12 transformer layers.
+        Load the ViT feature extractor for all 12 transformer layers.
         
         Parameters
         ----------
@@ -263,21 +261,35 @@ class MEGEncodingModel(BaseModelInterface):
             Torchextractor wrapped model configured to extract 
             representations from all 12 transformer layers.
         """
-        # Load CLIP model
-        model, _ = clip.load("ViT-B/32", device=device)
+        # Load ViT model
+        weights = ViT_B_32_Weights.DEFAULT
+        model = vit_b_32(weights=weights)
+        model.to(device)
         
         if device == 'cuda':
             model = model.float()
         
         model.eval()
+
         
         # Define layer names for all 12 transformer blocks
-        layer_names = [
-            f"transformer.resblocks.{i}" for i in range(12)
-        ]
+        layer_names = ['encoder.layers.encoder_layer_0',
+                            'encoder.layers.encoder_layer_1',
+                            'encoder.layers.encoder_layer_2',
+                            'encoder.layers.encoder_layer_3',
+                            'encoder.layers.encoder_layer_4',
+                            'encoder.layers.encoder_layer_5',
+                            'encoder.layers.encoder_layer_6',
+                            'encoder.layers.encoder_layer_7',
+                            'encoder.layers.encoder_layer_8',
+                            'encoder.layers.encoder_layer_9',
+                            'encoder.layers.encoder_layer_10',
+                            'encoder.layers.encoder_layer_11']
         
         # Wrap the visual encoder with torchextractor
-        feature_extractor = tx.Extractor(model.visual, layer_names)
+        feature_extractor = tx.Extractor(model, layer_names)
+        
+        self.transform = weights.transforms()
         
         return feature_extractor
     
@@ -289,8 +301,8 @@ class MEGEncodingModel(BaseModelInterface):
         Returns
         -------
         tuple
-            A tuple containing (scaler_pre_pca, pca, chunk_models) where:
-            - scaler_pre_pca : StandardScaler - Pre-PCA feature normalization
+            A tuple containing (scaler, pca, chunk_models) where:
+            - scaler : StandardScaler - Pre-PCA feature normalization
             - pca : PCA - Fitted principal component analysis model
             - chunk_models : List of LinearRegression models for each chunk
         """
@@ -299,20 +311,20 @@ class MEGEncodingModel(BaseModelInterface):
             self.berg_dir, 
             'encoding_models', 
             'modality-meg',
-            'train_dataset-things_meg1', 
-            'model-clip.vit_b_32',
+            'train_dataset-things_meg_1', 
+            'model-vit_b_32',
             'encoding_models_weights',
-            f'preprocessing_linear_cls_{self.subject}.npy'
+            f'preprocessing_linear_all_{self.subject}.npy'
         )
         preprocessing = np.load(weights_dir, allow_pickle=True).item()
         
         # Reconstruct pre-PCA scaler
-        scaler_pre_pca = StandardScaler()
-        scaler_pre_pca.scale_ = preprocessing['scaler_param']['scale_']
-        scaler_pre_pca.mean_ = preprocessing['scaler_param']['mean_']
-        scaler_pre_pca.var_ = preprocessing['scaler_param']['var_']
-        scaler_pre_pca.n_features_in_ = preprocessing['scaler_param']['n_features_in_']
-        scaler_pre_pca.n_samples_seen_ = preprocessing['scaler_param']['n_samples_seen_']
+        scaler = StandardScaler()
+        scaler.scale_ = preprocessing['scaler_param']['scale_']
+        scaler.mean_ = preprocessing['scaler_param']['mean_']
+        scaler.var_ = preprocessing['scaler_param']['var_']
+        scaler.n_features_in_ = preprocessing['scaler_param']['n_features_in_']
+        scaler.n_samples_seen_ = preprocessing['scaler_param']['n_samples_seen_']
         
         # Reconstruct PCA
         pca = PCA(n_components=250, random_state=20200220)
@@ -332,17 +344,17 @@ class MEGEncodingModel(BaseModelInterface):
             self.berg_dir, 
             'encoding_models', 
             'modality-meg',
-            'train_dataset-things_meg1', 
-            'model-clip.vit_b_32',
-            'encoding_model_weights'
+            'train_dataset-things_meg_1', 
+            'model-vit_b_32',
+            'encoding_models_weights'
         )
         
         for chunk_idx in range(self.N_CHUNKS):
-            model_filename = f'linear_cls_chunk_{chunk_idx}_{self.subject}.pkl'
+            model_filename = f'linear_all_chunk_{chunk_idx}_{self.subject}.pkl'
             chunk_model = joblib.load(os.path.join(model_dir, model_filename))
             chunk_models.append(chunk_model)
         
-        return scaler_pre_pca, pca, chunk_models
+        return scaler, pca, chunk_models
     
     def generate_response(
         self,
@@ -400,24 +412,25 @@ class MEGEncodingModel(BaseModelInterface):
                 img_batch = images[idx_start:idx_end].to(self.device)
                 _, features = self.feature_extractor(img_batch)
                 
-                # Extract CLS token from each layer and concatenate
+                # Extract all tokens from each layer and concatenate
                 batch_features = []
                 for layer_name in features.keys():
                     layer_features = features[layer_name]
-                    # CLIP output: (seq_len=50, batch_size, hidden_dim=768)
-                    # Extract CLS token (first token): (batch_size, hidden_dim)
-                    cls_token = layer_features[0, :, :]
-                    batch_features.append(cls_token)
+                    # ViT output: (batch_size, n_patches, hidden_dim)
+                    # Flatten all tokens: (batch_size, n_patches * hidden_dim)
+                    layer_flat = layer_features.flatten(1, 2)
+                    batch_features.append(layer_flat)
                 
                 # Concatenate features from all layers
-                # Shape: (batch_size, 12 * 768)
+                # Shape: (batch_size, 13_layers * 196_patches * 768_dim)
                 ft = torch.cat(batch_features, dim=-1)
                 ft = ft.detach().cpu().numpy()
                 
-                # Process features through pre-PCA scaler, PCA, and post-PCA scaler
-                ft = self.scaler_pre_pca.transform(ft)
+                # Process features through scaler and PCA
+                ft = self.scaler.transform(ft)
                 ft = self.pca.transform(ft)
                 ft = ft.astype(np.float32)
+                
                 
                 # Generate predictions from all chunks
                 chunk_predictions = []
@@ -529,8 +542,8 @@ class MEGEncodingModel(BaseModelInterface):
             berg_dir,
             'encoding_models',
             'modality-meg',
-            'train_dataset-things_meg1',
-            'model-clip.vit_b_32',
+            'train_dataset-things_meg_1',
+            'model-vit_b_32',
             'metadata',
             f'metadata_{subject}.npy'
         )
