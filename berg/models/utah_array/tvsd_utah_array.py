@@ -337,9 +337,8 @@ class UtahArrayEncodingModel(BaseModelInterface):
         Returns
         -------
         insilico_spike_responses : np.ndarray
-            In silico spiking response array of shape (batch_size, n_timepoints,
-            n_electrodes), where the number of electrodes and time points
-            depends on the selection parameter.
+            In silico spiking response array of shape (batch_size, n_electrodes,
+            n_timepoints), where the number of electrodes and time points
         """
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -402,20 +401,19 @@ class UtahArrayEncodingModel(BaseModelInterface):
                 for chunk_pred in chunk_predictions:
                     reshaped = chunk_pred.reshape(
                         chunk_pred.shape[0], 
-                        self.TIMEPOINTS_LENGTH, 
-                        self.ELECTRODES_PER_CHUNK
+                        self.ELECTRODES_PER_CHUNK,
+                        self.TIMEPOINTS_LENGTH
                     )
                     reshaped_chunks.append(reshaped)
-                
                 # Concatenate along electrode dimension
-                # Shape: (batch, n_times, n_electrodes)
-                batch_responses = np.concatenate(reshaped_chunks, axis=2)
+                # Shape: (batch, n_electrodes, n_times)
+                batch_responses = np.concatenate(reshaped_chunks, axis=1)
                 
                 # Apply electrode selection
-                batch_responses = batch_responses[:, :, self.selected_electrodes]
+                batch_responses = batch_responses[:, self.selected_electrodes, :]
                 
                 # Apply timepoint selection
-                batch_responses = batch_responses[:, self.selected_timepoints, :]
+                batch_responses = batch_responses[:, :, self.selected_timepoints]
                 
                 batch_responses = batch_responses.astype(np.float32)
                 
