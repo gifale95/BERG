@@ -7,7 +7,7 @@ import torchextractor as tx
 from tqdm import tqdm
 from torchvision import transforms as trn
 from torchvision.models import vit_b_32, ViT_B_32_Weights
-import timm
+
 import joblib
 import torchvision
 from sklearn.decomposition import PCA

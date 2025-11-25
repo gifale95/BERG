@@ -16,7 +16,7 @@ Pipeline steps:
    - Decision: Split models for memory efficiency vs single 307K-output model
    - Cross-validation over alphas [0.1, 1, 10, 100, 1000]
 6. Prediction: Load all 8 models, predict separately, concatenate results
-7. Output: Neural predictions (300 timepoints × 1,024 electrodes) + saved models
+7. Output: Neural predictions (1,024 electrodes × 300 timepoints) + saved models
 
 Parameters
 ----------
@@ -341,7 +341,7 @@ alphas = [0.1, 1, 10, 100, 1000]
 # Load neural data shape info
 neural_train_path = os.path.join(data_dir, f'tvsd_{args.monkey}_split-train.h5')
 with h5py.File(neural_train_path, 'r') as f:
-    n_trials, n_times, n_electrodes = f['neural_data'].shape
+    n_trials, n_electrodes, n_times = f['neural_data'].shape
 
 print(f"Training {n_chunks} separate Ridge models with {electrodes_per_chunk} electrodes each")
 
@@ -353,7 +353,7 @@ for chunk_idx in range(n_chunks):
     print(f"Training chunk {chunk_idx + 1}/{n_chunks}: electrodes {start_electrode}-{end_electrode-1}")
     
     # Load neural data for this chunk only
-    neural_chunk = np.empty((n_trials, n_times * electrodes_per_chunk), dtype=np.float32)
+    neural_chunk = np.empty((n_trials, electrodes_per_chunk * n_times), dtype=np.float32)
     
     with h5py.File(neural_train_path, 'r') as f:
         # Load in batches to avoid memory issues
@@ -361,8 +361,8 @@ for chunk_idx in range(n_chunks):
             batch_end = min(batch_start + args.train_chunk_size, n_trials)
             
             # Load batch and slice electrodes
-            batch_data = f['neural_data'][batch_start:batch_end, :, start_electrode:end_electrode]
-            # Reshape to (batch_size, n_times * electrodes_per_chunk)
+            batch_data = f['neural_data'][batch_start:batch_end, start_electrode:end_electrode, :]
+            # Reshape to (batch_size, electrodes_per_chunk * n_times)
             batch_reshaped = batch_data.reshape(batch_data.shape[0], -1)
             neural_chunk[batch_start:batch_end] = batch_reshaped
     
@@ -408,14 +408,14 @@ for chunk_idx in range(n_chunks):
     chunk_pred = chunk_model.predict(fmaps_test)
     chunk_predictions.append(chunk_pred)
 
-# Reshape each chunk back to (n_samples, n_times, electrodes_per_chunk)
+# Reshape each chunk back to (n_samples, electrodes_per_chunk, n_times)
 reshaped_chunks = []
 for chunk_pred in chunk_predictions:
-    reshaped_chunk = chunk_pred.reshape(chunk_pred.shape[0], n_times, electrodes_per_chunk)
+    reshaped_chunk = chunk_pred.reshape(chunk_pred.shape[0], electrodes_per_chunk, n_times)
     reshaped_chunks.append(reshaped_chunk)
 
-# Concatenate along electrode dimension  
-test_predictions = np.concatenate(reshaped_chunks, axis=2)
+# Concatenate along electrode dimension (dimension 1)
+test_predictions = np.concatenate(reshaped_chunks, axis=1)
 
 print(f"Test predictions shape: {test_predictions.shape}")
 

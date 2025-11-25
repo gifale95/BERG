@@ -3,8 +3,8 @@
  - split training and test data,
  - create comprehensive metadata mapping.
 After preprocessing, the neural data is saved as:
- - Training data: (Trials x Time points x Electrodes)
- - Test data: (Trials x Time points x Electrodes) and averaged version
+ - Training data: (Trials x Electrodes x Time points)
+ - Test data: (Trials x Electrodes x Time points) and averaged version
 The data is saved in HDF5 format for efficient loading during model training.
 
 Parameters
@@ -28,9 +28,9 @@ python berg_creation_code/01_prepare_data/train_dataset-tvsd/prepare_tvsd.py \
     
 Output Files Created (per monkey):
 ────────────────────────────────────────────────────────────────
-tvsd_{monkey}_split-train.h5           : (22,248, 300, 1024)
-tvsd_{monkey}_split-test.h5            : (3,000, 300, 1024)
-tvsd_{monkey}_split-test_averaged.h5   : (100, 300, 1024)
+tvsd_{monkey}_split-train.h5           : (22,248, 1024, 300)
+tvsd_{monkey}_split-test.h5            : (3,000, 1024, 300)
+tvsd_{monkey}_split-test_averaged.h5   : (100, 1024, 300)
 tvsd_{monkey}_metadata.npy             : 
 
     'utah-array':
@@ -57,8 +57,8 @@ tvsd_{monkey}_metadata.npy             :
         SNR                  : (4, 1024) - Signal-to-noise ratio per day per electrode
         SNR_max              : (1024,)  - Best SNR across all days per electrode
         oracle               : (1024,)  - Noise ceiling estimate per electrode
-        ncsnr                : (300, 1024) - Neural signal-to-noise ratio
-        noise_ceiling        : (300, 1024) - Noise Ceiling per timepoint for all electrodes
+        ncsnr                : (1024, 300) - Neural signal-to-noise ratio per electrode/timepoint
+        noise_ceiling        : (1024, 300) - Noise Ceiling per electrode for all timepoints
 
 """
 

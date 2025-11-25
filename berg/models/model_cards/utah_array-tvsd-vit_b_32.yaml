@@ -10,7 +10,7 @@ creator: Domenic Bersch
 
 # General description of the model
 description: |
-  These encoding models consist of a linear mapping through linear regression of a vision transformer
+  This encoding model consists of a linear mapping through linear regression of a vision transformer
   (Dosovitskiy et al., 2020) image features onto intracortical spiking activity. The ViT-B/32 model extracts
   features from all 12 transformer layers, using all 50 patch tokens per layer. Prior to
   mapping onto neural responses, the image features have been downsampled to 250 principal components using
@@ -18,18 +18,29 @@ description: |
   (TVSD) (Papale et al., Neuron 2025), simultaneous intracortical recordings from 1,024 electrodes across
   macaque ventral stream areas (V1, V4, IT) in response to natural images from the THINGS database
   (Hebart et al., 2019).
-  **Preprocessing**. Raw broadband signals (30 kHz) were band-pass filtered to extract high-frequency spiking activity, 
-  and multi-unit activity (MUA) was obtained using threshold-based spike detection and smoothing, following the official TVSD pipeline. 
-  Responses were baseline-corrected and normalized per session, with area-specific time windows aligned to peak latencies (V1: 25–125 ms, V4: 50–150 ms, IT: 75–175 ms).
+
+  **Neural data**. Raw broadband signals (30 kHz) were band-pass filtered to extract high-frequency spiking activity, 
+  and multi-unit activity (MUA) was obtained using threshold-based spike detection and smoothing, following the official TVSD pipeline. Responses were baseline-corrected and normalized per session, with area-specific time windows aligned to peak latencies (V1: 25–125 ms, V4: 50–150 ms, IT: 75–175 ms).
   The data were epoched from -100 ms to +199 ms relative to stimulus onset, resulting in 300 time points.
   More detailed preprocessing steps are described in the TVSD paper.
+
   **Model training partition.** Spiking responses to 22,248 unique images from the THINGS database, each
   presented once during passive fixation.
+
   **Model testing partition.** Spiking responses to 100 unique images, each repeated 30 times. The test
   predictions are generated for the averaged responses across repetitions.
-  Independent encoding models were trained for each monkey (monkeyN and monkeyF). For computational efficiency,
-  models were trained in 8 electrode chunks (128 electrodes each), with predictions concatenated to generate
-  full responses across all 1,024 electrodes and 300 time points simultaneously.
+
+  **Training procedure.** Independent encoding models were trained for each monkey (monkeyN and monkeyF). For computational efficiency, models were trained in 8 electrode chunks (128 electrodes each), with predictions concatenated to generate full responses across all 1,024 electrodes and 300 time points simultaneously.
+
+  **Noise ceiling.** The noise ceiling was computed from the 30 repeated presentations of each test image 
+  to quantify the maximum explainable variance given measurement noise. We calculated the signal-to-noise 
+  ratio (ncsnr) by separating within-image variance (noise) from between-image variance (signal), then 
+  converted to r² units: noise_ceiling = 100 × (ncsnr² / (ncsnr² + 1/30)). This represents the theoretical 
+  upper bound of prediction accuracy for each electrode and time point.
+
+  **Output.** Each trained model predicts time-resolved spike responses for all 1024 electrodes (or user-specified
+  subsets) across 300 time points for each input image.
+
 
 
 metadata: |
@@ -73,24 +84,31 @@ input:
 # Output information
 output:
   type: "numpy.ndarray"
-  shape: [batch_size, 300, n_electrodes]
+  shape: [batch_size, n_electrodes, 300]
   description: |
     The output is a 3D array containing in silico utah-array responses.
-    The second dimension corresponds to the timepoints.
-    The third dimension (n_electrodes) corresponds to the number of electrodes in the selected ROI,
-    which varies by ROI and monkey. For monkeyN, the number of electrodes per ROI is as follows:
-    
+    The second dimension (n_electrodes) corresponds to the number of electrodes in the selected ROI,
+    which varies by ROI and monkey.
+    The third dimension corresponds to the timepoints (300).
+
+    Monkey N electrode count:
       - V1: 512
       - V4: 256
       - IT: 256
 
+    Monkey N electrode count:
+      - V1: 512
+      - V4: 192
+      - IT: 320
+
   dimensions:
     - name: "batch_size"
       description: "Number of stimuli in the batch"
+    - name: "n_electrodes"
+      description: "Number of electrodes in the selection"
     - name: "timepoints"
       description: "Timepoints of recording"
-    - name: "n_voxels"
-      description: "Number of voxels in the selected ROI, varies by ROI and subject."
+
 
 # Model parameters and their usage
 parameters:
@@ -115,7 +133,7 @@ parameters:
     properties:
       roi:
         type: list[str]
-        description: List of EEG channel names to include in the output
+        description: List of ROIs to include in the output
         valid_values: ["V1", "V4", "IT"]
         example: ["V1", "IT"]
       electrodes:
@@ -166,4 +184,8 @@ performance:
 
 # Add References here
 references:
-    - "Citation for your model or dataset"
+    - Model building code: 'https://github.com/gifale95/BERG/tree/main/berg_creation_code'
+    - TVSD Paper (Papale et al., 2025): https://www.sciencedirect.com/science/article/pii/S089662732400881X
+    - TVSD Data (Papale et al., 2025): https://gin.g-node.org/paolo_papale/TVSD
+    - ViT-B/32 (Dosovitskiy et al., 2020): https://arxiv.org/abs/2010.11929
+

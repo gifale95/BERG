@@ -35,9 +35,9 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         
     Output Files
     ------------
-    tvsd_{monkey}_split-train.h5 : (22,248, 300, 1024)
-    tvsd_{monkey}_split-test.h5  : (3,000, 300, 1024)
-    tvsd_{monkey}_split-test_averaged.h5   : (100, 300, 1024)
+    tvsd_{monkey}_split-train.h5 : (22,248, 1024, 300)
+    tvsd_{monkey}_split-test.h5  : (3,000, 1024, 300)
+    tvsd_{monkey}_split-test_averaged.h5   : (100, 1024, 300)
     """
     with h5py.File(filepath, 'r') as f:
         ALLMAT = f['ALLMAT'][:]
@@ -61,7 +61,7 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         
         with h5py.File(train_file, 'w') as train_h5:
             train_dataset = train_h5.create_dataset('neural_data', 
-                                                   shape=(n_train, 300, 1024), 
+                                                   shape=(n_train, 1024, 300), 
                                                    dtype='float32')
             
             train_idx = 0
@@ -72,7 +72,7 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
                 chunk_train_mask = train_mask[start_idx:end_idx]
                 
                 if np.any(chunk_train_mask):
-                    train_chunk = chunk_data[:, chunk_train_mask, :].transpose(1, 0, 2)
+                    train_chunk = chunk_data[:, chunk_train_mask, :].transpose(1, 2, 0)
                     n_train_chunk = train_chunk.shape[0]
                     train_dataset[train_idx:train_idx + n_train_chunk] = train_chunk
                     train_idx += n_train_chunk
@@ -80,15 +80,12 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         # Process test data
         print("Processing test data...")
         test_indices = np.where(test_mask)[0]
-        test_data = allmua_dataset[:, test_indices, :].transpose(1, 0, 2)
+        test_data = allmua_dataset[:, test_indices, :].transpose(1, 2, 0)
         
         test_file = os.path.join(output_dir, f'tvsd_{monkey_id}_split-test.h5')
         with h5py.File(test_file, 'w') as test_h5:
             test_h5.create_dataset('neural_data', data=test_data)
-        
-        print(f"Training shape: ({n_train}, 300, 1024)")
-        print(f"Test shape: {test_data.shape}")
-        
+                
         
         # Process test data averaged
         print("Processing test data averaged...")
@@ -104,7 +101,7 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         with h5py.File(averaged_test_file, 'w') as f_out:
             f_out.create_dataset('neural_data', data=test_averaged)
         
-        print(f"Training shape: ({n_train}, 300, 1024)")
+        print(f"Training shape: ({n_train}, 1024, 300)")
         print(f"Test shape: {test_data.shape}")
         print(f"Averaged test shape: {test_averaged.shape}")
         
@@ -127,15 +124,15 @@ def compute_noise_ceiling(original_filepath, test_filepath, monkey_id):
     original_filepath : str
         Path to THINGS_MUA_trials.mat to extract stimulus IDs from ALLMAT.
     test_filepath : str
-        Path to the processed test HDF5 file (3,000, 300, 1024).
+        Path to the processed test HDF5 file (3,000, 1024, 300).
     monkey_id : str
         Monkey identifier for saving results.
         
     Returns
     -------
     dict
-        'ncsnr': (300, 1024) - Neural signal-to-noise ratio per timepoint/electrode
-        'noise_ceiling': (300, 1024) - Noise ceiling in r² percentage units (0-100)
+        'ncsnr': (1024, 300) - Neural signal-to-noise ratio per electrode/timepoint
+        'noise_ceiling': (1024, 300) - Noise ceiling in r² percentage units (0-100)
     """
     # =============================================================================
     # Load the TVSD neural responses for the test images
@@ -154,9 +151,9 @@ def compute_noise_ceiling(original_filepath, test_filepath, monkey_id):
     unique_test_images = np.unique(stimulus_ids)
     
     # Reshape the data to (samples, features)
-    n_timepoints = neural_data.shape[1]
-    n_electrodes = neural_data.shape[2]
-    n_features = n_timepoints * n_electrodes
+    n_electrodes = neural_data.shape[1]
+    n_timepoints = neural_data.shape[2]
+    n_features = n_electrodes * n_timepoints
     neural_data = neural_data.reshape(neural_data.shape[0], n_features)
     
     # =============================================================================
@@ -186,9 +183,9 @@ def compute_noise_ceiling(original_filepath, test_filepath, monkey_id):
     img_reps = 30
     noise_ceiling = 100 * (ncsnr ** 2) / ((ncsnr ** 2) + (1 / img_reps))
     
-    # Reshape the scores to (n_timepoints, n_electrodes)
-    ncsnr = ncsnr.reshape(n_timepoints, n_electrodes)
-    noise_ceiling = noise_ceiling.reshape(n_timepoints, n_electrodes)
+    # Reshape the scores to (n_electrodes, n_timepoints)
+    ncsnr = ncsnr.reshape(n_electrodes, n_timepoints)
+    noise_ceiling = noise_ceiling.reshape(n_electrodes, n_timepoints)
     
     # =============================================================================
     # Return the ncsnr and noise ceiling
@@ -201,11 +198,10 @@ def compute_noise_ceiling(original_filepath, test_filepath, monkey_id):
     return results
         
 
+
 # =============================================================================
-# Create dataset metadata
+# Create Metadata
 # =============================================================================
-# Generate comprehensive metadata linking stimulus IDs to image files,
-# object categories, and experimental conditions for both training and test sets.
 
 
 def load_things_mapping(mat_file_path):
