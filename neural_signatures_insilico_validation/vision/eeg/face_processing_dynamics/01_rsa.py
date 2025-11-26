@@ -267,7 +267,8 @@ rdm_stimuli['dnn'] = rdm_dnn
 # =============================================================================
 # Compute the RSA scores between EEG and model RDMs
 # =============================================================================
-rsa = {}
+rsa_pearson = {}
+rsa_spearman = {}
 
 # Loop across models
 for key_target, val_target in tqdm(rdm_stimuli.items()):
@@ -293,11 +294,14 @@ for key_target, val_target in tqdm(rdm_stimuli.items()):
     eeg_res = eeg - reg_eeg.predict(model_control)
 
     # Compute the timewise partial correlation between EEG and model RDMs
-    rsa_model = np.zeros(len(times))
+    rsa_model_pearson = np.zeros(len(times))
+    rsa_model_spearman = np.zeros(len(times))
     for t in range(len(times)):
-        rsa_model[t] = pearsonr(eeg_res[:,t], np.squeeze(model_res))[0]
-    rsa[key_target] = rsa_model
-    del rsa_model
+        rsa_model_pearson[t] = pearsonr(eeg_res[:,t], np.squeeze(model_res))[0]
+        rsa_model_spearman[t] = spearmanr(eeg_res[:,t], np.squeeze(model_res))[0]
+    rsa_pearson[key_target] = rsa_model_pearson
+    rsa_spearman[key_target] = rsa_model_spearman
+    del rsa_model_pearson, rsa_model_spearman
 
 
 # =============================================================================
@@ -307,7 +311,8 @@ results = {
     'eeg_decoding': eeg_decoding,
     'rdm_eeg': rdm_eeg,
     'rdm_stimuli': rdm_stimuli,
-    'rsa': rsa,
+    'rsa_pearson': rsa_pearson,
+    'rsa_spearman': rsa_spearman,
     'times': times,
     'kept_ch_names': kept_ch_names
 }

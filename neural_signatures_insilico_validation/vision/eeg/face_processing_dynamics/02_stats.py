@@ -67,10 +67,10 @@ for s, sub in enumerate(args.subjects):
     results = np.load(data_dir, allow_pickle=True).item()
     
     # Get the RSA results
-    for key, val in results['rsa'].items():
+    for key, val in results['rsa_spearman'].items():
         if s == 0:
            scores[key] = []
-        scores[key].append(results['rsa'][key])
+        scores[key].append(results['rsa_spearman'][key])
     
     # Get the decoding results
     if s == 0:
