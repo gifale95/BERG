@@ -68,13 +68,51 @@ Metadata
    * - Key
      - Shape/Type
      - Description
+   * - times
+     - ``(300,)``
+     - Time points (-100 to 199ms)
+   * - electrode_order
+     - ``(1024,)``
+     - Electrode mapping order (0-based)
+   * - monkey_id
+     - ``str``
+     - Monkey identifier
+   * - n_electrodes
+     - ``int``
+     - Number of electrodes (1024)
+
+**'roi'**
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
+   * - roi_assignments
+     - ``(1024,)``
+     - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
+   * - roi_labels
+     - ``(3,)``
+     - ROI label names ['V1', 'V4', 'IT']
+
+**'encoding_model'**
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
    * - train_img_ids
      - ``(22248,)``
      - Training stimulus IDs
-   * - train_img_files
+   * - train_stimuli
      - ``(22248,)``
      - Training image filenames
-   * - train_img_concepts
+   * - train_concepts
      - ``(22248,)``
      - Training object categories
    * - train_days
@@ -86,10 +124,10 @@ Metadata
    * - test_img_ids
      - ``(3000,)``
      - Test stimulus IDs (individual trials)
-   * - test_img_files
+   * - test_stimuli
      - ``(3000,)``
      - Test image filenames (individual)
-   * - test_img_concepts
+   * - test_concepts
      - ``(3000,)``
      - Test object categories (individual)
    * - test_days
@@ -98,43 +136,15 @@ Metadata
    * - test_sequence_pos
      - ``(3000,)``
      - Position in sequence for test
-   * - test_avg_img_ids
+   * - test_stimuli
      - ``(100,)``
      - Unique test stimulus IDs
-   * - test_avg_img_files
+   * - test_avg_stimui
      - ``(100,)``
      - Test image filenames (averaged)
-   * - test_avg_img_concepts
+   * - test_avg_concepts
      - ``(100,)``
      - Test object categories (averaged)
-   * - times
-     - ``(300,)``
-     - Time points (-100 to 199ms)
-   * - electrode_order
-     - ``(1024,)``
-     - Electrode mapping order (0-based)
-   * - roi_assignments
-     - ``(1024,)``
-     - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
-   * - roi_labels
-     - ``(3,)``
-     - ROI label names ['V1', 'V4', 'IT']
-   * - monkey_id
-     - ``str``
-     - Monkey identifier
-   * - n_electrodes
-     - ``int``
-     - Number of electrodes (1024)
-
-**'encoding_model'**
-
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Key
-     - Shape/Type
-     - Description
    * - SNR
      - ``(4, 1024)``
      - Signal-to-noise ratio per day per electrode
@@ -143,13 +153,13 @@ Metadata
      - Best SNR across all days per electrode
    * - oracle
      - ``(1024,)``
-     - Noise ceiling estimate per electrode from paper
+     - Noise ceiling estimate per electrode
    * - ncsnr
-     - ``(300, 1024)``
-     - Calculated neural signal-to-noise ratio
+     - ``(1024, 300)``
+     - Neural signal-to-noise ratio per electrode/timepoint
    * - noise_ceiling
-     - ``(300, 1024)``
-     - Calculated noise Ceiling per timepoint for all electrodes
+     - ``(1024, 300)``
+     - Noise Ceiling per electrode for all timepoints
 
 
 Input
