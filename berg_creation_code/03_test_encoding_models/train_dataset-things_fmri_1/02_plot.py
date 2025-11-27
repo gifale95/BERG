@@ -1,5 +1,5 @@
 """Plot the encoding models' prediction accuracy for the test stimuli by ROI.
-Multi-subject version with average plot.
+Multi-subject version with grid layout.
 
 Parameters
 ----------
@@ -79,14 +79,10 @@ for group_name, rois in roi_groups.items():
 all_subject_data = {}
 
 for subject in args.subjects:
-    print(f"\n{'='*80}")
-    print(f"Loading data for {subject}")
-    print('='*80)
-    
     # Load encoding model metadata
     metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
         'train_dataset-things_fmri_1', f'model-{args.model}', 'metadata')
-    file_name = f'metadata_{subject}.npy'
+    file_name = f'metadata_{args.regression}_{cls_suffix}_{subject}.npy'
     metadata = np.load(os.path.join(metadata_dir, file_name), allow_pickle=True).item()
     
     correlation_results = metadata['encoding_model']['correlation_results']
@@ -108,9 +104,6 @@ for subject in args.subjects:
     roi_n_voxels = []
     roi_labels = []
     
-    print(f"{'ROI':<15} {'N Voxels':<12} {'Model Corr':<15} {'Noise Ceiling':<15} {'Gap':<10}")
-    print("-"*80)
-    
     for roi_name in all_rois:
         roi_key = roi_name
         
@@ -120,14 +113,11 @@ for subject in args.subjects:
             if len(roi_indices) > 0:
                 roi_corr = np.mean(correlation_results[roi_indices])
                 roi_nc = np.mean(noise_ceiling_correlation[roi_indices])
-                gap = roi_nc - roi_corr
                 
                 roi_correlations.append(roi_corr)
                 roi_noise_ceilings.append(roi_nc)
                 roi_n_voxels.append(len(roi_indices))
                 roi_labels.append(roi_name)
-                
-                print(f"{roi_name:<15} {len(roi_indices):<12} {roi_corr:<15.4f} {roi_nc:<15.4f} {gap:<10.4f}")
     
     # Store data for this subject
     all_subject_data[subject] = {
@@ -137,14 +127,12 @@ for subject in args.subjects:
         'roi_labels': roi_labels
     }
 
+print(f"\nLoaded data for {n_subjects} subjects")
+
 
 # =============================================================================
 # Compute average across subjects
 # =============================================================================
-print(f"\n{'='*80}")
-print("Computing average across subjects")
-print('='*80)
-
 # Create a matrix for all ROIs across all subjects (using NaN for missing ROIs)
 # Shape: (n_subjects, n_rois)
 all_corrs_matrix = np.full((n_subjects, len(all_rois)), np.nan)
@@ -162,29 +150,30 @@ for subj_idx, subject in enumerate(args.subjects):
         all_corrs_matrix[subj_idx, master_roi_idx] = subj_corrs[roi_idx]
         all_ncs_matrix[subj_idx, master_roi_idx] = subj_ncs[roi_idx]
 
-# Compute mean and SEM across subjects (ignoring NaNs)
+# Compute mean across subjects (ignoring NaNs)
 mean_corrs = np.nanmean(all_corrs_matrix, axis=0)
 mean_ncs = np.nanmean(all_ncs_matrix, axis=0)
 
-# Count how many subjects have data for each ROI
-n_subjects_per_roi = np.sum(~np.isnan(all_corrs_matrix), axis=0)
 
-# Compute SEM (using actual number of subjects per ROI)
-sem_corrs = np.nanstd(all_corrs_matrix, axis=0) / np.sqrt(n_subjects_per_roi)
-sem_ncs = np.nanstd(all_ncs_matrix, axis=0) / np.sqrt(n_subjects_per_roi)
+# =============================================================================
+# Prepare data for grid plotting
+# =============================================================================
+# Convert correlations to R² (explained variance)
+all_r2_matrix = all_corrs_matrix ** 2
+mean_r2 = mean_corrs ** 2
 
-print(f"Mean correlation across subjects: {np.nanmean(mean_corrs):.4f}")
-print(f"Mean noise ceiling across subjects: {np.nanmean(mean_ncs):.4f}")
-print(f"\nROIs present in all subjects: {np.sum(n_subjects_per_roi == n_subjects)}/{len(all_rois)}")
+# Noise ceiling is already in R² scale, square it to match
+all_ncs_matrix_r2 = all_ncs_matrix ** 2
+mean_ncs_r2 = mean_ncs ** 2
 
 
 # =============================================================================
 # Plot parameters
 # =============================================================================
-fontsize = 12
+fontsize = 15
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams['font.size'] = fontsize
-plt.rc('xtick', labelsize=fontsize-1)
+plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
 matplotlib.rcParams['axes.linewidth'] = 1
 matplotlib.rcParams['xtick.major.width'] = 1
@@ -193,137 +182,93 @@ matplotlib.rcParams['ytick.major.width'] = 1
 matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
+matplotlib.rcParams['lines.markersize'] = 3
 matplotlib.rcParams['axes.grid'] = False
+matplotlib.rcParams['grid.linewidth'] = 2
+matplotlib.rcParams['grid.alpha'] = .3
+matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
+colors = [(170/255, 118/255, 186/255)]
 
 
 # =============================================================================
-# Create the multi-panel plot
+# Calculate global y-limit
 # =============================================================================
-n_rows = n_subjects + 1  # Individual subjects + average
-fig, axes = plt.subplots(n_rows, 1, figsize=(18, 7 * n_rows))
+# Find maximum value across all R² data and noise ceilings
+max_r2 = np.nanmax(all_r2_matrix)
+max_nc = np.nanmax(all_ncs_matrix_r2)
+global_max = max(max_r2, max_nc)
 
-# Ensure axes is always a list
-if n_rows == 1:
-    axes = [axes]
-
-# Determine global y-axis limits across all subjects and average
-all_values = []
-for subject in args.subjects:
-    all_values.extend(all_subject_data[subject]['roi_correlations'])
-    all_values.extend(all_subject_data[subject]['roi_noise_ceilings'])
-# Add average data (excluding NaNs)
-all_values.extend(mean_corrs[~np.isnan(mean_corrs)])
-all_values.extend(mean_ncs[~np.isnan(mean_ncs)])
-
-# Calculate global limits with some padding
-y_min = 0  # Start at 0 for correlations
-y_max = max(all_values) * 1.05  # Add 5% padding at top
+# Add 5% padding above the maximum
+y_max_global = global_max * 1.05
 
 
-# Plot individual subjects
-for idx, subject in enumerate(args.subjects):
-    ax = axes[idx]
-    data = all_subject_data[subject]
+# =============================================================================
+# Create multi-panel grid plot
+# =============================================================================
+n_rois = len(all_rois)
+n_cols = 7
+n_rows = int(np.ceil(n_rois / n_cols))
+
+fig, axs = plt.subplots(nrows=n_rows, ncols=n_cols, sharex=False, sharey=True, figsize=(21, n_rows*3))
+axs = np.reshape(axs, (-1))
+
+x = np.arange(n_subjects)
+width = 0.4
+
+for r, roi_name in enumerate(all_rois):
+    # Get R² values for this ROI across subjects
+    roi_r2 = all_r2_matrix[:, r]
+    roi_nc_r2 = all_ncs_matrix_r2[:, r]
     
-    # Use subject's own ROI labels and x-positions
-    subject_roi_labels = data['roi_labels']
-    subject_x_positions = np.arange(len(subject_roi_labels))
+    # Plot the R² bars for each subject
+    axs[r].bar(x, roi_r2, width=width, color=colors[0])
     
-    # Plot bars for model correlations
-    bars = ax.bar(subject_x_positions, data['roi_correlations'], color='#3498db', alpha=0.8,
-                  label='Model Correlation', width=0.7)
+    # Plot the mean R² across subjects (dashed line)
+    y_mean = mean_r2[r]
+    if not np.isnan(y_mean):
+        axs[r].plot([min(x), max(x)], [y_mean, y_mean], '--', color='k', 
+                    linewidth=2, alpha=0.4, label='Subjects mean')
     
-    # Plot noise ceiling as horizontal lines per ROI
-    for i, (x, nc) in enumerate(zip(subject_x_positions, data['roi_noise_ceilings'])):
-        ax.plot([x-0.35, x+0.35], [nc, nc], color='#e74c3c', linewidth=3, alpha=0.8)
+    # Plot the mean noise ceiling (solid line)
+    y_nc = mean_ncs_r2[r]
+    if not np.isnan(y_nc):
+        axs[r].plot([min(x), max(x)], [y_nc, y_nc], '-', color='k', 
+                    linewidth=2, alpha=0.6)
     
-    # Add one legend entry for noise ceiling
-    ax.plot([], [], color='#e74c3c', linewidth=3, alpha=0.8, label='Noise Ceiling (testset)')
+    # y-axis label on leftmost column
+    if r % n_cols == 0:
+        axs[r].set_ylabel('R² (Explained Variance)', fontsize=fontsize)
+    yticks = np.arange(0, y_max_global + 0.1, 0.2)
+    ylabels = [f'{tick:.1f}' for tick in yticks]
+    axs[r].set_yticks(yticks)
+    axs[r].set_yticklabels(ylabels)
+    axs[r].set_ylim(bottom=0, top=y_max_global)
     
-    # Add vertical lines to separate groups (based on subject's available ROIs)
-    current_pos = 0
-    for i, group_name in enumerate(roi_groups.keys()):
-        group_rois = roi_groups[group_name]
-        # Count how many ROIs from this group are in the subject's data
-        group_rois_in_subject = [r for r in group_rois if r in subject_roi_labels]
-        group_size = len(group_rois_in_subject)
-        
-        if group_size > 0:
-            # Add group label
-            group_center = current_pos + group_size / 2 - 0.5
-            ax.text(group_center, -0.15, group_name, ha='center', va='top',
-                    fontsize=fontsize, fontweight='bold', transform=ax.get_xaxis_transform())
-            
-            # Add separator line (except after last group)
-            if i < len(roi_groups) - 1 and current_pos + group_size < len(subject_roi_labels):
-                separator_pos = current_pos + group_size - 0.5
-                ax.axvline(separator_pos, color='black', linewidth=1.5, alpha=0.3, linestyle='--')
-            
-            current_pos += group_size
+    # x-axis label and ticks on bottom of each column
+    # A subplot is at the bottom of its column if there's no subplot below it
+    col_idx = r % n_cols
+    subplot_below_idx = r + n_cols
+    is_bottom_of_column = subplot_below_idx >= n_rois
     
-    # Axis labels and formatting
-    ax.set_ylabel("Pearson's r", fontsize=fontsize+2, fontweight='bold')
-    ax.set_ylim(y_min, y_max)  # Set shared y-axis limits
-    ax.set_xticks(subject_x_positions)
-    ax.set_xticklabels(subject_roi_labels, rotation=45, ha='right')
-    ax.set_xlim(-0.5, len(subject_roi_labels) - 0.5)
-    ax.set_title(f'{subject} - Encoding Accuracy by ROI',
-                 fontsize=fontsize+4, fontweight='bold', pad=20)
-    ax.legend(loc='upper right', fontsize=fontsize)
-    ax.axhline(0, color='black', linewidth=0.8, alpha=0.3)
+    if is_bottom_of_column:
+        axs[r].set_xlabel('Subjects', fontsize=fontsize)
+        xticks = x
+        xlabels = [str(i+1) for i in range(n_subjects)]
+        axs[r].set_xticks(xticks)
+        axs[r].set_xticklabels(xlabels, fontsize=fontsize)
+    else:
+        # Hide x-tick labels for non-bottom subplots
+        axs[r].set_xticks(x)
+        axs[r].set_xticklabels([])
+    
+    # Title
+    axs[r].set_title(roi_name, fontsize=fontsize)
 
-
-# Plot average across subjects (using ALL ROIs)
-ax = axes[-1]
-x_positions = np.arange(len(all_rois))
-
-# Plot bars with error bars for model correlations
-bars = ax.bar(x_positions, mean_corrs, yerr=sem_corrs, color='#3498db', alpha=0.8,
-              label='Model Correlation (mean ± SEM)', width=0.7, capsize=3, 
-              error_kw={'linewidth': 1.5, 'alpha': 0.7})
-
-# Plot noise ceiling with error bars as error regions
-for i, (x, nc, sem) in enumerate(zip(x_positions, mean_ncs, sem_ncs)):
-    # Skip if no data available for this ROI
-    if not np.isnan(nc):
-        # Central line
-        ax.plot([x-0.35, x+0.35], [nc, nc], color='#e74c3c', linewidth=3, alpha=0.8)
-        # Error region (only if SEM is valid)
-        if not np.isnan(sem):
-            ax.fill_between([x-0.35, x+0.35], nc-sem, nc+sem, color='#e74c3c', alpha=0.2)
-
-# Add legend entry for noise ceiling
-ax.plot([], [], color='#e74c3c', linewidth=3, alpha=0.8, label='Noise Ceiling (mean ± SEM)')
-
-# Add vertical lines to separate groups
-current_pos = 0
-for i, group_name in enumerate(roi_groups.keys()):
-    group_size = len(roi_groups[group_name])
-    
-    # Add group label
-    group_center = current_pos + group_size / 2 - 0.5
-    ax.text(group_center, -0.15, group_name, ha='center', va='top',
-            fontsize=fontsize, fontweight='bold', transform=ax.get_xaxis_transform())
-    
-    # Add separator line (except after last group)
-    if i < len(roi_groups) - 1:
-        separator_pos = current_pos + group_size - 0.5
-        ax.axvline(separator_pos, color='black', linewidth=1.5, alpha=0.3, linestyle='--')
-    
-    current_pos += group_size
-
-# Axis labels and formatting
-ax.set_xlabel('ROI', fontsize=fontsize+2, fontweight='bold', labelpad=40)
-ax.set_ylabel("Pearson's r", fontsize=fontsize+2, fontweight='bold')
-ax.set_ylim(y_min, y_max)  # Set shared y-axis limits
-ax.set_xticks(x_positions)
-ax.set_xticklabels(all_rois, rotation=45, ha='right')
-ax.set_xlim(-0.5, len(all_rois) - 0.5)
-ax.set_title(f'Average Across Subjects (N={n_subjects}) - Encoding Accuracy by ROI',
-             fontsize=fontsize+4, fontweight='bold', pad=20)
-ax.legend(loc='upper right', fontsize=fontsize)
-ax.axhline(0, color='black', linewidth=0.8, alpha=0.3)
+# Remove empty subplots
+for r in range(n_rois, len(axs)):
+    fig.delaxes(axs[r])
 
 plt.tight_layout()
 
@@ -337,46 +282,24 @@ if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
 subject_str = '_'.join(args.subjects)
-save_name = f'encoding_accuracy_roi_multisubject_{args.regression}_{cls_suffix}_{args.model}_{subject_str}'
+save_name = f'encoding_accuracy_roi_grid_{args.regression}_{cls_suffix}_{args.model}_{subject_str}'
+fig.savefig(os.path.join(save_dir, f'{save_name}.svg'), bbox_inches='tight', transparent=True, format='svg')
 fig.savefig(os.path.join(save_dir, f'{save_name}.png'), dpi=300, bbox_inches='tight', format='png')
-fig.savefig(os.path.join(save_dir, f'{save_name}.jpg'), dpi=300, bbox_inches='tight', format='jpeg')
 
-print(f"\nPlot saved to: {save_dir}/{save_name}.png and {save_dir}/{save_name}.jpg")
+print(f"\nPlot saved to: {save_dir}/{save_name}.svg and {save_dir}/{save_name}.png")
 
 
 # =============================================================================
 # Print summary statistics
 # =============================================================================
-print("\n" + "="*80)
-print("SUMMARY STATISTICS - AVERAGE ACROSS SUBJECTS")
-print("="*80)
-
-for i, group_name in enumerate(roi_groups.keys()):
-    group_start = group_boundaries[i]
-    group_end = group_boundaries[i+1]
-    
-    group_corrs = mean_corrs[group_start:group_end]
-    group_ncs = mean_ncs[group_start:group_end]
-    
-    # Count valid (non-NaN) ROIs in this group
-    valid_corrs = group_corrs[~np.isnan(group_corrs)]
-    valid_ncs = group_ncs[~np.isnan(group_ncs)]
-    
-    if len(valid_corrs) > 0:
-        print(f"\n{group_name}:")
-        print(f"  Mean correlation: {valid_corrs.mean():.4f} ± {valid_corrs.std():.4f}")
-        print(f"  Mean noise ceiling: {valid_ncs.mean():.4f} ± {valid_ncs.std():.4f}")
-        print(f"  Gap to ceiling: {(valid_ncs.mean() - valid_corrs.mean()):.4f}")
-        print(f"  ROIs with data: {len(valid_corrs)}/{len(group_corrs)}")
-
 # Overall statistics (excluding NaN values)
 valid_mean_corrs = mean_corrs[~np.isnan(mean_corrs)]
 valid_mean_ncs = mean_ncs[~np.isnan(mean_ncs)]
 
 print(f"\n{'='*80}")
-print(f"Overall:")
+print(f"SUMMARY STATISTICS - AVERAGE ACROSS SUBJECTS")
 print(f"  Mean correlation: {valid_mean_corrs.mean():.4f} ± {valid_mean_corrs.std():.4f}")
+print(f"  Mean R²: {(valid_mean_corrs**2).mean():.4f} ± {(valid_mean_corrs**2).std():.4f}")
 print(f"  Mean noise ceiling: {valid_mean_ncs.mean():.4f} ± {valid_mean_ncs.std():.4f}")
-print(f"  Gap to ceiling: {(valid_mean_ncs.mean() - valid_mean_corrs.mean()):.4f}")
 print(f"  Total ROIs with data: {len(valid_mean_corrs)}/{len(all_rois)}")
 print("="*80)
