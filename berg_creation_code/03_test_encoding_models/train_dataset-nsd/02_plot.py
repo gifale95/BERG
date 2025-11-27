@@ -115,7 +115,7 @@ axs[23].set_xlabel('Subjects', fontsize=fontsize)
 
 # Save the figure
 fig.savefig('noise_ceiling_normalized_explained_variance_roi_barplot.svg',
-	bbox_inches='tight', transparent=True, format='svg')
+	bbox_inches='tight', transparent=False, format='svg')
 fig.savefig('noise_ceiling_normalized_explained_variance_roi_barplot.png',
 	dpi=300, bbox_inches='tight', transparent=False, format='png')
 
@@ -178,7 +178,7 @@ for s, sub in enumerate(args.subjects):
 	# Save the figure
 	file_name = 'noise_ceiling_normalized_explained_variance_roi_' + \
 		'scatterplot_sub-0' + str(sub) + '.svg'
-	fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+	fig.savefig(file_name, bbox_inches='tight', transparent=False, format='svg')
 	file_name = 'noise_ceiling_normalized_explained_variance_roi_' + \
 		'scatterplot_sub-0' + str(sub) + '.png'
 	fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=False,

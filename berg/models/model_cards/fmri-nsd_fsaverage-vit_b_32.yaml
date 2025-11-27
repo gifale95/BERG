@@ -82,7 +82,7 @@ parameters:
           "V1d", "V1v", "V2d", "V2v", "V3d", "V3v", "hV4", "OFA", "FFA-1", "FFA-2",
           "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words",
           "OPA","PPA","RSC","EBA","FBA-1","FBA-2","mTL-bodies","early", "midventral",
-          "midlateral", "midparietal", "parietal", "lateral", "ventral"]
+          "midlateral", "midparietal", "parietal", "lateral", "ventral", "nsdgeneral"]
         example_roi: "V1v"
       lh_vertices:
         type: numpy.ndarray
@@ -102,13 +102,12 @@ parameters:
           The vertices from the one-hot encoded vector are only selected if the "roi" key
           is not provided, or has value None.
         example_vertices: [0, 0, ..., 1, 1, 0]
+    function: "get_encoding_model"
 
-  stimulus:
-    type: numpy.ndarray
+  model:
+    type: BaseModelInterface
     required: true
-    shape: [batch_size, 3, height, width]
-    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
-    example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+    description: An instantiated and loaded encoding model.
     function: "encode"
 
   device:
@@ -118,13 +117,21 @@ parameters:
     default: "auto"
     example: "auto"
     description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "get_encoding_model"
+
+  stimulus:
+    type: numpy.ndarray
+    required: true
+    shape: [batch_size, 3, height, width]
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
+    example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
     function: "encode"
 
 # Performance metrics and references
 performance:
 
   accuracy_plots: 
-    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd/model-vit_b_32/encoding_models_accuracy"
+    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-vit_b_32/encoding_models_accuracy"
   
 references:
     - Model building code: 'https://github.com/gifale95/BERG/tree/main/berg_creation_code'

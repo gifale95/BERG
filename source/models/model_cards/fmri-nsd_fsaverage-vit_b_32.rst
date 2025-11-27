@@ -114,7 +114,7 @@ This function loads the encoding model.
        |     **Type:** str
        |     **Description:** The region-of-interest (ROI) for which the in silico fMRI responses (of both
        |     hemispherese) are generated.
-       |     **Valid values:** "V1d", "V1v", "V2d", "V2v", "V3d", "V3v", "hV4", "OFA", "FFA-1", "FFA-2", "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words", "OPA", "PPA", "RSC", "EBA", "FBA-1", "FBA-2", "mTL-bodies", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral"
+       |     **Valid values:** "V1d", "V1v", "V2d", "V2v", "V3d", "V3v", "hV4", "OFA", "FFA-1", "FFA-2", "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words", "OPA", "PPA", "RSC", "EBA", "FBA-1", "FBA-2", "mTL-bodies", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral", "nsdgeneral"
        | 
        | **lh_vertices**
        |     **Type:** numpy.ndarray
@@ -131,6 +131,12 @@ This function loads the encoding model.
        |     have exactly the same length as the number of RH fsaverage vertices (163,842).
        |     The vertices from the one-hot encoded vector are only selected if the "roi" key
        |     is not provided, or has value None.
+   * - **device**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Valid Values:** 'cpu', 'cuda', 'auto'
+       | **Example:** 'auto'
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -141,24 +147,22 @@ This function generates in silico neural responses using the encoding model prev
    :widths: 20 80
    :header-rows: 0
 
+   * - **model**
+     - | **Type:** BaseModelInterface
+       | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
    * - **stimulus**
      - | **Type:** numpy.ndarray
        | **Required:** Yes
        | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
        | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
-   * - **device**
-     - | **Type:** str
-       | **Required:** No
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
 
 Performance
 ----------
 
 **Accuracy Plots:**
 
-* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd/model-vit_b_32/encoding_models_accuracy``
+* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-vit_b_32/encoding_models_accuracy``
 
 Example Usage
 ------------
@@ -211,7 +215,7 @@ Example Usage
 References
 ---------
 
-* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code
+* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-nsd_fsaverage/model-vit_b_32
 * NSD paper (Allen et al., 2022): https://doi.org/10.1038/s41593-021-00962-x
 * NSD-synthetic paper (Gifford et al., 2025): https://doi.org/10.48550/arXiv.2503.06286
 * COCO dataset (Lin et al., 2014): https://cocodataset.org/#home
