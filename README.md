@@ -74,7 +74,9 @@ The following table shows the encoding models currently available in BERG. For m
 | [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD (volume space)][allen] | fMRI | Human | Images |
 | [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | EEG | Human | Images |
 | [utah_array-tvsd-vit_b_32][utah_array-tvsd-vit_b_32] | [THINGS Ventral Stream Spiking Dataset (TVSD)][TVSD] | Utah array (MUA) | Macaque | Images |
- 
+| [fmri-things_fmri1-vit_b_32][fmri-things_fmri1-vit_b_32] | [THINGS fMRI-1][THINGS_1] | fMRI | Human | Images |
+| [meg-things_meg1-vit_b_32][meg-things_meg1-vit_b_32] | [THINGS MEG-1][THINGS_1] | MEG | Human | Images |
+  
 
 
 ### ✨ BERG functions
@@ -189,7 +191,9 @@ If you use the Brain Encoding Response Generator, please cite:
 [THINGS EEG2]: https://doi.org/10.1016/j.neuroimage.2022.119754
 [utah_array-tvsd-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/utah_array-tvsd-vit_b_32.html
 [TVSD]: https://www.cell.com/neuron/fulltext/S0896-6273(24)00881-X
-
+[fmri-things_fmri1-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-things_fmri1-vit_b_32.html
+[meg-things_meg1-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/meg-things_meg1-vit_b_32.html
+[THINGS_1]: https://elifesciences.org/articles/82580
 
 
 [fmri_tutorial_colab]: https://colab.research.google.com/drive/1W9Sroz2Y0eTYfyhVrAJwe50GGHHAGBdE?usp=drive_link
