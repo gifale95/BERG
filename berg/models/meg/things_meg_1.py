@@ -207,7 +207,7 @@ class MEGEncodingModel(BaseModelInterface):
             if self.selected_regions is not None:
                 for region in self.selected_regions:
                     # Find sensors matching this region
-                    region_mask = self.metadata['meg']['sensor_regions'] == region
+                    region_mask = self.metadata['sensors']['sensor_regions'] == region
                     region_sensors = np.where(region_mask)[0]
                     sensor_indices_set.update(region_sensors.tolist())
             
@@ -215,7 +215,7 @@ class MEGEncodingModel(BaseModelInterface):
             if self.selected_sensor_prefixes is not None:
                 for prefix in self.selected_sensor_prefixes:
                     # Find sensors matching this prefix
-                    prefix_mask = self.metadata['meg']['sensor_prefixes'] == prefix
+                    prefix_mask = self.metadata['sensors']['sensor_prefixes'] == prefix
                     prefix_sensors = np.where(prefix_mask)[0]
                     sensor_indices_set.update(prefix_sensors.tolist())
             

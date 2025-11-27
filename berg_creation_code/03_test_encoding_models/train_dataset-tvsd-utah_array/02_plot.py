@@ -77,7 +77,7 @@ for monkey in args.monkey:
     
     correlation_results.append(metadata['encoding_model']['correlation_results'])
     times = metadata['utah_array']['times']
-    roi_assignments = metadata['utah_array']['roi_assignments']
+    roi_assignments = metadata['roi']['roi_assignments']
     roi_labels = metadata['roi']['roi_labels']
     noise_ceiling = metadata['encoding_model']['noise_ceiling']
     roi_data.append((roi_assignments, roi_labels))

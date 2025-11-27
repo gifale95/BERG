@@ -172,29 +172,27 @@ class fMRIEncodingModel(BaseModelInterface):
             self.metadata = np.load(metadata_dir, allow_pickle=True).item()
             
             # Build voxel selection from multiple sources
-            voxel_indices_set = set()
-            
+            voxel_indices_list = []
+
             # Add voxels from ROI selection
             if self.selected_rois is not None:
                 for roi in self.selected_rois:
-                    # Get voxel indices for this ROI from metadata
                     if roi in self.metadata['roi']:
                         roi_voxels = self.metadata['roi'][roi]
-                        voxel_indices_set.update(roi_voxels.tolist())
+                        voxel_indices_list.extend(roi_voxels.tolist())
                     else:
                         raise InvalidParameterError(
                             f"ROI '{roi}' not found in metadata for subject {self.subject}"
                         )
-            
+
             # Add voxels from direct voxel index selection
             if self.selected_voxels is not None:
-                voxel_indices_set.update(self.selected_voxels)
-            
-            # If any selection was made, use the combined set
-            if voxel_indices_set:
-                self.selected_voxels = sorted(list(voxel_indices_set))
+                voxel_indices_list.extend(self.selected_voxels)
+
+            # If any selection was made, use the combined list
+            if voxel_indices_list:
+                self.selected_voxels = voxel_indices_list
             else:
-                # If no selection made, use all voxels
                 self.selected_voxels = list(range(self.VOXELS_LENGTH))
             
             # Load the vision transformer

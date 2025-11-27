@@ -175,10 +175,10 @@ class UtahArrayEncodingModel(BaseModelInterface):
             if self.selected_rois is not None:
                 if self.selected_electrodes is None:
                     self.selected_electrodes = np.array([])
-                electrode_indices = self.metadata['utah_array']['roi_assignments']
+                electrode_indices = self.metadata['roi']['roi_assignments']
                 for roi in self.selected_rois:
 
-                    roi_index = list(self.metadata['utah_array']['roi_labels']).index(roi)
+                    roi_index = list(self.metadata['roi']['roi_labels']).index(roi)
                     roi_electrodes = np.where(electrode_indices==roi_index)[0]
                     self.selected_electrodes = np.append(self.selected_electrodes,roi_electrodes).astype(int)
                 self.selected_electrodes = sorted(list(set(self.selected_electrodes)))

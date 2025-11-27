@@ -209,7 +209,7 @@ metadata = np.load(metadata_path, allow_pickle=True).item()
 
 # Extract training image features
 print("Extracting training features...")
-n_train_images = len(metadata['utah_array']['train_stimuli'])
+n_train_images = len(metadata['encoding_model']['train_stimuli'])
 fmaps_train = []
 
 for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=False):
