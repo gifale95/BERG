@@ -9,10 +9,6 @@ model : str
     Name of the used encoding model.
 berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
-only_cls : str
-    If we should only use CLS token or all patches ('True' or 'False').
-regression : str
-    Type of regression used ('ridge' or 'linear').
 pycortex_filestore : str
     Path to pycortex filestore containing subject surfaces.
 transform : str
@@ -27,8 +23,6 @@ python berg_creation_code/03_test_encoding_models/train_dataset-things_fmri_1/03
     --subjects sub-01 sub-02 sub-03 \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --pycortex_filestore '/Volumes/Extreme SSD/Datasets/THINGS/pycortex_filestore' \
-    --only_cls True \
-    --regression linear \
     --model vit_b_32 \
     --transform align_auto \
     --vmin -0.5 \
@@ -39,6 +33,8 @@ import argparse
 import os
 import numpy as np
 import cortex
+import matplotlib
+matplotlib.use('Agg')  # Must be before importing pyplot
 import matplotlib.pyplot as plt
 
 
@@ -50,10 +46,6 @@ parser.add_argument('--subjects', type=str, nargs='+', required=True,
                    help="List of subject IDs (e.g., 'sub-01 sub-02 sub-03')")
 parser.add_argument('--model', required=True, choices=["vit_b_32"],
                    help="Selecting which model to use")
-parser.add_argument('--only_cls', required=True, choices=["True", "False"],
-                    help='If we should only use CLS token or all patches')
-parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
-                   help="Select type of regression")
 parser.add_argument('--berg_dir', required=True, type=str)
 parser.add_argument('--pycortex_filestore', required=True, type=str,
                    help="Path to pycortex filestore")
@@ -64,9 +56,6 @@ parser.add_argument('--vmin', type=float, default=-0.5,
 parser.add_argument('--vmax', type=float, default=0.9,
                    help="Maximum value for colormap (default: 0.9)")
 args = parser.parse_args()
-
-args.only_cls = args.only_cls == "True"
-cls_suffix = 'cls' if args.only_cls else 'all'
 
 n_subjects = len(args.subjects)
 print(f"Processing {n_subjects} subjects: {', '.join(args.subjects)}")
@@ -143,7 +132,7 @@ for subject in args.subjects:
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
     
-    save_name = f'surface_correlation_{args.regression}_{cls_suffix}_{args.model}_{subject}'
+    save_name = f'surface_correlation_{subject}'
     fig.savefig(os.path.join(save_dir, f'{save_name}.png'), dpi=300, bbox_inches='tight')
     
     print(f"Saved: {save_dir}/{save_name}.png")
