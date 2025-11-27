@@ -189,7 +189,7 @@ metadata = np.load(metadata_path, allow_pickle=True).item()
 
 # Extract training image features
 print("Extracting training features...")
-n_train_images = len(metadata['meg']['train_full_image_path'])
+n_train_images = len(metadata['encoding_model']['train_img_ids'])
 fmaps_train = []
 
 
@@ -199,7 +199,7 @@ for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=F
     
     # Load batch of training images
     for i in range(start_idx, end_idx):
-        img_path = metadata['meg']['train_full_image_path'][i]
+        img_path = metadata['encoding_model']['train_concepts'][i] + "/" + metadata['encoding_model']['train_stimuli'][i]
         full_path = os.path.join(args.things_dir, img_path)
         img = Image.open(full_path).convert('RGB')
         img_tensor = preprocess(img)
@@ -249,8 +249,8 @@ print(f"Training features shape (fmaps): {fmaps_train.shape}")
 # Extract test image features
 print("Extracting test features...")
 test_images = []
-for i in range(len(metadata['meg']['test_avg_full_image_path'])):
-    img_path = metadata['meg']['test_avg_full_image_path'][i]
+for i in range(len(metadata['encoding_model']['test_avg_things_img_ids'])):
+    img_path = metadata['encoding_model']['test_avg_concepts'][i] + "/" + metadata['encoding_model']['test_avg_stimuli'][i]
     full_path = os.path.join(args.things_dir, img_path)
     
     img = Image.open(full_path).convert('RGB')

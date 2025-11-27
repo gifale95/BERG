@@ -115,20 +115,20 @@ print(args.only_cls)
 # =============================================================================
 def map_trial_to_image(trial_idx, metadata, things_dir=None):
     """Map a training trial index to its corresponding THINGS image information."""
-    if trial_idx < 0 or trial_idx >= len(metadata['utah_array']['train_img_files']):
+    if trial_idx < 0 or trial_idx >= len(metadata['encoding_model']['train_stimuli']):
         raise ValueError(f"Trial index {trial_idx} out of range")
     
     image_info = {
         'trial_idx': trial_idx,
-        'stimulus_id': metadata['utah_array']['train_img_ids'][trial_idx],
-        'image_file': metadata['utah_array']['train_img_files'][trial_idx],
-        'object_category': metadata['utah_array']['train_img_concepts'][trial_idx],
-        'recording_day': metadata['utah_array']['train_days'][trial_idx],
-        'sequence_position': metadata['utah_array']['train_sequence_pos'][trial_idx]
+        'stimulus_id': metadata['encoding_model']['train_img_ids'][trial_idx],
+        'image_file': metadata['encoding_model']['train_stimuli'][trial_idx],
+        'object_category': metadata['encoding_model']['train_concepts'][trial_idx],
+        'recording_day': metadata['encoding_model']['train_days'][trial_idx],
+        'sequence_position': metadata['encoding_model']['train_sequence_pos'][trial_idx]
     }
     
     if things_dir:
-        category = metadata['utah_array']['train_img_concepts'][trial_idx]
+        category = metadata['encoding_model']['train_concepts'][trial_idx]
         image_info['full_path'] = f"{things_dir}/{category}/{image_info['image_file']}"
     
     return image_info
@@ -209,7 +209,7 @@ metadata = np.load(metadata_path, allow_pickle=True).item()
 
 # Extract training image features
 print("Extracting training features...")
-n_train_images = len(metadata['utah_array']['train_img_files'])
+n_train_images = len(metadata['utah_array']['train_stimuli'])
 fmaps_train = []
 
 for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=False):
@@ -266,9 +266,9 @@ fmaps_train = np.concatenate(fmaps_train, axis=0)
 # Extract test image features
 print("Extracting test features...")
 test_images = []
-for i in range(len(metadata['utah_array']['test_avg_img_files'])):
-    category = metadata['utah_array']['test_avg_img_concepts'][i]
-    image_file = metadata['utah_array']['test_avg_img_files'][i]
+for i in range(len(metadata['encoding_model']['test_avg_stimuli'])):
+    category = metadata['encoding_model']['test_avg_concepts'][i]
+    image_file = metadata['encoding_model']['test_avg_stimuli'][i]
     full_path = f"{args.things_dir}/{category}/{image_file}"
     
     img = Image.open(full_path).convert('RGB')

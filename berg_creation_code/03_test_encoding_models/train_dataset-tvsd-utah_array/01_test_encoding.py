@@ -109,25 +109,20 @@ print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
 # =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
-metadata = {
-    'utah_array': metadata_tvsd['utah_array'],
-    'encoding_model': {
-        'correlation_results': correlation_results,
-        'percent_noise_ceiling': percent_noise_ceiling,
-        'SNR': metadata_tvsd['encoding_model']['SNR'],
-        'SNR_max': metadata_tvsd['encoding_model']['SNR_max'],
-        'oracle': metadata_tvsd['encoding_model']['oracle'],
-        'ncsnr': metadata_tvsd['encoding_model']['ncsnr'],
-        'noise_ceiling': metadata_tvsd['encoding_model']['noise_ceiling']
-    }
-}
+
+
+metadata = metadata_tvsd.copy()
+metadata['encoding_model'].update({
+    'correlation_results': correlation_results,
+    'percent_noise_ceiling': percent_noise_ceiling
+})
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
 	'train_dataset-tvsd', f'model-{args.model}', 'metadata')
 if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)
 
-file_name = f'metadata_{args.regression}_{cls_suffix}_{args.monkey}.npy'
+file_name = f'metadata_{args.monkey}.npy'
 np.save(os.path.join(save_dir, file_name), metadata)
 
 print(f"Metadata saved to: {os.path.join(save_dir, file_name)}")

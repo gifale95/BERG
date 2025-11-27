@@ -33,13 +33,8 @@ Output Files Created (per subject):
 ────────────────────────────────────────────────────────────────────────────
 Neural Data:
 fmri_{subject}_split-train.h5           : (8640, 211339)
-    Training trials with session-wise z-score normalization
-    
 fmri_{subject}_split-test.h5            : (1200, 211339)
-    Individual test trials with session-wise z-score normalization
-    
 fmri_{subject}_split-test_averaged.h5   : (100, 211339)
-    Test data averaged across repetitions of the same stimulus
 
 Metadata:
 fmri_{subject}_metadata.npy             :
@@ -71,11 +66,6 @@ fmri_{subject}_metadata.npy             :
         lFFA, rFFA, lOFA, rOFA, lEBA, rEBA, lPPA, rPPA, lRSC, rRSC, 
         lTOS, rTOS, lLOC, rLOC, IT, lSTS, rSTS
             Each ROI entry contains voxel indices (variable length) for that functional region
-
-
-Note: All HDF5 files use the key 'neural_data'.
-      Data shape is (Trials x Voxels) after transposition from original (Voxels x Trials).
-      Session-wise z-score normalization is applied: (trial - session_mean) / session_std
 """
 
 

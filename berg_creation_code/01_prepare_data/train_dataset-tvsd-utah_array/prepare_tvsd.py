@@ -19,7 +19,7 @@ batch_size : int
     Batch size for chunked processing to manage memory usage.
     
     
-python berg_creation_code/01_prepare_data/train_dataset-tvsd/prepare_tvsd.py \
+python berg_creation_code/01_prepare_data/train_dataset-tvsd-utah_array/prepare_tvsd.py \
     --monkey monkeyN \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
     --tvsd_dir '/Volumes/Extreme SSD/Datasets/TSVD' \
@@ -34,32 +34,38 @@ tvsd_{monkey}_split-test_averaged.h5   : (100, 1024, 300)
 tvsd_{monkey}_metadata.npy             : 
 
     'utah-array':
-        train_img_ids        : (22248,) - Training stimulus IDs
-        train_img_files      : (22248,) - Training image filenames
-        train_img_concepts   : (22248,) - Training object categories
-        train_days           : (22248,) - Recording days for training
-        train_sequence_pos   : (22248,) - Position in 4-image sequence
-        test_img_ids         : (3000,)  - Test stimulus IDs (individual trials)
-        test_img_files       : (3000,)  - Test image filenames (individual)
-        test_img_concepts    : (3000,)  - Test object categories (individual)
-        test_days            : (3000,)  - Recording days for test
-        test_sequence_pos    : (3000,)  - Position in sequence for test
-        test_avg_img_ids     : (100,)   - Unique test stimulus IDs
-        test_avg_img_files   : (100,)   - Test image filenames (averaged)
-        test_avg_img_concepts: (100,)   - Test object categories (averaged)
         times                : (300,)   - Time points (-100 to 199ms)
         electrode_order      : (1024,)  - Electrode mapping order (0-based)
-        roi_assignments      : (1024,)  - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
-        roi_labels           : (3,)     - ROI label names ['V1', 'V4', 'IT']
         monkey_id            : str      - Monkey identifier
         n_electrodes         : int      - Number of electrodes (1024)
+        
+    'roi':
+        roi_assignments      : (1024,)  - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
+        roi_labels           : (3,)     - ROI label names ['V1', 'V4', 'IT']
+    
     'encoding_model':
+        train_img_ids        : (22248,) - Training stimulus IDs
+        train_stimuli      : (22248,) - Training image filenames
+        train_concepts   : (22248,) - Training object categories
+        train_days           : (22248,) - Recording days for training
+        train_sequence_pos   : (22248,) - Position in 4-image sequence
+        
+        test_img_ids         : (3000,)  - Test stimulus IDs (individual trials)
+        test_stimuli      : (3000,)  - Test image filenames (individual)
+        test_concepts    : (3000,)  - Test object categories (individual)
+        test_days            : (3000,)  - Recording days for test
+        test_sequence_pos    : (3000,)  - Position in sequence for test
+        
+        test_stimuli    : (100,)   - Unique test stimulus IDs
+        
+        test_avg_stimui   : (100,)   - Test image filenames (averaged)
+        test_avg_concepts: (100,)   - Test object categories (averaged)
+        
         SNR                  : (4, 1024) - Signal-to-noise ratio per day per electrode
         SNR_max              : (1024,)  - Best SNR across all days per electrode
         oracle               : (1024,)  - Noise ceiling estimate per electrode
         ncsnr                : (1024, 300) - Neural signal-to-noise ratio per electrode/timepoint
         noise_ceiling        : (1024, 300) - Noise Ceiling per electrode for all timepoints
-
 """
 
 import argparse

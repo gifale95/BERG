@@ -127,17 +127,11 @@ print(f"  Range: [{np.nanmin(percent_noise_ceiling):.2f}%, {np.nanmax(percent_no
 # =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
-metadata = {
-    'fmri': metadata_fmri['fmri'],
-    'encoding_model': {
-        'correlation_results': correlation_results,
-        'percent_noise_ceiling': percent_noise_ceiling,
-        'noise_ceiling_singletrial': metadata_fmri['encoding_model']["noise_ceiling_singletrial"],
-        'noise_ceiling_testset': metadata_fmri['encoding_model']["noise_ceiling_testset"],
-        'splithalf_corrected': metadata_fmri['encoding_model']["splithalf_corrected"],
-        'splithalf_uncorrected': metadata_fmri['encoding_model']["splithalf_uncorrected"]
-    }
-}
+metadata = metadata_fmri.copy()
+metadata['encoding_model'].update({
+    'correlation_results': correlation_results,
+    'percent_noise_ceiling': percent_noise_ceiling
+})
 
 # Save the metadata
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
@@ -145,7 +139,7 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-file_name = f'metadata_{args.regression}_{cls_suffix}_{args.subject}.npy'
+file_name = f'metadata_{args.subject}.npy'
 np.save(os.path.join(save_dir, file_name), metadata)
 
 print(f"\nMetadata saved to: {os.path.join(save_dir, file_name)}")

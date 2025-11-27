@@ -70,14 +70,14 @@ metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
 
 for subject in args.subject:
     # Load all data from single metadata file
-    file_name = f'metadata_{args.regression}_{cls_suffix}_{subject}.npy'
+    file_name = f'metadata_{subject}.npy'
     metadata = np.load(os.path.join(metadata_dir, file_name),
         allow_pickle=True).item()
     
     correlation_results.append(metadata['encoding_model']['correlation_results'])
     noise_ceiling_results.append(metadata['encoding_model']['noise_ceiling'])
     times = metadata['meg']['times']
-    sensor_regions = metadata['meg']['sensor_regions']
+    sensor_regions = metadata['sensors']['sensor_regions']
     region_data.append(sensor_regions)
 
 correlation_results = np.asarray(correlation_results)

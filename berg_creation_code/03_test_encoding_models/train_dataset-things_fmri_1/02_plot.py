@@ -86,7 +86,7 @@ for subject in args.subjects:
     # Load encoding model metadata
     metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
         'train_dataset-things_fmri_1', f'model-{args.model}', 'metadata')
-    file_name = f'metadata_{args.regression}_{cls_suffix}_{subject}.npy'
+    file_name = f'metadata_{subject}.npy'
     metadata = np.load(os.path.join(metadata_dir, file_name), allow_pickle=True).item()
     
     correlation_results = metadata['encoding_model']['correlation_results']

@@ -315,6 +315,15 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id):
             train_full_image_paths.append(path)
     train_full_image_paths = np.array(train_full_image_paths)
     
+    # Turn into category and image
+    train_stimuli = []
+    train_concepts = []
+    for path in train_full_image_paths:
+        conc, stim = path.split("/")
+        train_concepts.append(conc)
+        train_stimuli.append(stim)
+        
+    
     # Extract test metadata (individual trials)
     test_metadata = metadata[test_mask]
     test_things_img_ids = test_metadata['things_image_nr'].values
@@ -350,6 +359,14 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id):
         else:
             test_full_image_paths.append(path)
     test_full_image_paths = np.array(test_full_image_paths)
+    
+    # Turn into category and image
+    test_stimuli = []
+    test_concepts = []
+    for path in test_full_image_paths:
+        conc, stim = path.split("/")
+        test_concepts.append(conc)
+        test_stimuli.append(stim)
     
     # Create averaged test metadata (one entry per unique test image)
     unique_test_images = np.unique(test_image_nr)
@@ -387,6 +404,15 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id):
     
     test_avg_full_image_paths = np.array(test_avg_full_image_paths)
     
+    
+    # Turn into category and image
+    test_avg_stimuli = []
+    test_avg_concepts = []
+    for path in test_avg_full_image_paths:
+        conc, stim = path.split("/")
+        test_avg_concepts.append(conc)
+        test_avg_stimuli.append(stim)
+    
     # Compute noise ceilings
     test_filepath = os.path.join(output_dir, f'meg_{subject_id}_split-test.h5')
     nc_data = compute_noise_ceiling(meg_filepath, test_filepath, subject_id)
@@ -396,35 +422,38 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id):
     # Compile metadata dictionary
     metadata_dict = {
         'meg': {
-        'train_things_img_ids': train_things_img_ids,
-        'train_categories': train_categories,
-        'train_exemplars': train_exemplars,
-        'train_sessions': train_sessions,
-        'train_runs': train_runs,
-        'train_image_paths': train_image_paths,
-        'train_full_image_path': train_full_image_paths,
-        'test_things_img_ids': test_things_img_ids,
-        'test_image_nr': test_image_nr,
-        'test_categories': test_categories,
-        'test_exemplars': test_exemplars,
-        'test_sessions': test_sessions,
-        'test_runs': test_runs,
-        'test_image_paths': test_image_paths,
-        'test_full_image_path': test_full_image_paths,
-        'test_avg_things_img_ids': np.array(test_avg_things_img_ids),
-        'test_avg_image_nr': unique_test_images,
-        'test_avg_categories': np.array(test_avg_categories),
-        'test_avg_image_paths': np.array(test_avg_image_paths),
-        'test_avg_full_image_path': test_avg_full_image_paths,
         'times': times,
+        'subject_id': subject_id},
+        
+        'sensors': {
         'sensor_names': sensor_names,
         'sensor_prefixes': sensor_prefixes,
         'sensor_hemispheres': sensor_hemispheres,
         'sensor_regions': sensor_regions,
         'n_sensors': len(sensor_names),
-        'subject_id': subject_id},
+        },
         
         'encoding_model': {
+            'train_img_ids': train_things_img_ids,
+            'train_stimuli': train_stimuli,
+            'train_concepts': train_concepts,
+            'train_sessions': train_sessions,
+            'train_runs': train_runs,
+            'train_img_files': train_full_image_paths,
+            
+            'test_things_img_ids': test_things_img_ids,
+            'test_stimuli': test_stimuli,
+            'test_concepts': test_concepts,
+            'test_image_nr': test_image_nr,
+            'test_sessions': test_sessions,
+            'test_runs': test_runs,
+            'test_img_files': test_full_image_paths,
+            
+            'test_avg_things_img_ids': np.array(test_avg_things_img_ids),
+            'test_avg_stimuli': test_avg_stimuli,
+            'test_avg_concepts': test_avg_concepts,
+            'test_avg_img_files': test_avg_full_image_paths,
+            
             'ncsnr': ncsnr,
             'noise_ceiling': noise_ceiling}
     }

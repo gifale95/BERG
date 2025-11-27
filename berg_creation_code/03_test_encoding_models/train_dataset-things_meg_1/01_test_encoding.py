@@ -111,15 +111,12 @@ print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
 # =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
-metadata = {
-    'meg': metadata_meg['meg'],
-    'encoding_model': {
-        'correlation_results': correlation_results,
-        'percent_noise_ceiling': percent_noise_ceiling,
-        'ncsnr': metadata_meg['encoding_model']['ncsnr'],
-        'noise_ceiling': metadata_meg['encoding_model']['noise_ceiling']
-    }
-}
+
+metadata = metadata_meg.copy()
+metadata['encoding_model'].update({
+    'correlation_results': correlation_results,
+    'percent_noise_ceiling': percent_noise_ceiling
+})
 
 # Save the metadata
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
@@ -127,7 +124,7 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-file_name = f'metadata_{args.regression}_{cls_suffix}_{args.subject}.npy'
+file_name = f'metadata_{args.subject}.npy'
 np.save(os.path.join(save_dir, file_name), metadata)
 
 print(f"Metadata saved to: {os.path.join(save_dir, file_name)}")

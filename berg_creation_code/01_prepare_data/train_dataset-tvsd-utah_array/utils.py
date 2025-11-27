@@ -368,26 +368,30 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
     
     metadata = {
         'utah_array': {
-            'train_img_ids': train_stimulus_ids,
-            'train_img_files': np.array(train_img_files),
-            'train_img_concepts': np.array(train_img_concepts),
-            'train_days': train_days,
-            'train_sequence_pos': train_sequence_pos,
-            'test_img_ids': test_stimulus_ids,
-            'test_img_files': np.array(test_img_files),
-            'test_img_concepts': np.array(test_img_concepts),
-            'test_days': test_days,
-            'test_sequence_pos': test_sequence_pos,
-            'test_avg_img_ids': unique_test_ids,
-            'test_avg_img_files': np.array(test_avg_img_files),
-            'test_avg_img_concepts': np.array(test_avg_img_concepts),
             'times': tb,
             'monkey_id': monkey_id,
             'n_electrodes': 1024,
-            'electrode_order': electrode_order,
+            'electrode_order': electrode_order},
+        'roi': {
             'roi_assignments': roi_assignments,
             'roi_labels': roi_labels},
         'encoding_model': {
+            'train_img_ids': train_stimulus_ids,
+            'train_stimuli': np.array(train_img_files),
+            'train_concepts': np.array(train_img_concepts),
+            'train_days': train_days,
+            'train_sequence_pos': train_sequence_pos,
+            
+            'test_img_ids': test_stimulus_ids,
+            'test_stimuli': np.array(test_img_files),
+            'test_concepts': np.array(test_img_concepts),
+            'test_days': test_days,
+            'test_sequence_pos': test_sequence_pos,
+            
+            'test_avg_img_ids': unique_test_ids,
+            'test_avg_stimuli': np.array(test_avg_img_files),
+            'test_avg_concepts': np.array(test_avg_img_concepts),
+            
             'SNR': SNR,
             'SNR_max': SNR_max,
             'oracle': oracle,

@@ -71,14 +71,14 @@ metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_arr
     'train_dataset-tvsd', f'model-{args.model}', 'metadata')
 
 for monkey in args.monkey:
-    file_name = f'metadata_{args.regression}_{cls_suffix}_{monkey}.npy'
+    file_name = f'metadata_{monkey}.npy'
     metadata = np.load(os.path.join(metadata_dir, file_name),
         allow_pickle=True).item()
     
     correlation_results.append(metadata['encoding_model']['correlation_results'])
     times = metadata['utah_array']['times']
     roi_assignments = metadata['utah_array']['roi_assignments']
-    roi_labels = metadata['utah_array']['roi_labels']
+    roi_labels = metadata['roi']['roi_labels']
     noise_ceiling = metadata['encoding_model']['noise_ceiling']
     roi_data.append((roi_assignments, roi_labels))
     noise_ceiling_data.append(noise_ceiling)
