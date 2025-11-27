@@ -1,7 +1,5 @@
-"""Compute the stats on the results of the pairwise decoding analysis. The
-stats consist of bootstrapped 95% confidence intervals for the pairwise
-decoding results, as well as for the difference between exemplar and animacy
-pairwise decoding peaks.
+"""Compute the stats on the results of the decoding and rsa analyses. The stats
+consist of bootstrapped 95% confidence intervals and significance estimates.
 
 Parameters
 ----------
@@ -29,6 +27,8 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.utils import resample
 from scipy.stats import ttest_1samp
+import itertools
+from statsmodels.stats.multitest import multipletests
 
 
 # =============================================================================
@@ -41,7 +41,7 @@ parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Pairwise decoding stats <<<')
+print('>>> RSA stats <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -53,96 +53,86 @@ np.random.seed(seed)
 
 
 # =============================================================================
-# Load the pairwise decoding results
+# Load the decoding and RSA results
 # =============================================================================
-decoding_exemplars = []
-decoding_animacy = []
+decoding = []
+rsa = []
 
 for sub in args.subjects:
 
     data_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'eeg',
-        'object_exemplar_animacy_categorization', 'pairwise_decoding_results',
-        'pairwise_decoding_sub-'+format(sub,'02')+'_channels-'+
-        ''.join(args.channels)+'.npy')
+        'behavioral_modeling', 'rsa', 'rsa_sub-'+format(sub,'02')+'_channels-'+
+        '-'.join(args.channels)+'.npy')
     results = np.load(data_dir, allow_pickle=True).item()
 
-    # Get the exemplars decoding results
-    idx_tril = np.tril_indices(len(results['decoding_exemplars']), -1)
-    decoding_exemplars.append(np.mean(
-        results['decoding_exemplars'][idx_tril], 0))
+    # Get the decoding results
+    idx_tril = np.tril_indices(len(results['eeg_rdm']), -1)
+    decoding.append(np.mean(results['eeg_rdm'][idx_tril], 0))
 
-    # Get the animacy decoding results
-    decoding_animacy.append(results['decoding_animacy'])
+    # Get the RSA results
+    rsa.append(results['rsa'])
 
     # EEG metadata
-    times = results['times']
-    kept_ch_names = results['kept_ch_names']
+    times = results['metadata']['eeg']['times']
 
 # Convert to numpy arrays
-decoding_exemplars = np.asarray(decoding_exemplars)
-decoding_animacy = np.asarray(decoding_animacy)
-
-# Compute the peak latency difference of each subject
-peak_latency_diff = []
-for s in range(len(args.subjects)):
-    peak_exemplars_latency = times[np.argmax(decoding_exemplars[s])] # type: ignore
-    peak_animacy_latency = times[np.argmax(decoding_animacy[s])] # type: ignore
-    peak_latency_diff.append(peak_animacy_latency - peak_exemplars_latency)
-peak_latency_diff = np.array(peak_latency_diff)
+decoding = np.asarray(decoding) * 100
+rsa = np.asarray(rsa)
 
 
 # =============================================================================
 # Bootstrap the confidence intervals (CIs)
 # =============================================================================
-ci_exemplars = np.zeros((2, len(times))) # type: ignore
-ci_animacy = np.zeros((2, len(times))) # type: ignore
-ci_peak_latency_diff = np.zeros((2)) # type: ignore
+ci_decoding = np.zeros((2, len(times))) # type: ignore
+ci_rsa = np.zeros((2, len(times))) # type: ignore
 
-exemplars_dist = np.zeros((args.n_iter, len(times))) # type: ignore
-animacy_dist = np.zeros((args.n_iter, len(times))) # type: ignore
-latency_dist = np.zeros((args.n_iter)) # type: ignore
+decoding_dist = np.zeros((args.n_iter, len(times))) # type: ignore
+rsa_dist = np.zeros((args.n_iter, len(times))) # type: ignore
 
 for i in tqdm(range(args.n_iter)):
     idx = resample(np.arange(len(args.subjects)))
-    exemplars_dist[i] = np.mean(decoding_exemplars[idx], 0)
-    animacy_dist[i] = np.mean(decoding_animacy[idx], 0)
-    latency_dist[i] = np.mean(peak_latency_diff[idx])
+    decoding_dist[i] = np.mean(decoding[idx], 0)
+    rsa_dist[i] = np.mean(rsa[idx], 0)
 
-ci_exemplars[0] = np.percentile(exemplars_dist, 2.5, axis=0)
-ci_exemplars[1] = np.percentile(exemplars_dist, 97.5, axis=0)
-ci_animacy[0] = np.percentile(animacy_dist, 2.5, axis=0)
-ci_animacy[1] = np.percentile(animacy_dist, 97.5, axis=0)
-ci_peak_latency_diff[0] = np.percentile(latency_dist, 2.5, axis=0)
-ci_peak_latency_diff[1] = np.percentile(latency_dist, 97.5, axis=0)
+ci_decoding[0] = np.percentile(decoding_dist, 2.5, axis=0)
+ci_decoding[1] = np.percentile(decoding_dist, 97.5, axis=0)
+ci_rsa[0] = np.percentile(rsa_dist, 2.5, axis=0)
+ci_rsa[1] = np.percentile(rsa_dist, 97.5, axis=0)
 
 
 # =============================================================================
-# Compute the significance of the peak latency difference
+# Compute the significance
 # =============================================================================
-pval_peak_latency_diff = ttest_1samp(peak_latency_diff, 0,
-    alternative='greater')[1]
+# Compute the p-values with t-tests
+pval_decoding = ttest_1samp(decoding, 50, axis=0, alternative='greater')[1]
+pval_rsa = ttest_1samp(rsa, 0, axis=0, alternative='greater')[1]
+
+# Correct for multiple comparisons
+sig_decoding, pval_decoding_corrected, _, _ = multipletests(pval_decoding,
+    0.05, 'fdr_bh')
+sig_rsa, pval_rsa_corrected, _, _ = multipletests(pval_rsa, 0.05, 'fdr_bh')
 
 
 # =============================================================================
 # Save the results
 # =============================================================================
 results = {
-    'decoding_exemplars': decoding_exemplars,
-    'decoding_animacy': decoding_animacy,
-    'ci_exemplars': ci_exemplars,
-    'ci_animacy': ci_animacy,
-    'peak_latency_diff': peak_latency_diff,
-    'ci_peak_latency_diff': ci_peak_latency_diff,
-    'pval_peak_latency_diff': pval_peak_latency_diff,
-    'times': times, # type: ignore
-    'kept_ch_names': kept_ch_names # type: ignore
+    'decoding': decoding,
+    'rsa': rsa,
+    'ci_decoding': ci_decoding,
+    'ci_rsa': ci_rsa,
+    'pval_decoding': pval_decoding,
+    'pval_rsa': pval_rsa,
+    'sig_decoding': sig_decoding,
+    'sig_rsa': sig_rsa,
+    'times': times # type: ignore
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_exemplar_animacy_categorization', 'stats')
+    'vision', 'eeg', 'behavioral_modeling', 'stats')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'stats_' + 'channels-' + ''.join(args.channels) + '.npy'
+file_name = 'stats_' + 'channels-' + '-'.join(args.channels) + '.npy'
 
 np.save(os.path.join(save_dir, file_name), results) # type: ignore

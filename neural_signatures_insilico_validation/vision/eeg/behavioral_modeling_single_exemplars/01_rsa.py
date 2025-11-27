@@ -61,12 +61,12 @@ np.random.seed(seed)
 # Load the metadata
 metadata_dir = os.path.join(args.berg_dir, args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'behavioral_modeling', 'image_metadata.npy')
+    'behavioral_modeling_single_exemplars', 'image_metadata.npy')
 
 metadata = np.load(metadata_dir, allow_pickle=True).item()
 
-# Get the test image category number based on the original THINGS database
 test_img_concepts_THINGS = metadata['test_img_concepts_THINGS']
+test_img_files = metadata['test_img_files']
 
 
 # =============================================================================
@@ -102,43 +102,25 @@ model = berg.get_encoding_model(
 # =============================================================================
 # Generate the in silico EEG responses
 # =============================================================================
-eeg = []
+images = []
 
 # Loop across test object concepts
-for cat in tqdm(test_img_concepts_THINGS):
+for c, cat in enumerate(tqdm(test_img_concepts_THINGS)):
 
-    # Get the image exemplar file names for each concept
-    image_list = os.listdir(os.path.join(args.things_dir,
-        'image-database_things', cat[6:]))
-    image_list.sort()
-
-    # Loop across image exemplars
-    images = []
-    for ifile in image_list:
-
-        # Load the images
-        img_path = os.path.join(args.things_dir, 'image-database_things',
-            cat[6:], ifile)
-        img = Image.open(img_path)
-        img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
-        img = np.array(img)
-        images.append(img)
+    # Load the images
+    img_path = os.path.join(args.things_dir, 'image-database_things',
+        cat[6:], test_img_files[c])
+    img = Image.open(img_path)
+    img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
+    img = np.array(img)
+    images.append(img)
     
-    # Format the images
-    images = np.array(images)
-    images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
+# Format the images
+images = np.array(images)
+images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
 
-    # Generate the in silico EEG responses
-    eeg_cat, metadata = berg.encode(model, images, return_metadata=True)
-
-    # Store the in silico EEG responses averaged across image exemplars
-    eeg.append(np.mean(eeg_cat, 0))
-
-    # Delete unused variables
-    del eeg_cat, images
-
-# Convert the EEG responses to numpy arrays
-eeg = np.array(eeg)
+# Generate the in silico EEG responses
+eeg, metadata = berg.encode(model, images, return_metadata=True)
 times = metadata['eeg']['times']
 
 
@@ -190,17 +172,28 @@ for t in tqdm(range(len(times))):
 # Create the behavioral RDM
 # =============================================================================
 # Load the behavioral embeddings (the behavioral emebddings can be downloaded
-# from: https://osf.io/f5rn6/overview)
+# from: https://github.com/ViCCo-Group/dimension_encoding/tree/master/data/66d)
 embedding_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'behavioral_modeling', 'spose_embedding_66d_sorted.txt')
+    'behavioral_modeling_single_exemplars',
+    'predictions_66d_elastic_clip-ViT_visual_THINGS.txt')
 beh_embeddings_all = np.array(pd.read_csv(embedding_dir, delim_whitespace=True,
     header=None))
 
-# Retain the embeddings from the 200 test image concepts
+# Load the THINGS image paths
+path_dir = os.path.join(args.berg_dir,
+    'neural_signatures_insilico_validation', 'vision', 'eeg',
+    'behavioral_modeling_single_exemplars', 'image-paths.csv')
+image_paths = np.array(pd.read_csv(path_dir, delim_whitespace=True,
+    header=None))
+paths_list = []
+for path in image_paths:
+    paths_list.append(os.path.basename(path[0]))
+
+# Retain the embeddings from the 200 test images
 idx_test = np.zeros(len(test_img_concepts_THINGS), dtype=int)
-for i, img in enumerate(test_img_concepts_THINGS):
-    idx_test[i] = int(img[:5]) - 1
+for i, img in enumerate(test_img_files):
+    idx_test[i] = paths_list.index(img)
 beh_embeddings = beh_embeddings_all[idx_test]
 
 # Create the RDM
@@ -236,7 +229,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'behavioral_modeling', 'rsa')
+    'vision', 'eeg', 'behavioral_modeling_single_exemplars', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'rsa_sub-' + format(args.subject, '02') + '_channels-' + \

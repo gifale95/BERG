@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-behavioral_modeling-01_rsa
+#SBATCH --job-name=berg_insilico_validation-behavioral_modeling_single_exemplars-01_rsa
 #SBATCH --mail-type=end
 #SBATCH --mem=3000
 #SBATCH --time=03:00:00
@@ -27,7 +27,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/eeg/behavioral_modeling
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/eeg/behavioral_modeling_single_exemplars
 
 # Run the job
 python 01_rsa.py --subject $subject

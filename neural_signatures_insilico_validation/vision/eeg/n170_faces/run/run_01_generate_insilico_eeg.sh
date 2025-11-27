@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg_insilico_validation-eeg_n170_faces-01_generate_insilico_eeg
 #SBATCH --mail-type=end
 #SBATCH --mem=5000
-#SBATCH --time=00:15:00
+#SBATCH --time=00:20:00
 #SBATCH --qos=extended
 
 # Activate the Anaconda environment

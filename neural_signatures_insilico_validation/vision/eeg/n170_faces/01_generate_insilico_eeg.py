@@ -55,7 +55,8 @@ for cat in tqdm(categories):
         img_list.sort()
         for img_name in img_list:
             img_path = os.path.join(img_dir, cat+'-'+itype, img_name)
-            img = Image.open(img_path).convert('RGB')
+            img = Image.open(img_path)
+            img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
             img = np.array(img)
             img_cat.append(img)
     img_cat = np.array(img_cat)

@@ -52,7 +52,6 @@ results = np.load(results_dir, allow_pickle=True).item()
 
 erp_faces = results['erp_faces']
 erp_objects = results['erp_objects']
-erp_diff = results['erp_diff']
 ci_erp_faces = results['ci_erp_faces']
 ci_erp_objects = results['ci_erp_objects']
 pval_erp_diff = results['pval_erp_diff']
