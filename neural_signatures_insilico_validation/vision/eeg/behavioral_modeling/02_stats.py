@@ -7,11 +7,11 @@ subjects : list
     The subject identifiers for the EEG encoding models. Since the used
     encoding models are trained on THINGS EEG2 data, valid subject identifiers
     are integers from 1 to 10.
-channels : list
-    List containing the EEG channel type(s) retained for the analyses.
-    Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
-    'C' (central), 'F' (frontal). Alternatively, the list can also contain the
-    names of the individual channels used.
+channels : string
+    String containing the EEG channel type(s) retained for the analyses,
+    separated by a comma. Possible values are: 'O' (occipital), 'P'
+    (posterior), 'T' (temporal), 'C' (central), 'F' (frontal). Alternatively,
+    the list can also contain the names of the individual channels used.
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
     distribution.
@@ -36,7 +36,7 @@ from statsmodels.stats.multitest import multipletests
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
-parser.add_argument('--channels', default=['O', 'P'], type=list)
+parser.add_argument('--channels', default='O', type=lambda s: s.split(','))
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()

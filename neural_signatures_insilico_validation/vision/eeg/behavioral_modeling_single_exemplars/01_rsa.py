@@ -10,11 +10,11 @@ subject : int
     The subject identifier for the EEG encoding models. Since the used
     encoidng models are trained on THINGS EEG2 data, valid subject identifiers
     are integers from 1 to 10.
-channels : list
-    List containing the EEG channel type(s) retained for the analyses.
-    Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
-    'C' (central), 'F' (frontal). Alternatively, the list can also contain the
-    names of the individual channels used.
+channels : string
+    String containing the EEG channel type(s) retained for the analyses,
+    separated by a comma. Possible values are: 'O' (occipital), 'P'
+    (posterior), 'T' (temporal), 'C' (central), 'F' (frontal). Alternatively,
+    the list can also contain the names of the individual channels used.
 berg_dir : str
     Directory of the BERG.
 things_dir : str
@@ -37,7 +37,7 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subject', default=1, type=int)
-parser.add_argument('--channels', default=['O', 'P'], type=list)
+parser.add_argument('--channels', default='O', type=lambda s: s.split(','))
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
@@ -102,25 +102,43 @@ model = berg.get_encoding_model(
 # =============================================================================
 # Generate the in silico EEG responses
 # =============================================================================
-images = []
+eeg = []
 
 # Loop across test object concepts
-for c, cat in enumerate(tqdm(test_img_concepts_THINGS)):
+for cat in tqdm(test_img_concepts_THINGS):
 
-    # Load the images
-    img_path = os.path.join(args.things_dir, 'image-database_things',
-        cat[6:], test_img_files[c])
-    img = Image.open(img_path)
-    img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
-    img = np.array(img)
-    images.append(img)
+    # Get the image exemplar file names for each concept
+    image_list = os.listdir(os.path.join(args.things_dir,
+        'image-database_things', cat[6:]))
+    image_list.sort()
+
+    # Loop across image exemplars
+    images = []
+    for ifile in image_list:
+
+        # Load the images
+        img_path = os.path.join(args.things_dir, 'image-database_things',
+            cat[6:], ifile)
+        img = Image.open(img_path)
+        img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
+        img = np.array(img)
+        images.append(img)
     
-# Format the images
-images = np.array(images)
-images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
+    # Format the images
+    images = np.array(images)
+    images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
 
-# Generate the in silico EEG responses
-eeg, metadata = berg.encode(model, images, return_metadata=True)
+    # Generate the in silico EEG responses
+    eeg_cat, metadata = berg.encode(model, images, return_metadata=True)
+
+    # Store the in silico EEG responses averaged across image exemplars
+    eeg.append(np.mean(eeg_cat, 0))
+
+    # Delete unused variables
+    del eeg_cat, images
+
+# Convert the EEG responses to numpy arrays
+eeg = np.array(eeg)
 times = metadata['eeg']['times']
 
 
@@ -190,11 +208,13 @@ paths_list = []
 for path in image_paths:
     paths_list.append(os.path.basename(path[0]))
 
-# Retain the embeddings from the 200 test images
-idx_test = np.zeros(len(test_img_concepts_THINGS), dtype=int)
-for i, img in enumerate(test_img_files):
-    idx_test[i] = paths_list.index(img)
-beh_embeddings = beh_embeddings_all[idx_test]
+# Loop across test concepts, and average the embeddings of all images exemplars
+# from the same object concept
+beh_embeddings = []
+for cat in test_img_concepts_THINGS:
+    idx = [i for i, x in enumerate(paths_list) if x.startswith(cat[6:])]
+    beh_embeddings.append(np.mean(beh_embeddings_all[idx], 0))
+beh_embeddings = np.array(beh_embeddings)
 
 # Create the RDM
 beh_rdm = np.zeros((len(beh_embeddings), len(beh_embeddings)), dtype=np.float32)

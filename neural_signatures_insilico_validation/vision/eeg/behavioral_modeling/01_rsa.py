@@ -10,11 +10,11 @@ subject : int
     The subject identifier for the EEG encoding models. Since the used
     encoidng models are trained on THINGS EEG2 data, valid subject identifiers
     are integers from 1 to 10.
-channels : list
-    List containing the EEG channel type(s) retained for the analyses.
-    Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
-    'C' (central), 'F' (frontal). Alternatively, the list can also contain the
-    names of the individual channels used.
+channels : string
+    String containing the EEG channel type(s) retained for the analyses,
+    separated by a comma. Possible values are: 'O' (occipital), 'P'
+    (posterior), 'T' (temporal), 'C' (central), 'F' (frontal). Alternatively,
+    the list can also contain the names of the individual channels used.
 berg_dir : str
     Directory of the BERG.
 things_dir : str
@@ -37,7 +37,7 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subject', default=1, type=int)
-parser.add_argument('--channels', default=['O', 'P'], type=list)
+parser.add_argument('--channels', default='O', type=lambda s: s.split(','))
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
