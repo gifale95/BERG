@@ -11,7 +11,7 @@ declare -a subject_all
 declare -a channels_all
 index=0
 for s in `seq 1 10` ; do
-    for c in 'O' 'P' 'T' 'C' 'F' ; do
+    for c in 'O' 'P' 'T' 'C' 'F' 'O,P' ; do
         subject_all[$index]=$s
         channels_all[$index]=$c
         ((index=index+1))

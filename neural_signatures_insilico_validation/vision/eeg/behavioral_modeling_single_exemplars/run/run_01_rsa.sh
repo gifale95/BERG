@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg_insilico_validation-behavioral_modeling_single_exemplars-01_rsa
 #SBATCH --mail-type=end
 #SBATCH --mem=3000
-#SBATCH --time=03:00:00
+#SBATCH --time=05:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -11,7 +11,7 @@ declare -a subject_all
 declare -a channels_all
 index=0
 for s in `seq 1 10` ; do
-    for c in 'O' 'P' 'T' 'C' 'F' 'O, P' ; do
+    for c in 'O' 'P' 'T' 'C' 'F' 'O,P' ; do
         subject_all[$index]=$s
         channels_all[$index]=$c
         ((index=index+1))

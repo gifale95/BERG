@@ -1,5 +1,4 @@
-"""Plot the RSA scores between in silico EEG responses and behavioral
-embeddings.
+"""Plot the ERPs for faces and objects.
 
 Parameters
 ----------
@@ -7,11 +6,6 @@ subjects : list
     The subject identifiers for the EEG encoding models. Since the used
     encoding models are trained on THINGS EEG2 data, valid subject identifiers
     are integers from 1 to 10.
-channels : list
-    List containing the EEG channel type(s) retained for the analyses.
-    Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
-    'C' (central), 'F' (frontal). Alternatively, the list can also contain the
-    names of the individual channels used.
 berg_dir : str
     Directory of the BERG.
 
@@ -29,7 +23,6 @@ from matplotlib import pyplot as plt
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
-parser.add_argument('--channels', default=['O-P'], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -38,30 +31,26 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'behavioral_modeling_single_exemplars', 'plots')
+    'vision', 'eeg', 'erps', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
-# Load the RSA results
+# Load the ERP results
 # =============================================================================
-rsa = {}
-ci_rsa = {}
-sig_rsa = {}
+results_dir = os.path.join(args.berg_dir,
+    'neural_signatures_insilico_validation', 'vision', 'eeg',  'erps',
+    'erps', 'erps.npy')
 
-for chan in args.channels:
+results = np.load(results_dir, allow_pickle=True).item()
 
-    results_dir = os.path.join(args.berg_dir,
-        'neural_signatures_insilico_validation', 'vision', 'eeg',
-        'behavioral_modeling_single_exemplars', 'stats', 'stats_'+'channels-'+
-        chan+'.npy')
-
-    results = np.load(results_dir, allow_pickle=True).item()
-
-    rsa[chan] = results['rsa']
-    ci_rsa[chan] = results['ci_rsa']
-    sig_rsa[chan] = results['sig_rsa']
-    times = results['times']
+insilico_erps_chan_avg = results['insilico_erps_chan_avg']
+invivo_erps_chan_avg = results['invivo_erps_chan_avg']
+ci_insilico_erps_chan_avg = results['ci_insilico_erps_chan_avg']
+ci_invivo_erps_chan_avg = results['ci_invivo_erps_chan_avg']
+corr_erps_chan_avg = results['corr_erps_chan_avg']
+pval_corr_erps_chan_avg = results['pval_corr_erps_chan_avg']
+times = results['metadata'][0]['eeg']['times']
 
 
 # =============================================================================
@@ -86,60 +75,57 @@ matplotlib.rcParams['grid.alpha'] = .3
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-colors = [(139/255, 0/255, 0/255), (166/255, 77/255, 121/255),
-    (103/255, 78/255, 167/255)]
+colors = [
+    (147/255, 112/255, 219/255),
+    (186/255, 85/255, 211/255),
+    (105/255, 105/255, 105/255),
+    (169/255, 169/255, 169/255),
+    (90/255, 130/255, 200/255),
+    (40/255, 65/255, 150/255)
+    ]
 
 
 # =============================================================================
-# Plot the RSA results
+# Plot the ERPs
 # =============================================================================
-fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(13, 7))
-axs = np.reshape(axs, (-1)) # type: ignore
+fig= plt.figure(figsize=(13, 7))
 
-# Plot the chance and stimulus onset dashed lines
-axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
-    linewidth=3, alpha=.5, label='_nolegend_')
+# Plot the stimulus onset dashed line
+plt.plot([0, 0], [100, -100], 'k--', linewidth=2, alpha=.5, label='_nolegend_')
 
 # Loop across channel groups
-for c, chan in enumerate(args.channels):
+chan_groups = ['O', 'P', 'T', 'C', 'F']
+for c, chan in enumerate(chan_groups):
 
-    # Plot the RSA subject-average results
-    axs[0].plot(times, np.mean(rsa[chan], 0), color=colors[c], linewidth=3)
+    # Plot the ERPs
+    plt.plot(times, np.mean(invivo_erps_chan_avg[chan], 0), color=colors[c],
+        linewidth=2, label='In vivo - '+chan)
+    plt.plot(times, np.mean(insilico_erps_chan_avg[chan], 0), '--',
+        color=colors[c], linewidth=2, label='In silico - '+chan)
 
-    # Plot the peak time point
-    peak = times[np.argsort(np.mean(rsa[chan], 0))[::-1][0]]
-    text = str(int(peak * 1000)) + ' ms'
-    max_rsa = max(np.mean(rsa[chan], 0))
-    axs[0].text(peak, max_rsa+0.015, text, color='k', ha='center')
-    #axs[0].plot([peak, peak], [max_rsa, -100], '--', linewidth=3, color=colors[0],
-    #    alpha=.5)
-
-    # Plot the confidence intervals
-    axs[0].fill_between(times, ci_rsa[chan][1], ci_rsa[chan][0],
-        color=colors[c], alpha=.2)
-
-    # Plot the significance markers
-    sig = np.empty(len(times))
-    sig[:] = np.nan
-    sig[sig_rsa[chan]] = -.015
-    plt.scatter(times, sig, s=100, color=colors[c])
+    # Plot the CIs
+    plt.fill_between(times, ci_invivo_erps_chan_avg[chan][1],
+        ci_invivo_erps_chan_avg[chan][0], color=colors[c], alpha=.1)
+    plt.fill_between(times, ci_insilico_erps_chan_avg[chan][1],
+        ci_insilico_erps_chan_avg[chan][0], color=colors[c], alpha=.1)
 
 # x-axis parameters
-axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
+plt.xlabel('Time (ms)', fontsize=fontsize)
 xticks = [0, .1, .2, .3, .4, .5]
 xlabels = [0, 100, 200, 300, 400, 500]
 plt.xticks(ticks=xticks, labels=xlabels) # type: ignore
-axs[0].set_xlim(left=min(times), right=max(times))
+plt.xlim(left=min(times), right=max(times))
 
 # y-axis parameters
-axs[0].set_ylabel("RSA (Pearson's $r$)", fontsize=fontsize)
-yticks = [0, 0.05, 0.1, 0.15, 0.2, 0.25]
-ylabels = [0, 0.05, 0.1, 0.15, 0.2, 0.25]
+plt.ylabel('μV', fontsize=fontsize)
+yticks = [-.5, 0, .5]
+ylabels = [-.5, 0, .5]
 plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
-axs[0].set_ylim(bottom=-.03, top=.25)
+plt.ylim(bottom=-.5, top=.65)
+
+# Legend
+plt.legend(ncol=1, fontsize=fontsize, loc=0, ncols=5, frameon=False)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'rsa_channels-'+'-'.join(args.channels)+
-    '.svg')
+file_name = os.path.join(save_dir, 'erps.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')

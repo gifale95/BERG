@@ -9,7 +9,7 @@
 # Create the parameters combinations
 declare -a channels_all
 index=0
-for c in 'O' 'P' 'T' 'C' 'F' 'O, P' ; do
+for c in 'O' 'P' 'T' 'C' 'F' 'O,P' ; do
     channels_all[$index]=$c
     ((index=index+1))
 done

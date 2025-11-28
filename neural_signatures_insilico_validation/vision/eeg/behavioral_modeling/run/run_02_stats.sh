@@ -2,14 +2,14 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-behavioral_modeling-02_stats
 #SBATCH --mail-type=end
-#SBATCH --mem=500
-#SBATCH --time=00:10:00
+#SBATCH --mem=1000
+#SBATCH --time=00:20:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a channels_all
 index=0
-for c in 'O' 'P' 'T' 'C' 'F' ; do
+for c in 'O' 'P' 'T' 'C' 'F' 'O,P' ; do
     channels_all[$index]=$c
     ((index=index+1))
 done

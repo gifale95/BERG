@@ -7,11 +7,11 @@ subjects : list
     The subject identifiers for the EEG encoding models. Since the used
     encoding models are trained on THINGS EEG2 data, valid subject identifiers
     are integers from 1 to 10.
-channels : list
-    List containing the EEG channel type(s) retained for the analyses.
-    Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
-    'C' (central), 'F' (frontal). Alternatively, the list can also contain the
-    names of the individual channels used.
+channels : string
+    String containing the EEG channel type(s) retained for the analyses,
+    separated by a comma. Possible values are: 'O' (occipital), 'P'
+    (posterior), 'T' (temporal), 'C' (central), 'F' (frontal). Alternatively,
+    the list can also contain the names of the individual channels used.
 berg_dir : str
     Directory of the BERG.
 
@@ -29,7 +29,7 @@ from matplotlib import pyplot as plt
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
-parser.add_argument('--channels', default=['O', 'P'], type=list)
+parser.add_argument('--channels', default='O', type=lambda s: s.split(','))
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -38,7 +38,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_exemplar_animacy_categorization', 'plots')
+    'vision', 'eeg', 'object_categorization', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -47,8 +47,8 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'object_exemplar_animacy_categorization', 'stats', 'stats_'+'channels-'+
-    ''.join(args.channels)+'.npy')
+    'object_categorization', 'stats', 'stats_'+'channels-'+
+    '-'.join(args.channels)+'.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
@@ -139,8 +139,17 @@ axs[0].legend(ncol=1, fontsize=fontsize, loc=1, frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'decoding_accuray_channels-'+
-    ''.join(args.channels)+'.svg')
+    '-'.join(args.channels)+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+
+
+# =============================================================================
+# Plot the EEG responses in MDS sapce, color coded based on animacy # !!!
+# =============================================================================
+
+# =============================================================================
+# Plot the EEG responses in MDS sapce, color coded based on object category # !!!
+# =============================================================================
 
 
 # =============================================================================

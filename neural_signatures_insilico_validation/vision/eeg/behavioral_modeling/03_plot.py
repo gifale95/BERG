@@ -7,11 +7,11 @@ subjects : list
     The subject identifiers for the EEG encoding models. Since the used
     encoding models are trained on THINGS EEG2 data, valid subject identifiers
     are integers from 1 to 10.
-channels : string
-    String containing the EEG channel type(s) retained for the analyses,
-    separated by a comma. Possible values are: 'O' (occipital), 'P'
-    (posterior), 'T' (temporal), 'C' (central), 'F' (frontal). Alternatively,
-    the list can also contain the names of the individual channels used.
+channels : list
+    List containing the EEG channel type(s) retained for the analyses.
+    Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
+    'C' (central), 'F' (frontal). Alternatively, the list can also contain the
+    names of the individual channels used.
 berg_dir : str
     Directory of the BERG.
 
@@ -29,7 +29,7 @@ from matplotlib import pyplot as plt
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
-parser.add_argument('--channels', default='O', type=lambda s: s.split(','))
+parser.add_argument('--channels', default=['O-P'], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -45,17 +45,22 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 # Load the RSA results
 # =============================================================================
-results_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'behavioral_modeling', 'stats', 'stats_'+'channels-'+
-    '-'.join(args.channels)+'.npy')
+rsa = {}
+ci_rsa = {}
+sig_rsa = {}
 
-results = np.load(results_dir, allow_pickle=True).item()
+for chan in args.channels:
 
-rsa = results['rsa']
-ci_rsa = results['ci_rsa']
-sig_rsa = results['sig_rsa']
-times = results['times']
+    results_dir = os.path.join(args.berg_dir,
+        'neural_signatures_insilico_validation', 'vision', 'eeg',
+        'behavioral_modeling', 'stats', 'stats_'+'channels-'+chan+'.npy')
+
+    results = np.load(results_dir, allow_pickle=True).item()
+
+    rsa[chan] = results['rsa']
+    ci_rsa[chan] = results['ci_rsa']
+    sig_rsa[chan] = results['sig_rsa']
+    times = results['times']
 
 
 # =============================================================================
@@ -95,25 +100,29 @@ axs = np.reshape(axs, (-1)) # type: ignore
 axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=3, alpha=.5, label='_nolegend_')
 
-# Plot the RSA subject-average results
-axs[0].plot(times, np.mean(rsa, 0), color=colors[0], linewidth=3)
+# Loop across channel groups
+for c, chan in enumerate(args.channels):
 
-# Plot the peak time point
-peak = times[np.argsort(np.mean(rsa, 0))[::-1][0]]
-text = str(int(peak * 1000)) + ' ms'
-max_rsa = max(np.mean(rsa, 0))
-axs[0].text(peak, max_rsa+0.015, text, color='k', ha='center')
-#axs[0].plot([peak, peak], [max_rsa, -100], '--', linewidth=3, color=colors[0],
-#    alpha=.5)
+    # Plot the RSA subject-average results
+    axs[0].plot(times, np.mean(rsa[chan], 0), color=colors[c], linewidth=3)
 
-# Plot the confidence intervals
-axs[0].fill_between(times, ci_rsa[1], ci_rsa[0], color=colors[0], alpha=.2)
+    # Plot the peak time point
+    peak = times[np.argsort(np.mean(rsa[chan], 0))[::-1][0]]
+    text = str(int(peak * 1000)) + ' ms'
+    max_rsa = max(np.mean(rsa[chan], 0))
+    axs[0].text(peak, max_rsa+0.015, text, color='k', ha='center')
+    #axs[0].plot([peak, peak], [max_rsa, -100], '--', linewidth=3, color=colors[0],
+    #    alpha=.5)
 
-# Plot the significance markers
-sig = np.empty(len(times))
-sig[:] = np.nan
-sig[sig_rsa] = -.015
-plt.scatter(times, sig, s=100, color=colors[0])
+    # Plot the confidence intervals
+    axs[0].fill_between(times, ci_rsa[chan][1], ci_rsa[chan][0],
+        color=colors[c], alpha=.2)
+
+    # Plot the significance markers
+    sig = np.empty(len(times))
+    sig[:] = np.nan
+    sig[sig_rsa[chan]] = -.015
+    plt.scatter(times, sig, s=100, color=colors[c])
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
