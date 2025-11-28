@@ -38,7 +38,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'behavioral_modeling', 'plots')
+    'vision', 'eeg', 'behavioral_modeling_single_exemplars', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -47,7 +47,7 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'behavioral_modeling', 'stats', 'stats_'+'channels-'+
+    'behavioral_modeling_single_exemplars', 'stats', 'stats_'+'channels-'+
     '-'.join(args.channels)+'.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
@@ -112,7 +112,7 @@ axs[0].fill_between(times, ci_rsa[1], ci_rsa[0], color=colors[0], alpha=.2)
 # Plot the significance markers
 sig = np.empty(len(times))
 sig[:] = np.nan
-sig[sig_rsa] = -.015
+sig[sig_rsa] = -.01
 plt.scatter(times, sig, s=100, color=colors[0])
 
 # x-axis parameters
@@ -127,7 +127,7 @@ axs[0].set_ylabel("RSA (Pearson's $r$)", fontsize=fontsize)
 yticks = [0, 0.05, 0.1, 0.15, 0.2, 0.25]
 ylabels = [0, 0.05, 0.1, 0.15, 0.2, 0.25]
 plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
-axs[0].set_ylim(bottom=-.03, top=.25)
+axs[0].set_ylim(bottom=-.02, top=.15)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'rsa_channels-'+'-'.join(args.channels)+

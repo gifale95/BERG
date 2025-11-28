@@ -90,7 +90,7 @@ image_path = os.path.join(args.berg_dir,
 # Animate images
 animate_imgs = os.listdir(os.path.join(image_path, 'animate'))
 animate_imgs.sort()
-for img_file in animate_imgs:
+for img_file in tqdm(animate_imgs):
     img = Image.open(os.path.join(image_path, 'animate', img_file))
     img = np.asarray(img)
     img = np.swapaxes(np.swapaxes(img, 0, 2), 1, 2)
@@ -99,7 +99,7 @@ for img_file in animate_imgs:
 # Inanimate images
 inanimate_imgs = os.listdir(os.path.join(image_path, 'inanimate'))
 inanimate_imgs.sort()
-for img_file in inanimate_imgs:
+for img_file in tqdm(inanimate_imgs):
     img = Image.open(os.path.join(image_path, 'inanimate', img_file))
     img = np.asarray(img)
     img = np.swapaxes(np.swapaxes(img, 0, 2), 1, 2)
