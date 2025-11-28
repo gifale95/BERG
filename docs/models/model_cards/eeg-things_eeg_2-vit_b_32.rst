@@ -47,6 +47,66 @@ Independent encoding models were trained for each of the 4 training data repeats
 generate 4 instances (i.e., repeats) of in silico EEG responses.  Indepedent encoding models were trained for each subject,
 channel, and time point.
 
+Metadata
+--------
+
+**'eeg'**
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
+   * - ch_names
+     - ``(63,)``
+     - EEG channel names (electrode labels)
+   * - times
+     - ``(140,)``
+     - Time points relative to stimulus onset (seconds)
+
+**'encoding_models'**
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
+   * - correlation_averaged_repetitions
+     - ``(63, 140)``
+     - Correlation scores across channels and time (averaged over repetitions)
+   * - correlation_single_repetitions
+     - ``(4, 63, 140)``
+     - Correlation scores for individual repetitions across channels and time
+   * - train_img_info
+     - ``dict``
+     - Training image metadata
+   * - train_img_concepts
+     - ``(16540,)``
+     - Concept labels for training images
+   * - train_img_concepts_THINGS
+     - ``(16540,)``
+     - THINGS dataset concept labels for training images
+   * - train_img_files
+     - ``(16540,)``
+     - Image filenames for training stimuli
+   * - test_img_info
+     - ``dict``
+     - Test image metadata
+   * - test_img_concepts
+     - ``(200,)``
+     - Concept labels for test images
+   * - test_img_concepts_THINGS
+     - ``(200,)``
+     - THINGS dataset concept labels for test images
+   * - test_img_files
+     - ``(200,)``
+     - Image filenames for test stimuli
+
+
 Input
 -----
 
@@ -116,20 +176,20 @@ This function loads the encoding model.
        |     **Type:** list[str]
        |     **Description:** List of EEG channel names to include in the output
        |     **Valid values:** "Fp1", "F3", "F7", "FT9", "FC5", "FC1", "C3", "T7", "TP9", "CP5", "CP1", "Pz", "P3", "P7", "O1", "Oz", "O2", "P4", "P8", "TP10", "CP6", "CP2", "Cz", "C4", "T8", "FT10", "FC6", "FC2", "F4", "F8", "Fp2", "AF7", "AF3", "AFz", "F1", "F5", "FT7", "FC3", "FCz", "C1", "C5", "TP7", "CP3", "P1", "P5", "PO7", "PO3", "POz", "PO4", "PO8", "P6", "P2", "CPz", "CP4", "TP8", "C6", "C2", "FC4", "FT8", "F6", "F2", "AF4", "AF8"
-       |     **Example:** ["Oz", "Cz", "Fp1"]
+       |     **Example:** ['Oz', 'Cz', 'Fp1']
        | 
        | **timepoints**
        |     **Type:** numpy.ndarray
        |     **Description:** Binary one-hot encoded vector indicating which timepoints to include.
        |     Must have exactly the same length as the number of available timepoints (140).
        |     Each position set to 1 indicates that timepoint should be included.
-       |     **Example:** [0, 0, ..., 1, 1, 0]
+       |     **Example:** [0, 0, '...', 1, 1, 0]
    * - **device**
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** 'cpu', 'cuda', 'auto'
-       | **Example:** 'auto'
+       | **Valid Values:** cpu, cuda, auto
+       | **Example:** auto
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,7 +241,6 @@ Example Usage
             "channels": ["Oz", "Cz", "Fp1"]
             "timepoints": [0, 0, '...', 1, 1, 0]
         },
-        device="auto"
     )
     
     # Prepare the stimulus images
@@ -213,7 +272,7 @@ Example Usage
 References
 ---------
 
-* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-things_eeg_2/model-vit_b_32
+* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code
 * THINGS EEG2 (Gifford et al., 2022): https://doi.org/10.1016/j.neuroimage.2022.119754
 * THINGS initiative (Hebart et al., 2019): https://things-initiative.org/
 * ViT-B/32 (Dosovitskiy et al., 2020): https://arxiv.org/abs/2010.11929

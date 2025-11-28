@@ -46,6 +46,59 @@ all subjects saw for up to three times during the NSD experiment).
 **Model testing partition.** fMRI responses for 515/1,000 shared images (i.e., the 515 images that each subject saw for
 exactly three times during the NSD experiment).
 
+Metadata
+--------
+
+NOTE: Metadata files are generated separately for each ROI, containing only voxels within that region.
+
+**'fmri'**
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
+   * - ncsnr
+     - ``(n_voxels,)``
+     - Noise-ceiling signal-to-noise ratio per voxel (ROI-specific)
+   * - roi_mask_volume
+     - ``(81, 104, 83)``
+     - Binary mask defining voxel locations in volume space for this ROI
+   * - fmri_affine
+     - ``(4, 4)``
+     - Affine transformation matrix for volume-to-world coordinate mapping
+
+**'encoding_models'**
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
+   * - r2
+     - ``(n_voxels,)``
+     - R² scores per voxel
+   * - noise_ceiling
+     - ``(n_voxels,)``
+     - Noise ceiling per voxel (max explainable variance)
+   * - explained_variance
+     - ``(n_voxels,)``
+     - Percentage of noise ceiling explained by model
+   * - train_img_num
+     - ``(9000,)``
+     - Image indices used for training
+   * - val_img_num
+     - ``(485,)``
+     - Image indices used for validation
+   * - test_img_num
+     - ``(515,)``
+     - Image indices used for testing
+
+
 Input
 -----
 
@@ -142,8 +195,8 @@ This function loads the encoding model.
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** 'cpu', 'cuda', 'auto'
-       | **Example:** 'auto'
+       | **Valid Values:** cpu, cuda, auto
+       | **Example:** auto
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -189,7 +242,6 @@ Example Usage
         selection={
             "roi": "V1"
         },
-        device="auto"
     )
     
     # Prepare the stimulus images
@@ -219,7 +271,7 @@ Example Usage
 References
 ---------
 
-* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-nsd/model-fwrf
+* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code
 * NSD paper (Allen et al., 2022): https://doi.org/10.1038/s41593-021-00962-x
 * fwRF model (St-Yves et al., 2018): https://doi.org/10.1016/j.neuroimage.2017.06.035
 * COCO dataset (Lin et al., 2014): https://cocodataset.org/#home

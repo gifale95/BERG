@@ -66,6 +66,97 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         rst_content.append(line)
     rst_content.append("")
     
+    # Metadata section
+    if "metadata" in data:
+        rst_content.extend(["Metadata", "--------", ""])
+        metadata = data.get("metadata", "").strip()
+        
+        # Parse metadata structure
+        lines = metadata.split("\n")
+        current_section = None
+        section_data = {}
+        preamble_lines = []  # Store note/comment lines before structured data
+        in_structured_section = False
+        
+        for line in lines:
+            line_stripped = line.strip()
+            if not line_stripped:
+                continue
+            
+            # Check if this is a top-level key (ends with : and no -)
+            if line_stripped.endswith(":") and " - " not in line_stripped:
+                in_structured_section = True
+                
+                # Output preamble if we have any
+                if preamble_lines and not current_section:
+                    for preamble_line in preamble_lines:
+                        rst_content.append(preamble_line)
+                    rst_content.append("")
+                    preamble_lines = []
+                
+                # Save previous section if exists
+                if current_section and current_section in section_data:
+                    # Create table for previous section
+                    rst_content.append(f"**{current_section}**")
+                    rst_content.append("")
+                    rst_content.append(".. list-table::")
+                    rst_content.append("   :widths: 30 20 50")
+                    rst_content.append("   :header-rows: 1")
+                    rst_content.append("")
+                    rst_content.append("   * - Key")
+                    rst_content.append("     - Shape/Type")
+                    rst_content.append("     - Description")
+                    
+                    for key, shape, desc in section_data[current_section]:
+                        rst_content.append(f"   * - {key}")
+                        rst_content.append(f"     - ``{shape}``")
+                        rst_content.append(f"     - {desc}")
+                    
+                    rst_content.append("")
+                
+                # Start new section
+                current_section = line_stripped.rstrip(":")
+                section_data[current_section] = []
+            else:
+                # Check if this is structured data (key : shape - description)
+                if ":" in line_stripped and " - " in line_stripped:
+                    in_structured_section = True
+                    # Split on first : to get key
+                    key_part, rest = line_stripped.split(":", 1)
+                    key = key_part.strip()
+                    
+                    # Split on - to get shape and description
+                    shape_part, desc_part = rest.split(" - ", 1)
+                    shape = shape_part.strip()
+                    desc = desc_part.strip()
+                    
+                    if current_section:
+                        section_data[current_section].append((key, shape, desc))
+                elif not in_structured_section:
+                    # This is preamble text (like NOTE:)
+                    preamble_lines.append(line_stripped)
+        
+        # Handle the last section
+        if current_section and current_section in section_data:
+            rst_content.append(f"**{current_section}**")
+            rst_content.append("")
+            rst_content.append(".. list-table::")
+            rst_content.append("   :widths: 30 20 50")
+            rst_content.append("   :header-rows: 1")
+            rst_content.append("")
+            rst_content.append("   * - Key")
+            rst_content.append("     - Shape/Type")
+            rst_content.append("     - Description")
+            
+            for key, shape, desc in section_data[current_section]:
+                rst_content.append(f"   * - {key}")
+                rst_content.append(f"     - ``{shape}``")
+                rst_content.append(f"     - {desc}")
+            
+            rst_content.append("")
+        
+        rst_content.append("")
+    
     # Input section
     rst_content.extend(["Input", "-----", ""])
     input_data = data.get("input", {})
@@ -514,5 +605,5 @@ if __name__ == "__main__":
 # 2. Convert a YAML file to RST with specific output path:
 #    python yaml_to_rst.py fmri_nsd_fwrf.yaml docs/model_cards/fmri_nsd_fwrf.rst
     
-# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-nsd-fwrf.yaml source/models/model_cards/fmri-nsd-fwrf.rst
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-things_fmri_1-vit_b_32.yaml source/models/model_cards/fmri-things_fmri_1-vit_b_32.rst
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml source/models/model_cards/eeg-things_eeg_2-vit_b_32.rst
