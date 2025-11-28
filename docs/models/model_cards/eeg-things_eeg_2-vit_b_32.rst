@@ -61,10 +61,10 @@ Metadata
      - Description
    * - ch_names
      - ``(63,)``
-     - EEG channel names (electrode labels)
+     - EEG channel names
    * - times
      - ``(140,)``
-     - Time points relative to stimulus onset (seconds)
+     - Time points relative to stimulus onset
 
 **'encoding_models'**
 
@@ -81,9 +81,6 @@ Metadata
    * - correlation_single_repetitions
      - ``(4, 63, 140)``
      - Correlation scores for individual repetitions across channels and time
-   * - train_img_info
-     - ``dict``
-     - Training image metadata
    * - train_img_concepts
      - ``(16540,)``
      - Concept labels for training images
@@ -93,9 +90,6 @@ Metadata
    * - train_img_files
      - ``(16540,)``
      - Image filenames for training stimuli
-   * - test_img_info
-     - ``dict``
-     - Test image metadata
    * - test_img_concepts
      - ``(200,)``
      - Concept labels for test images

@@ -32,16 +32,16 @@ description: |
 
 metadata: |
   'eeg':
-      ch_names                           : (63,)       - EEG channel names (electrode labels)
-      times                              : (140,)      - Time points relative to stimulus onset (seconds)
+      ch_names                           : (63,)       - EEG channel names 
+      times                              : (140,)      - Time points relative to stimulus onset
   'encoding_models':
       correlation_averaged_repetitions   : (63, 140)   - Correlation scores across channels and time (averaged over repetitions)
       correlation_single_repetitions     : (4, 63, 140) - Correlation scores for individual repetitions across channels and time
-      train_img_info                     : dict        - Training image metadata
+      train_img_info                     : dict        
           train_img_concepts             : (16540,)    - Concept labels for training images
           train_img_concepts_THINGS      : (16540,)    - THINGS dataset concept labels for training images
           train_img_files                : (16540,)    - Image filenames for training stimuli
-      test_img_info                      : dict        - Test image metadata
+      test_img_info                      : dict        
           test_img_concepts              : (200,)      - Concept labels for test images
           test_img_concepts_THINGS       : (200,)      - THINGS dataset concept labels for test images
           test_img_files                 : (200,)      - Image filenames for test stimuli
