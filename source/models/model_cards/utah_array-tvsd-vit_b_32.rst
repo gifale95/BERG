@@ -289,7 +289,7 @@ Performance
 
 **Accuracy Plots:**
 
-* ``brain-encoding-response-generator/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy``
+* ``brain-encoding-response-generator/encoding_models/modality-utah_array/train_dataset-tvsd/model-vit_b_32/encoding_models_accuracy``
 
 Example Usage
 ------------
@@ -342,7 +342,7 @@ Example Usage
 References
 ---------
 
-* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code
+* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-tvsd/model-vit_b_32
 * TVSD Paper (Papale et al., 2025): https://www.sciencedirect.com/science/article/pii/S089662732400881X
 * TVSD Data (Papale et al., 2025): https://gin.g-node.org/paolo_papale/TVSD
 * ViT-B/32 (Dosovitskiy et al., 2020): https://arxiv.org/abs/2010.11929

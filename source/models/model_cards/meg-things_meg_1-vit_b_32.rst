@@ -294,6 +294,10 @@ This function generates in silico neural responses using the encoding model prev
 Performance
 ----------
 
+**Accuracy Plots (AWS directory):**
+
+* ``brain-encoding-response-generator/encoding_models/modality-meg/train_dataset-things_meg_1/model-vit_b_32/encoding_models_accuracy``
+
 Example Usage
 ------------
 
@@ -346,7 +350,8 @@ Example Usage
 References
 ---------
 
-* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code
-* THINGS MEG & fMRI Paper (Hebart et al., 2023): https://elifesciences.org/articles/82580
+* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-things_meg_1/model-vit_b_32
+* THINGS MEG & fMRI Paper (Hebart et al., 2023): https://doi.org/10.7554/eLife.82580
 * THINGS MEG & fMRI Data (Hebart et al., 2023): https://plus.figshare.com/collections/_/6161151
+* THINGS initiative (Hebart et al., 2019): https://things-initiative.org/
 * ViT-B/32 (Dosovitskiy et al., 2020): https://arxiv.org/abs/2010.11929
