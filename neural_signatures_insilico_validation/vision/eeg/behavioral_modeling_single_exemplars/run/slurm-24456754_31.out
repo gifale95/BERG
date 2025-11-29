@@ -1,0 +1,814 @@
+SLURM_ARRAY_JOB_ID: 31
+subject: 6
+channels: P
+>>> RSA <<<
+
+Input arguments:
+encoding_model   eeg-things_eeg_2-vit_b_32
+subject          6
+channels         ['P']
+berg_dir         /scratch/giffordale95/projects/brain-encoding-response-generator
+things_dir       /scratch/giffordale95/datasets/image_sets/things_database
+Model loaded on cpu for subject 6
+  0%|          | 0/200 [00:00<?, ?it/s]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=23, Total images=23][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.40s/it, Encoded images=23, Total images=23][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.40s/it, Encoded images=23, Total images=23]
+  0%|          | 1/200 [00:03<11:37,  3.50s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+  1%|          | 2/200 [00:05<07:50,  2.38s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=20, Total images=20][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.99s/it, Encoded images=20, Total images=20][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.99s/it, Encoded images=20, Total images=20]
+  2%|▏         | 3/200 [00:07<08:20,  2.54s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.42s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.42s/it, Encoded images=13, Total images=13]
+  2%|▏         | 4/200 [00:09<07:37,  2.34s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13]
+  2%|▎         | 5/200 [00:12<07:34,  2.33s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.32s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.32s/it, Encoded images=12, Total images=12]
+  3%|▎         | 6/200 [00:13<06:57,  2.15s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14]
+  4%|▎         | 7/200 [00:15<06:34,  2.04s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.39s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.39s/it, Encoded images=13, Total images=13]
+  4%|▍         | 8/200 [00:17<06:20,  1.98s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=19, Total images=19][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.92s/it, Encoded images=19, Total images=19][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.92s/it, Encoded images=19, Total images=19]
+  4%|▍         | 9/200 [00:20<07:14,  2.28s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=18, Total images=18][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.87s/it, Encoded images=18, Total images=18][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.87s/it, Encoded images=18, Total images=18]
+  5%|▌         | 10/200 [00:22<07:17,  2.30s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+  6%|▌         | 11/200 [00:24<06:51,  2.18s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=17, Total images=17][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.77s/it, Encoded images=17, Total images=17][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.77s/it, Encoded images=17, Total images=17]
+  6%|▌         | 12/200 [00:27<07:27,  2.38s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.66s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.66s/it, Encoded images=16, Total images=16]
+  6%|▋         | 13/200 [00:30<07:25,  2.38s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=23, Total images=23][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.37s/it, Encoded images=23, Total images=23][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.37s/it, Encoded images=23, Total images=23]
+  7%|▋         | 14/200 [00:33<08:45,  2.82s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=18, Total images=18][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.84s/it, Encoded images=18, Total images=18][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.84s/it, Encoded images=18, Total images=18]
+  8%|▊         | 15/200 [00:36<08:53,  2.88s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14]
+  8%|▊         | 16/200 [00:38<07:55,  2.58s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15]
+  8%|▊         | 17/200 [00:41<07:32,  2.47s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=17, Total images=17][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.77s/it, Encoded images=17, Total images=17][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.77s/it, Encoded images=17, Total images=17]
+  9%|▉         | 18/200 [00:43<07:20,  2.42s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12]
+ 10%|▉         | 19/200 [00:45<06:40,  2.21s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.58s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.58s/it, Encoded images=15, Total images=15]
+ 10%|█         | 20/200 [00:47<06:35,  2.20s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.66s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.66s/it, Encoded images=16, Total images=16]
+ 10%|█         | 21/200 [00:49<06:36,  2.21s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=22, Total images=22][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.23s/it, Encoded images=22, Total images=22][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.23s/it, Encoded images=22, Total images=22]
+ 11%|█         | 22/200 [00:52<07:09,  2.41s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.49s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.49s/it, Encoded images=14, Total images=14]
+ 12%|█▏        | 23/200 [00:54<06:49,  2.31s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=17, Total images=17][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.76s/it, Encoded images=17, Total images=17][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.76s/it, Encoded images=17, Total images=17]
+ 12%|█▏        | 24/200 [00:56<06:40,  2.27s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 12%|█▎        | 25/200 [00:58<06:03,  2.08s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.40s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.40s/it, Encoded images=13, Total images=13]
+ 13%|█▎        | 26/200 [01:00<06:01,  2.08s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+ 14%|█▎        | 27/200 [01:01<05:38,  1.95s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.33s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.33s/it, Encoded images=12, Total images=12]
+ 14%|█▍        | 28/200 [01:03<05:23,  1.88s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.47s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.47s/it, Encoded images=14, Total images=14]
+ 14%|█▍        | 29/200 [01:05<05:15,  1.84s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14]
+ 15%|█▌        | 30/200 [01:07<05:23,  1.90s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 16%|█▌        | 31/200 [01:09<05:19,  1.89s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.59s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.59s/it, Encoded images=15, Total images=15]
+ 16%|█▌        | 32/200 [01:11<05:29,  1.96s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 16%|█▋        | 33/200 [01:13<05:12,  1.87s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=21, Total images=21][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.11s/it, Encoded images=21, Total images=21][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.11s/it, Encoded images=21, Total images=21]
+ 17%|█▋        | 34/200 [01:16<06:20,  2.29s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 18%|█▊        | 35/200 [01:18<05:57,  2.17s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.64s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.64s/it, Encoded images=16, Total images=16]
+ 18%|█▊        | 36/200 [01:20<06:04,  2.22s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=19, Total images=19][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.98s/it, Encoded images=19, Total images=19][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.98s/it, Encoded images=19, Total images=19]
+ 18%|█▊        | 37/200 [01:23<06:15,  2.30s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.58s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.58s/it, Encoded images=15, Total images=15]
+ 19%|█▉        | 38/200 [01:25<05:57,  2.21s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.39s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.39s/it, Encoded images=13, Total images=13]
+ 20%|█▉        | 39/200 [01:27<05:41,  2.12s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+ 20%|██        | 40/200 [01:28<05:18,  1.99s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12]
+ 20%|██        | 41/200 [01:30<04:57,  1.87s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12]
+ 21%|██        | 42/200 [01:31<04:41,  1.78s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=22, Total images=22][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.20s/it, Encoded images=22, Total images=22][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.20s/it, Encoded images=22, Total images=22]
+ 22%|██▏       | 43/200 [01:34<05:32,  2.12s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.36s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.36s/it, Encoded images=13, Total images=13]
+ 22%|██▏       | 44/200 [01:36<05:17,  2.04s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 22%|██▎       | 45/200 [01:38<05:03,  1.96s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13]
+ 23%|██▎       | 46/200 [01:40<05:13,  2.04s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=20, Total images=20][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.05s/it, Encoded images=20, Total images=20][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.05s/it, Encoded images=20, Total images=20]
+ 24%|██▎       | 47/200 [01:43<06:11,  2.43s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+ 24%|██▍       | 48/200 [01:45<05:31,  2.18s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14]
+ 24%|██▍       | 49/200 [01:47<05:37,  2.24s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.55s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.55s/it, Encoded images=15, Total images=15]
+ 25%|██▌       | 50/200 [01:50<05:48,  2.32s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12]
+ 26%|██▌       | 51/200 [01:51<05:09,  2.08s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.51s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.51s/it, Encoded images=14, Total images=14]
+ 26%|██▌       | 52/200 [01:53<05:01,  2.03s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=17, Total images=17][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.75s/it, Encoded images=17, Total images=17][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.75s/it, Encoded images=17, Total images=17]
+ 26%|██▋       | 53/200 [01:56<05:04,  2.07s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=19, Total images=19][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.98s/it, Encoded images=19, Total images=19][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.98s/it, Encoded images=19, Total images=19]
+ 27%|██▋       | 54/200 [01:58<05:17,  2.18s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=19, Total images=19][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.97s/it, Encoded images=19, Total images=19][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.97s/it, Encoded images=19, Total images=19]
+ 28%|██▊       | 55/200 [02:00<05:21,  2.22s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=17, Total images=17][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.78s/it, Encoded images=17, Total images=17][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.78s/it, Encoded images=17, Total images=17]
+ 28%|██▊       | 56/200 [02:03<05:41,  2.37s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14]
+ 28%|██▊       | 57/200 [02:06<05:52,  2.47s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=21, Total images=21][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.08s/it, Encoded images=21, Total images=21][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.08s/it, Encoded images=21, Total images=21]
+ 29%|██▉       | 58/200 [02:08<05:57,  2.52s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 30%|██▉       | 59/200 [02:10<05:14,  2.23s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 30%|███       | 60/200 [02:12<04:47,  2.05s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=17, Total images=17][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.82s/it, Encoded images=17, Total images=17][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.82s/it, Encoded images=17, Total images=17]
+ 30%|███       | 61/200 [02:14<05:17,  2.29s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14]
+ 31%|███       | 62/200 [02:16<04:58,  2.16s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 32%|███▏      | 63/200 [02:18<04:32,  1.99s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=22, Total images=22][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.23s/it, Encoded images=22, Total images=22][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.23s/it, Encoded images=22, Total images=22]
+ 32%|███▏      | 64/200 [02:20<04:58,  2.19s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.67s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.67s/it, Encoded images=16, Total images=16]
+ 32%|███▎      | 65/200 [02:23<05:02,  2.24s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13]
+ 33%|███▎      | 66/200 [02:25<04:38,  2.08s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15]
+ 34%|███▎      | 67/200 [02:27<04:35,  2.07s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13]
+ 34%|███▍      | 68/200 [02:28<04:18,  1.96s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=21, Total images=21][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.16s/it, Encoded images=21, Total images=21][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.16s/it, Encoded images=21, Total images=21]
+ 34%|███▍      | 69/200 [02:31<04:43,  2.16s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 35%|███▌      | 70/200 [02:33<04:21,  2.01s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15]
+ 36%|███▌      | 71/200 [02:35<04:30,  2.10s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+ 36%|███▌      | 72/200 [02:36<04:09,  1.95s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12]
+ 36%|███▋      | 73/200 [02:38<03:55,  1.85s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+ 37%|███▋      | 74/200 [02:40<03:45,  1.79s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 38%|███▊      | 75/200 [02:41<03:35,  1.73s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=22, Total images=22][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.28s/it, Encoded images=22, Total images=22][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.28s/it, Encoded images=22, Total images=22]
+ 38%|███▊      | 76/200 [02:44<04:17,  2.08s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=19, Total images=19][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.99s/it, Encoded images=19, Total images=19][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.99s/it, Encoded images=19, Total images=19]
+ 38%|███▊      | 77/200 [02:47<04:30,  2.20s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 39%|███▉      | 78/200 [02:48<04:07,  2.03s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+ 40%|███▉      | 79/200 [02:50<03:58,  1.97s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 40%|████      | 80/200 [02:52<03:50,  1.92s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12]
+ 40%|████      | 81/200 [02:54<03:39,  1.84s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 41%|████      | 82/200 [02:56<03:39,  1.86s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.65s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.65s/it, Encoded images=16, Total images=16]
+ 42%|████▏     | 83/200 [02:58<04:00,  2.06s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+ 42%|████▏     | 84/200 [03:00<03:44,  1.94s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 42%|████▎     | 85/200 [03:02<03:49,  1.99s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.68s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.68s/it, Encoded images=16, Total images=16]
+ 43%|████▎     | 86/200 [03:04<03:52,  2.04s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.68s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.68s/it, Encoded images=16, Total images=16]
+ 44%|████▎     | 87/200 [03:06<03:52,  2.06s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=21, Total images=21][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.12s/it, Encoded images=21, Total images=21][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.12s/it, Encoded images=21, Total images=21]
+ 44%|████▍     | 88/200 [03:09<04:09,  2.23s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=20, Total images=20][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.00s/it, Encoded images=20, Total images=20][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.00s/it, Encoded images=20, Total images=20]
+ 44%|████▍     | 89/200 [03:12<04:31,  2.45s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.31s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.31s/it, Encoded images=12, Total images=12]
+ 45%|████▌     | 90/200 [03:13<04:01,  2.19s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 46%|████▌     | 91/200 [03:15<03:38,  2.00s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12]
+ 46%|████▌     | 92/200 [03:17<03:35,  2.00s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12]
+ 46%|████▋     | 93/200 [03:18<03:22,  1.89s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12]
+ 47%|████▋     | 94/200 [03:20<03:21,  1.90s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12]
+ 48%|████▊     | 95/200 [03:22<03:16,  1.87s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.60s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.60s/it, Encoded images=15, Total images=15]
+ 48%|████▊     | 96/200 [03:24<03:17,  1.90s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 48%|████▊     | 97/200 [03:26<03:07,  1.82s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14]
+ 49%|████▉     | 98/200 [03:28<03:15,  1.92s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 50%|████▉     | 99/200 [03:29<03:00,  1.79s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.58s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.58s/it, Encoded images=15, Total images=15]
+ 50%|█████     | 100/200 [03:32<03:10,  1.90s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.41s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.41s/it, Encoded images=13, Total images=13]
+ 50%|█████     | 101/200 [03:33<03:03,  1.86s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13]
+ 51%|█████     | 102/200 [03:35<03:07,  1.92s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.57s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.57s/it, Encoded images=15, Total images=15]
+ 52%|█████▏    | 103/200 [03:37<03:03,  1.89s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.62s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.62s/it, Encoded images=16, Total images=16]
+ 52%|█████▏    | 104/200 [03:39<03:08,  1.96s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13]
+ 52%|█████▎    | 105/200 [03:41<03:02,  1.93s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.67s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.67s/it, Encoded images=16, Total images=16]
+ 53%|█████▎    | 106/200 [03:43<03:03,  1.95s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 54%|█████▎    | 107/200 [03:45<02:58,  1.92s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 54%|█████▍    | 108/200 [03:47<02:53,  1.89s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12]
+ 55%|█████▍    | 109/200 [03:49<02:47,  1.84s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12]
+ 55%|█████▌    | 110/200 [03:50<02:41,  1.79s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12]
+ 56%|█████▌    | 111/200 [03:52<02:41,  1.81s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14]
+ 56%|█████▌    | 112/200 [03:54<02:49,  1.93s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 56%|█████▋    | 113/200 [03:56<02:42,  1.86s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 57%|█████▋    | 114/200 [03:58<02:32,  1.77s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=19, Total images=19][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.92s/it, Encoded images=19, Total images=19][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.92s/it, Encoded images=19, Total images=19]
+ 57%|█████▊    | 115/200 [04:01<03:08,  2.22s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12]
+ 58%|█████▊    | 116/200 [04:02<02:50,  2.03s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=19, Total images=19][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.93s/it, Encoded images=19, Total images=19][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.93s/it, Encoded images=19, Total images=19]
+ 58%|█████▊    | 117/200 [04:05<03:08,  2.27s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 59%|█████▉    | 118/200 [04:07<02:51,  2.09s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.47s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.47s/it, Encoded images=14, Total images=14]
+ 60%|█████▉    | 119/200 [04:09<02:46,  2.06s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14]
+ 60%|██████    | 120/200 [04:11<02:37,  1.96s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14]
+ 60%|██████    | 121/200 [04:13<02:33,  1.94s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.57s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.57s/it, Encoded images=15, Total images=15]
+ 61%|██████    | 122/200 [04:15<02:42,  2.09s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=18, Total images=18][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.83s/it, Encoded images=18, Total images=18][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.83s/it, Encoded images=18, Total images=18]
+ 62%|██████▏   | 123/200 [04:18<03:03,  2.38s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.55s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.55s/it, Encoded images=15, Total images=15]
+ 62%|██████▏   | 124/200 [04:20<02:59,  2.37s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13]
+ 62%|██████▎   | 125/200 [04:22<02:46,  2.22s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=17, Total images=17][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.74s/it, Encoded images=17, Total images=17][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.74s/it, Encoded images=17, Total images=17]
+ 63%|██████▎   | 126/200 [04:25<02:55,  2.37s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=19, Total images=19][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.94s/it, Encoded images=19, Total images=19][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.94s/it, Encoded images=19, Total images=19]
+ 64%|██████▎   | 127/200 [04:27<02:53,  2.38s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.39s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.39s/it, Encoded images=13, Total images=13]
+ 64%|██████▍   | 128/200 [04:29<02:39,  2.21s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.47s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.47s/it, Encoded images=14, Total images=14]
+ 64%|██████▍   | 129/200 [04:31<02:28,  2.08s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 65%|██████▌   | 130/200 [04:33<02:17,  1.96s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13]
+ 66%|██████▌   | 131/200 [04:34<02:09,  1.88s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15]
+ 66%|██████▌   | 132/200 [04:36<02:07,  1.87s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=21, Total images=21][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.10s/it, Encoded images=21, Total images=21][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.10s/it, Encoded images=21, Total images=21]
+ 66%|██████▋   | 133/200 [04:39<02:19,  2.08s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12]
+ 67%|██████▋   | 134/200 [04:41<02:11,  2.00s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=19, Total images=19][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.95s/it, Encoded images=19, Total images=19][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.95s/it, Encoded images=19, Total images=19]
+ 68%|██████▊   | 135/200 [04:43<02:16,  2.11s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 68%|██████▊   | 136/200 [04:44<02:02,  1.92s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 68%|██████▊   | 137/200 [04:46<01:53,  1.80s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.62s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.62s/it, Encoded images=16, Total images=16]
+ 69%|██████▉   | 138/200 [04:48<01:57,  1.90s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.43s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.43s/it, Encoded images=14, Total images=14]
+ 70%|██████▉   | 139/200 [04:50<01:53,  1.87s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.57s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.57s/it, Encoded images=15, Total images=15]
+ 70%|███████   | 140/200 [04:52<01:55,  1.92s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.30s/it, Encoded images=12, Total images=12]
+ 70%|███████   | 141/200 [04:54<01:48,  1.85s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 71%|███████   | 142/200 [04:55<01:42,  1.77s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13]
+ 72%|███████▏  | 143/200 [04:57<01:40,  1.76s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=24, Total images=24][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.37s/it, Encoded images=24, Total images=24][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.37s/it, Encoded images=24, Total images=24]
+ 72%|███████▏  | 144/200 [05:00<01:59,  2.13s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14]
+ 72%|███████▎  | 145/200 [05:02<01:52,  2.05s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.31s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.31s/it, Encoded images=12, Total images=12]
+ 73%|███████▎  | 146/200 [05:03<01:45,  1.95s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.54s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.54s/it, Encoded images=15, Total images=15]
+ 74%|███████▎  | 147/200 [05:06<01:44,  1.98s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 74%|███████▍  | 148/200 [05:07<01:38,  1.88s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=17, Total images=17][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.73s/it, Encoded images=17, Total images=17][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.73s/it, Encoded images=17, Total images=17]
+ 74%|███████▍  | 149/200 [05:10<01:43,  2.03s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 75%|███████▌  | 150/200 [05:11<01:35,  1.91s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.63s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.63s/it, Encoded images=15, Total images=15]
+ 76%|███████▌  | 151/200 [05:14<01:48,  2.22s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14]
+ 76%|███████▌  | 152/200 [05:16<01:41,  2.12s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.45s/it, Encoded images=14, Total images=14]
+ 76%|███████▋  | 153/200 [05:19<01:47,  2.29s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.54s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.54s/it, Encoded images=15, Total images=15]
+ 77%|███████▋  | 154/200 [05:21<01:41,  2.21s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.61s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.61s/it, Encoded images=15, Total images=15]
+ 78%|███████▊  | 155/200 [05:23<01:42,  2.28s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 78%|███████▊  | 156/200 [05:25<01:31,  2.07s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.64s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.64s/it, Encoded images=16, Total images=16]
+ 78%|███████▊  | 157/200 [05:27<01:30,  2.09s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15]
+ 79%|███████▉  | 158/200 [05:29<01:29,  2.13s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.58s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.58s/it, Encoded images=15, Total images=15]
+ 80%|███████▉  | 159/200 [05:31<01:26,  2.11s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.70s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.70s/it, Encoded images=16, Total images=16]
+ 80%|████████  | 160/200 [05:33<01:26,  2.16s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12]
+ 80%|████████  | 161/200 [05:35<01:17,  2.00s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 81%|████████  | 162/200 [05:37<01:12,  1.90s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.48s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.48s/it, Encoded images=14, Total images=14]
+ 82%|████████▏ | 163/200 [05:39<01:12,  1.95s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.48s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.48s/it, Encoded images=14, Total images=14]
+ 82%|████████▏ | 164/200 [05:41<01:12,  2.00s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+ 82%|████████▎ | 165/200 [05:43<01:06,  1.91s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 83%|████████▎ | 166/200 [05:45<01:05,  1.93s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.64s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.64s/it, Encoded images=16, Total images=16]
+ 84%|████████▎ | 167/200 [05:47<01:10,  2.14s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 84%|████████▍ | 168/200 [05:50<01:17,  2.41s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13]
+ 84%|████████▍ | 169/200 [05:53<01:14,  2.39s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.40s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.40s/it, Encoded images=13, Total images=13]
+ 85%|████████▌ | 170/200 [05:55<01:15,  2.53s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.37s/it, Encoded images=13, Total images=13]
+ 86%|████████▌ | 171/200 [05:58<01:17,  2.67s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.38s/it, Encoded images=13, Total images=13]
+ 86%|████████▌ | 172/200 [06:01<01:16,  2.75s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 86%|████████▋ | 173/200 [06:05<01:20,  2.96s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15]
+ 87%|████████▋ | 174/200 [06:08<01:17,  2.99s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.47s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.47s/it, Encoded images=14, Total images=14]
+ 88%|████████▊ | 175/200 [06:12<01:19,  3.19s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.55s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.55s/it, Encoded images=15, Total images=15]
+ 88%|████████▊ | 176/200 [06:15<01:20,  3.35s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.54s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.54s/it, Encoded images=15, Total images=15]
+ 88%|████████▊ | 177/200 [06:18<01:12,  3.14s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12]
+ 89%|████████▉ | 178/200 [06:21<01:05,  3.00s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.68s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.68s/it, Encoded images=16, Total images=16]
+ 90%|████████▉ | 179/200 [06:24<01:04,  3.09s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 90%|█████████ | 180/200 [06:27<01:01,  3.07s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.46s/it, Encoded images=14, Total images=14]
+ 90%|█████████ | 181/200 [06:29<00:54,  2.88s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 91%|█████████ | 182/200 [06:32<00:49,  2.74s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+ 92%|█████████▏| 183/200 [06:34<00:43,  2.55s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=14, Total images=14][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.47s/it, Encoded images=14, Total images=14][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.47s/it, Encoded images=14, Total images=14]
+ 92%|█████████▏| 184/200 [06:37<00:41,  2.58s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.27s/it, Encoded images=12, Total images=12]
+ 92%|█████████▎| 185/200 [06:39<00:38,  2.57s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 93%|█████████▎| 186/200 [06:42<00:36,  2.61s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.43s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.43s/it, Encoded images=13, Total images=13]
+ 94%|█████████▎| 187/200 [06:44<00:32,  2.47s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=17, Total images=17][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.76s/it, Encoded images=17, Total images=17][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.76s/it, Encoded images=17, Total images=17]
+ 94%|█████████▍| 188/200 [06:47<00:31,  2.65s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.25s/it, Encoded images=12, Total images=12]
+ 94%|█████████▍| 189/200 [06:49<00:27,  2.47s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.55s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.55s/it, Encoded images=15, Total images=15]
+ 95%|█████████▌| 190/200 [06:52<00:26,  2.61s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.29s/it, Encoded images=12, Total images=12]
+ 96%|█████████▌| 191/200 [06:54<00:21,  2.38s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.55s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.55s/it, Encoded images=15, Total images=15]
+ 96%|█████████▌| 192/200 [06:56<00:18,  2.34s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.66s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.66s/it, Encoded images=16, Total images=16]
+ 96%|█████████▋| 193/200 [06:59<00:17,  2.45s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=16, Total images=16][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.63s/it, Encoded images=16, Total images=16][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.63s/it, Encoded images=16, Total images=16]
+ 97%|█████████▋| 194/200 [07:01<00:14,  2.37s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=13, Total images=13][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.39s/it, Encoded images=13, Total images=13][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.39s/it, Encoded images=13, Total images=13]
+ 98%|█████████▊| 195/200 [07:04<00:12,  2.56s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+ 98%|█████████▊| 196/200 [07:06<00:10,  2.51s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.26s/it, Encoded images=12, Total images=12]
+ 98%|█████████▊| 197/200 [07:09<00:07,  2.54s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=15, Total images=15][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.56s/it, Encoded images=15, Total images=15]
+ 99%|█████████▉| 198/200 [07:12<00:05,  2.54s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:02<?, ?it/s, Encoded images=26, Total images=26][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.57s/it, Encoded images=26, Total images=26][AEncoding EEG responses: 100%|██████████| 1/1 [00:02<00:00,  2.57s/it, Encoded images=26, Total images=26]
+100%|█████████▉| 199/200 [07:15<00:02,  2.92s/it]
+Encoding EEG responses:   0%|          | 0/1 [00:00<?, ?it/s][A
+Encoding EEG responses:   0%|          | 0/1 [00:01<?, ?it/s, Encoded images=12, Total images=12][A
+Encoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12][AEncoding EEG responses: 100%|██████████| 1/1 [00:01<00:00,  1.28s/it, Encoded images=12, Total images=12]
+100%|██████████| 200/200 [07:17<00:00,  2.50s/it]100%|██████████| 200/200 [07:17<00:00,  2.19s/it]
+  0%|          | 0/140 [00:00<?, ?it/s]  1%|          | 1/140 [00:37<1:27:55, 37.96s/it]  1%|▏         | 2/140 [01:16<1:27:53, 38.22s/it]  2%|▏         | 3/140 [01:54<1:26:49, 38.03s/it]  3%|▎         | 4/140 [02:32<1:26:14, 38.05s/it]  4%|▎         | 5/140 [03:10<1:25:56, 38.20s/it]  4%|▍         | 6/140 [03:48<1:25:16, 38.18s/it]  5%|▌         | 7/140 [04:27<1:24:46, 38.24s/it]  6%|▌         | 8/140 [05:05<1:24:19, 38.33s/it]  6%|▋         | 9/140 [05:44<1:23:41, 38.33s/it]  7%|▋         | 10/140 [06:22<1:23:10, 38.39s/it]  8%|▊         | 11/140 [07:01<1:22:44, 38.49s/it]  9%|▊         | 12/140 [07:39<1:22:10, 38.52s/it]  9%|▉         | 13/140 [08:18<1:21:37, 38.56s/it] 10%|█         | 14/140 [08:57<1:20:57, 38.55s/it] 11%|█         | 15/140 [09:36<1:20:33, 38.66s/it] 11%|█▏        | 16/140 [10:14<1:19:49, 38.63s/it] 12%|█▏        | 17/140 [10:52<1:19:04, 38.57s/it] 13%|█▎        | 18/140 [11:31<1:18:28, 38.59s/it] 14%|█▎        | 19/140 [12:10<1:17:48, 38.59s/it] 14%|█▍        | 20/140 [12:48<1:17:04, 38.53s/it] 15%|█▌        | 21/140 [13:27<1:16:22, 38.51s/it] 16%|█▌        | 22/140 [14:04<1:15:14, 38.26s/it] 16%|█▋        | 23/140 [14:42<1:14:20, 38.13s/it] 17%|█▋        | 24/140 [15:21<1:13:54, 38.23s/it] 18%|█▊        | 25/140 [15:59<1:13:27, 38.33s/it] 19%|█▊        | 26/140 [16:37<1:12:39, 38.24s/it] 19%|█▉        | 27/140 [17:15<1:11:41, 38.07s/it] 20%|██        | 28/140 [17:53<1:10:52, 37.97s/it] 21%|██        | 29/140 [18:31<1:10:17, 37.99s/it] 21%|██▏       | 30/140 [19:09<1:09:55, 38.14s/it] 22%|██▏       | 31/140 [19:47<1:09:07, 38.05s/it] 23%|██▎       | 32/140 [20:25<1:08:33, 38.09s/it] 24%|██▎       | 33/140 [21:03<1:07:59, 38.13s/it] 24%|██▍       | 34/140 [21:41<1:07:17, 38.09s/it] 25%|██▌       | 35/140 [22:19<1:06:35, 38.05s/it] 26%|██▌       | 36/140 [22:58<1:06:03, 38.11s/it] 26%|██▋       | 37/140 [23:35<1:05:14, 38.01s/it] 27%|██▋       | 38/140 [24:13<1:04:31, 37.95s/it] 28%|██▊       | 39/140 [24:51<1:03:46, 37.88s/it] 29%|██▊       | 40/140 [25:29<1:03:10, 37.91s/it] 29%|██▉       | 41/140 [26:07<1:02:45, 38.03s/it] 30%|███       | 42/140 [26:46<1:02:17, 38.14s/it] 31%|███       | 43/140 [27:24<1:01:48, 38.23s/it] 31%|███▏      | 44/140 [28:03<1:01:20, 38.34s/it] 32%|███▏      | 45/140 [28:41<1:00:49, 38.41s/it] 33%|███▎      | 46/140 [29:20<1:00:13, 38.44s/it] 34%|███▎      | 47/140 [29:58<59:44, 38.54s/it]   34%|███▍      | 48/140 [30:37<59:06, 38.55s/it] 35%|███▌      | 49/140 [31:16<58:30, 38.58s/it] 36%|███▌      | 50/140 [31:54<57:49, 38.55s/it] 36%|███▋      | 51/140 [32:33<57:10, 38.55s/it] 37%|███▋      | 52/140 [33:11<56:32, 38.56s/it] 38%|███▊      | 53/140 [33:50<55:52, 38.53s/it] 39%|███▊      | 54/140 [34:28<55:11, 38.50s/it] 39%|███▉      | 55/140 [35:07<54:32, 38.50s/it] 40%|████      | 56/140 [35:45<53:53, 38.49s/it] 41%|████      | 57/140 [36:24<53:13, 38.47s/it] 41%|████▏     | 58/140 [37:02<52:24, 38.35s/it] 42%|████▏     | 59/140 [37:39<51:28, 38.13s/it] 43%|████▎     | 60/140 [38:17<50:47, 38.10s/it] 44%|████▎     | 61/140 [38:55<50:08, 38.09s/it] 44%|████▍     | 62/140 [39:33<49:26, 38.03s/it] 45%|████▌     | 63/140 [40:11<48:43, 37.97s/it] 46%|████▌     | 64/140 [40:49<48:02, 37.93s/it] 46%|████▋     | 65/140 [41:27<47:23, 37.91s/it] 47%|████▋     | 66/140 [42:05<46:44, 37.90s/it] 48%|████▊     | 67/140 [42:43<46:08, 37.93s/it] 49%|████▊     | 68/140 [43:21<45:40, 38.06s/it] 49%|████▉     | 69/140 [43:59<45:01, 38.06s/it] 50%|█████     | 70/140 [44:37<44:21, 38.01s/it] 51%|█████     | 71/140 [45:15<43:36, 37.92s/it] 51%|█████▏    | 72/140 [45:53<42:58, 37.92s/it] 52%|█████▏    | 73/140 [46:31<42:33, 38.11s/it] 53%|█████▎    | 74/140 [47:10<42:03, 38.24s/it] 54%|█████▎    | 75/140 [47:48<41:29, 38.30s/it] 54%|█████▍    | 76/140 [48:26<40:54, 38.35s/it] 55%|█████▌    | 77/140 [49:05<40:14, 38.32s/it] 56%|█████▌    | 78/140 [49:43<39:38, 38.37s/it] 56%|█████▋    | 79/140 [50:21<38:57, 38.32s/it] 57%|█████▋    | 80/140 [50:59<38:13, 38.22s/it] 58%|█████▊    | 81/140 [51:38<37:41, 38.33s/it] 59%|█████▊    | 82/140 [52:17<37:06, 38.39s/it] 59%|█████▉    | 83/140 [52:55<36:30, 38.43s/it] 60%|██████    | 84/140 [53:34<35:54, 38.47s/it] 61%|██████    | 85/140 [54:12<35:16, 38.49s/it] 61%|██████▏   | 86/140 [54:51<34:37, 38.48s/it] 62%|██████▏   | 87/140 [55:29<33:51, 38.33s/it] 63%|██████▎   | 88/140 [56:07<33:12, 38.32s/it] 64%|██████▎   | 89/140 [56:45<32:30, 38.24s/it] 64%|██████▍   | 90/140 [57:23<31:55, 38.31s/it] 65%|██████▌   | 91/140 [58:02<31:21, 38.40s/it] 66%|██████▌   | 92/140 [58:41<30:44, 38.44s/it] 66%|██████▋   | 93/140 [59:19<30:06, 38.43s/it] 67%|██████▋   | 94/140 [59:57<29:27, 38.43s/it] 68%|██████▊   | 95/140 [1:00:35<28:40, 38.24s/it] 69%|██████▊   | 96/140 [1:01:14<28:03, 38.25s/it] 69%|██████▉   | 97/140 [1:01:52<27:23, 38.22s/it] 70%|███████   | 98/140 [1:02:30<26:41, 38.14s/it] 71%|███████   | 99/140 [1:03:08<26:01, 38.09s/it] 71%|███████▏  | 100/140 [1:03:46<25:26, 38.15s/it] 72%|███████▏  | 101/140 [1:04:24<24:45, 38.09s/it] 73%|███████▎  | 102/140 [1:05:02<24:07, 38.09s/it] 74%|███████▎  | 103/140 [1:05:40<23:31, 38.15s/it] 74%|███████▍  | 104/140 [1:06:18<22:54, 38.17s/it] 75%|███████▌  | 105/140 [1:06:56<22:13, 38.09s/it] 76%|███████▌  | 106/140 [1:07:34<21:32, 38.03s/it] 76%|███████▋  | 107/140 [1:08:12<20:52, 37.95s/it] 77%|███████▋  | 108/140 [1:08:50<20:15, 37.97s/it] 78%|███████▊  | 109/140 [1:09:28<19:34, 37.87s/it] 79%|███████▊  | 110/140 [1:10:05<18:56, 37.87s/it] 79%|███████▉  | 111/140 [1:10:44<18:21, 37.97s/it] 80%|████████  | 112/140 [1:11:22<17:46, 38.10s/it] 81%|████████  | 113/140 [1:12:01<17:11, 38.19s/it] 81%|████████▏ | 114/140 [1:12:39<16:32, 38.17s/it] 82%|████████▏ | 115/140 [1:13:17<15:55, 38.23s/it] 83%|████████▎ | 116/140 [1:13:55<15:17, 38.24s/it] 84%|████████▎ | 117/140 [1:14:34<14:40, 38.27s/it] 84%|████████▍ | 118/140 [1:15:12<14:04, 38.38s/it] 85%|████████▌ | 119/140 [1:15:51<13:25, 38.36s/it] 86%|████████▌ | 120/140 [1:16:29<12:47, 38.37s/it] 86%|████████▋ | 121/140 [1:17:07<12:08, 38.36s/it] 87%|████████▋ | 122/140 [1:17:46<11:30, 38.39s/it] 88%|████████▊ | 123/140 [1:18:24<10:51, 38.32s/it] 89%|████████▊ | 124/140 [1:19:02<10:13, 38.34s/it] 89%|████████▉ | 125/140 [1:19:41<09:35, 38.35s/it] 90%|█████████ | 126/140 [1:20:19<08:55, 38.24s/it] 91%|█████████ | 127/140 [1:20:57<08:16, 38.22s/it] 91%|█████████▏| 128/140 [1:21:35<07:37, 38.11s/it] 92%|█████████▏| 129/140 [1:22:12<06:57, 37.99s/it] 93%|█████████▎| 130/140 [1:22:50<06:18, 37.88s/it] 94%|█████████▎| 131/140 [1:23:28<05:40, 37.83s/it] 94%|█████████▍| 132/140 [1:24:06<05:03, 37.95s/it] 95%|█████████▌| 133/140 [1:24:44<04:26, 38.04s/it] 96%|█████████▌| 134/140 [1:25:22<03:48, 38.06s/it] 96%|█████████▋| 135/140 [1:26:00<03:10, 38.10s/it] 97%|█████████▋| 136/140 [1:26:39<02:32, 38.18s/it] 98%|█████████▊| 137/140 [1:27:17<01:54, 38.20s/it] 99%|█████████▊| 138/140 [1:27:55<01:16, 38.15s/it] 99%|█████████▉| 139/140 [1:28:30<00:37, 37.29s/it]100%|██████████| 140/140 [1:29:06<00:00, 36.68s/it]100%|██████████| 140/140 [1:29:06<00:00, 38.19s/it]

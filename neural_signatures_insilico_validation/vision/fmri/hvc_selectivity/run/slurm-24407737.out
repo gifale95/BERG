@@ -1,0 +1,254 @@
+>>> Tripartite organization <<<
+
+Input arguments:
+encoding_model   fmri-nsd_fsaverage-huze
+subjects         [1, 2, 3, 4, 5, 6, 7, 8]
+berg_dir         /scratch/giffordale95/projects/brain-encoding-response-generator
+  0%|          | 0/3 [00:00<?, ?it/s] 33%|███▎      | 1/3 [00:04<00:09,  4.86s/it] 67%|██████▋   | 2/3 [00:09<00:04,  4.49s/it]100%|██████████| 3/3 [00:12<00:00,  4.08s/it]100%|██████████| 3/3 [00:12<00:00,  4.23s/it]
+  0%|          | 0/8 [00:00<?, ?it/s]Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+/home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main/dinov2/layers/swiglu_ffn.py:51: UserWarning: xFormers is not available (SwiGLU)
+  warnings.warn("xFormers is not available (SwiGLU)")
+/home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main/dinov2/layers/attention.py:33: UserWarning: xFormers is not available (Attention)
+  warnings.warn("xFormers is not available (Attention)")
+/home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main/dinov2/layers/block.py:40: UserWarning: xFormers is not available (Block)
+  warnings.warn("xFormers is not available (Block)")
+Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Model loaded on cuda for subject 1
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:15<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:15<00:31, 15.76s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:19<00:31, 15.76s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:19<00:08,  8.51s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:22<00:08,  8.51s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:22<00:00,  6.19s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:22<00:00,  7.54s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.42s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.42s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.42s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.42s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.43s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.42s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.44s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.44s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.44s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:12<00:03,  3.44s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:12<00:00,  4.65s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:12<00:00,  4.32s/it, Encoded images=300, Total images=300]
+ 12%|█▎        | 1/8 [00:59<06:54, 59.15s/it]Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Computing responses for all vertices (no selection applied)
+Model loaded on cuda for subject 2
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:10<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:10<00:21, 10.81s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:14<00:21, 10.81s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:14<00:06,  6.45s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:17<00:06,  6.45s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:17<00:00,  5.06s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:17<00:00,  5.87s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.41s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.41s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.42s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.42s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.42s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.42s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.42s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.42s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.42s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.42s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.44s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.43s/it, Encoded images=300, Total images=300]
+ 25%|██▌       | 2/8 [02:11<06:42, 67.02s/it]Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Computing responses for all vertices (no selection applied)
+Model loaded on cuda for subject 3
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.41s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.41s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.41s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.41s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.41s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.41s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.40s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.40s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.41s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.41s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.42s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.42s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.41s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.41s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.43s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.43s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.43s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.43s/it, Encoded images=300, Total images=300]
+ 38%|███▊      | 3/8 [03:25<05:51, 70.30s/it]Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Computing responses for all vertices (no selection applied)
+Model loaded on cuda for subject 4
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.46s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.46s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.45s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.45s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.45s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.45s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.45s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.45s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.46s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.46s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.46s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.46s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.47s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.47s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.48s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.48s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.48s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.48s/it, Encoded images=300, Total images=300]
+ 50%|█████     | 4/8 [04:38<04:45, 71.35s/it]Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Computing responses for all vertices (no selection applied)
+Model loaded on cuda for subject 5
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.43s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.43s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.43s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.43s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.43s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.43s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.43s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.43s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.43s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.43s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.44s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.43s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.45s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.45s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.45s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.45s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.45s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.45s/it, Encoded images=300, Total images=300]
+ 62%|██████▎   | 5/8 [05:46<03:30, 70.13s/it]Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Computing responses for all vertices (no selection applied)
+Model loaded on cuda for subject 6
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.44s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.44s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.44s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.44s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.43s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.43s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.43s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.43s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.44s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.44s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.44s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.44s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.45s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.45s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.46s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.46s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.46s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.46s/it, Encoded images=300, Total images=300]
+ 75%|███████▌  | 6/8 [06:55<02:19, 69.71s/it]Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Computing responses for all vertices (no selection applied)
+Model loaded on cuda for subject 7
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.48s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.48s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.48s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.48s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.49s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.49s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.48s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.48s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.49s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.49s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.50s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.50s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.49s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:07<00:06,  3.49s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:07<00:03,  3.51s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.51s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.51s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.51s/it, Encoded images=300, Total images=300]
+ 88%|████████▊ | 7/8 [07:45<01:03, 63.28s/it]Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Using cache found in /home/giffordale95/.cache/torch/hub/facebookresearch_dinov2_main
+Computing responses for all vertices (no selection applied)
+Model loaded on cuda for subject 8
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.46s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.46s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.45s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.45s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.45s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.45s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.46s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.46s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.46s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.46s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.46s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.46s/it, Encoded images=300, Total images=300]
+Computing responses for all vertices (no selection applied)
+
+Encoding fMRI responses:   0%|          | 0/3 [00:00<?, ?it/s][A
+Encoding fMRI responses:   0%|          | 0/3 [00:03<?, ?it/s, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:03<00:06,  3.47s/it, Encoded images=100, Total images=300][A
+Encoding fMRI responses:  33%|███▎      | 1/3 [00:06<00:06,  3.47s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:06<00:03,  3.47s/it, Encoded images=200, Total images=300][A
+Encoding fMRI responses:  67%|██████▋   | 2/3 [00:10<00:03,  3.47s/it, Encoded images=300, Total images=300][A
+Encoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.47s/it, Encoded images=300, Total images=300][AEncoding fMRI responses: 100%|██████████| 3/3 [00:10<00:00,  3.47s/it, Encoded images=300, Total images=300]
+100%|██████████| 8/8 [08:34<00:00, 58.51s/it]100%|██████████| 8/8 [08:34<00:00, 64.26s/it]
+Computing responses for all vertices (no selection applied)
