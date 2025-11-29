@@ -121,7 +121,7 @@ eeg = berg.encode(
 
 
 # =============================================================================
-# Exemplar decoding
+# Exemplar decoding (~7h)
 # =============================================================================
 # Results array of shape:
 # (Images × Images × EEG time points)
@@ -169,7 +169,7 @@ for t in tqdm(range(len(times))):
 
 
 # =============================================================================
-# Object decoding
+# Object decoding (~2h)
 # =============================================================================
 # Results array of shape:
 # (Object categories × Object categories × EEG time points)
@@ -201,8 +201,8 @@ for t in tqdm(range(len(times))):
             for e in range(len(eeg_cond_1)):
 
                 # Define the train exemplars
-                eeg_cond_1_train = np.delete(eeg_cond_1, e, 0)
-                eeg_cond_2_train = np.delete(eeg_cond_2, e, 0)
+                eeg_cond_1_train_ex = np.delete(eeg_cond_1, e, 0)
+                eeg_cond_2_train_ex = np.delete(eeg_cond_2, e, 0)
 
                 # Loop over EEG repeats (to reduce false positives, the SVMs
                 # should be trained and tested on independent in silico EEG
@@ -211,8 +211,8 @@ for t in tqdm(range(len(times))):
                 for r in range(eeg_cond_1.shape[1]):
 
                     # Define the train repeats
-                    eeg_cond_1_train = np.delete(eeg_cond_1_train, r, 1)
-                    eeg_cond_2_train = np.delete(eeg_cond_2_train, r, 1)
+                    eeg_cond_1_train = np.delete(eeg_cond_1_train_ex, r, 1)
+                    eeg_cond_2_train = np.delete(eeg_cond_2_train_ex, r, 1)
                     eeg_cond_1_train = np.reshape(eeg_cond_1_train,
                         (-1, len(kept_ch_names)))
                     eeg_cond_2_train = np.reshape(eeg_cond_2_train,
@@ -243,7 +243,7 @@ for t in tqdm(range(len(times))):
 
 
 # =============================================================================
-# Animacy decoding
+# Animacy decoding (~6h)
 # =============================================================================
 # Select the used animate conditions
 animate_conditions = np.arange(len(animate_imgs))
@@ -262,19 +262,26 @@ for t in tqdm(range(len(times))):
     eeg_animate = eeg[animate_conditions,:,:,t] # type: ignore
     eeg_inanimate = eeg[inanimate_conditions,:,:,t] # type: ignore
 
-    # Loop over object categories (to reduce the risk of the classifiers
-    # exploiting low-level visual information, the classifiers are
+    # Loop over the animate object categories (to reduce the risk of the
+    # classifiers exploiting low-level visual information, the classifiers are
     # trained and tested on idendependent object categories)
     scores = []
-    for c1 in range(len(eeg_animate)):
+    for c1 in tqdm(range(object_cats//2)): # Half of the total objects are animate
 
         # Define the animate train object categories
-        eeg_animate_train = np.delete(eeg_animate, c1, 0)
+        idx_c1_start = c1 * exemplars_per_cat
+        idx_c1_end = idx_c1_start + exemplars_per_cat
+        eeg_animate_train_cat = np.delete(
+            eeg_animate, np.arange(idx_c1_start, idx_c1_end), 0)
 
-        for c2 in range(len(eeg_inanimate)):
+        # Looop over the inanimate object categories
+        for c2 in range(object_cats//2): # Half of the total objects are inanimate
 
             # Define the inanimate train object categories
-            eeg_inanimate_train = np.delete(eeg_inanimate, c2, 0)
+            idx_c2_start = c2 * exemplars_per_cat
+            idx_c2_end = idx_c2_start + exemplars_per_cat
+            eeg_inanimate_train_cat = np.delete(
+                eeg_inanimate, np.arange(idx_c2_start, idx_c2_end), 0)
 
             # Loop over EEG repeats (to reduce false positives, the SVMs should
             # be trained and tested on independent in silico EEG response
@@ -283,8 +290,8 @@ for t in tqdm(range(len(times))):
             for r in range(eeg_animate.shape[1]):
 
                 # Define the train repeats
-                eeg_animate_train = np.delete(eeg_animate_train, r, 1)
-                eeg_inanimate_train = np.delete(eeg_inanimate_train, r, 1)
+                eeg_animate_train = np.delete(eeg_animate_train_cat, r, 1)
+                eeg_inanimate_train = np.delete(eeg_inanimate_train_cat, r, 1)
                 eeg_animate_train = np.reshape(eeg_animate_train,
                     (-1, len(kept_ch_names)))
                 eeg_inanimate_train = np.reshape(eeg_inanimate_train,
@@ -292,8 +299,9 @@ for t in tqdm(range(len(times))):
                 X_train = np.append(eeg_animate_train, eeg_inanimate_train, 0)
 
                 # Define the test partition
-                X_test = np.append(np.expand_dims(eeg_animate[c1,r], 0),
-                    np.expand_dims(eeg_inanimate[c2,r], 0), 0)
+                X_test = np.append(
+                    eeg_animate[idx_c1_start:idx_c1_end,r],
+                    eeg_inanimate[idx_c2_start:idx_c2_end,r], 0)
 
                 # SVM target vectors
                 y_train = np.zeros(len(X_train))
