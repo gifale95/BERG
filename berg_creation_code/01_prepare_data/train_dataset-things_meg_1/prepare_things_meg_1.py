@@ -87,7 +87,7 @@ parser.add_argument('--batch_size', default=1000, type=int,
                     help="Batch size for chunked processing.")
 args = parser.parse_args()
 
-print('>>> MEG THINGS-data preprocessing <<<')
+print('>>> MEG THINGS-data preparation <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -120,4 +120,4 @@ create_meg_metadata(
     output_dir=output_dir,
     subject_id=args.subject)
 
-print("\nPreprocessing complete!")
+print("\nPreparation complete!")

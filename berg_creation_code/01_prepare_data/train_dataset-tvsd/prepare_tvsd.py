@@ -1,10 +1,11 @@
-"""Preprocess the raw neural data from the THINGS Ventral Stream Spiking Dataset
-(Papale et al., Neuron 2025):
+"""Prepare the preprocessed neural data from the THINGS Ventral Stream Spiking
+Dataset (Papale et al., Neuron 2025):
  - split training and test data,
  - create comprehensive metadata mapping.
-After preprocessing, the neural data is saved as:
+After preparation, the neural data is saved as:
  - Training data: (Trials x Electrodes x Time points)
- - Test data: (Trials x Electrodes x Time points) and averaged version
+ - Test data: (Trials x Electrodes x Time points)
+ - Test data (trial average): (100 Test conditions x Electrodes x Time points)
 The data is saved in HDF5 format for efficient loading during model training.
 
 Parameters
@@ -45,21 +46,21 @@ tvsd_{monkey}_metadata.npy             :
     
     'encoding_model':
         train_img_ids        : (22248,) - Training stimulus IDs
-        train_stimuli      : (22248,) - Training image filenames
-        train_concepts   : (22248,) - Training object categories
+        train_stimuli        : (22248,) - Training image filenames
+        train_concepts       : (22248,) - Training object categories
         train_days           : (22248,) - Recording days for training
         train_sequence_pos   : (22248,) - Position in 4-image sequence
         
         test_img_ids         : (3000,)  - Test stimulus IDs (individual trials)
-        test_stimuli      : (3000,)  - Test image filenames (individual)
-        test_concepts    : (3000,)  - Test object categories (individual)
+        test_stimuli         : (3000,)  - Test image filenames (individual)
+        test_concepts        : (3000,)  - Test object categories (individual)
         test_days            : (3000,)  - Recording days for test
         test_sequence_pos    : (3000,)  - Position in sequence for test
         
-        test_stimuli    : (100,)   - Unique test stimulus IDs
+        test_stimuli         : (100,)   - Unique test stimulus IDs
         
-        test_avg_stimui   : (100,)   - Test image filenames (averaged)
-        test_avg_concepts: (100,)   - Test object categories (averaged)
+        test_avg_stimui      : (100,)   - Test image filenames (averaged)
+        test_avg_concepts    : (100,)   - Test object categories (averaged)
         
         SNR                  : (4, 1024) - Signal-to-noise ratio per day per electrode
         SNR_max              : (1024,)  - Best SNR across all days per electrode
@@ -86,7 +87,7 @@ parser.add_argument('--batch_size', default=1000, type=int,
                     help="Batch size for chunked processing.")
 args = parser.parse_args()
 
-print('>>> TVSD Data preprocessing <<<')
+print('>>> TVSD Data preparation <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))

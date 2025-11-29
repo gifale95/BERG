@@ -1,9 +1,9 @@
-"""Preprocess the THINGS-fMRI dataset (Hebart et al., 2023):
+"""Prepare the THINGS-fMRI1 dataset (Hebart et al., 2023):
  - split training and test data based on trial type,
  - create comprehensive metadata mapping,
  - generate averaged test data across repeated presentations.
 
-After preprocessing, the fMRI data is saved as:
+After preparation, the fMRI data is saved as:
  - Training data: (Trials x Voxels) = (8640, 211339)   
  - Test data: (Trials x Voxels)    = (1200, 211339)    
  - Averaged test (unique images):  (100, 211339)  
@@ -88,7 +88,7 @@ parser.add_argument('--batch_size', default=1000, type=int,
                     help="Batch size for chunked processing.")
 args = parser.parse_args()
 
-print('>>> fMRI THINGS-data preprocessing <<<')
+print('>>> fMRI THINGS-data preparation <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))

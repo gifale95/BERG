@@ -1,5 +1,6 @@
-"""Train a Regression model to predict THINGS fMRI neural data using Vision transformer feature maps as predictors. Th Regression is trained 
-using the training images neural data (Y) and feature maps (X).
+"""Train a Regression model to predict THINGS fMRI neural data using Vision
+transformer feature maps as predictors. Th Regression is trained  using the
+training images neural data (Y) and feature maps (X).
 
 The feature maps come from a vision transformer, and are downsampled to 
 250 principal components using PCA.

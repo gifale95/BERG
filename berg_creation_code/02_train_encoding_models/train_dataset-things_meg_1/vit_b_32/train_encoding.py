@@ -1,4 +1,4 @@
-"""Train a Regression model to predict THINGS MEG neural data using  
+"""Train a Regression model to predict THINGS MEG1 neural data using  
 vision transformer feature maps as predictors. The regression is trained 
 using the training images neural data (Y) and feature maps (X).
 

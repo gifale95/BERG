@@ -1,9 +1,9 @@
-"""Train a regression model to predict TVSD neural data using vision transformer feature maps as predictors. The regression is trained 
-using the training images neural data (Y) and feature maps (X).
+"""Train a regression model to predict TVSD neural data using vision
+transformer feature maps as predictors. The regression is trained  using the
+training images neural data (Y) and feature maps (X).
 
 The feature maps come from a vision transformer, and are downsampled to 
 250 principal components using PCA.
-
 
 Pipeline steps:
 1. Model setup: Load ViT-B/32, wrap with torchextractor for multi-layer access
