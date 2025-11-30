@@ -31,7 +31,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'erps', 'plots')
+    'vision', 'eeg', 'model-'+args.encoding_model, 'erps', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -39,8 +39,8 @@ os.makedirs(save_dir, exist_ok=True)
 # Load the ERP results
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'eeg',  'erps',
-    'erps', 'erps.npy')
+    'neural_signatures_insilico_validation', 'vision', 'eeg', 'erps', 'erps',
+    'erps.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
@@ -76,8 +76,8 @@ matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 colors = [
-    (147/255, 112/255, 219/255),
-    (186/255, 85/255, 211/255),
+    (103/255, 78/255, 167/255),
+    (166/255, 77/255, 121/255),
     (105/255, 105/255, 105/255),
     (169/255, 169/255, 169/255),
     (100/255, 149/255, 237/255),

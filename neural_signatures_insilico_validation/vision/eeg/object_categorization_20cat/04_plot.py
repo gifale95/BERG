@@ -41,7 +41,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_categorization', 'plots')
+    'vision', 'eeg', 'object_categorization_20cat', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -50,7 +50,7 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'object_categorization', 'stats', 'stats_'+'channels-'+
+    'object_categorization_20cat', 'stats', 'stats_'+'channels-'+
     '-'.join(args.channels)+'.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
@@ -244,7 +244,7 @@ matplotlib.rcParams['axes.spines.bottom'] = False
 images = []
 image_path = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'object_categorization', 'stimuli')
+    'object_categorization_20cat', 'stimuli')
 animate_imgs = os.listdir(os.path.join(image_path, 'animate'))
 animate_imgs.sort()
 for img_file in tqdm(animate_imgs):

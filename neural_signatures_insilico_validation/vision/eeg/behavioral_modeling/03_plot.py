@@ -118,7 +118,7 @@ for c, chan in enumerate(args.channels):
     axs[0].fill_between(times, ci_rsa[chan][1], ci_rsa[chan][0],
         color=colors[c], alpha=.2)
 
-    # Plot the significance markers
+    # Plot the significance time points
     sig = np.empty(len(times))
     sig[:] = np.nan
     sig[sig_rsa[chan]] = -.015
