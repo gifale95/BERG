@@ -61,6 +61,7 @@ np.random.seed(seed)
 decoding_exemplars = []
 decoding_objects = []
 decoding_animacy = []
+eeg_mds_single_sub = []
 
 for s, sub in enumerate(args.subjects):
 
@@ -90,6 +91,9 @@ for s, sub in enumerate(args.subjects):
     # Get the animacy decoding results
     decoding_animacy.append(results['decoding_animacy'])
 
+    # Get the single subject MDS results
+    eeg_mds_single_sub.append(results['eeg_mds'])
+
     # EEG metadata
     times = results['times']
     kept_ch_names = results['kept_ch_names']
@@ -98,6 +102,7 @@ for s, sub in enumerate(args.subjects):
 decoding_exemplars = np.asarray(decoding_exemplars) * 100
 decoding_objects = np.asarray(decoding_objects) * 100
 decoding_animacy = np.asarray(decoding_animacy) * 100
+eeg_mds_single_sub = np.asarray(eeg_mds_single_sub)
 
 
 # =============================================================================
@@ -177,6 +182,7 @@ for t in tqdm(range(len(times))):
 # =============================================================================
 results = {
     'eeg_mds': eeg_mds,
+    'eeg_mds_single_sub': eeg_mds_single_sub,
     'decoding_exemplars': decoding_exemplars,
     'decoding_objects': decoding_objects,
     'decoding_animacy': decoding_animacy,
