@@ -14,7 +14,7 @@ BERG contains several encoding models, defined by the following model ID naming 
 
 where
 
-* ``modality``: The neural recording recording modality on which the encoding model was trained.
+* ``modality``: The neural recording modality on which the encoding model was trained.
 * ``dataset``: The neural dataset on which the encoding model was trained.
 * ``model``: The type of encoding model used.
 
