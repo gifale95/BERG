@@ -87,7 +87,7 @@ For detailed instructions and folder structure, see the [documentation](https://
 
 The following table shows BERG's most accurate encoding models for each dataset and modality. For more details on these models, or for the full list of available models, please refer to the [documentation][model_cards].
 
-| Model ID | Training dataset | Acquisition device | Species | Stimuli | Encoding accuracy |
+| Model ID | Training dataset | Recoding modality | Species | Stimuli | Encoding accuracy |
 |----------|------------------|--------------------|---------|---------|-------------------|
 | [fmri-nsd_fsaverage-huze][fmri-nsd_fsaverage-huze] | [NSD (surface space)][allen] | fMRI | Human | Images | [Accuracy plots][acc-fmri-nsd_fsaverage-huze] |
 | [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD (volume space)][allen] | fMRI | Human | Images | [Accuracy plots][acc-fmri-nsd-fwrf] |
