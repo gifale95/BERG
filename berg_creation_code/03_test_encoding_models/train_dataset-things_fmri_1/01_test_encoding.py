@@ -5,22 +5,13 @@ Parameters
 ----------
 subject : str
     Which subject's data to use (e.g., 'sub-01').
-model : str
-    Name of the used encoding model.
 berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
-only_cls : str
-    If we should only use CLS token or all patches ('True' or 'False').
-regression : str
-    Type of regression used ('ridge' or 'linear').
 
 Example usage:
 python berg_creation_code/03_test_encoding_models/train_dataset-things_fmri_1/01_test_encoding.py \
     --subject sub-01 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --only_cls True \
-    --regression linear \
-    --model clip.vit_b_32
+    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator'
 """
 
 import argparse
@@ -32,17 +23,9 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=str, required=True,
                    help="Subject ID (e.g., 'sub-01')")
-parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
-                   help="Selecting which model to use")
-parser.add_argument('--only_cls', required=True, choices=["True", "False"],
-                    help='If we should only use CLS token or all patches')
-parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
-                   help="Select type of regression")
 parser.add_argument('--berg_dir', required=True, type=str)
 
 args = parser.parse_args()
-
-args.only_cls = args.only_cls == "True"
 
 print('>>> Test THINGS fMRI encoding models <<<')
 print('\nInput parameters:')
@@ -74,10 +57,9 @@ print(f"Actual neural test data shape: {neural_test.shape}")
 # Load the in silico neural responses for the test images
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-    'modality-fmri', 'train_dataset-things_fmri_1', args.model)
+    'modality-fmri', 'train_dataset-things_fmri_1', 'vit_b_32')
 
-cls_suffix = 'cls' if args.only_cls else 'all'
-pred_path = os.path.join(results_dir, f'fmri_test_pred_{args.regression}_{cls_suffix}_{args.subject}.npy')
+pred_path = os.path.join(results_dir, f'fmri_test_pred_{args.subject}.npy')
 neural_test_pred = np.load(pred_path, allow_pickle=True)
 
 print(f"Predicted neural test data shape: {neural_test_pred.shape}")
@@ -86,8 +68,6 @@ print(f"Predicted neural test data shape: {neural_test_pred.shape}")
 # =============================================================================
 # Compute the encoding accuracy
 # =============================================================================
-# Correlate the in vivo and in silico neural responses
-# Shape: (n_voxels,)
 n_voxels = neural_test.shape[1]
 correlation_results = np.zeros(n_voxels)
 
@@ -103,26 +83,18 @@ print(f"Correlation range: [{correlation_results.min():.4f}, {correlation_result
 
 
 # =============================================================================
-# Compute percent noise ceiling reached
+# Compute percent noise ceiling 
 # =============================================================================
-# Get noise ceiling from metadata (in R² percentage scale, 0-100)
 noise_ceiling_testset = metadata_fmri['encoding_model']['noise_ceiling_singletrial']
+noise_ceiling_r2 = noise_ceiling_testset / 100
 
-# Square correlation results to get R² for comparison with R² noise ceiling
-correlation_r2 = correlation_results ** 2
 
-# Calculate percent of noise ceiling reached
-# Handle division by zero: set to NaN where noise ceiling is 0
-percent_noise_ceiling = np.zeros(n_voxels)
-valid_mask = noise_ceiling_testset != 0
-percent_noise_ceiling[valid_mask] = (correlation_r2[valid_mask] / (noise_ceiling_testset[valid_mask] / 100)) * 100
-percent_noise_ceiling[~valid_mask] = np.nan
 
-print(f"\nPercent noise ceiling stats (excluding NaN):")
-print(f"  Mean: {np.nanmean(percent_noise_ceiling):.2f}%")
-print(f"  Std: {np.nanstd(percent_noise_ceiling):.2f}%")
-print(f"  Range: [{np.nanmin(percent_noise_ceiling):.2f}%, {np.nanmax(percent_noise_ceiling):.2f}%]")
+# Clip negative correlations to 0 before squaring
+correlation_results_clipped = np.clip(correlation_results, 0, None)
+percent_noise_ceiling = (correlation_results_clipped**2 / noise_ceiling_r2) * 100
 
+print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
 
 # =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
@@ -135,7 +107,7 @@ metadata['encoding_model'].update({
 
 # Save the metadata
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-    'train_dataset-things_fmri_1', f'model-{args.model}', 'metadata')
+    'train_dataset-things_fmri_1', 'model-vit_b_32', 'metadata')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 

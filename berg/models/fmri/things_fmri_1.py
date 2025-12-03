@@ -7,7 +7,7 @@ import torchextractor as tx
 from tqdm import tqdm
 from torchvision import transforms as trn
 from torchvision.models import vit_b_32, ViT_B_32_Weights
-import joblib
+from sklearn.linear_model import LinearRegression
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
@@ -67,7 +67,6 @@ class fMRIEncodingModel(BaseModelInterface):
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     VOXELS_LENGTH = 211339
-    N_CHUNKS = 32
     
     def __init__(
         self, 
@@ -155,8 +154,7 @@ class fMRIEncodingModel(BaseModelInterface):
         
         Loads the vision transformer backbone, preprocessing components 
         (scalers, PCA), and trained regression weights for the specified
-        subject. Sets up all necessary components for generating fMRI
-        responses.
+        subject. Only loads weights for selected voxels.
         """
         try:
             # Load metadata
@@ -193,14 +191,14 @@ class fMRIEncodingModel(BaseModelInterface):
             if voxel_indices_list:
                 self.selected_voxels = voxel_indices_list
             else:
+                # If no selection, use all voxels
                 self.selected_voxels = list(range(self.VOXELS_LENGTH))
             
             # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)
             
             # Load the scalers, PCA, and trained regression weights
-            self.scaler, self.pca, self.chunk_models = \
-                self._load_encoding_weights()
+            self.scaler, self.pca, self.reg = self._load_encoding_weights()
             
             print(f"Model loaded on {self.device} for subject {self.subject}")
             
@@ -220,18 +218,15 @@ class fMRIEncodingModel(BaseModelInterface):
         -------
         tx.Extractor
             Torchextractor wrapped model configured to extract 
-            representations from all 12 transformer layers.
+            features from all 12 transformer encoder layers.
         """
         # Load ViT model
         weights = ViT_B_32_Weights.DEFAULT
         model = vit_b_32(weights=weights)
         model.to(device)
-        
         if device == 'cuda':
             model = model.float()
-        
         model.eval()
-        
         # Define layer names for all 12 transformer blocks
         layer_names = ['encoder.layers.encoder_layer_0',
                        'encoder.layers.encoder_layer_1',
@@ -245,28 +240,26 @@ class fMRIEncodingModel(BaseModelInterface):
                        'encoder.layers.encoder_layer_9',
                        'encoder.layers.encoder_layer_10',
                        'encoder.layers.encoder_layer_11']
-        
         # Wrap the visual encoder with torchextractor
         feature_extractor = tx.Extractor(model, layer_names)
-        
         self.transform = weights.transforms()
         
         return feature_extractor
     
     def _load_encoding_weights(self):
         """
-        Load pretrained pre-PCA scaler, PCA, and post-PCA scaler transformation parameters.
-        Load trained chunked linear regression models.
+        Load pretrained scaler, PCA, and regression weights.
+        Only loads weights for selected voxels to optimize memory usage.
         
         Returns
         -------
         tuple
-            A tuple containing (scaler, pca, chunk_models) where:
+            A tuple containing (scaler, pca, reg) where:
             - scaler : StandardScaler - Pre-PCA feature normalization
             - pca : PCA - Fitted principal component analysis model
-            - chunk_models : List of LinearRegression models for each chunk
+            - reg : LinearRegression - Model with only selected weights
         """
-        # Load preprocessing parameters
+        # Load weights file
         weights_dir = os.path.join(
             self.berg_dir, 
             'encoding_models', 
@@ -274,47 +267,41 @@ class fMRIEncodingModel(BaseModelInterface):
             'train_dataset-things_fmri_1', 
             'model-vit_b_32',
             'encoding_models_weights',
-            f'preprocessing_linear_all_{self.subject}.npy'
+            f'weights_{self.subject}.npy'
         )
-        preprocessing = np.load(weights_dir, allow_pickle=True).item()
+        weights_data = np.load(weights_dir, allow_pickle=True).item()
         
         # Reconstruct pre-PCA scaler
         scaler = StandardScaler()
-        scaler.scale_ = preprocessing['scaler_param']['scale_']
-        scaler.mean_ = preprocessing['scaler_param']['mean_']
-        scaler.var_ = preprocessing['scaler_param']['var_']
-        scaler.n_features_in_ = preprocessing['scaler_param']['n_features_in_']
-        scaler.n_samples_seen_ = preprocessing['scaler_param']['n_samples_seen_']
+        scaler.scale_ = weights_data['scaler_param']['scale_']
+        scaler.mean_ = weights_data['scaler_param']['mean_']
+        scaler.var_ = weights_data['scaler_param']['var_']
+        scaler.n_features_in_ = weights_data['scaler_param']['n_features_in_']
+        scaler.n_samples_seen_ = weights_data['scaler_param']['n_samples_seen_']
         
         # Reconstruct PCA
         pca = PCA(n_components=250, random_state=20200220)
-        pca.components_ = preprocessing['pca_param']['components_']
-        pca.explained_variance_ = preprocessing['pca_param']['explained_variance_']
-        pca.explained_variance_ratio_ = preprocessing['pca_param']['explained_variance_ratio_']
-        pca.singular_values_ = preprocessing['pca_param']['singular_values_']
-        pca.mean_ = preprocessing['pca_param']['mean_']
-        pca.n_components_ = preprocessing['pca_param']['n_components_']
-        pca.n_samples_ = preprocessing['pca_param']['n_samples_']
-        pca.noise_variance_ = preprocessing['pca_param']['noise_variance_']
-        pca.n_features_in_ = preprocessing['pca_param']['n_features_in_']
+        pca.components_ = weights_data['pca_param']['components_']
+        pca.explained_variance_ = weights_data['pca_param']['explained_variance_']
+        pca.explained_variance_ratio_ = weights_data['pca_param']['explained_variance_ratio_']
+        pca.singular_values_ = weights_data['pca_param']['singular_values_']
+        pca.mean_ = weights_data['pca_param']['mean_']
+        pca.n_components_ = weights_data['pca_param']['n_components_']
+        pca.n_samples_ = weights_data['pca_param']['n_samples_']
+        pca.noise_variance_ = weights_data['pca_param']['noise_variance_']
+        pca.n_features_in_ = weights_data['pca_param']['n_features_in_']
         
-        # Load all chunk models
-        chunk_models = []
-        model_dir = os.path.join(
-            self.berg_dir, 
-            'encoding_models', 
-            'modality-fmri',
-            'train_dataset-things_fmri_1', 
-            'model-vit_b_32',
-            'encoding_models_weights'
-        )
+        # Slice regression weights to only selected voxels BEFORE prediction
+        coef_subset = weights_data['reg_param']['coef_'][self.selected_voxels, :]
+        intercept_subset = weights_data['reg_param']['intercept_'][self.selected_voxels]
         
-        for chunk_idx in range(self.N_CHUNKS):
-            model_filename = f'linear_all_chunk_{chunk_idx}_{self.subject}.pkl'
-            chunk_model = joblib.load(os.path.join(model_dir, model_filename))
-            chunk_models.append(chunk_model)
+        # Build regression model with only selected weights
+        reg = LinearRegression()
+        reg.coef_ = coef_subset.astype(np.float32)
+        reg.intercept_ = intercept_subset.astype(np.float32)
+        reg.n_features_in_ = weights_data['reg_param']['n_features_in_']
         
-        return scaler, pca, chunk_models
+        return scaler, pca, reg
     
     def generate_response(
         self, 
@@ -387,31 +374,8 @@ class fMRIEncodingModel(BaseModelInterface):
                 ft = self.pca.transform(ft)
                 ft = ft.astype(np.float32)
                 
-                # Generate predictions from all chunks
-                chunk_predictions = []
-                voxels_per_chunk = self.VOXELS_LENGTH // self.N_CHUNKS
-                remainder = self.VOXELS_LENGTH % self.N_CHUNKS
-                
-                for chunk_idx, chunk_model in enumerate(self.chunk_models):
-                    chunk_pred = chunk_model.predict(ft)
-                    
-                    # Calculate chunk size for this specific chunk
-                    if chunk_idx < remainder:
-                        chunk_size = voxels_per_chunk + 1
-                    else:
-                        chunk_size = voxels_per_chunk
-                    
-                    # chunk_pred shape: (batch, chunk_size)
-                    chunk_predictions.append(chunk_pred)
-                
-                # Concatenate along voxel dimension
-                # Shape: (batch, n_voxels)
-                batch_responses = np.concatenate(chunk_predictions, axis=1)
-                
-                # Apply voxel selection
-                batch_responses = batch_responses[:, self.selected_voxels]
-                
-                batch_responses = batch_responses.astype(np.float32)
+                # Generate predictions using loaded weights for selected voxels
+                batch_responses = self.reg.predict(ft)
                 
                 # Combine with previous batches
                 if insilico_fmri_responses is None:

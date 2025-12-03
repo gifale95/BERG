@@ -5,22 +5,13 @@ Parameters
 ----------
 subjects : list of str
     List of subjects to analyze (e.g., 'sub-01 sub-02 sub-03').
-model : str
-    Name of the used encoding model.
 berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
-only_cls : str
-    If we should only use CLS token or all patches ('True' or 'False').
-regression : str
-    Type of regression used ('ridge' or 'linear').
 
 Example usage:
 python berg_creation_code/03_test_encoding_models/train_dataset-things_fmri_1/02_plot.py \
     --subjects sub-01 sub-02 sub-03 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --only_cls True \
-    --regression linear \
-    --model clip.vit_b_32
+    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator'
 """
 
 import argparse
@@ -28,6 +19,7 @@ import os
 import numpy as np
 import matplotlib
 from matplotlib import pyplot as plt
+from matplotlib.patches import Rectangle
 
 
 # =============================================================================
@@ -36,17 +28,8 @@ from matplotlib import pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=str, nargs='+', required=True,
                    help="List of subject IDs (e.g., 'sub-01 sub-02 sub-03')")
-parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32", "huze"],
-                   help="Selecting which model to use")
-parser.add_argument('--only_cls', required=True, choices=["True", "False"],
-                    help='If we should only use CLS token or all patches')
-parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
-                   help="Select type of regression")
 parser.add_argument('--berg_dir', required=True, type=str)
 args = parser.parse_args()
-
-args.only_cls = args.only_cls == "True"
-cls_suffix = 'cls' if args.only_cls else 'all'
 
 n_subjects = len(args.subjects)
 print(f"Processing {n_subjects} subjects: {', '.join(args.subjects)}")
@@ -81,8 +64,8 @@ all_subject_data = {}
 for subject in args.subjects:
     # Load encoding model metadata
     metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-        'train_dataset-things_fmri_1', f'model-{args.model}', 'metadata')
-    file_name = f'metadata_{args.regression}_{cls_suffix}_{subject}.npy'
+        'train_dataset-things_fmri_1', 'model-vit_b_32', 'metadata')
+    file_name = f'metadata_{subject}.npy'
     metadata = np.load(os.path.join(metadata_dir, file_name), allow_pickle=True).item()
     
     correlation_results = metadata['encoding_model']['correlation_results']
@@ -150,6 +133,9 @@ for subj_idx, subject in enumerate(args.subjects):
         all_corrs_matrix[subj_idx, master_roi_idx] = subj_corrs[roi_idx]
         all_ncs_matrix[subj_idx, master_roi_idx] = subj_ncs[roi_idx]
 
+# Clip negative correlations to zero before computing R²
+all_corrs_matrix = np.clip(all_corrs_matrix, 0, None)
+
 # Compute mean across subjects (ignoring NaNs)
 mean_corrs = np.nanmean(all_corrs_matrix, axis=0)
 mean_ncs = np.nanmean(all_ncs_matrix, axis=0)
@@ -189,7 +175,11 @@ matplotlib.rcParams['grid.alpha'] = .3
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-colors = [(170/255, 118/255, 186/255)]
+
+# Colors
+bar_color = (170/255, 118/255, 186/255)  # Purple for bars
+mean_color = '#2E86AB'  # Blue for mean line
+nc_color = '#A23B72'  # Dark rose for noise ceiling
 
 
 # =============================================================================
@@ -223,19 +213,21 @@ for r, roi_name in enumerate(all_rois):
     roi_nc_r2 = all_ncs_matrix_r2[:, r]
     
     # Plot the R² bars for each subject
-    axs[r].bar(x, roi_r2, width=width, color=colors[0])
+    axs[r].bar(x, roi_r2, width=width, color=bar_color)
+    
+    # Plot individual noise ceiling lines above each bar
+    for subj_idx in range(n_subjects):
+        if not np.isnan(roi_nc_r2[subj_idx]):
+            x_pos = x[subj_idx]
+            y_nc = roi_nc_r2[subj_idx]
+            axs[r].plot([x_pos - width/2, x_pos + width/2], [y_nc, y_nc], 
+                       '-', color=nc_color, linewidth=2.5, alpha=0.8)
     
     # Plot the mean R² across subjects (dashed line)
     y_mean = mean_r2[r]
     if not np.isnan(y_mean):
-        axs[r].plot([min(x), max(x)], [y_mean, y_mean], '--', color='k', 
-                    linewidth=2, alpha=0.4, label='Subjects mean')
-    
-    # Plot the mean noise ceiling (solid line)
-    y_nc = mean_ncs_r2[r]
-    if not np.isnan(y_nc):
-        axs[r].plot([min(x), max(x)], [y_nc, y_nc], '-', color='k', 
-                    linewidth=2, alpha=0.6)
+        axs[r].plot([min(x) - 0.5, max(x) + 0.5], [y_mean, y_mean], '--', 
+                   color=mean_color, linewidth=2, alpha=0.7)
     
     # y-axis label on leftmost column
     if r % n_cols == 0:
@@ -247,7 +239,6 @@ for r, roi_name in enumerate(all_rois):
     axs[r].set_ylim(bottom=0, top=y_max_global)
     
     # x-axis label and ticks on bottom of each column
-    # A subplot is at the bottom of its column if there's no subplot below it
     col_idx = r % n_cols
     subplot_below_idx = r + n_cols
     is_bottom_of_column = subplot_below_idx >= n_rois
@@ -266,8 +257,34 @@ for r, roi_name in enumerate(all_rois):
     # Title
     axs[r].set_title(roi_name, fontsize=fontsize)
 
-# Remove empty subplots
-for r in range(n_rois, len(axs)):
+# =============================================================================
+# Add legend in the empty subplot after the last ROI
+# =============================================================================
+# Find which subplot should contain the legend (first empty one after last ROI)
+legend_subplot_idx = n_rois
+
+if legend_subplot_idx < len(axs):
+    # Turn off axis for legend subplot
+    axs[legend_subplot_idx].axis('off')
+    
+    # Create legend elements
+    from matplotlib.patches import Patch
+    from matplotlib.lines import Line2D
+    
+    legend_elements = [
+        Patch(facecolor=bar_color, label='Model R²'),
+        Line2D([0], [0], color=mean_color, linewidth=2, linestyle='--', 
+               alpha=0.7, label='Mean Model R²'),
+        Line2D([0], [0], color=nc_color, linewidth=2.5, linestyle='-', 
+               alpha=0.8, label='Noise Ceiling')
+    ]
+    
+    # Place legend in the center of the subplot
+    axs[legend_subplot_idx].legend(handles=legend_elements, loc='center', 
+                                   fontsize=fontsize, frameon=False)
+
+# Remove remaining empty subplots
+for r in range(legend_subplot_idx + 1, len(axs)):
     fig.delaxes(axs[r])
 
 plt.tight_layout()
@@ -277,29 +294,10 @@ plt.tight_layout()
 # Save the figure
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-    'train_dataset-things_fmri_1', f'model-{args.model}', 'encoding_models_accuracy')
+    'train_dataset-things_fmri_1', 'model-vit_b_32', 'encoding_models_accuracy')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-subject_str = '_'.join(args.subjects)
-save_name = f'encoding_accuracy_roi_grid_{args.regression}_{cls_suffix}_{args.model}_{subject_str}'
-fig.savefig(os.path.join(save_dir, f'{save_name}.svg'), bbox_inches='tight', transparent=True, format='svg')
-fig.savefig(os.path.join(save_dir, f'{save_name}.png'), dpi=300, bbox_inches='tight', format='png')
+save_name = 'encoding_accuracy'
+fig.savefig(os.path.join(save_dir, f'{save_name}.png'), dpi=300, bbox_inches='tight', format='jpg')
 
-print(f"\nPlot saved to: {save_dir}/{save_name}.svg and {save_dir}/{save_name}.png")
-
-
-# =============================================================================
-# Print summary statistics
-# =============================================================================
-# Overall statistics (excluding NaN values)
-valid_mean_corrs = mean_corrs[~np.isnan(mean_corrs)]
-valid_mean_ncs = mean_ncs[~np.isnan(mean_ncs)]
-
-print(f"\n{'='*80}")
-print(f"SUMMARY STATISTICS - AVERAGE ACROSS SUBJECTS")
-print(f"  Mean correlation: {valid_mean_corrs.mean():.4f} ± {valid_mean_corrs.std():.4f}")
-print(f"  Mean R²: {(valid_mean_corrs**2).mean():.4f} ± {(valid_mean_corrs**2).std():.4f}")
-print(f"  Mean noise ceiling: {valid_mean_ncs.mean():.4f} ± {valid_mean_ncs.std():.4f}")
-print(f"  Total ROIs with data: {len(valid_mean_corrs)}/{len(all_rois)}")
-print("="*80)
