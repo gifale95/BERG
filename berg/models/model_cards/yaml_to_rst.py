@@ -356,7 +356,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     performance_data = data.get("performance", {})
     
     if "accuracy_plots" in performance_data:
-        rst_content.append("**Accuracy Plots:**")
+        rst_content.append("**Accuracy Plots (AWS directory):**")
         rst_content.append("")
         for plot in performance_data["accuracy_plots"]:
             rst_content.append(f"* ``{plot}``")
