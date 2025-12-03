@@ -7,7 +7,7 @@ import torchextractor as tx
 from tqdm import tqdm
 from torchvision import transforms as trn
 from torchvision.models import vit_b_32, ViT_B_32_Weights
-import joblib
+from sklearn.linear_model import LinearRegression
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
@@ -69,7 +69,6 @@ class MEGEncodingModel(BaseModelInterface):
     VALID_SENSOR_PREFIXES = model_info["parameters"]["selection"]["properties"]["sensors"]["valid_values"]
     SENSORS_LENGTH = 271
     TIMEPOINTS_LENGTH = 281
-    N_CHUNKS = 16
     
     def __init__(
         self, 
@@ -184,8 +183,8 @@ class MEGEncodingModel(BaseModelInterface):
         
         Loads the vision transformer backbone, preprocessing components 
         (scalers, PCA), and trained regression weights for the specified
-        subject. Sets up all necessary components for generating MEG
-        responses.
+        subject. Only loads weights for selected sensors and timepoints
+        to optimize memory usage.
         """
         try:
             # Load metadata
@@ -237,9 +236,8 @@ class MEGEncodingModel(BaseModelInterface):
             # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)
             
-            # Load the scalers, PCA, and trained regression weights
-            self.scaler, self.pca, self.chunk_models = \
-                self._load_encoding_weights()
+            # Load the scalers, PCA, and trained regression weights (only for selection)
+            self.scaler, self.pca, self.reg = self._load_encoding_weights()
             
             print(f"Model loaded on {self.device} for subject {self.subject}")
             
@@ -295,18 +293,18 @@ class MEGEncodingModel(BaseModelInterface):
     
     def _load_encoding_weights(self):
         """
-        Load pretrained pre-PCA scaler, PCA, and post-PCA scaler transformation parameters.
-        Load trained chunked linear regression models.
+        Load pretrained scaler, PCA, and regression weights.
+        Only loads regression weights for selected sensors and timepoints.
         
         Returns
         -------
         tuple
-            A tuple containing (scaler, pca, chunk_models) where:
+            A tuple containing (scaler, pca, reg) where:
             - scaler : StandardScaler - Pre-PCA feature normalization
             - pca : PCA - Fitted principal component analysis model
-            - chunk_models : List of LinearRegression models for each chunk
+            - reg : LinearRegression - Model with only selected weights
         """
-        # Load preprocessing parameters
+        # Load all weights
         weights_dir = os.path.join(
             self.berg_dir, 
             'encoding_models', 
@@ -314,47 +312,52 @@ class MEGEncodingModel(BaseModelInterface):
             'train_dataset-things_meg_1', 
             'model-vit_b_32',
             'encoding_models_weights',
-            f'preprocessing_linear_all_{self.subject}.npy'
+            f'weights_{self.subject}.npy'
         )
-        preprocessing = np.load(weights_dir, allow_pickle=True).item()
+        weights = np.load(weights_dir, allow_pickle=True).item()
         
         # Reconstruct pre-PCA scaler
         scaler = StandardScaler()
-        scaler.scale_ = preprocessing['scaler_param']['scale_']
-        scaler.mean_ = preprocessing['scaler_param']['mean_']
-        scaler.var_ = preprocessing['scaler_param']['var_']
-        scaler.n_features_in_ = preprocessing['scaler_param']['n_features_in_']
-        scaler.n_samples_seen_ = preprocessing['scaler_param']['n_samples_seen_']
+        scaler.scale_ = weights['scaler_param']['scale_']
+        scaler.mean_ = weights['scaler_param']['mean_']
+        scaler.var_ = weights['scaler_param']['var_']
+        scaler.n_features_in_ = weights['scaler_param']['n_features_in_']
+        scaler.n_samples_seen_ = weights['scaler_param']['n_samples_seen_']
         
         # Reconstruct PCA
         pca = PCA(n_components=250, random_state=20200220)
-        pca.components_ = preprocessing['pca_param']['components_']
-        pca.explained_variance_ = preprocessing['pca_param']['explained_variance_']
-        pca.explained_variance_ratio_ = preprocessing['pca_param']['explained_variance_ratio_']
-        pca.singular_values_ = preprocessing['pca_param']['singular_values_']
-        pca.mean_ = preprocessing['pca_param']['mean_']
-        pca.n_components_ = preprocessing['pca_param']['n_components_']
-        pca.n_samples_ = preprocessing['pca_param']['n_samples_']
-        pca.noise_variance_ = preprocessing['pca_param']['noise_variance_']
-        pca.n_features_in_ = preprocessing['pca_param']['n_features_in_']
+        pca.components_ = weights['pca_param']['components_']
+        pca.explained_variance_ = weights['pca_param']['explained_variance_']
+        pca.explained_variance_ratio_ = weights['pca_param']['explained_variance_ratio_']
+        pca.singular_values_ = weights['pca_param']['singular_values_']
+        pca.mean_ = weights['pca_param']['mean_']
+        pca.n_components_ = weights['pca_param']['n_components_']
+        pca.n_samples_ = weights['pca_param']['n_samples_']
+        pca.noise_variance_ = weights['pca_param']['noise_variance_']
+        pca.n_features_in_ = weights['pca_param']['n_features_in_']
         
-        # Load all chunk models
-        chunk_models = []
-        model_dir = os.path.join(
-            self.berg_dir, 
-            'encoding_models', 
-            'modality-meg',
-            'train_dataset-things_meg_1', 
-            'model-vit_b_32',
-            'encoding_models_weights'
-        )
+        # Load regression weights
+        reg_coef_full = weights['reg_param']['coef_']  # Shape: (n_sensors * n_times, n_features)
+        reg_intercept_full = weights['reg_param']['intercept_']  # Shape: (n_sensors * n_times,)
         
-        for chunk_idx in range(self.N_CHUNKS):
-            model_filename = f'linear_all_chunk_{chunk_idx}_{self.subject}.pkl'
-            chunk_model = joblib.load(os.path.join(model_dir, model_filename))
-            chunk_models.append(chunk_model)
+        # Calculate indices for selected outputs
+        selected_indices = []
+        for sensor_idx in self.selected_sensors:
+            for time_idx in self.selected_timepoints:
+                flat_idx = sensor_idx * self.TIMEPOINTS_LENGTH + time_idx
+                selected_indices.append(flat_idx)
         
-        return scaler, pca, chunk_models
+        # Extract only the weights for selected outputs
+        coef_subset = reg_coef_full[selected_indices, :]  # Shape: (n_selected_outputs, n_features)
+        intercept_subset = reg_intercept_full[selected_indices]  # Shape: (n_selected_outputs,)
+        
+        # Build regression model with only selected weights
+        reg = LinearRegression()
+        reg.coef_ = coef_subset
+        reg.intercept_ = intercept_subset
+        reg.n_features_in_ = weights['reg_param']['n_features_in_']
+        
+        return scaler, pca, reg
     
     def generate_response(
         self,
@@ -422,7 +425,7 @@ class MEGEncodingModel(BaseModelInterface):
                     batch_features.append(layer_flat)
                 
                 # Concatenate features from all layers
-                # Shape: (batch_size, 13_layers * 196_patches * 768_dim)
+                # Shape: (batch_size, 12_layers * 50_patches * 768_dim)
                 ft = torch.cat(batch_features, dim=-1)
                 ft = ft.detach().cpu().numpy()
                 
@@ -431,38 +434,15 @@ class MEGEncodingModel(BaseModelInterface):
                 ft = self.pca.transform(ft)
                 ft = ft.astype(np.float32)
                 
-                
-                # Generate predictions from all chunks
-                chunk_predictions = []
-                channels_per_chunk = self.SENSORS_LENGTH // self.N_CHUNKS
-                remainder = self.SENSORS_LENGTH % self.N_CHUNKS
-                
-                for chunk_idx, chunk_model in enumerate(self.chunk_models):
-                    chunk_pred = chunk_model.predict(ft)
-                    
-                    # Calculate chunk size for this specific chunk
-                    if chunk_idx < remainder:
-                        chunk_size = channels_per_chunk + 1
-                    else:
-                        chunk_size = channels_per_chunk
-                    
-                    # Reshape: (batch, chunk_size * n_times) -> (batch, chunk_size, n_times)
-                    reshaped = chunk_pred.reshape(
-                        chunk_pred.shape[0], 
-                        chunk_size,
-                        self.TIMEPOINTS_LENGTH
-                    )
-                    chunk_predictions.append(reshaped)
-                
-                # Concatenate along sensor dimension
-                # Shape: (batch, n_sensors, n_times)
-                batch_responses = np.concatenate(chunk_predictions, axis=1)
-                
-                # Apply sensor selection
-                batch_responses = batch_responses[:, self.selected_sensors, :]
-                
-                # Apply timepoint selection
-                batch_responses = batch_responses[:, :, self.selected_timepoints]
+                # Generate predictions with model
+                batch_pred = self.reg.predict(ft)
+
+                # Reshape to (batch_size, n_sensors, n_timepoints)
+                batch_responses = batch_pred.reshape(
+                    batch_pred.shape[0],
+                    len(self.selected_sensors),
+                    len(self.selected_timepoints)
+                )
                 
                 batch_responses = batch_responses.astype(np.float32)
                 

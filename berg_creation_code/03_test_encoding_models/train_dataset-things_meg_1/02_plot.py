@@ -4,30 +4,17 @@ Parameters
 ----------
 subject : list
     List with all used subjects (e.g., ['P1', 'P2', 'P3', 'P4']).
-model : str
-    Name of the used encoding model.
 berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
-only_cls : str
-    If we should only use CLS token or all patches ('True' or 'False').
-regression : str
-    Type of regression used ('ridge' or 'linear').
 
 Example usage:
 python berg_creation_code/03_test_encoding_models/train_dataset-things_meg_1/02_plot.py \
     --subject P1 P2 P3 P4 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --only_cls True \
-    --regression ridge \
-    --model clip.vit_b_32
-    
+    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator'
     
 python berg_creation_code/03_test_encoding_models/train_dataset-things_meg_1/02_plot.py \
     --subject P1 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --only_cls True \
-    --regression ridge \
-    --model clip.vit_b_32
+    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator'
 """
 
 import argparse
@@ -44,18 +31,8 @@ from matplotlib.gridspec import GridSpec
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', nargs='+', default=['P1'],
     help='List of subjects to analyze (e.g., --subject P1 P2 P3 P4)')
-parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
-                   help="Selecting which model to use")
-parser.add_argument('--only_cls', required=True, choices=["True", "False"],
-                    help='If we should only use CLS token or all patches')
-parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
-                   help="Select type of regression")
 parser.add_argument('--berg_dir', required=True, type=str)
 args = parser.parse_args()
-
-args.only_cls = args.only_cls == "True"
-
-cls_suffix = 'cls' if args.only_cls else 'all'
 
 
 # =============================================================================
@@ -66,7 +43,7 @@ noise_ceiling_results = []
 region_data = []
 
 metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
-    'train_dataset-things_meg_1', f'model-{args.model}', 'metadata')
+    'train_dataset-things_meg_1', 'model-vit_b_32', 'metadata')
 
 for subject in args.subject:
     # Load all data from single metadata file
@@ -82,9 +59,6 @@ for subject in args.subject:
 
 correlation_results = np.asarray(correlation_results)
 noise_ceiling_results = np.asarray(noise_ceiling_results)
-
-print(f"Correlation results shape: {correlation_results.shape}")
-print(f"Noise ceiling results shape: {noise_ceiling_results.shape}")
 
 
 # =============================================================================
@@ -166,8 +140,11 @@ for s, subject in enumerate(args.subject):
             # correlation_results shape: (n_subjects, n_channels, n_timepoints)
             region_correlations = np.mean(correlation_results[s, region_sensors, :], axis=0)
             
+            # Set negative correlations to 0 before squaring
+            region_correlations_clipped = np.clip(region_correlations, 0, None)
+            
             # Square correlations to get r²
-            region_r2 = region_correlations ** 2
+            region_r2 = region_correlations_clipped ** 2
             
             # Average noise ceiling across sensors in this region
             # Convert from r² percentage (0-100) to proportion (0-1)
@@ -205,11 +182,9 @@ for s, subject in enumerate(args.subject):
     ax.grid(True, alpha=0.2, linestyle='-', linewidth=0.5)
     ax.set_axisbelow(True)
     
-    # Title and legend
+    # Title
     ax.set_title(f'{subject} - Brain Region Encoding Accuracy', 
                 fontsize=fontsize+3, fontweight='bold', pad=15)
-    ax.legend(loc='upper right', fontsize=fontsize, framealpha=0.95, 
-             edgecolor='gray', fancybox=True)
 
 # Hide unused subplots if we have fewer than 4 subjects
 if n_subjects < 4 and avg_ax is None:
@@ -244,8 +219,11 @@ if avg_ax is not None:
             grand_avg_corr = np.mean(region_avg_correlations, axis=0)
             grand_avg_nc_r2 = np.mean(region_avg_noise_ceilings, axis=0)
             
+            # Set negative correlations to 0 before squaring
+            grand_avg_corr_clipped = np.clip(grand_avg_corr, 0, None)
+            
             # Square correlations to get r²
-            grand_avg_r2 = grand_avg_corr ** 2
+            grand_avg_r2 = grand_avg_corr_clipped ** 2
             
             # Convert noise ceiling from percentage to proportion
             grand_avg_nc = grand_avg_nc_r2 / 100
@@ -281,11 +259,27 @@ if avg_ax is not None:
     avg_ax.grid(True, alpha=0.2, linestyle='-', linewidth=0.5)
     avg_ax.set_axisbelow(True)
     
-    # Title and legend
+    # Title
     avg_ax.set_title('Grand Average Across All Subjects - Brain Region Encoding Accuracy', 
                      fontsize=fontsize+3, fontweight='bold', pad=15)
-    avg_ax.legend(loc='upper right', fontsize=fontsize+1, framealpha=0.95,
-                 edgecolor='gray', fancybox=True)
+
+# Add single legend in upper left corner
+# Create custom legend entries
+from matplotlib.lines import Line2D
+legend_elements = []
+
+# Add region lines
+for region_label in region_order:
+    legend_elements.append(Line2D([0], [0], color=region_colors[region_label], 
+                                  linewidth=2.5, label=region_label))
+
+# Add noise ceiling entry
+legend_elements.append(Line2D([0], [0], color='gray', linestyle='--', 
+                             linewidth=1.2, alpha=0.5, label='Noise Ceiling'))
+
+# Place legend on first subplot (upper left)
+axes[0].legend(handles=legend_elements, loc='upper left', fontsize=fontsize, 
+              framealpha=0.95, edgecolor='gray', fancybox=True)
 
 # Adjust layout
 if n_subjects == 1 or avg_ax is None:
@@ -293,15 +287,12 @@ if n_subjects == 1 or avg_ax is None:
 
 # Create save directory
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
-    'train_dataset-things_meg_1', f'model-{args.model}', 'encoding_models_accuracy')
+    'train_dataset-things_meg_1', 'model-vit_b_32', 'encoding_models_accuracy')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
 # Save the figure
-subjects_str = '_'.join(args.subject)
-save_name = f'encoding_accuracy_region_model-{args.regression}_{cls_suffix}_{args.model}_{subjects_str}'
-fig.savefig(os.path.join(save_dir, f'{save_name}.png'), dpi=300, bbox_inches='tight', format='png')
+save_name = 'encoding_accuracy'
 fig.savefig(os.path.join(save_dir, f'{save_name}.jpg'), dpi=300, bbox_inches='tight', format='jpeg')
 
-print(f"Plot saved to: {save_dir}/{save_name}.png and {save_dir}/{save_name}.jpg")
 plt.show()
