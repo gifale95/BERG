@@ -127,7 +127,7 @@ for m, monkey in enumerate(args.monkey):
             ax.plot(times, region_correlations_r2, 
                    color=roi_colors[roi_label], 
                    linewidth=3,
-                   label=f'{roi_label} (n={len(region_electrodes)})')
+                   label=f'{roi_label}')
             
             if args.plot_noise_ceiling:
                 region_noise_ceiling = np.mean(noise_ceiling[region_electrodes, :], axis=0) / 100
@@ -152,7 +152,10 @@ for m, monkey in enumerate(args.monkey):
     ax.set_yticks(np.arange(0, 1.0, 0.1))
     
     ax.set_title(f'{monkey} - Brain Region Comparison', fontsize=fontsize+2, fontweight='bold')
-    ax.legend(loc='upper left', fontsize=fontsize)
+    
+    # Only show legend on first subplot
+    if m == 0:
+        ax.legend(loc='upper left', fontsize=fontsize)
 
 for roi_label in ['V1', 'V4', 'IT']:
     if all_roi_correlations[roi_label]:
