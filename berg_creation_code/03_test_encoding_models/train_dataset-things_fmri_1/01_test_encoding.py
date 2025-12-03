@@ -7,11 +7,6 @@ subject : str
     Which subject's data to use (e.g., 'sub-01').
 berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
-
-Example usage:
-python berg_creation_code/03_test_encoding_models/train_dataset-things_fmri_1/01_test_encoding.py \
-    --subject sub-01 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator'
 """
 
 import argparse

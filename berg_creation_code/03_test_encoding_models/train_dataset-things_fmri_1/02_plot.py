@@ -7,11 +7,6 @@ subjects : list of str
     List of subjects to analyze (e.g., 'sub-01 sub-02 sub-03').
 berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
-
-Example usage:
-python berg_creation_code/03_test_encoding_models/train_dataset-things_fmri_1/02_plot.py \
-    --subjects sub-01 sub-02 sub-03 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator'
 """
 
 import argparse

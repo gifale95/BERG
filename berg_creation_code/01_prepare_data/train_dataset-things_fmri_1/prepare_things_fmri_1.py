@@ -21,13 +21,6 @@ fmri_data_dir : str
 batch_size : int
     Batch size for chunked processing to manage memory usage.
 
-Usage
------
-python berg_creation_code/01_prepare_data/train_dataset-things_fMRI_1/prepare_things_fMRI_1.py \
-    --subject sub-02 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --fmri_data_dir '/Volumes/Extreme SSD/Datasets/THINGS/betas_csv' \
-    --batch_size 1000
 
 Output Files Created (per subject):
 ────────────────────────────────────────────────────────────────────────────

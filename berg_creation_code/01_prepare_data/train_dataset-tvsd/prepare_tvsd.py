@@ -20,13 +20,6 @@ batch_size : int
     Batch size for chunked processing to manage memory usage.
     
     
-python berg_creation_code/01_prepare_data/train_dataset-tvsd-utah_array/prepare_tvsd.py \
-    --monkey monkeyN \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --tvsd_dir '/Volumes/Extreme SSD/Datasets/TSVD' \
-    --batch_size 1000    
-    
-    
 Output Files Created (per monkey):
 ────────────────────────────────────────────────────────────────
 tvsd_{monkey}_split-train.h5           : (22,248, 1024, 300)

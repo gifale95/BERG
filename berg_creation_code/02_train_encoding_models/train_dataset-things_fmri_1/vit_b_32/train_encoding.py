@@ -27,12 +27,6 @@ feature_batch_size : int
     Batch size for feature extraction (default: 512).
 n_pca_components : int
     Number of PCA components (default: 250).
-
-Example usage:
-python berg_creation_code/02_train_encoding_models/train_dataset-things_fmri_1/train_encoding.py \
-    --subject sub-01 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --things_dir '/Volumes/Extreme SSD/Datasets/THINGS/things_images'
 """
 
 import argparse

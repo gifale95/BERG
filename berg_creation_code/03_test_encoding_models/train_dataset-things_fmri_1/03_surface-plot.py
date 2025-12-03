@@ -11,13 +11,6 @@ pycortex_filestore : str
     Path to pycortex filestore containing subject surfaces.
 transform : str
     Name of the transform to use (default: 'align_auto').
-
-Example usage:
-python berg_creation_code/03_test_encoding_models/train_dataset-things_fmri_1/03_surface-plot.py \
-    --subjects sub-01 sub-02 sub-03 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --pycortex_filestore '/Volumes/Extreme SSD/Datasets/THINGS/pycortex_filestore' \
-    --transform align_auto
 """
 
 import argparse

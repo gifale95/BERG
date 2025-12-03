@@ -20,15 +20,6 @@ batch_size : int
     Batch size for chunked processing to manage memory usage.
 
 
-Usage
------
-python '/Users/domenicbersch/Documents/Repositories/NEST/berg_creation_code/01_prepare_data/train_dataset-things_meg_1/prepare_things_meg_1.py' \
-    --subject P1 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --meg_data_dir '/Volumes/Extreme SSD/Datasets/THINGS/LOCAL 2/ocontier/thingsmri/openneuro/THINGS-data/THINGS-MEG/ds004212/derivatives/preprocessed' \
-    --batch_size 512
-
-
 Output Files Created (per subject):
 ────────────────────────────────────────────────────────────────
 meg_{subject}_split-train.h5                : (22248, 271, 281) - Non-normalized training data

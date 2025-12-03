@@ -8,13 +8,6 @@ monkey : str
 berg_dir : str
 	Directory of the Brain Encoding Response Generator (BERG).
 	https://github.com/gifale95/BERG
- 
-
-
-python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/01_test_encoding.py \
-    --monkey monkeyN \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-
 """
 
 import argparse

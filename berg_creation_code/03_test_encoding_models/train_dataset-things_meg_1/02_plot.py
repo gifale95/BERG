@@ -6,15 +6,6 @@ subject : list
     List with all used subjects (e.g., ['P1', 'P2', 'P3', 'P4']).
 berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
-
-Example usage:
-python berg_creation_code/03_test_encoding_models/train_dataset-things_meg_1/02_plot.py \
-    --subject P1 P2 P3 P4 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator'
-    
-python berg_creation_code/03_test_encoding_models/train_dataset-things_meg_1/02_plot.py \
-    --subject P1 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator'
 """
 
 import argparse
