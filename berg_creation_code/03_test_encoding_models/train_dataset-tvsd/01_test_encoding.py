@@ -5,8 +5,6 @@ Parameters
 ----------
 monkey : str
 	Which monkey's data to use ('monkeyN' or 'monkeyF').
-model : str
-	Name of the used encoding model.
 berg_dir : str
 	Directory of the Brain Encoding Response Generator (BERG).
 	https://github.com/gifale95/BERG
@@ -16,9 +14,6 @@ berg_dir : str
 python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/01_test_encoding.py \
     --monkey monkeyN \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --only_cls True \
-    --regression linear \
-    --model clip.vit_b_32
 
 """
 
@@ -30,17 +25,9 @@ from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--monkey', type=str, required=True, choices=['monkeyN', 'monkeyF'])
-parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
-                   help="Selecting which model to use")
-parser.add_argument('--only_cls', required=True, choices=["True", "False"],
-                    help='If we should only use CLS token or all patches')
-parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
-                   help="Select type of regression")
 parser.add_argument('--berg_dir', required=True, type=str)
 
 args = parser.parse_args()
-
-args.only_cls = args.only_cls == "True"
 
 print('>>> Test TVSD encoding models <<<')
 print('\nInput parameters:')
@@ -72,11 +59,9 @@ print(f"Actual neural test data shape: {neural_test.shape}")
 # Load the in silico neural responses for the test images
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-	'modality-utah_array', 'train_dataset-tvsd', args.model)
+	'modality-utah_array', 'train_dataset-tvsd', 'vit_b_32')
 
-
-cls_suffix = 'cls' if args.only_cls else 'all'
-pred_path = os.path.join(results_dir, f'utah_array_test_pred_{args.regression}_{cls_suffix}_{args.monkey}.npy')
+pred_path = os.path.join(results_dir, f'utah_array_test_pred_{args.monkey}.npy')
 neural_test_pred = np.load(pred_path)
 
 print(f"Predicted neural test data shape: {neural_test_pred.shape}")
@@ -100,8 +85,11 @@ print(f"Correlation results shape: {correlation_results.shape}")
 # =============================================================================
 noise_ceiling = metadata_tvsd['encoding_model']['noise_ceiling']
 
-noise_ceiling_r2 = noise_ceiling / 100 
-percent_noise_ceiling = (correlation_results**2 / noise_ceiling_r2) * 100
+noise_ceiling_r2 = noise_ceiling / 100
+
+# Clip negative correlations to 0 before squaring
+correlation_results_clipped = np.clip(correlation_results, 0, None)
+percent_noise_ceiling = (correlation_results_clipped**2 / noise_ceiling_r2) * 100
 
 print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
 
@@ -118,7 +106,7 @@ metadata['encoding_model'].update({
 })
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
-	'train_dataset-tvsd', f'model-{args.model}', 'metadata')
+	'train_dataset-tvsd', 'model-vit_b_32', 'metadata')
 if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)
 

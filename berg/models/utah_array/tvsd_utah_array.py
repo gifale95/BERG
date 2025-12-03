@@ -8,10 +8,10 @@ from tqdm import tqdm
 from torchvision import transforms as trn
 from torchvision.models import vit_b_32, ViT_B_32_Weights
 
-import joblib
 import torchvision
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LinearRegression
 from berg.core.exceptions import (
     InvalidParameterError,
     ModelLoadError,
@@ -58,8 +58,6 @@ class UtahArrayEncodingModel(BaseModelInterface):
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     ELECTRODES_LENGTH = 1024
     TIMEPOINTS_LENGTH = 300
-    N_CHUNKS = 8
-    ELECTRODES_PER_CHUNK = 128
     
     def __init__(
         self, 
@@ -195,7 +193,7 @@ class UtahArrayEncodingModel(BaseModelInterface):
             self.feature_extractor = self._load_feature_extractor(self.device)        
             
             # Load the scaler, PCA, and trained regression weights
-            self.scaler, self.pca, self.chunk_models = self._load_encoding_weights()
+            self.scaler, self.pca, self.reg = self._load_encoding_weights()
             
             print(f"Model loaded on {self.device} for monkey {self.subject}")
             
@@ -253,18 +251,18 @@ class UtahArrayEncodingModel(BaseModelInterface):
 
     def _load_encoding_weights(self):
         """
-        Load pretrained scaler and PCA transformation parameters.
-        Load trained chunked linear regression models.
+        Load pretrained scaler, PCA, and regression weights.
+        Applies electrode/timepoint selection to create model.
         
         Returns
         -------
         tuple
-            A tuple containing (scaler, pca, chunk_models) where:
+            A tuple containing (scaler, pca, reg) where:
             - scaler : StandardScaler - Fitted feature normalization object
             - pca : PCA - Fitted principal component analysis model
-            - chunk_models : List of LinearRegression models for each chunk
+            - reg : LinearRegression - Model with only selected weights
         """
-        # Load preprocessing parameters
+        # Load all weights
         weights_dir = os.path.join(
             self.berg_dir, 
             'encoding_models', 
@@ -272,47 +270,51 @@ class UtahArrayEncodingModel(BaseModelInterface):
             'train_dataset-tvsd', 
             'model-vit_b_32',
             'encoding_models_weights',
-            f'preprocessing_linear_all_monkey{self.subject}.npy'
+            f'weights_monkey{self.subject}.npy'
         )
-        preprocessing = np.load(weights_dir, allow_pickle=True).item()
+        weights = np.load(weights_dir, allow_pickle=True).item()
         
         # Reconstruct scaler
         scaler = StandardScaler()
-        scaler.scale_ = preprocessing['scaler_param']['scale_']
-        scaler.mean_ = preprocessing['scaler_param']['mean_']
-        scaler.var_ = preprocessing['scaler_param']['var_']
-        scaler.n_features_in_ = preprocessing['scaler_param']['n_features_in_']
-        scaler.n_samples_seen_ = preprocessing['scaler_param']['n_samples_seen_']
+        scaler.scale_ = weights['scaler_param']['scale_']
+        scaler.mean_ = weights['scaler_param']['mean_']
+        scaler.var_ = weights['scaler_param']['var_']
+        scaler.n_features_in_ = weights['scaler_param']['n_features_in_']
+        scaler.n_samples_seen_ = weights['scaler_param']['n_samples_seen_']
         
         # Reconstruct PCA
         pca = PCA(n_components=250, random_state=20200220)
-        pca.components_ = preprocessing['pca_param']['components_']
-        pca.explained_variance_ = preprocessing['pca_param']['explained_variance_']
-        pca.explained_variance_ratio_ = preprocessing['pca_param']['explained_variance_ratio_']
-        pca.singular_values_ = preprocessing['pca_param']['singular_values_']
-        pca.mean_ = preprocessing['pca_param']['mean_']
-        pca.n_components_ = preprocessing['pca_param']['n_components_']
-        pca.n_samples_ = preprocessing['pca_param']['n_samples_']
-        pca.noise_variance_ = preprocessing['pca_param']['noise_variance_']
-        pca.n_features_in_ = preprocessing['pca_param']['n_features_in_']
+        pca.components_ = weights['pca_param']['components_']
+        pca.explained_variance_ = weights['pca_param']['explained_variance_']
+        pca.explained_variance_ratio_ = weights['pca_param']['explained_variance_ratio_']
+        pca.singular_values_ = weights['pca_param']['singular_values_']
+        pca.mean_ = weights['pca_param']['mean_']
+        pca.n_components_ = weights['pca_param']['n_components_']
+        pca.n_samples_ = weights['pca_param']['n_samples_']
+        pca.noise_variance_ = weights['pca_param']['noise_variance_']
+        pca.n_features_in_ = weights['pca_param']['n_features_in_']
         
-        # Load all chunk models
-        chunk_models = []
-        model_dir = os.path.join(
-            self.berg_dir, 
-            'encoding_models', 
-            'modality-utah_array',
-            'train_dataset-tvsd', 
-            'model-vit_b_32',
-            'encoding_models_weights'
-        )
+        # Create masks for selection
+        electrode_mask = np.zeros(self.ELECTRODES_LENGTH, dtype=bool)
+        electrode_mask[self.selected_electrodes] = True
         
-        for chunk_idx in range(self.N_CHUNKS):
-            model_filename = f'linear_all_chunk_{chunk_idx}_monkey{self.subject}.pkl'
-            chunk_model = joblib.load(os.path.join(model_dir, model_filename))
-            chunk_models.append(chunk_model)
+        time_mask = np.zeros(self.TIMEPOINTS_LENGTH, dtype=bool)
+        time_mask[self.selected_timepoints] = True
         
-        return scaler, pca, chunk_models
+        # Combined mask for flattened neural space (electrodes x times)
+        combined_mask = (electrode_mask[:, None] & time_mask[None, :]).flatten()
+        
+        # Slice regression weights to selected subset only
+        coef_subset = weights['reg_param']['coef_'][combined_mask, :]
+        intercept_subset = weights['reg_param']['intercept_'][combined_mask]
+        
+        # Build regression model with only selected weights
+        reg = LinearRegression()
+        reg.coef_ = coef_subset
+        reg.intercept_ = intercept_subset
+        reg.n_features_in_ = weights['reg_param']['n_features_in_']
+        
+        return scaler, pca, reg
 
 
     def generate_response(
@@ -337,8 +339,8 @@ class UtahArrayEncodingModel(BaseModelInterface):
         Returns
         -------
         insilico_spike_responses : np.ndarray
-            In silico spiking response array of shape (batch_size, n_electrodes,
-            n_timepoints), where the number of electrodes and time points
+            In silico spiking response array of shape (batch_size, n_selected_electrodes,
+            n_selected_timepoints).
         """
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -380,7 +382,7 @@ class UtahArrayEncodingModel(BaseModelInterface):
                     batch_features.append(layer_flat)
 
                 # Concatenate features from all layers
-                # Shape: (batch_size, 13_layers * 196_patches * 768_dim)
+                # Shape: (batch_size, 12_layers * 50_patches * 768_dim)
                 ft = torch.cat(batch_features, dim=-1)
                 ft = ft.detach().cpu().numpy()
                 
@@ -389,33 +391,17 @@ class UtahArrayEncodingModel(BaseModelInterface):
                 ft = self.pca.transform(ft)
                 ft = ft.astype(np.float32)
                 
-                # Generate predictions from all chunks
-                chunk_predictions = []
-                for chunk_model in self.chunk_models:
-                    chunk_pred = chunk_model.predict(ft)
-                    chunk_predictions.append(chunk_pred)
+                # Generate predictions with model
+                batch_pred = self.reg.predict(ft)
                 
-                # Reshape each chunk: (batch, n_times * electrodes_per_chunk) 
-                # -> (batch, n_times, electrodes_per_chunk)
-                reshaped_chunks = []
-                for chunk_pred in chunk_predictions:
-                    reshaped = chunk_pred.reshape(
-                        chunk_pred.shape[0], 
-                        self.ELECTRODES_PER_CHUNK,
-                        self.TIMEPOINTS_LENGTH
-                    )
-                    reshaped_chunks.append(reshaped)
-                # Concatenate along electrode dimension
-                # Shape: (batch, n_electrodes, n_times)
-                batch_responses = np.concatenate(reshaped_chunks, axis=1)
-                
-                # Apply electrode selection
-                batch_responses = batch_responses[:, self.selected_electrodes, :]
-                
-                # Apply timepoint selection
-                batch_responses = batch_responses[:, :, self.selected_timepoints]
-                
-                batch_responses = batch_responses.astype(np.float32)
+                # Reshape to (batch, n_selected_electrodes, n_selected_timepoints)
+                n_selected_electrodes = len(self.selected_electrodes)
+                n_selected_timepoints = len(self.selected_timepoints)
+                batch_responses = batch_pred.reshape(
+                    batch_pred.shape[0],
+                    n_selected_electrodes,
+                    n_selected_timepoints
+                ).astype(np.float32)
                 
                 # Combine with previous batches
                 if insilico_spike_responses is None:

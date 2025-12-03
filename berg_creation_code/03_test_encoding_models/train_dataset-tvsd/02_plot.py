@@ -4,8 +4,6 @@ Parameters
 ----------
 monkeys : list
     List with all used TVSD monkeys.
-model : str
-    Name of the used encoding model.
 berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
     https://github.com/gifale95/BERG
@@ -14,17 +12,11 @@ berg_dir : str
 python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/02_plot.py \
     --monkey monkeyF monkeyN \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --only_cls True \
-    --regression linear \
-    --model vit_b_32 \
     --plot_noise_ceiling True
     
 python berg_creation_code/03_test_encoding_models/train_dataset-tvsd_monkey/02_plot.py \
     --monkey monkeyF \
     --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --only_cls True \
-    --regression linear \
-    --model vit_b_32 \
 
     
 
@@ -43,21 +35,13 @@ from matplotlib import pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--monkey', nargs='+', default=['monkeyN', 'monkeyF'],
     help='List of monkeys to analyze (e.g., --monkey monkeyN monkeyF)')
-parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
-                   help="Selecting which model to use")
-parser.add_argument('--only_cls', required=True, choices=["True", "False"],
-                    help='If we should only use CLS token or all patches')
-parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
-                   help="Select type of regression")
 parser.add_argument('--plot_noise_ceiling', required=True, choices=["True", "False"],
                    help="Plot noise ceiling for each ROI")
 parser.add_argument('--berg_dir', required=True, type=str)
 args = parser.parse_args()
 
-args.only_cls = args.only_cls == "True"
 args.plot_noise_ceiling = args.plot_noise_ceiling == "True"
 
-cls_suffix = 'cls' if args.only_cls else 'all'
 
 
 # =============================================================================
@@ -68,7 +52,7 @@ roi_data = []
 noise_ceiling_data = []
 
 metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
-    'train_dataset-tvsd', f'model-{args.model}', 'metadata')
+    'train_dataset-tvsd', 'model-vit_b_32', 'metadata')
 
 for monkey in args.monkey:
     file_name = f'metadata_{monkey}.npy'
@@ -147,7 +131,9 @@ for m, monkey in enumerate(args.monkey):
         region_electrodes = np.where(roi_assignments == roi_idx)[0]
         
         if len(region_electrodes) > 0:
-            region_correlations_r2 = np.mean(correlation_results[m][region_electrodes, :]**2, axis=0)
+            # Clip negative correlations to 0 before squaring
+            region_correlations = np.clip(correlation_results[m][region_electrodes, :], 0, None)
+            region_correlations_r2 = np.mean(region_correlations**2, axis=0)
             
             all_roi_correlations[roi_label].append(region_correlations_r2)
             
@@ -159,11 +145,12 @@ for m, monkey in enumerate(args.monkey):
             if args.plot_noise_ceiling:
                 region_noise_ceiling = np.mean(noise_ceiling[region_electrodes, :], axis=0) / 100
                 all_roi_noise_ceilings[roi_label].append(region_noise_ceiling)
-                
                 ax.plot(times, region_noise_ceiling, 
                        color=roi_colors[roi_label], 
-                       linestyle='--', linewidth=2, alpha=0.5,
-                       label=f'{roi_label} Noise Ceiling')
+                       linestyle='--', linewidth=2, alpha=0.5)
+    
+    if args.plot_noise_ceiling:
+        ax.plot([], [], color='gray', linestyle='--', linewidth=2, alpha=0.5, label='Noise Ceiling')
     
     ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
     ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
@@ -178,7 +165,7 @@ for m, monkey in enumerate(args.monkey):
     ax.set_yticks(np.arange(0, 1.0, 0.1))
     
     ax.set_title(f'{monkey} - Brain Region Comparison', fontsize=fontsize+2, fontweight='bold')
-    ax.legend(loc='upper right', fontsize=fontsize)
+    ax.legend(loc='upper left', fontsize=fontsize)
 
 for roi_label in ['V1', 'V4', 'IT']:
     if all_roi_correlations[roi_label]:
@@ -193,11 +180,12 @@ for roi_label in ['V1', 'V4', 'IT']:
         if args.plot_noise_ceiling and all_roi_noise_ceilings[roi_label]:
             noise_ceiling_array = np.array(all_roi_noise_ceilings[roi_label])
             noise_ceiling_mean = np.mean(noise_ceiling_array, axis=0)
-            
             avg_ax.plot(times, noise_ceiling_mean,
                        color=roi_colors[roi_label],
-                       linestyle='--', linewidth=2, alpha=0.5,
-                       label=f'{roi_label} Noise Ceiling')
+                       linestyle='--', linewidth=2, alpha=0.5)
+
+if args.plot_noise_ceiling:
+    avg_ax.plot([], [], color='gray', linestyle='--', linewidth=2, alpha=0.5, label='Noise Ceiling')
 
 avg_ax.axhline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
 avg_ax.axvline(0, color='black', linestyle='--', linewidth=1, alpha=0.5)
@@ -213,17 +201,16 @@ avg_ax.set_yticks(np.arange(0, 1.0, 0.1))
 
 
 avg_ax.set_title('Average Across Monkeys - Brain Region Comparison', fontsize=fontsize+2, fontweight='bold')
-avg_ax.legend(loc='upper right', fontsize=fontsize)
+avg_ax.legend(loc='upper left', fontsize=fontsize)
 
 plt.tight_layout()
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
-    'train_dataset-tvsd', f'model-{args.model}', 'encoding_models_accuracy')
+    'train_dataset-tvsd', 'model-vit_b_32', 'encoding_models_accuracy')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-nc_suffix = '_noise_ceiling' if args.plot_noise_ceiling else ''
-save_name = f'encoding_accuracy_roi_model-{args.regression}_{cls_suffix}_{args.model}{nc_suffix}'
+save_name = f'encoding_accuracy'
 fig.savefig(os.path.join(save_dir, f'{save_name}.jpg'), dpi=300, bbox_inches='tight', format='jpeg')
 
 print(f"Plot saved to: {save_dir}/{save_name}.jpg")
