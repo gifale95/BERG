@@ -84,13 +84,13 @@ for subject in args.subjects:
                  coords[:, 0].max() + 1)
     print(f"Volume shape (Z, Y, X): {vol_shape}")
     
-    # Create empty volume filled with NaN
-    volume_3d = np.full(vol_shape, np.nan)
+    # Create empty volume filled with zeros
+    volume_3d = np.zeros(vol_shape)
     
     # Place clipped correlation values at their coordinates
     volume_3d[coords[:, 2], coords[:, 1], coords[:, 0]] = correlations_clipped
     
-    print(f"Non-NaN voxels: {np.sum(~np.isnan(volume_3d))}")
+    print(f"Non-zero voxels: {np.sum(volume_3d > 0)}")
     
     # =============================================================================
     # Create pycortex Volume and visualize
