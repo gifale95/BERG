@@ -89,6 +89,9 @@ noise_ceiling_r2 = noise_ceiling_testset / 100
 correlation_results_clipped = np.clip(correlation_results, 0, None)
 percent_noise_ceiling = (correlation_results_clipped**2 / noise_ceiling_r2) * 100
 
+# If noise ceiling = 0
+percent_noise_ceiling[~np.isfinite(percent_noise_ceiling)] = np.nan
+
 print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
 
 # =============================================================================
