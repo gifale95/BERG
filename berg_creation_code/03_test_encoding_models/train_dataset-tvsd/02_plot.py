@@ -118,7 +118,7 @@ for m, monkey in enumerate(args.monkey):
         region_electrodes = np.where(roi_assignments == roi_idx)[0]
         
         # Filter for electrodes where noise ceiling > 0
-        valid_mask = noise_ceiling[region_electrodes, :].max(axis=1) > 0
+        valid_mask = noise_ceiling[region_electrodes, :].max(axis=1) > 0.1
         region_electrodes = region_electrodes[valid_mask]
             
         if len(region_electrodes) > 0:

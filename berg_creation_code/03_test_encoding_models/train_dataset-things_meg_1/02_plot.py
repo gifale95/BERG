@@ -194,7 +194,7 @@ if avg_ax is not None:
             region_sensors = np.where(sensor_regions == region_label)[0]
             
             # Filter for sensors where noise ceiling > 0
-            valid_mask = noise_ceiling_results[s, region_sensors, :].max(axis=1) > 0
+            valid_mask = noise_ceiling_results[s, region_sensors, :].max(axis=1) > 0.1
             region_sensors = region_sensors[valid_mask]
             
             if len(region_sensors) > 0:

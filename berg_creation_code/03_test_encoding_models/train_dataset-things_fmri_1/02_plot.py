@@ -92,7 +92,7 @@ for subject in args.subjects:
             roi_indices = roi_indices_dict[roi_key]
             
             # Filter for voxels where noise ceiling > 0
-            roi_indices = roi_indices[noise_ceiling_r2[roi_indices] > 0]
+            roi_indices = roi_indices[noise_ceiling_r2[roi_indices] > 0.1]
             
             if len(roi_indices) > 0:
                 # Clip negative correlations to 0, then square to get R²
