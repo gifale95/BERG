@@ -80,7 +80,7 @@ print(f"Correlation range: [{correlation_results.min():.4f}, {correlation_result
 # =============================================================================
 # Compute percent noise ceiling 
 # =============================================================================
-noise_ceiling_testset = metadata_fmri['encoding_model']['noise_ceiling_singletrial']
+noise_ceiling_testset = metadata_fmri['encoding_model']['noise_ceiling_testset']
 noise_ceiling_r2 = noise_ceiling_testset / 100
 
 

@@ -63,9 +63,12 @@ for subject in args.subjects:
     file_name = f'metadata_{subject}.npy'
     metadata = np.load(os.path.join(metadata_dir, file_name), allow_pickle=True).item()
     
+    # Get correlation results (r values) and noise ceiling (R² percentage)
     correlation_results = metadata['encoding_model']['correlation_results']
     noise_ceiling_testset = metadata['encoding_model']['noise_ceiling_testset']
-    noise_ceiling_correlation = np.sqrt(noise_ceiling_testset / 100)
+    
+    # Convert noise ceiling from percentage to R² (0-1 scale)
+    noise_ceiling_r2 = noise_ceiling_testset / 100
     
     # Load ROI indices from preprocessed metadata
     preprocessed_dir = os.path.join(args.berg_dir, 'model_training_datasets',
@@ -76,8 +79,8 @@ for subject in args.subjects:
     # ROIs are now directly in the 'roi' dictionary
     roi_indices_dict = preprocessed_metadata['roi']
     
-    # Compute ROI-averaged correlations and noise ceilings
-    roi_correlations = []
+    # Compute ROI-averaged R² and noise ceilings
+    roi_r2_values = []
     roi_noise_ceilings = []
     roi_n_voxels = []
     roi_labels = []
@@ -89,17 +92,21 @@ for subject in args.subjects:
             roi_indices = roi_indices_dict[roi_key]
             
             if len(roi_indices) > 0:
-                roi_corr = np.mean(correlation_results[roi_indices])
-                roi_nc = np.mean(noise_ceiling_correlation[roi_indices])
+                # Clip negative correlations to 0, then square to get R²
+                roi_corr_clipped = np.clip(correlation_results[roi_indices], 0, None)
+                roi_r2 = np.mean(roi_corr_clipped ** 2)
                 
-                roi_correlations.append(roi_corr)
+                # Get mean noise ceiling R² for this ROI
+                roi_nc = np.mean(noise_ceiling_r2[roi_indices])
+                
+                roi_r2_values.append(roi_r2)
                 roi_noise_ceilings.append(roi_nc)
                 roi_n_voxels.append(len(roi_indices))
                 roi_labels.append(roi_name)
     
     # Store data for this subject
     all_subject_data[subject] = {
-        'roi_correlations': np.array(roi_correlations),
+        'roi_r2': np.array(roi_r2_values),
         'roi_noise_ceilings': np.array(roi_noise_ceilings),
         'roi_n_voxels': np.array(roi_n_voxels),
         'roi_labels': roi_labels
@@ -113,39 +120,24 @@ print(f"\nLoaded data for {n_subjects} subjects")
 # =============================================================================
 # Create a matrix for all ROIs across all subjects (using NaN for missing ROIs)
 # Shape: (n_subjects, n_rois)
-all_corrs_matrix = np.full((n_subjects, len(all_rois)), np.nan)
+all_r2_matrix = np.full((n_subjects, len(all_rois)), np.nan)
 all_ncs_matrix = np.full((n_subjects, len(all_rois)), np.nan)
 
 # Fill in the data for each subject
 for subj_idx, subject in enumerate(args.subjects):
     subj_roi_labels = all_subject_data[subject]['roi_labels']
-    subj_corrs = all_subject_data[subject]['roi_correlations']
+    subj_r2 = all_subject_data[subject]['roi_r2']
     subj_ncs = all_subject_data[subject]['roi_noise_ceilings']
     
     # Map subject's ROIs to the master ROI list
     for roi_idx, roi_name in enumerate(subj_roi_labels):
         master_roi_idx = all_rois.index(roi_name)
-        all_corrs_matrix[subj_idx, master_roi_idx] = subj_corrs[roi_idx]
+        all_r2_matrix[subj_idx, master_roi_idx] = subj_r2[roi_idx]
         all_ncs_matrix[subj_idx, master_roi_idx] = subj_ncs[roi_idx]
 
-# Clip negative correlations to zero before computing R²
-all_corrs_matrix = np.clip(all_corrs_matrix, 0, None)
-
 # Compute mean across subjects (ignoring NaNs)
-mean_corrs = np.nanmean(all_corrs_matrix, axis=0)
+mean_r2 = np.nanmean(all_r2_matrix, axis=0)
 mean_ncs = np.nanmean(all_ncs_matrix, axis=0)
-
-
-# =============================================================================
-# Prepare data for grid plotting
-# =============================================================================
-# Convert correlations to R² (explained variance)
-all_r2_matrix = all_corrs_matrix ** 2
-mean_r2 = mean_corrs ** 2
-
-# Noise ceiling is already in R² scale, square it to match
-all_ncs_matrix_r2 = all_ncs_matrix ** 2
-mean_ncs_r2 = mean_ncs ** 2
 
 
 # =============================================================================
@@ -182,7 +174,7 @@ nc_color = '#A23B72'  # Dark rose for noise ceiling
 # =============================================================================
 # Find maximum value across all R² data and noise ceilings
 max_r2 = np.nanmax(all_r2_matrix)
-max_nc = np.nanmax(all_ncs_matrix_r2)
+max_nc = np.nanmax(all_ncs_matrix)
 global_max = max(max_r2, max_nc)
 
 # Add 5% padding above the maximum
@@ -205,16 +197,16 @@ width = 0.4
 for r, roi_name in enumerate(all_rois):
     # Get R² values for this ROI across subjects
     roi_r2 = all_r2_matrix[:, r]
-    roi_nc_r2 = all_ncs_matrix_r2[:, r]
+    roi_nc = all_ncs_matrix[:, r]
     
     # Plot the R² bars for each subject
     axs[r].bar(x, roi_r2, width=width, color=bar_color)
     
     # Plot individual noise ceiling lines above each bar
     for subj_idx in range(n_subjects):
-        if not np.isnan(roi_nc_r2[subj_idx]):
+        if not np.isnan(roi_nc[subj_idx]):
             x_pos = x[subj_idx]
-            y_nc = roi_nc_r2[subj_idx]
+            y_nc = roi_nc[subj_idx]
             axs[r].plot([x_pos - width/2, x_pos + width/2], [y_nc, y_nc], 
                        '-', color=nc_color, linewidth=2.5, alpha=0.8)
     
@@ -227,7 +219,9 @@ for r, roi_name in enumerate(all_rois):
     # y-axis label on leftmost column
     if r % n_cols == 0:
         axs[r].set_ylabel('R² (Explained Variance)', fontsize=fontsize)
-    yticks = np.arange(0, y_max_global + 0.1, 0.2)
+    
+    # Create reasonable y-ticks based on R² scale (0-1)
+    yticks = np.arange(0, 1.0, 0.2)  # 0, 0.2, 0.4, 0.6, 0.8
     ylabels = [f'{tick:.1f}' for tick in yticks]
     axs[r].set_yticks(yticks)
     axs[r].set_yticklabels(ylabels)
@@ -295,4 +289,3 @@ if not os.path.isdir(save_dir):
 
 save_name = 'encoding_accuracy'
 fig.savefig(os.path.join(save_dir, f'{save_name}.png'), dpi=300, bbox_inches='tight', format='jpg')
-
