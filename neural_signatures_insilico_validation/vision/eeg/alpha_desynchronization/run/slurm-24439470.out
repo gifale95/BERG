@@ -1,78 +1,0 @@
->>> Alpha desynchronization - Generate in silico EEG <<<
-
-Input arguments:
-encoding_model   eeg-things_eeg_2-vit_b_32
-subjects         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-berg_dir         /scratch/giffordale95/projects/brain-encoding-response-generator
-  0%|          | 0/200 [00:00<?, ?it/s] 11%|█         | 22/200 [00:00<00:00, 217.63it/s] 25%|██▌       | 50/200 [00:00<00:00, 252.88it/s] 40%|███▉      | 79/200 [00:00<00:00, 268.22it/s] 54%|█████▍    | 108/200 [00:00<00:00, 274.67it/s] 68%|██████▊   | 136/200 [00:00<00:00, 275.90it/s] 82%|████████▏ | 164/200 [00:00<00:00, 268.20it/s] 96%|█████████▋| 193/200 [00:00<00:00, 271.53it/s]100%|██████████| 200/200 [00:00<00:00, 268.15it/s]
-  0%|          | 0/10 [00:00<?, ?it/s]Model loaded on cpu for subject 1
-
-Encoding EEG responses:   0%|          | 0/2 [00:00<?, ?it/s][A
-Encoding EEG responses:   0%|          | 0/2 [00:12<?, ?it/s, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:12<00:12, 12.25s/it, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:24<00:12, 12.25s/it, Encoded images=200, Total images=200][A
-Encoding EEG responses: 100%|██████████| 2/2 [00:24<00:00, 12.07s/it, Encoded images=200, Total images=200][AEncoding EEG responses: 100%|██████████| 2/2 [00:24<00:00, 12.10s/it, Encoded images=200, Total images=200]
- 10%|█         | 1/10 [00:27<04:11, 27.94s/it]Model loaded on cpu for subject 2
-
-Encoding EEG responses:   0%|          | 0/2 [00:00<?, ?it/s][A
-Encoding EEG responses:   0%|          | 0/2 [00:12<?, ?it/s, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:12<00:12, 12.19s/it, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:24<00:12, 12.19s/it, Encoded images=200, Total images=200][A
-Encoding EEG responses: 100%|██████████| 2/2 [00:24<00:00, 12.16s/it, Encoded images=200, Total images=200][AEncoding EEG responses: 100%|██████████| 2/2 [00:24<00:00, 12.16s/it, Encoded images=200, Total images=200]
- 20%|██        | 2/10 [00:55<03:43, 27.91s/it]Model loaded on cpu for subject 3
-
-Encoding EEG responses:   0%|          | 0/2 [00:00<?, ?it/s][A
-Encoding EEG responses:   0%|          | 0/2 [00:10<?, ?it/s, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:10<00:10, 10.82s/it, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:20<00:10, 10.82s/it, Encoded images=200, Total images=200][A
-Encoding EEG responses: 100%|██████████| 2/2 [00:20<00:00, 10.33s/it, Encoded images=200, Total images=200][AEncoding EEG responses: 100%|██████████| 2/2 [00:20<00:00, 10.41s/it, Encoded images=200, Total images=200]
- 30%|███       | 3/10 [01:20<03:03, 26.21s/it]Model loaded on cpu for subject 4
-
-Encoding EEG responses:   0%|          | 0/2 [00:00<?, ?it/s][A
-Encoding EEG responses:   0%|          | 0/2 [00:10<?, ?it/s, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:10<00:10, 10.98s/it, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:21<00:10, 10.98s/it, Encoded images=200, Total images=200][A
-Encoding EEG responses: 100%|██████████| 2/2 [00:21<00:00, 10.84s/it, Encoded images=200, Total images=200][AEncoding EEG responses: 100%|██████████| 2/2 [00:21<00:00, 10.86s/it, Encoded images=200, Total images=200]
- 40%|████      | 4/10 [01:46<02:38, 26.39s/it]Model loaded on cpu for subject 5
-
-Encoding EEG responses:   0%|          | 0/2 [00:00<?, ?it/s][A
-Encoding EEG responses:   0%|          | 0/2 [00:10<?, ?it/s, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:10<00:10, 10.90s/it, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:21<00:10, 10.90s/it, Encoded images=200, Total images=200][A
-Encoding EEG responses: 100%|██████████| 2/2 [00:21<00:00, 10.91s/it, Encoded images=200, Total images=200][AEncoding EEG responses: 100%|██████████| 2/2 [00:21<00:00, 10.91s/it, Encoded images=200, Total images=200]
- 50%|█████     | 5/10 [02:12<02:10, 26.13s/it]Model loaded on cpu for subject 6
-
-Encoding EEG responses:   0%|          | 0/2 [00:00<?, ?it/s][A
-Encoding EEG responses:   0%|          | 0/2 [00:10<?, ?it/s, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:10<00:10, 10.74s/it, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:21<00:10, 10.74s/it, Encoded images=200, Total images=200][A
-Encoding EEG responses: 100%|██████████| 2/2 [00:21<00:00, 10.76s/it, Encoded images=200, Total images=200][AEncoding EEG responses: 100%|██████████| 2/2 [00:21<00:00, 10.76s/it, Encoded images=200, Total images=200]
- 60%|██████    | 6/10 [02:37<01:43, 25.75s/it]Model loaded on cpu for subject 7
-
-Encoding EEG responses:   0%|          | 0/2 [00:00<?, ?it/s][A
-Encoding EEG responses:   0%|          | 0/2 [00:10<?, ?it/s, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:10<00:10, 10.48s/it, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:21<00:10, 10.48s/it, Encoded images=200, Total images=200][A
-Encoding EEG responses: 100%|██████████| 2/2 [00:21<00:00, 10.60s/it, Encoded images=200, Total images=200][AEncoding EEG responses: 100%|██████████| 2/2 [00:21<00:00, 10.58s/it, Encoded images=200, Total images=200]
- 70%|███████   | 7/10 [03:02<01:16, 25.47s/it]Model loaded on cpu for subject 8
-
-Encoding EEG responses:   0%|          | 0/2 [00:00<?, ?it/s][A
-Encoding EEG responses:   0%|          | 0/2 [00:10<?, ?it/s, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:10<00:10, 10.52s/it, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:21<00:10, 10.52s/it, Encoded images=200, Total images=200][A
-Encoding EEG responses: 100%|██████████| 2/2 [00:21<00:00, 10.56s/it, Encoded images=200, Total images=200][AEncoding EEG responses: 100%|██████████| 2/2 [00:21<00:00, 10.56s/it, Encoded images=200, Total images=200]
- 80%|████████  | 8/10 [03:27<00:51, 25.54s/it]Model loaded on cpu for subject 9
-
-Encoding EEG responses:   0%|          | 0/2 [00:00<?, ?it/s][A
-Encoding EEG responses:   0%|          | 0/2 [00:10<?, ?it/s, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:10<00:10, 10.34s/it, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:20<00:10, 10.34s/it, Encoded images=200, Total images=200][A
-Encoding EEG responses: 100%|██████████| 2/2 [00:20<00:00, 10.42s/it, Encoded images=200, Total images=200][AEncoding EEG responses: 100%|██████████| 2/2 [00:20<00:00, 10.41s/it, Encoded images=200, Total images=200]
- 90%|█████████ | 9/10 [03:52<00:25, 25.20s/it]Model loaded on cpu for subject 10
-
-Encoding EEG responses:   0%|          | 0/2 [00:00<?, ?it/s][A
-Encoding EEG responses:   0%|          | 0/2 [00:10<?, ?it/s, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:10<00:10, 10.32s/it, Encoded images=100, Total images=200][A
-Encoding EEG responses:  50%|█████     | 1/2 [00:20<00:10, 10.32s/it, Encoded images=200, Total images=200][A
-Encoding EEG responses: 100%|██████████| 2/2 [00:20<00:00, 10.46s/it, Encoded images=200, Total images=200][AEncoding EEG responses: 100%|██████████| 2/2 [00:20<00:00, 10.44s/it, Encoded images=200, Total images=200]
-100%|██████████| 10/10 [04:17<00:00, 25.09s/it]100%|██████████| 10/10 [04:17<00:00, 25.72s/it]
