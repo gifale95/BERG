@@ -19,13 +19,14 @@ class BERG:
         berg_dir : str
             Path to the BERG directory containing model files and weights.
             This directory should contain the organized structure of encoding
-            models by modality and dataset.
+            models by neural recording modality and training dataset.
         """
         self.berg_dir = berg_dir
         
     def get_model_catalog(self, print_format: bool = False) -> Dict[str, List[str]]:
         """
-        Get a catalog of available models organized by modality and training dataset.
+        Get a catalog of available models organized by neural recording modality
+        and training dataset.
         
         Parameters
         ----------
@@ -36,10 +37,10 @@ class BERG:
         -------
         Dict[str, List[str]]
             Dictionary mapping modalities (e.g., 'fmri', 'eeg') to lists of 
-            available datasets for each modality.
+            available training datasets for each neural recording modality.
         """
         
-        # Organize models by modality and dataset
+        # Organize models by neural recording modality and training dataset
         catalog = {}
         
         for model_id, info in MODEL_REGISTRY.items():
