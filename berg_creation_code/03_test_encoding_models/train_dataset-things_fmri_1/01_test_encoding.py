@@ -5,22 +5,8 @@ Parameters
 ----------
 subject : str
     Which subject's data to use (e.g., 'sub-01').
-model : str
-    Name of the used encoding model.
 berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
-only_cls : str
-    If we should only use CLS token or all patches ('True' or 'False').
-regression : str
-    Type of regression used ('ridge' or 'linear').
-
-Example usage:
-python berg_creation_code/03_test_encoding_models/train_dataset-things_fmri/01_test_encoding.py \
-    --subject sub-01 \
-    --berg_dir '/Volumes/Extreme SSD/brain-encoding-response-generator' \
-    --only_cls True \
-    --regression ridge \
-    --model clip.vit_b_32
 """
 
 import argparse
@@ -32,17 +18,9 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=str, required=True,
                    help="Subject ID (e.g., 'sub-01')")
-parser.add_argument('--model', required=True, choices=["vit_b_32", "clip.vit_b_32"],
-                   help="Selecting which model to use")
-parser.add_argument('--only_cls', required=True, choices=["True", "False"],
-                    help='If we should only use CLS token or all patches')
-parser.add_argument('--regression', required=True, choices=["ridge", "linear"],
-                   help="Select type of regression")
 parser.add_argument('--berg_dir', required=True, type=str)
 
 args = parser.parse_args()
-
-args.only_cls = args.only_cls == "True"
 
 print('>>> Test THINGS fMRI encoding models <<<')
 print('\nInput parameters:')
@@ -54,10 +32,10 @@ for key, val in vars(args).items():
 # Load the responses metadata
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
-    'train_dataset-things_fmri')
+    'train_dataset-things_fmri_1')
 
-metadata_path = os.path.join(data_dir, f'fmri_{args.subject}_metadata.npz')
-metadata_fmri = np.load(metadata_path, allow_pickle=True)
+metadata_path = os.path.join(data_dir, f'fmri_{args.subject}_metadata.npy')
+metadata_fmri = np.load(metadata_path, allow_pickle=True).item()
 
 
 # =============================================================================
@@ -74,10 +52,9 @@ print(f"Actual neural test data shape: {neural_test.shape}")
 # Load the in silico neural responses for the test images
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-    'modality-fmri', 'train_dataset-things_fmri', args.model)
+    'modality-fmri', 'train_dataset-things_fmri_1', 'vit_b_32')
 
-cls_suffix = 'cls' if args.only_cls else 'all'
-pred_path = os.path.join(results_dir, f'fmri_test_pred_{args.regression}_{cls_suffix}_{args.subject}.npy')
+pred_path = os.path.join(results_dir, f'fmri_test_pred_{args.subject}.npy')
 neural_test_pred = np.load(pred_path, allow_pickle=True)
 
 print(f"Predicted neural test data shape: {neural_test_pred.shape}")
@@ -86,8 +63,6 @@ print(f"Predicted neural test data shape: {neural_test_pred.shape}")
 # =============================================================================
 # Compute the encoding accuracy
 # =============================================================================
-# Correlate the in vivo and in silico neural responses
-# Shape: (n_voxels,)
 n_voxels = neural_test.shape[1]
 correlation_results = np.zeros(n_voxels)
 
@@ -103,20 +78,35 @@ print(f"Correlation range: [{correlation_results.min():.4f}, {correlation_result
 
 
 # =============================================================================
+# Compute percent noise ceiling 
+# =============================================================================
+noise_ceiling_testset = metadata_fmri['encoding_model']['noise_ceiling_testset']
+noise_ceiling_r2 = noise_ceiling_testset / 100
+
+
+
+# Clip negative correlations to 0 before squaring
+correlation_results_clipped = np.clip(correlation_results, 0, None)
+percent_noise_ceiling = (correlation_results_clipped**2 / noise_ceiling_r2) * 100
+
+print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
+
+# =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
-metadata = {
+metadata = metadata_fmri.copy()
+metadata['encoding_model'].update({
     'correlation_results': correlation_results,
-    **{key: metadata_fmri[key] for key in metadata_fmri.files}
-}
+    'percent_noise_ceiling': percent_noise_ceiling
+})
 
 # Save the metadata
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-    'train_dataset-things_fmri', f'model-{args.model}', 'metadata')
+    'train_dataset-things_fmri_1', 'model-vit_b_32', 'metadata')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-file_name = f'metadata_{args.regression}_{cls_suffix}_{args.subject}.npy'
+file_name = f'metadata_{args.subject}.npy'
 np.save(os.path.join(save_dir, file_name), metadata)
 
 print(f"\nMetadata saved to: {os.path.join(save_dir, file_name)}")
