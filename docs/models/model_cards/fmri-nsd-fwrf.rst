@@ -220,7 +220,7 @@ This function generates in silico neural responses using the encoding model prev
 Performance
 ----------
 
-**Accuracy Plots:**
+**Accuracy Plots (AWS directory):**
 
 * ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy``
 

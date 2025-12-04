@@ -35,14 +35,16 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         
     Output Files
     ------------
-    tvsd_{monkey}_split-train.h5 : (22,248, 300, 1024)
-    tvsd_{monkey}_split-test.h5  : (3,000, 300, 1024)
+    tvsd_{monkey}_split-train.h5 : (22,248, 1024, 300)
+    tvsd_{monkey}_split-test.h5  : (3,000, 1024, 300)
+    tvsd_{monkey}_split-test_averaged.h5   : (100, 1024, 300)
     """
     with h5py.File(filepath, 'r') as f:
         ALLMAT = f['ALLMAT'][:]
         test_idx = ALLMAT[2, :]
         train_mask = test_idx == 0
         test_mask = test_idx != 0
+        test_stimuli = test_idx[test_mask]
         
         n_train = np.sum(train_mask)
         n_test = np.sum(test_mask)
@@ -59,8 +61,8 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         
         with h5py.File(train_file, 'w') as train_h5:
             train_dataset = train_h5.create_dataset('neural_data', 
-                                                   shape=(n_train, 300, 1024), 
-                                                   dtype='float64')
+                                                   shape=(n_train, 1024, 300), 
+                                                   dtype='float32')
             
             train_idx = 0
             for start_idx in tqdm(range(0, total_trials, batch_size), desc="Training batches"):
@@ -70,7 +72,7 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
                 chunk_train_mask = train_mask[start_idx:end_idx]
                 
                 if np.any(chunk_train_mask):
-                    train_chunk = chunk_data[:, chunk_train_mask, :].transpose(1, 0, 2)
+                    train_chunk = chunk_data[:, chunk_train_mask, :].transpose(1, 2, 0)
                     n_train_chunk = train_chunk.shape[0]
                     train_dataset[train_idx:train_idx + n_train_chunk] = train_chunk
                     train_idx += n_train_chunk
@@ -78,22 +80,128 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         # Process test data
         print("Processing test data...")
         test_indices = np.where(test_mask)[0]
-        test_data = allmua_dataset[:, test_indices, :].transpose(1, 0, 2)
+        test_data = allmua_dataset[:, test_indices, :].transpose(1, 2, 0)
         
         test_file = os.path.join(output_dir, f'tvsd_{monkey_id}_split-test.h5')
         with h5py.File(test_file, 'w') as test_h5:
             test_h5.create_dataset('neural_data', data=test_data)
+                
         
-        print(f"Training shape: ({n_train}, 300, 1024)")
+        # Process test data averaged
+        print("Processing test data averaged...")
+        unique_test_ids = np.unique(test_stimuli)
+        test_averaged = np.zeros((len(unique_test_ids), test_data.shape[1], test_data.shape[2]), dtype='float32')
+        
+        for i, stimulus_id in enumerate(tqdm(unique_test_ids, desc="Averaging test data")):
+            mask = test_stimuli == stimulus_id
+            test_averaged[i] = np.mean(test_data[mask], axis=0)
+            
+        averaged_test_file = os.path.join(output_dir, f'tvsd_{monkey_id}_split-test_averaged.h5')
+            
+        with h5py.File(averaged_test_file, 'w') as f_out:
+            f_out.create_dataset('neural_data', data=test_averaged)
+        
+        print(f"Training shape: ({n_train}, 1024, 300)")
         print(f"Test shape: {test_data.shape}")
+        print(f"Averaged test shape: {test_averaged.shape}")
         
+        
+        
+# =============================================================================
+# Compute Noise Ceiling
+# =============================================================================
+
+
+def compute_noise_ceiling(original_filepath, test_filepath, monkey_id):
+    """Compute ncsnr and noise ceiling from test data with repeated presentations.
+    
+    Estimates noise ceiling using the variance across 30 repeated presentations
+    of 100 test images. The noise ceiling represents the maximum achievable
+    prediction accuracy given measurement noise.
+    
+    Parameters
+    ----------
+    original_filepath : str
+        Path to THINGS_MUA_trials.mat to extract stimulus IDs from ALLMAT.
+    test_filepath : str
+        Path to the processed test HDF5 file (3,000, 1024, 300).
+    monkey_id : str
+        Monkey identifier for saving results.
+        
+    Returns
+    -------
+    dict
+        'ncsnr': (1024, 300) - Neural signal-to-noise ratio per electrode/timepoint
+        'noise_ceiling': (1024, 300) - Noise ceiling in r² percentage units (0-100)
+    """
+    # =============================================================================
+    # Load the TVSD neural responses for the test images
+    # =============================================================================
+    # Load test stimulus IDs from ALLMAT
+    with h5py.File(original_filepath, 'r') as f:
+        ALLMAT = f['ALLMAT'][:]
+        trial_type = ALLMAT[2, :]
+        test_mask = trial_type != 0
+        stimulus_ids = trial_type[test_mask].astype(int)
+    
+    # Load test neural data
+    with h5py.File(test_filepath, 'r') as f:
+        neural_data = f['neural_data'][:].astype(np.float32)
+    
+    unique_test_images = np.unique(stimulus_ids)
+    
+    # Reshape the data to (samples, features)
+    n_electrodes = neural_data.shape[1]
+    n_timepoints = neural_data.shape[2]
+    n_features = n_electrodes * n_timepoints
+    neural_data = neural_data.reshape(neural_data.shape[0], n_features)
+    
+    # =============================================================================
+    # Compute the ncsnr and noise ceiling
+    # =============================================================================
+    # Estimate the noise standard deviation (calculate the variance of the
+    # responses across the 30 presentations of each test image).
+    var = []
+    for img in unique_test_images:
+        idx = np.where(stimulus_ids == img)[0]
+        var.append(np.nanvar(neural_data[idx], axis=0, ddof=1))
+    # Average the variance across images and compute the square root of the
+    # result
+    sigma_noise = np.sqrt(np.nanmean(var, 0))
+    
+    # Estimate the signal standard deviation (total variance - noise variance)
+    tot_var_data = np.nanvar(neural_data, axis=0, ddof=1)
+    sigma_signal = tot_var_data - (sigma_noise ** 2)
+    sigma_signal[sigma_signal<0] = 0
+    sigma_signal = np.sqrt(sigma_signal)
+    
+    # Compute the ncsnr
+    ncsnr = sigma_signal / sigma_noise
+    
+    # Convert the ncsnr to noise ceiling (the noise ceiling is in r² explained
+    # variance units)
+    img_reps = 30
+    noise_ceiling = 100 * (ncsnr ** 2) / ((ncsnr ** 2) + (1 / img_reps))
+    
+    # Reshape the scores to (n_electrodes, n_timepoints)
+    ncsnr = ncsnr.reshape(n_electrodes, n_timepoints)
+    noise_ceiling = noise_ceiling.reshape(n_electrodes, n_timepoints)
+    
+    # =============================================================================
+    # Return the ncsnr and noise ceiling
+    # =============================================================================
+    results = {
+        'ncsnr': ncsnr,
+        'noise_ceiling': noise_ceiling
+    }
+    
+    return results
         
 
+
 # =============================================================================
-# Create dataset metadata
+# Create Metadata
 # =============================================================================
-# Generate comprehensive metadata linking stimulus IDs to image files,
-# object categories, and experimental conditions for both training and test sets.
 
 
 def load_things_mapping(mat_file_path):
@@ -132,13 +240,13 @@ def load_things_mapping(mat_file_path):
     return train_df, test_df
 
 
-def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, monkey_id, baseline_stats):
+def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, monkey_id):
     """Create comprehensive metadata file for TVSD dataset.
     
     Generate metadata linking neural responses to THINGS database images through
     stimulus ID mapping. Converts MATLAB 1-based indices to Python 0-based indices
     to map trial-by-trial neural responses to specific image files and categories.
-    Includes experimental conditions, baseline normalization parameters, electrode
+    Includes experimental conditions, electrode
     quality metrics, and electrode-to-ROI mapping information.
     
     Mapping Process: Extract stimulus IDs from ALLMAT → Convert to 0-based indices
@@ -156,8 +264,6 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         Output directory for processed data files.
     monkey_id : str
         Monkey identifier for file naming.
-    baseline_stats : dict
-        Baseline normalization statistics from normalize_tvsd_data.
         
     Output Files
     ------------
@@ -191,10 +297,8 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         roi_assignments[0:512] = 0    # V1
         roi_assignments[512:832] = 2  # IT
         roi_assignments[832:1024] = 1 # V4
-    else:
-        raise ValueError(f"Unknown monkey_id: {monkey_id}")
-    
-    # ROI labels (consistent across monkeys)
+
+    # ROI labels 
     roi_labels = np.array(['V1', 'V4', 'IT'])
     
     # Load electrode quality metrics from THINGS_normMUA.mat
@@ -205,7 +309,6 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
     with h5py.File(norm_mua_filepath, 'r') as f:
         SNR = f['SNR'][:]
         SNR_max = f['SNR_max'][:]
-        oracle = f['oracle'][:]
     
     train_df, test_df = load_things_mapping(things_mapping_file)
     
@@ -242,54 +345,41 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         stim_id = int(stim_id)
         row = test_df.iloc[stim_id - 1]
         test_img_files.append(row['things_path'].split('\\')[-1])
-        test_img_concepts.append(row['class'])
-    
-    # Create averaged test metadata
-    unique_test_ids = np.unique(test_stimulus_ids)
-    test_avg_img_files = []
-    test_avg_img_concepts = []
-    
-    for stim_id in unique_test_ids:
-        stim_id = int(stim_id)
-        row = test_df.iloc[stim_id - 1]
-        test_avg_img_files.append(row['things_path'].split('\\')[-1])
-        test_avg_img_concepts.append(row['class'])
+        test_img_concepts.append(row['class'])    
+        
+    # Compute noise ceilings
+    test_filepath = os.path.join(output_dir, f'tvsd_{monkey_id}_split-test.h5')
+    nc_data = compute_noise_ceiling(original_filepath, test_filepath, monkey_id)
+    ncsnr = nc_data["ncsnr"]
+    noise_ceiling = nc_data["noise_ceiling"]
     
     metadata = {
-        'train_img_ids': train_stimulus_ids,
-        'train_img_files': np.array(train_img_files),
-        'train_img_concepts': np.array(train_img_concepts),
-        'train_days': train_days,
-        'train_sequence_pos': train_sequence_pos,
-        'test_img_ids': test_stimulus_ids,
-        'test_img_files': np.array(test_img_files),
-        'test_img_concepts': np.array(test_img_concepts),
-        'test_days': test_days,
-        'test_sequence_pos': test_sequence_pos,
-        'test_avg_img_ids': unique_test_ids,
-        'test_avg_img_files': np.array(test_avg_img_files),
-        'test_avg_img_concepts': np.array(test_avg_img_concepts),
-        'times': tb,
-        'monkey_id': monkey_id,
-        'n_electrodes': 1024,
-        'baseline_means': baseline_stats['baseline_means'],
-        'baseline_stds': baseline_stats['baseline_stds'], 
-        'baseline_days': baseline_stats['baseline_days'],
-        'baseline_time_range': baseline_stats['baseline_time_range'],
-        'baseline_indices': baseline_stats['baseline_indices'],
-        'electrode_order': electrode_order,
-        'roi_assignments': roi_assignments,
-        'roi_labels': roi_labels,
-        'SNR': SNR,
-        'SNR_max': SNR_max,
-        'oracle': oracle
+        'utah_array': {
+            'times': tb,
+            'monkey_id': monkey_id,
+            'n_electrodes': 1024,
+            'electrode_order': electrode_order},
+        'roi': {
+            'roi_assignments': roi_assignments,
+            'roi_labels': roi_labels},
+        'encoding_model': {
+            'train_img_ids': train_stimulus_ids,
+            'train_stimuli': np.array(train_img_files),
+            'train_concepts': np.array(train_img_concepts),
+            'train_days': train_days,
+            'train_sequence_pos': train_sequence_pos,
+            
+            'test_img_ids': test_stimulus_ids,
+            'test_stimuli': np.array(test_img_files),
+            'test_concepts': np.array(test_img_concepts),
+            'test_days': test_days,
+            'test_sequence_pos': test_sequence_pos,
+            
+            'SNR': SNR,
+            'SNR_max': SNR_max,
+            'ncsnr': ncsnr,
+            'noise_ceiling': noise_ceiling}
     }
     
-    metadata_file = os.path.join(output_dir, f'tvsd_{monkey_id}_metadata.npz')
-    np.savez(metadata_file, **metadata)
-    
-    print(f"Training trials: {len(train_stimulus_ids)}")
-    print(f"Test trials: {len(test_stimulus_ids)}")
-    print(f"Unique test stimuli: {len(unique_test_ids)}")
-    print(f"Time points: {len(tb)} ({tb[0]:.1f} to {tb[-1]:.1f} ms)")
-    print(f"ROI assignments - V1: {np.sum(roi_assignments == 0)}, V4: {np.sum(roi_assignments == 1)}, IT: {np.sum(roi_assignments == 2)}")
+    metadata_file = os.path.join(output_dir, f'tvsd_{monkey_id}_metadata.npy')  # Changed .npz to .npy
+    np.save(metadata_file, metadata, allow_pickle=True)

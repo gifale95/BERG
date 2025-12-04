@@ -1,6 +1,6 @@
 model_id: eeg-things_eeg_2-vit_b_32
 modality: EEG
-training_dataset:  THINGS EEG2
+training_dataset: THINGS EEG2
 species: Human
 stimuli: Images
 model_type: Vision transformer (ViT-B/32)

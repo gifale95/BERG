@@ -1,5 +1,25 @@
 # Brain Encoding Response Generator (BERG)
 
+📋 **BERG Survey** 📋
+
+Dear Users,
+
+We would be grateful if you could take a few minutes to share your feedback on BERG. Your input will contribute to improving BERG’s usefulness and reliability!
+
+- **Link to survey:** [https://forms.gle/pybrqcaqdso2LJK88](https://forms.gle/pybrqcaqdso2LJK88)
+
+We would also appreciate it if you could share the survey by forwarding this message to your colleagues, and/or by sharing the corresponding Bluesky/X posts:
+
+- **Blusesky post:** [https://bsky.app/profile/alessandrogifford.bsky.social/post/3m6f5nm5wb22l](https://bsky.app/profile/alessandrogifford.bsky.social/post/3m6f5nm5wb22l)
+
+- **X post:** [https://x.com/AlgonautsProj/status/1992980825160483019?s=20](https://x.com/AlgonautsProj/status/1992980825160483019?s=20)
+
+We thank you and look forward to your input!
+
+*The BERG Team*
+
+---
+
 The **Brain Encoding Response Generator (BERG)** is a resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.
 
 In silico neural responses from encoding models increasingly resemble in vivo responses recorded from real brains, enabling the novel research paradigm of in silico neuroscience. In silico neural responses are quick and cheap to generate, allowing researchers to explore and test scientific hypotheses across vastly larger solution spaces than possible in vivo. Novel findings from large-scale in silico experimentation are then validated through targeted small-scale in vivo data collection, in this way optimizing research resources. Thus, in silico neuroscience scales beyond what is possible with in vivo data, and democratizes research across groups with diverse data collection infrastructure and resources. To catalyze this emerging research paradigm, we introduce the Brain Encoding Response Generator (BERG), a resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code. BERG includes a growing, well documented library of encoding models trained on different neural data acquisition modalities, datasets, subjects, stimulation types, and brain areas, offering broad versatility for addressing a wide range of research questions through in silico neuroscience.
@@ -65,13 +85,16 @@ For detailed instructions and folder structure, see the [documentation](https://
 
 ### 🧠 Available encoding models
 
-The following table shows the encoding models currently available in BERG. For more details on these models, please refer to the [documentation][model_cards].
+The following table shows BERG's most accurate encoding models for each dataset and modality. For more details on these models, or for the full list of available models, please refer to the [documentation][model_cards].
 
-| Model ID | Training dataset | Acquisition device | Species | Stimuli | Encoding accuracy |
+| Model ID | Training dataset | Neural recoding modality | Species | Stimuli | Encoding accuracy |
 |----------|------------------|--------------------|---------|---------|-------------------|
 | [fmri-nsd_fsaverage-huze][fmri-nsd_fsaverage-huze] | [NSD (surface space)][allen] | fMRI | Human | Images | [Accuracy plots][acc-fmri-nsd_fsaverage-huze] |
 | [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD (volume space)][allen] | fMRI | Human | Images | [Accuracy plots][acc-fmri-nsd-fwrf] |
+| [fmri-things_fmri_1-vit_b_32][fmri-things_fmri_1-vit_b_32] | [THINGS fMRI1][things_data] | fMRI | Human | Images | [Accuracy plots][acc-fmri-things_fmri_1-vit_b_32] |
 | [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | EEG | Human | Images | [Accuracy plots][acc-eeg-things_eeg_2-vit_b_32] |
+| [meg-things_meg_1-vit_b_32][meg-things_meg_1-vit_b_32] | [THINGS MEG1][things_data] | MEG | Human | Images | [Accuracy plots][acc-meg-things_meg_1-vit_b_32] |
+| [utah_array-tvsd-vit_b_32][utah_array-tvsd-vit_b_32] | [TVSD][tvsd] | Utah arrays | Macaque | Images | [Accuracy plots][acc-utah_array-tvsd-vit_b_32] |
 
 
 ### ✨ BERG functions
@@ -172,6 +195,9 @@ If you use the Brain Encoding Response Generator, please cite:
 [requirements]: https://github.com/gifale95/BERG/blob/main/requirements.txt
 [rclone]: https://rclone.org/
 [guide]: https://noisyneuron.github.io/nyu-hpc/transfer.html
+[THINGS EEG2]: https://doi.org/10.1016/j.neuroimage.2022.119754
+[things_data]: https://doi.org/10.7554/eLife.82580
+[tvsd]: https://doi.org/10.1016/j.neuron.2024.12.003
 
 
 [get_encoding_model]: https://github.com/gifale95/BERG/blob/main/berg/berg.py#L207
@@ -181,9 +207,11 @@ If you use the Brain Encoding Response Generator, please cite:
 
 [fmri-nsd_fsaverage-huze]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-huze.html
 [fmri-nsd_fsaverage-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-vit_b_32.html
+[fmri-things_fmri_1-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-things_fmri_1-vit_b_32.html
+[meg-things_meg_1-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/meg-things_meg_1-vit_b_32.html
+[utah_array-tvsd-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/utah_array-tvsd-vit_b_32.html
 [fmri-nsd-fwrf]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd-fwrf.html
 [eeg-things_eeg_2-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-vit_b_32.html
-[THINGS EEG2]: https://doi.org/10.1016/j.neuroimage.2022.119754
 
 
 [fmri_tutorial_colab]: https://colab.research.google.com/drive/1W9Sroz2Y0eTYfyhVrAJwe50GGHHAGBdE?usp=drive_link
@@ -205,3 +233,6 @@ If you use the Brain Encoding Response Generator, please cite:
 [acc-eeg-things_eeg_2-vit_b_32]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy/
 [acc-fmri-nsd-fwrf]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy/
 [acc-fmri-nsd_fsaverage-huze]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-huze/encoding_models_accuracy/
+[acc-utah_array-tvsd-vit_b_32]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-utah_array/train_dataset-tvsd/model-vit_b_32/encoding_models_accuracy/
+[acc-meg-things_meg_1-vit_b_32]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-meg/train_dataset-things_meg_1/model-vit_b_32/encoding_models_accuracy/
+[acc-fmri-things_fmri_1-vit_b_32]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32/encoding_models_accuracy/
