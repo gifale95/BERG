@@ -224,9 +224,9 @@ for t in tqdm(range(len(times))):
     plt.title(title, fontsize=fontsize)
 
     # Save the figure
-    file_name = os.path.join(save_dir, 'mds_animacy_time-'+str(t)+'.svg')
+    file_name = os.path.join(save_dir, 'mds_animacy_time-'+format(t, '03')+'.svg')
     fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-    file_name = os.path.join(save_dir, 'mds_animacy_time-'+str(t)+'.png')
+    file_name = os.path.join(save_dir, 'mds_animacy_time-'+format(t, '03')+'.png')
     fig.savefig(file_name, bbox_inches='tight', transparent=False, format='png')
 
     # Close the figure
@@ -245,7 +245,7 @@ matplotlib.rcParams['axes.spines.bottom'] = False
 colors = [(100/255, 149/255, 237/255), (169/255, 169/255, 169/255)]
 
 # Loop acros subjects
-for s, sub in enumerate(args.subjects):
+for s, sub in enumerate(tqdm(args.subjects)):
 
     # Select the MDS results from the subject of interest
     eeg_mds_sub = eeg_mds_single_sub[s]
@@ -281,11 +281,11 @@ for s, sub in enumerate(args.subjects):
 
         # Save the figure
         file_name = os.path.join(save_dir, 'mds_animacy_sub-'+
-            format(sub, '02')+'time-'+str(t)+'.svg')
+            format(sub, '02')+'_time-'+format(t, '03')+'.svg')
         fig.savefig(file_name, bbox_inches='tight', transparent=True,
             format='svg')
         file_name = os.path.join(save_dir, 'mds_animacy_sub-'+
-            format(sub, '02')+'time-'+str(t)+'.png')
+            format(sub, '02')+'_time-'+format(t, '03')+'.png')
         fig.savefig(file_name, bbox_inches='tight', transparent=False,
             format='png')
 
@@ -328,7 +328,7 @@ peak_indices = {
 }
 
 # Loop across decoding types
-for key, val in peak_indices.items():
+for key, val in tqdm(peak_indices.items()):
 
     # Create the figure
     fig, ax = plt.subplots(figsize=(13, 13))
