@@ -17,10 +17,8 @@ cv : int
     If '1' multivariate RNC leaves the data of one subject out for
     cross-validation, if '0' multivariate RNC uses the data of all subjects.
 cv_subject : int
-    If cv==1, the left-out subject during cross-validation, out of the 8 NSD
-    subjects (if encoding_models_train_dataset=='nsd'), or the 7 Visual Illusion
-    Reconstruction dataset subjects
-    (if encoding_models_train_dataset=='VisualIllusionRecon').
+    If cv==1, the left-out subject during cross-validation, out of the 10
+    THINGS EEG2 subjects.
 time : float
     The EEG time point (in seconds) for which to create the RSM.
 berg_dir : str

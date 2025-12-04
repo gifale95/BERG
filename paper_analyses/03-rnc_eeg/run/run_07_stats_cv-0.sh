@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=03-rnc_eeg-05_baseline_cv-0
+#SBATCH --job-name=03-rnc_eeg-07_stats_cv-0
 #SBATCH --mail-type=end
 #SBATCH --mem=4000
 #SBATCH --time=00:30:00
@@ -30,4 +30,4 @@ conda activate general
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/03-rnc_eeg
 
 # Run the job
-python 05_baseline.py --time_pair $time_pair --cv '0'
+python 07_stats.py --time_pair $time_pair --cv '0'

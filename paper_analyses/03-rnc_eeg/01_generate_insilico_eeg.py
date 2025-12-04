@@ -16,12 +16,12 @@ channels : string
     separated by a comma. Possible values are: 'O' (occipital), 'P'
     (posterior), 'T' (temporal), 'C' (central), 'F' (frontal). Alternatively,
     the list can also contain the names of the individual channels used.
-berg_dir : str
-    Directory of the Brain Encoding Response Generator.
-    https://github.com/gifale95/BERG
 imagenet_dir : str
     Directory of the ImageNet image set.
     https://www.image-net.org/challenges/LSVRC/2012/index.php
+berg_dir : str
+    Directory of the Brain Encoding Response Generator.
+    https://github.com/gifale95/BERG
 
 """
 
@@ -39,8 +39,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subject', default=1, type=int)
 parser.add_argument('--channels', default='O,P', type=lambda s: s.split(','))
-parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/giffordale95/datasets/image_sets/ILSVRC2012', type=str)
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Generate in silico EEG responses <<<')
@@ -79,7 +79,7 @@ model = berg.get_encoding_model(
 
 
 # =============================================================================
-# Read the ImageNet validation images
+# Access the ImageNet validation images
 # =============================================================================
 images = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='val')
 
