@@ -29,10 +29,10 @@ This encoding model consists of a linear mapping through linear regression of a 
 (Dosovitskiy et al., 2020) image features onto whole-brain functional magnetic resonance imaging (fMRI) responses from the THINGS-fMRI dataset (Hebart et al., eLife 2023). The model provides features from all 12 transformer layers, using the full
 set of patch tokens per layer to represent each stimulus image. For each image stimulus, features are concatenated across all spatial tokens and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve as predictors for fMRI responses.
 
-**Neural data.** fMRI data were recorded from three human participants (sub-01–sub-03) viewing 1,854 object categories
+**Neural data.** Encoding models were trained on the preprocessed data preparation provided in THINGS fMRI1.
+fMRI data were recorded from three human participants (sub-01–sub-03) viewing 1,854 object categories
 from the THINGS database (~8,740 naturalistic object images). Recordings were acquired at 1.6 mm isotropic resolution,
 preprocessed with standard fMRI pipelines including motion correction, slice-timing correction, and spatial normalization.
-Session-wise z-score normalization was applied to stabilize responses across scanning sessions.
 
 **Model training partition.** Single-trial responses to approximately 8,640 unique naturalistic images were
 used for training.
@@ -90,16 +90,10 @@ Metadata
      - Concept labels for training trials
    * - test_stimuli
      - ``(1200,)``
-     - Stimulus filenames for individual test trials
+     - Stimulus filenames for test trials
    * - test_concepts
      - ``(1200,)``
-     - Concept labels for individual test trials
-   * - test_avg_stimuli
-     - ``(100,)``
-     - Stimulus filenames for unique test images (after averaging)
-   * - test_avg_concepts
-     - ``(100,)``
-     - Concept labels for unique test images (after averaging)
+     - Concept labels for test trials
    * - noise_ceiling_singletrial
      - ``(211339,)``
      - Max explainable variance per voxel based on single-trial repeat reliability
@@ -112,6 +106,9 @@ Metadata
    * - splithalf_uncorrected
      - ``(211339,)``
      - Split-half reliability corrected to estimate full-data consistency
+   * - correlation_results
+     - ``(211339,)``
+     - Encoding model prediction accuracy (Pearson's r) for each voxel (computed on the test data)
 
 **'prf'**
 

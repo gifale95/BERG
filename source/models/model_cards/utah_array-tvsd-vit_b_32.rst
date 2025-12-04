@@ -10,9 +10,9 @@ Model Summary
    :stub-columns: 1
 
    * - Modality
-     - utah_array
+     - Utah arrays
    * - Training Dataset
-     - tvsd
+     - THINGS Ventral Stream Spiking Dataset (TVSD)
    * - Species
      - Macaque
    * - Stimuli
@@ -34,26 +34,24 @@ principal component analysis. The encoding models were trained on the THINGS Ven
 macaque ventral stream areas (V1, V4, IT) in response to natural images from the THINGS database
 (Hebart et al., 2019).
 
-**Neural data**. Raw broadband signals (30 kHz) were band-pass filtered to extract high-frequency spiking activity, 
-and multi-unit activity (MUA) was obtained using threshold-based spike detection and smoothing, following the official TVSD pipeline. Responses were baseline-corrected and normalized per session, with area-specific time windows aligned to peak latencies (V1: 25–125 ms, V4: 50–150 ms, IT: 75–175 ms).
-The data were epoched from -100 ms to +199 ms relative to stimulus onset, resulting in 300 time points.
-More detailed preprocessing steps are described in the TVSD paper.
+**Neural data**. Encoding models were trained on the preprocessed data preparation provided in the TVSD. Raw broadband
+signals (30 kHz) were band-pass filtered to extract high-frequency spiking activity, and multi-unit activity (MUA)
+was obtained using threshold-based spike detection and smoothing, following the official TVSD pipeline. Responses were
+baseline-corrected and normalized per session, with area-specific time windows aligned to peak latencies
+(V1: 25–125 ms, V4: 50–150 ms, IT: 75–175 ms). The data were epoched from -100 ms to +199 ms relative to
+stimulus onset, resulting in 300 time points. More detailed preprocessing steps are described in the TVSD paper.
 
 **Model training partition.** Spiking responses to 22,248 unique images from the THINGS database, each
 presented once during passive fixation.
 
-**Model testing partition.** Spiking responses to 100 unique images, each repeated 30 times. The test
-predictions are generated for the averaged responses across repetitions.
+**Model testing partition.** Spiking responses to 100 unique images, each repeated 30 times.
 
-**Training procedure.** Independent encoding models were trained for each monkey (monkeyN and monkeyF). For computational efficiency, models were trained in 8 electrode chunks (128 electrodes each), with predictions concatenated to generate full responses across all 1,024 electrodes and 300 time points simultaneously.
+**Training procedure.** Independent encoding models were trained for each monkey (monkeyN and monkeyF).
 
-**Noise ceiling.** The noise ceiling was computed from the 30 repeated presentations of each test image 
-to quantify the maximum explainable variance given measurement noise. We calculated the signal-to-noise 
-ratio (ncsnr) by separating within-image variance (noise) from between-image variance (signal), then 
-converted to r² units: noise_ceiling = 100 × (ncsnr² / (ncsnr² + 1/30)). This represents the theoretical 
-upper bound of prediction accuracy for each electrode and time point.
+**Noise ceiling.** The noise ceiling was computed from the 30 repeated presentations of each test image,
+following the analytical procedure described in the Natural Scenes Dataset (NSD) paper (Allen et al., 2022).
 
-**Output.** Each trained model predicts time-resolved spike responses for all 1024 electrodes (or user-specified
+**Output.** Each encoding model predicts time-resolved spike responses for all 1024 electrodes (or user-specified
 subsets) across 300 time points for each input image.
 
 Metadata
@@ -70,7 +68,7 @@ Metadata
      - Description
    * - times
      - ``(300,)``
-     - Time points (-100 to 199ms)
+     - Time points (-100ms to 199ms)
    * - electrode_order
      - ``(1024,)``
      - Electrode mapping order (0-based)
@@ -123,43 +121,31 @@ Metadata
      - Position in 4-image sequence
    * - test_img_ids
      - ``(3000,)``
-     - Test stimulus IDs (individual trials)
+     - Test stimulus indicates
    * - test_stimuli
      - ``(3000,)``
-     - Test image filenames (individual)
+     - Test image filenames
    * - test_concepts
      - ``(3000,)``
-     - Test object categories (individual)
+     - Test object categories
    * - test_days
      - ``(3000,)``
      - Recording days for test
    * - test_sequence_pos
      - ``(3000,)``
      - Position in sequence for test
-   * - test_stimuli
-     - ``(100,)``
-     - Unique test stimulus IDs
-   * - test_avg_stimui
-     - ``(100,)``
-     - Test image filenames (averaged)
-   * - test_avg_concepts
-     - ``(100,)``
-     - Test object categories (averaged)
    * - SNR
      - ``(4, 1024)``
      - Signal-to-noise ratio per day per electrode
    * - SNR_max
      - ``(1024,)``
      - Best SNR across all days per electrode
-   * - oracle
-     - ``(1024,)``
-     - Noise ceiling estimate per electrode
    * - ncsnr
      - ``(1024, 300)``
-     - Neural signal-to-noise ratio per electrode/timepoint
+     - Noise ceiling signal-to-noise ratio for each electrode/timepoint (computed on the test data)
    * - noise_ceiling
      - ``(1024, 300)``
-     - Noise Ceiling per electrode for all timepoints
+     - Noise ceiling for each electrode/timepoint (computed on the test data)
 
 
 Input
@@ -179,7 +165,7 @@ Output
 ------
 
 **Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 'n_electrodes', 300]``  
+**Shape**: ``['batch_size', 'n_electrodes', ''n_timepoints']``  
 **Description**:  
 The output is a 3D array containing in silico utah-array responses.
 The second dimension (n_electrodes) corresponds to the number of electrodes in the selected ROI,
@@ -254,7 +240,7 @@ This function loads the encoding model.
        | **timepoints**
        |     **Type:** numpy.ndarray
        |     **Description:** Binary one-hot encoded vector indicating which timepoints to include.
-       |     Must have exactly the same length as the number of available timepoints (140).
+       |     Must have exactly the same length as the number of available timepoints (300).
        |     Each position set to 1 indicates that timepoint should be included.
        |     **Example:** [0, 0, '...', 1, 1, 0]
 

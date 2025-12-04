@@ -12,7 +12,7 @@ Model Summary
    * - Modality
      - MEG
    * - Training Dataset
-     - THINGS MEG 1
+     - THINGS MEG1
    * - Species
      - Human
    * - Stimuli
@@ -29,7 +29,8 @@ This encoding model consists of a linear mapping through linear regression of a 
 (Dosovitskiy et al., 2020) image features onto whole-brain magnetoencephalography (MEG) responses from the THINGS-data MEG dataset (Hebart et al., eLife 2023). The model provides features from all 12 transformer layers, using the full
 set of patch tokens per layer to represent each stimulus image. For each image stimulus, features are concatenated across all spatial tokens and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve as predictors for MEG responses.
 
-**Neural data.** MEG data were recorded from four human participants (P1–P4) viewing 1,854 object categories
+**Neural data.** Encoding models were trained on the preprocessed data preparation provided in THINGS MEG1.
+MEG data were recorded from four human participants (P1–P4) viewing 1,854 object categories
 from the THINGS database (~22,000 naturalistic object images). Recordings were acquired with 271 sensors at
 200 Hz, epoched from −100 ms to +1300 ms relative to stimulus onset. The preprocessing pipeline included
 band-pass filtering (0.1–40 Hz), epoching, baseline correction (−100 to 0 ms), and exclusion of malfunctioning
@@ -44,11 +45,8 @@ target responses correspond to the average MEG activity across repetitions.
 **Training procedure.** Independent linear regression models were fitted separately for each MEG sensor
 and time point, predicting the sensor’s time-resolved response from the feature vectors. The resulting model weights provide a spatiotemporal mapping from visual features to MEG sensor activity.
 
-**Noise ceiling.** The noise ceiling was computed from the 12 repeated presentations of each of the 200 test images 
-to quantify the maximum explainable variance given measurement noise. We calculated the signal-to-noise 
-ratio (ncsnr) by separating within-image variance (noise) from between-image variance (signal), then 
-converted to r² units: noise_ceiling = 100 × (ncsnr² / (ncsnr² + 1/12)). This represents the theoretical 
-upper bound of prediction accuracy for each sensor and time point.
+**Noise ceiling.** The noise ceiling was computed from the 12 repeated presentations of each of the 200 test image,
+  following the analytical procedure described in the Natural Scenes Dataset (NSD) paper (Allen et al., 2022).
 
 **Output.** Each trained model predicts time-resolved MEG responses for all 271 sensors (or user-specified
 subsets) across 281 time points (−100 to +1300 ms) for each input image.
@@ -108,25 +106,25 @@ Metadata
      - Description
    * - train_img_ids
      - ``(22248,)``
-     - THINGS image IDs for training (for ViT linking)
+     - THINGS image IDs for training trials
    * - train_concepts
      - ``(22248,)``
-     - Object category IDs (1–1854)
+     - Object category IDs (1–1854) for training trials
    * - train_sessions
      - ``(22248,)``
      - Session numbers for training trials
    * - train_runs
      - ``(22248,)``
-     - Run numbers within each session
+     - Run numbers within each training session
    * - train_img_files
      - ``(22248,)``
-     - Full image paths on disk for training images
+     - Full image paths on disk for training trials
    * - test_things_img_ids
      - ``(2400,)``
      - THINGS image IDs for test trials
    * - test_image_nr
      - ``(2400,)``
-     - Test image numbers (1–200, repeated over repetitions)
+     - Test image numbers (1–200) for test trials
    * - test_concepts
      - ``(2400,)``
      - Object category IDs for test trials
@@ -135,28 +133,19 @@ Metadata
      - Session numbers for test trials
    * - test_runs
      - ``(2400,)``
-     - Run numbers for test trials
+     - Run numbers within each test session
    * - test_img_files
      - ``(2400,)``
      - Full image paths on disk for test images
-   * - test_avg_things_img_ids
-     - ``(200,)``
-     - Unique THINGS image IDs used in averaging
-   * - test_avg_image_nr
-     - ``(200,)``
-     - Test image numbers 1–200 (averaged over repetitions)
-   * - test_avg_concepts
-     - ``(200,)``
-     - Object category IDs for averaged test images
-   * - test_avg_img_files
-     - ``(200,)``
-     - Full image paths on disk for averaged test images
    * - ncsnr
      - ``(281, 271)``
-     - Neural cross-validated signal-to-noise ratio per time point and sensor
+     - Noise ceiling signal-to-noise ratio for each sensor/timepoint (computed on the test data)
    * - noise_ceiling
      - ``(281, 271)``
-     - Noise ceiling per time point and sensor
+     - Noise ceiling for each sensor/timepoint (computed on the test data)
+   * - correlation_results
+     - ``(281, 271)``
+     - Encoding model prediction accuracy (Pearson's r) for each sensor/timepoint (computed on the test data)
 
 
 Input
@@ -176,7 +165,7 @@ Output
 ------
 
 **Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 'n_sensors', 281]``  
+**Shape**: ``['batch_size', 'n_sensors', 'n_timepoints']``  
 **Description**:  
 The output is a 3D array containing in silico MEG responses.
 
