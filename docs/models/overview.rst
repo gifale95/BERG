@@ -1,13 +1,10 @@
 ===================
 Available Models
 ===================
-
 This page provides an overview of the brain encoding models currently available in BERG.
-
 
 Model Naming Convention
 ----------------------
-
 BERG contains several encoding models, defined by the following model ID naming convention:
 
 ``{modality}-{dataset}-{model}``
@@ -23,33 +20,28 @@ For example:
 - ``fmri-nsd-fwrf``: An fMRI encoding model trained on the NSD using feature-weighted receptive fields.
 - ``eeg-things_eeg_2-vit_b_32``: An EEG model trained on the THINGS-EEG2 dataset using the ViT-B/32 visual transformer architecture.
 
-
 Get Model Information
 ------------------------
-
 You can get detailed information about any model using:
 
 .. code-block:: python
 
-    from berg import BERG
-    
-    berg = BERG("path/to/brain-encoding-response-generator")
-
-    # List all available models
-    all_models = berg.list_models()
-    
-    # Get detailed model information
-    model_info = berg.describe("fmri-nsd-fwrf")
-
+   from berg import BERG
+   
+   berg = BERG("path/to/brain-encoding-response-generator")
+   
+   # List all available models
+   all_models = berg.list_models()
+   
+   # Get detailed model information
+   model_info = berg.describe("fmri-nsd-fwrf")
 
 Available models
 ----------------------
-
 Following is a list of all available models, grouped by ``modality``. The ✅ icon indicates the best model for each ``dataset``.
 
 modality-fmri
 ~~~~~~~~~~
-
 Encoding models trained on neural responses recorded with functional Magnetic Resonance Imaging (fMRI).
 
 .. list-table::
@@ -85,11 +77,16 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy/>`_
-
+   * - 
+     - :doc:`model_cards/fmri-things_fmri_1-vit_b_32`
+     - Linear mapping of vision transformer image features onto whole-brain fMRI responses.
+     - THINGS fMRI1
+     - Human
+     - Images
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32/encoding_models_accuracy/>`_
 
 modality-eeg
 ~~~~~~~~~~~~
-
 Encoding models trained on neural responses recorded with Electroencephalography (EEG).
 
 .. list-table::
@@ -112,12 +109,59 @@ Encoding models trained on neural responses recorded with Electroencephalography
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy/>`_
 
+modality-meg
+~~~~~~~~~~~~
+Encoding models trained on neural responses recorded with Magnetoencephalography (MEG).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 3 60 40 20 10 10 10
+   :class: wrap-table
+
+   * - Best model
+     - Model ID
+     - Description
+     - Training dataset
+     - Species
+     - Stimuli
+     - Encoding accuracy
+   * - ✅
+     - :doc:`model_cards/meg-things_meg_1-vit_b_32`
+     - Linear mapping of vision transformer image features onto time-resolved whole-brain MEG responses.
+     - THINGS MEG1
+     - Human
+     - Images
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-meg/train_dataset-things_meg_1/model-vit_b_32/encoding_models_accuracy/>`_
+
+modality-utah_array
+~~~~~~~~~~~~~~~~~~~
+Encoding models trained on neural responses recorded with Utah arrays (intracortical electrophysiology).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 3 60 40 20 10 10 10
+   :class: wrap-table
+
+   * - Best model
+     - Model ID
+     - Description
+     - Training dataset
+     - Species
+     - Stimuli
+     - Encoding accuracy
+   * - ✅
+     - :doc:`model_cards/utah_array-tvsd-vit_b_32`
+     - Linear mapping of vision transformer image features onto time-resolved intracortical spiking activity.
+     - THINGS Ventral Stream Spiking Dataset (TVSD)
+     - Macaque
+     - Images
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-utah_array/train_dataset-tvsd/model-vit_b_32/encoding_models_accuracy/>`_
+
 .. raw:: html
 
    <style>
    .wrap-table td {
-     white-space: normal !important;
-     word-wrap: break-word !important;
+       white-space: normal !important;
+       word-wrap: break-word !important;
    }
    </style>
-
