@@ -26,11 +26,10 @@ Description
 ----------
 
 This encoding model consists of a linear mapping through linear regression of a vision transformer
-(Dosovitskiy et al., 2020) image features onto whole-brain magnetoencephalography (MEG) responses from the THINGS-data MEG dataset (Hebart et al., eLife 2023). The model provides features from all 12 transformer layers, using the full
+(Dosovitskiy et al., 2020) image features onto whole-brain magnetoencephalography (MEG) responses from the THINGS MEG1 dataset (Hebart et al., eLife 2023). The model provides features from all 12 transformer layers, using the full
 set of patch tokens per layer to represent each stimulus image. For each image stimulus, features are concatenated across all spatial tokens and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve as predictors for MEG responses.
 
-**Neural data.** Encoding models were trained on the preprocessed data preparation provided in THINGS MEG1.
-MEG data were recorded from four human participants (P1–P4) viewing 1,854 object categories
+**Neural data.** Encoding models were trained on the preprocessed data preparation provided in THINGS MEG1. MEG data were recorded from four human participants (P1–P4) viewing 1,854 object categories
 from the THINGS database (~22,000 naturalistic object images). Recordings were acquired with 271 sensors at
 200 Hz, epoched from −100 ms to +1300 ms relative to stimulus onset. The preprocessing pipeline included
 band-pass filtering (0.1–40 Hz), epoching, baseline correction (−100 to 0 ms), and exclusion of malfunctioning
@@ -46,7 +45,7 @@ target responses correspond to the average MEG activity across repetitions.
 and time point, predicting the sensor’s time-resolved response from the feature vectors. The resulting model weights provide a spatiotemporal mapping from visual features to MEG sensor activity.
 
 **Noise ceiling.** The noise ceiling was computed from the 12 repeated presentations of each of the 200 test image,
-  following the analytical procedure described in the Natural Scenes Dataset (NSD) paper (Allen et al., 2022).
+following the analytical procedure described in the Natural Scenes Dataset (NSD) paper (Allen et al., 2022).
 
 **Output.** Each trained model predicts time-resolved MEG responses for all 271 sensors (or user-specified
 subsets) across 281 time points (−100 to +1300 ms) for each input image.
@@ -65,7 +64,7 @@ Metadata
      - Description
    * - times
      - ``(281,)``
-     - Time points (e.g., -0.1 to 1.3s relative to stimulus onset)
+     - Time points (e.g., -0.1s to 1.3s relative to stimulus onset)
    * - subject_id
      - ``str``
      - Subject identifier
@@ -323,7 +322,7 @@ Example Usage
     )
     
     # The in silico fMRI responses will be a numpy.ndarray of shape:
-    # ['batch_size', 'n_sensors', 281]
+    # ['batch_size', 'n_sensors', 'n_timepoints']
     # where:
     # - n_sensors: Number of MEG sensors (up to 271, based on the number of sensors selected).
     # - n_timepoints: Number of time points in the MEG epoch (up to 281, based on the number of time points selected).

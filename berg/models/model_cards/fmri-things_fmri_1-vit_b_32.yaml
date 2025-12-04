@@ -153,9 +153,11 @@ parameters:
     function: "encode"
 
 # Performance metrics 
-performance:  
-  plots: 'brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32/encoding_models_accuracy'
 
+performance:
+  accuracy_plots: 
+    - 'brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32/encoding_models_accuracy'
+  
 references:
     - Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-things_fmri_1/model-vit_b_32
     - THINGS MEG & fMRI Paper (Hebart et al., 2023): https://doi.org/10.7554/eLife.82580

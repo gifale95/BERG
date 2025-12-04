@@ -12,7 +12,7 @@ Model Summary
    * - Modality
      - fMRI
    * - Training Dataset
-     - THINGS fMRI 1
+     - THINGS fMRI1
    * - Species
      - Human
    * - Stimuli
@@ -29,8 +29,7 @@ This encoding model consists of a linear mapping through linear regression of a 
 (Dosovitskiy et al., 2020) image features onto whole-brain functional magnetic resonance imaging (fMRI) responses from the THINGS-fMRI dataset (Hebart et al., eLife 2023). The model provides features from all 12 transformer layers, using the full
 set of patch tokens per layer to represent each stimulus image. For each image stimulus, features are concatenated across all spatial tokens and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve as predictors for fMRI responses.
 
-**Neural data.** Encoding models were trained on the preprocessed data preparation provided in THINGS fMRI1.
-fMRI data were recorded from three human participants (sub-01–sub-03) viewing 1,854 object categories
+**Neural data.** Encoding models were trained on the preprocessed data preparation provided in THINGS fMRI1. fMRI data were recorded from three human participants (sub-01–sub-03) viewing 1,854 object categories
 from the THINGS database (~8,740 naturalistic object images). Recordings were acquired at 1.6 mm isotropic resolution,
 preprocessed with standard fMRI pipelines including motion correction, slice-timing correction, and spatial normalization.
 

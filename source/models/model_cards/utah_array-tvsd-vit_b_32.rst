@@ -34,12 +34,10 @@ principal component analysis. The encoding models were trained on the THINGS Ven
 macaque ventral stream areas (V1, V4, IT) in response to natural images from the THINGS database
 (Hebart et al., 2019).
 
-**Neural data**. Encoding models were trained on the preprocessed data preparation provided in the TVSD. Raw broadband
-signals (30 kHz) were band-pass filtered to extract high-frequency spiking activity, and multi-unit activity (MUA)
-was obtained using threshold-based spike detection and smoothing, following the official TVSD pipeline. Responses were
-baseline-corrected and normalized per session, with area-specific time windows aligned to peak latencies
-(V1: 25–125 ms, V4: 50–150 ms, IT: 75–175 ms). The data were epoched from -100 ms to +199 ms relative to
-stimulus onset, resulting in 300 time points. More detailed preprocessing steps are described in the TVSD paper.
+**Neural data**. Encoding models were trained on the preprocessed data preparation provided in the TVSD. Raw broadband signals (30 kHz) were band-pass filtered to extract high-frequency spiking activity, 
+and multi-unit activity (MUA) was obtained using threshold-based spike detection and smoothing, following the official TVSD pipeline. Responses were baseline-corrected and normalized per session, with area-specific time windows aligned to peak latencies (V1: 25–125 ms, V4: 50–150 ms, IT: 75–175 ms).
+The data were epoched from -100 ms to +199 ms relative to stimulus onset, resulting in 300 time points.
+More detailed preprocessing steps are described in the TVSD paper.
 
 **Model training partition.** Spiking responses to 22,248 unique images from the THINGS database, each
 presented once during passive fixation.
@@ -121,7 +119,7 @@ Metadata
      - Position in 4-image sequence
    * - test_img_ids
      - ``(3000,)``
-     - Test stimulus indicates
+     - Test stimulus IDs
    * - test_stimuli
      - ``(3000,)``
      - Test image filenames
@@ -146,6 +144,9 @@ Metadata
    * - noise_ceiling
      - ``(1024, 300)``
      - Noise ceiling for each electrode/timepoint (computed on the test data)
+   * - correlation_results
+     - ``(1024, 300)``
+     - Encoding model prediction accuracy (Pearson's r) for each electrode/timepoint (computed on the test data)
 
 
 Input
@@ -165,7 +166,7 @@ Output
 ------
 
 **Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 'n_electrodes', ''n_timepoints']``  
+**Shape**: ``['batch_size', 'n_electrodes', 'n_timepoints']``  
 **Description**:  
 The output is a 3D array containing in silico utah-array responses.
 The second dimension (n_electrodes) corresponds to the number of electrodes in the selected ROI,
@@ -273,7 +274,7 @@ This function generates in silico neural responses using the encoding model prev
 Performance
 ----------
 
-**Accuracy Plots:**
+**Accuracy Plots (AWS directory):**
 
 * ``brain-encoding-response-generator/encoding_models/modality-utah_array/train_dataset-tvsd/model-vit_b_32/encoding_models_accuracy``
 
@@ -312,7 +313,7 @@ Example Usage
     )
     
     # The in silico fMRI responses will be a numpy.ndarray of shape:
-    # ['batch_size', 'n_electrodes', 300]
+    # ['batch_size', 'n_electrodes', 'n_timepoints']
     # where:
     # - n_electrodes: Number of electrodes in the selection
     # - timepoints: Timepoints of recording
