@@ -3,17 +3,16 @@
 #SBATCH --job-name=03-rnc_eeg-04_average_rsms_cv-0
 #SBATCH --mail-type=end
 #SBATCH --mem=4000
-#SBATCH --time=00:30:00
+#SBATCH --time=00:05:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a time_all
 index=0
-    for t in '0.1' '0.2' '0.3' '0.4' ; do
-        cv_subject_all[$index]=$s
-        time_all[$index]=$t
-        ((index=index+1))
-    done
+for t in '0.1' '0.2' '0.3' '0.4' ; do
+    cv_subject_all[$index]=$s
+    time_all[$index]=$t
+    ((index=index+1))
 done
 
 # Extract the parameters

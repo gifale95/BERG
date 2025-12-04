@@ -3,7 +3,7 @@
 #SBATCH --job-name=03-rnc_eeg-04_average_rsms_cv-1
 #SBATCH --mail-type=end
 #SBATCH --mem=4000
-#SBATCH --time=00:30:00
+#SBATCH --time=00:05:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
