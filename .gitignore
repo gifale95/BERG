@@ -166,3 +166,15 @@ cython_debug/
 debug.ipynb
 debug_1.ipynb
 debug_2.ipynb
+/Additionals
+/fmri_testimages
+/meg1_testimages
+/monkeyN_testimages
+/TVSD_Testing
+understand_eeg.ipynb
+video_creator.ipynb
+TVSD.ipynb
+THINGS_MEG.ipynb
+THINGS_fmri.ipynb
+test_model_pipeline.ipynb
+prepare_fsaverage.ipynb
