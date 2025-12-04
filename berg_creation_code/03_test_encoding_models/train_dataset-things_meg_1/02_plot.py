@@ -127,15 +127,10 @@ for s, subject in enumerate(args.subject):
         region_sensors = np.where(sensor_regions == region_label)[0]
         
         if len(region_sensors) > 0:
-            # Average correlation across sensors in this region
+            # Clip negative correlations to 0, square to r², then average
             # correlation_results shape: (n_subjects, n_channels, n_timepoints)
-            region_correlations = np.mean(correlation_results[s, region_sensors, :], axis=0)
-            
-            # Set negative correlations to 0 before squaring
-            region_correlations_clipped = np.clip(region_correlations, 0, None)
-            
-            # Square correlations to get r²
-            region_r2 = region_correlations_clipped ** 2
+            region_correlations_clipped = np.clip(correlation_results[s, region_sensors, :], 0, None)
+            region_r2 = np.mean(region_correlations_clipped ** 2, axis=0)
             
             # Average noise ceiling across sensors in this region
             # Convert from r² percentage (0-100) to proportion (0-1)
@@ -186,7 +181,7 @@ if n_subjects < 4 and avg_ax is None:
 if avg_ax is not None:
     # Calculate grand average across subjects for each region
     for region_label in region_order:
-        region_avg_correlations = []
+        region_avg_r2 = []
         region_avg_noise_ceilings = []
         total_sensors = 0
         
@@ -195,9 +190,10 @@ if avg_ax is not None:
             region_sensors = np.where(sensor_regions == region_label)[0]
             
             if len(region_sensors) > 0:
-                # Average correlation across sensors in this region for this subject
-                region_correlations = np.mean(correlation_results[s, region_sensors, :], axis=0)
-                region_avg_correlations.append(region_correlations)
+                # Clip negative correlations to 0, square to r², then average across sensors
+                region_correlations_clipped = np.clip(correlation_results[s, region_sensors, :], 0, None)
+                region_r2 = np.mean(region_correlations_clipped ** 2, axis=0)
+                region_avg_r2.append(region_r2)
                 
                 # Average noise ceiling across sensors in this region for this subject
                 region_noise_ceiling_r2 = np.mean(noise_ceiling_results[s, region_sensors, :], axis=0)
@@ -205,16 +201,10 @@ if avg_ax is not None:
                 
                 total_sensors += len(region_sensors)
         
-        if len(region_avg_correlations) > 0:
-            # Average across subjects
-            grand_avg_corr = np.mean(region_avg_correlations, axis=0)
+        if len(region_avg_r2) > 0:
+            # Average r² across subjects
+            grand_avg_r2 = np.mean(region_avg_r2, axis=0)
             grand_avg_nc_r2 = np.mean(region_avg_noise_ceilings, axis=0)
-            
-            # Set negative correlations to 0 before squaring
-            grand_avg_corr_clipped = np.clip(grand_avg_corr, 0, None)
-            
-            # Square correlations to get r²
-            grand_avg_r2 = grand_avg_corr_clipped ** 2
             
             # Convert noise ceiling from percentage to proportion
             grand_avg_nc = grand_avg_nc_r2 / 100
