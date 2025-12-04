@@ -309,7 +309,6 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
     with h5py.File(norm_mua_filepath, 'r') as f:
         SNR = f['SNR'][:]
         SNR_max = f['SNR_max'][:]
-        oracle = f['oracle'][:]
     
     train_df, test_df = load_things_mapping(things_mapping_file)
     
@@ -346,19 +345,7 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         stim_id = int(stim_id)
         row = test_df.iloc[stim_id - 1]
         test_img_files.append(row['things_path'].split('\\')[-1])
-        test_img_concepts.append(row['class'])
-    
-    # Create averaged test metadata
-    unique_test_ids = np.unique(test_stimulus_ids)
-    test_avg_img_files = []
-    test_avg_img_concepts = []
-    
-    for stim_id in unique_test_ids:
-        stim_id = int(stim_id)
-        row = test_df.iloc[stim_id - 1]
-        test_avg_img_files.append(row['things_path'].split('\\')[-1])
-        test_avg_img_concepts.append(row['class'])
-        
+        test_img_concepts.append(row['class'])    
         
     # Compute noise ceilings
     test_filepath = os.path.join(output_dir, f'tvsd_{monkey_id}_split-test.h5')
@@ -388,22 +375,11 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
             'test_days': test_days,
             'test_sequence_pos': test_sequence_pos,
             
-            'test_avg_img_ids': unique_test_ids,
-            'test_avg_stimuli': np.array(test_avg_img_files),
-            'test_avg_concepts': np.array(test_avg_img_concepts),
-            
             'SNR': SNR,
             'SNR_max': SNR_max,
-            'oracle': oracle,
             'ncsnr': ncsnr,
             'noise_ceiling': noise_ceiling}
     }
     
     metadata_file = os.path.join(output_dir, f'tvsd_{monkey_id}_metadata.npy')  # Changed .npz to .npy
     np.save(metadata_file, metadata, allow_pickle=True)
-    
-    print(f"Training trials: {len(train_stimulus_ids)}")
-    print(f"Test trials: {len(test_stimulus_ids)}")
-    print(f"Unique test stimuli: {len(unique_test_ids)}")
-    print(f"Time points: {len(tb)} ({tb[0]:.1f} to {tb[-1]:.1f} ms)")
-    print(f"ROI assignments - V1: {np.sum(roi_assignments == 0)}, V4: {np.sum(roi_assignments == 1)}, IT: {np.sum(roi_assignments == 2)}")

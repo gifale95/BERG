@@ -255,22 +255,6 @@ def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_
     test_concepts = test_data['concept'].values
     
     
-
-    # Create averaged test metadata (one entry per unique stimulus)
-    unique_test_stimuli = np.unique(test_stimuli)
-    test_avg_stimuli = []
-    test_avg_concepts = []
-    
-    for stimulus in unique_test_stimuli:
-        stimulus_mask = test_stimuli == stimulus
-        # Take the first occurrence for each unique stimulus
-        idx = np.where(stimulus_mask)[0][0]
-        test_avg_stimuli.append(test_data.iloc[idx]['stimulus'])
-        test_avg_concepts.append(test_data.iloc[idx]['concept'])
-    
-    test_avg_stimuli = np.array(test_avg_stimuli)
-    test_avg_concepts = np.array(test_avg_concepts)
-    
     # Extract voxel information
     print("Extracting voxel information...")
     voxel_coords = voxel_metadata[['voxel_x', 'voxel_y', 'voxel_z']].values
@@ -287,8 +271,6 @@ def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_
     print("Extracting ROI indices...")
     roi_indices = extract_roi_indices(voxel_metadata)
     
-    
-        
     # Compile metadata dictionary
     metadata_dict = {
         'fmri': {
@@ -300,8 +282,6 @@ def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_
             'train_concepts': train_concepts,
             'test_stimuli': test_stimuli,
             'test_concepts': test_concepts,
-            'test_avg_stimuli': test_avg_stimuli,
-            'test_avg_concepts': test_avg_concepts,
             'noise_ceiling_singletrial': noise_ceiling_singletrial,
             'noise_ceiling_testset': noise_ceiling_testset,
             'splithalf_corrected': splithalf_corrected,
@@ -322,8 +302,3 @@ def create_fmri_metadata(stimulus_filepath, voxel_filepath, output_dir, subject_
     # Save metadata
     metadata_file = os.path.join(output_dir, f'fmri_{subject_id}_metadata.npy')
     np.save(metadata_file, metadata_dict, allow_pickle=True)
-    
-    print(f"Unique test stimuli: {len(test_avg_stimuli)}")
-    print(f"Voxels: {len(voxel_metadata)}")
-    print(f"Functional ROIs: {len(roi_indices)}")
-    print(f"Metadata saved to: {metadata_file}")

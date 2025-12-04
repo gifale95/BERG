@@ -50,14 +50,8 @@ tvsd_{monkey}_metadata.npy             :
         test_days            : (3000,)  - Recording days for test
         test_sequence_pos    : (3000,)  - Position in sequence for test
         
-        test_stimuli         : (100,)   - Unique test stimulus IDs
-        
-        test_avg_stimui      : (100,)   - Test image filenames (averaged)
-        test_avg_concepts    : (100,)   - Test object categories (averaged)
-        
         SNR                  : (4, 1024) - Signal-to-noise ratio per day per electrode
         SNR_max              : (1024,)  - Best SNR across all days per electrode
-        oracle               : (1024,)  - Noise ceiling estimate per electrode
         ncsnr                : (1024, 300) - Neural signal-to-noise ratio per electrode/timepoint
         noise_ceiling        : (1024, 300) - Noise Ceiling per electrode for all timepoints
 """

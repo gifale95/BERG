@@ -41,8 +41,6 @@ fmri_{subject}_metadata.npy             :
         train_concepts       : (8640,)  - Concept labels for training trials
         test_stimuli         : (1200,)  - Stimulus filenames for individual test trials
         test_concepts        : (1200,)  - Concept labels for individual test trials
-        test_avg_stimuli     : (100,)   - Stimulus filenames for unique test images (after averaging)
-        test_avg_concepts    : (100,)   - Concept labels for unique test images (after averaging)
         noise_ceiling_singletrial : (211339,) - Max explainable variance per voxel based on single-trial repeat reliability
         noise_ceiling_testset     : (211339,) - Max explainable variance per voxel based on averaged test-set repeats
         splithalf_corrected       : (211339,) - Raw split-half voxel reliability without correction
