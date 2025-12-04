@@ -117,6 +117,10 @@ for m, monkey in enumerate(args.monkey):
     for roi_idx, roi_label in enumerate(roi_labels):
         region_electrodes = np.where(roi_assignments == roi_idx)[0]
         
+        # Filter for electrodes where noise ceiling > 0
+        valid_mask = noise_ceiling[region_electrodes, :].max(axis=1) > 0
+        region_electrodes = region_electrodes[valid_mask]
+            
         if len(region_electrodes) > 0:
             # Clip negative correlations to 0 before squaring
             region_correlations = np.clip(correlation_results[m][region_electrodes, :], 0, None)

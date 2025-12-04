@@ -91,6 +91,9 @@ for subject in args.subjects:
         if roi_key in roi_indices_dict:
             roi_indices = roi_indices_dict[roi_key]
             
+            # Filter for voxels where noise ceiling > 0
+            roi_indices = roi_indices[noise_ceiling_r2[roi_indices] > 0]
+            
             if len(roi_indices) > 0:
                 # Clip negative correlations to 0, then square to get R²
                 roi_corr_clipped = np.clip(correlation_results[roi_indices], 0, None)
@@ -221,7 +224,7 @@ for r, roi_name in enumerate(all_rois):
         axs[r].set_ylabel('R² (Explained Variance)', fontsize=fontsize)
     
     # Create reasonable y-ticks based on R² scale (0-1)
-    yticks = np.arange(0, 1.0, 0.2)  # 0, 0.2, 0.4, 0.6, 0.8
+    yticks = np.arange(0, 1.0, 0.1) 
     ylabels = [f'{tick:.1f}' for tick in yticks]
     axs[r].set_yticks(yticks)
     axs[r].set_yticklabels(ylabels)

@@ -126,6 +126,10 @@ for s, subject in enumerate(args.subject):
         # Find sensors belonging to this region
         region_sensors = np.where(sensor_regions == region_label)[0]
         
+        # Filter for sensors where noise ceiling > 0
+        valid_mask = noise_ceiling_results[s, region_sensors, :].max(axis=1) > 0
+        region_sensors = region_sensors[valid_mask]
+        
         if len(region_sensors) > 0:
             # Clip negative correlations to 0, square to r², then average
             # correlation_results shape: (n_subjects, n_channels, n_timepoints)
@@ -188,6 +192,10 @@ if avg_ax is not None:
         for s in range(n_subjects):
             sensor_regions = region_data[s]
             region_sensors = np.where(sensor_regions == region_label)[0]
+            
+            # Filter for sensors where noise ceiling > 0
+            valid_mask = noise_ceiling_results[s, region_sensors, :].max(axis=1) > 0
+            region_sensors = region_sensors[valid_mask]
             
             if len(region_sensors) > 0:
                 # Clip negative correlations to 0, square to r², then average across sensors
