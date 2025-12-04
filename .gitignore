@@ -178,3 +178,10 @@ THINGS_MEG.ipynb
 THINGS_fmri.ipynb
 test_model_pipeline.ipynb
 prepare_fsaverage.ipynb
+/noise_ceiling_things_meg
+.vscode/settings.json
+form.ipynb
+TVSD_Testing/TVSD.ipynb
+TVSD_Testing/utah_array_test_pred_linear_all_monkeyF.npy
+TVSD_Testing/utah_array_test_pred_linear_all_monkeyN.npy
+understand_metadata.ipynb
