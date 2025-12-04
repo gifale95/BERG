@@ -27,8 +27,6 @@ share/python-wheels/
 MANIFEST
 
 # PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
 *.manifest
 *.spec
 
@@ -55,20 +53,20 @@ cover/
 *.mo
 *.pot
 
-# Django stuff:
+# Django
 *.log
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Flask stuff:
+# Flask
 instance/
 .webassets-cache
 
-# Scrapy stuff:
+# Scrapy
 .scrapy
 
-# Sphinx documentation
+# Sphinx
 docs/_build/
 
 # PyBuilder
@@ -83,40 +81,26 @@ profile_default/
 ipython_config.py
 
 # pyenv
-#   For a library or package, you might want to ignore these files since the code is
-#   intended to run in multiple environments; otherwise, check them in:
 # .python-version
 
 # pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
+# Pipfile.lock
 
 # poetry
-#   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
-#   This is especially recommended for binary packages to ensure reproducibility, and is more
-#   commonly ignored for libraries.
-#   https://python-poetry.org/docs/basic-usage/#commit-your-poetrylock-file-to-version-control
-#poetry.lock
+# poetry.lock
 
 # pdm
-#   Similar to Pipfile.lock, it is generally recommended to include pdm.lock in version control.
-#pdm.lock
-#   pdm stores project-wide configurations in .pdm.toml, but it is recommended to not include it
-#   in version control.
-#   https://pdm.fming.dev/#use-with-ide
+# pdm.lock
 .pdm.toml
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
+# PEP 582
 __pypackages__/
 
-# Celery stuff
+# Celery
 celerybeat-schedule
 celerybeat.pid
 
-# SageMath parsed files
+# SageMath
 *.sage.py
 
 # Environments
@@ -128,14 +112,14 @@ ENV/
 env.bak/
 venv.bak/
 
-# Spyder project settings
+# Spyder
 .spyderproject
 .spyproject
 
-# Rope project settings
+# Rope
 .ropeproject
 
-# mkdocs documentation
+# mkdocs
 /site
 
 # mypy
@@ -143,26 +127,58 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-# Pyre type checker
+# Pyre
 .pyre/
 
-# pytype static type analyzer
+# pytype
 .pytype/
 
 # Cython debug symbols
 cython_debug/
 
-# PyCharm
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#.idea/
-/encoding_models
-/tutorial_images
+# PyCharm (optional nuclear ignore)
+# .idea/
+
+# Project-specific
+encoding_models/
+tutorial_images/
+neural_encoding_simulation_toolkit/
+neural-encoding-simulation-toolkit/
+Additionals/
+fmri_testimages/
+meg1_testimages/
+monkeyN_testimages/
+noise_ceiling_things_meg/
+TVSD_Testing/
+TVSD_Testing/TVSD.ipynb
+TVSD_Testing/utah_array_test_pred_linear_all_monkeyF.npy
+TVSD_Testing/utah_array_test_pred_linear_all_monkeyN.npy
+
 *.DS_Store
-/neural_encoding_simulation_toolkit
-/neural-encoding-simulation-toolkit
+.vscode/settings.json
+
 debug.ipynb
 debug_1.ipynb
 debug_2.ipynb
+/fmri_testimages
+/meg1_testimages
+/monkeyN_testimages
+/noise_ceiling_things_meg
+/TVSD_Testing
+THINGS_fmri.ipynb
+THINGS_MEG.ipynb
+prepare_noise_ceilings.ipynb
+prepare_fsaverage.ipynb
+form.ipynb
+test_model_pipeline.ipynb
+.vscode/settings.json
+epochs_metadata.csv
+prepare_fsaverage.ipynb
+THINGS_MEG.ipynb
+video_creator.ipynb
+/Additionals
+THINGS_fmri.ipynb
+THINGS_MEG.ipynb
+TVSD.ipynb
+understand_eeg.ipynb
+video_creator.ipynb

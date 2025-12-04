@@ -10,6 +10,11 @@ torchvision
 tqdm
 sphinx-rtd-theme
 pyyaml
+torchextractor
+ftfy 
+regex 
+tqdm
+clip @ git+https://github.com/openai/CLIP.git
 
 # memory encoding model
 yacs==0.1.8

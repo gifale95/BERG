@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "BERG"
+dynamic = ["version"]
+description = "Brain Encoding Response Generator"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}  # Update this to your actual license
+maintainers = [
+    {name = "Alessandro Gifford", email = "alessandro.gifford@gmail.com"}
+]
+classifiers = [
+    "Programming Language :: Python",
+    "Intended Audience :: Science/Research",
+]
+dependencies = [
+    "h5py",
+    "joblib",
+    "nibabel",
+    "numpy",
+    "Pillow",
+    "scipy",
+    "scikit-learn",
+    "torch",
+    "torchvision",
+    "tqdm",
+    "sphinx-rtd-theme",
+    "pyyaml",
+    "torchextractor",
+    "ftfy",
+    "regex",
+    "clip @ git+https://github.com/openai/CLIP.git",
+    "yacs==0.1.8",
+    "yacs-stubgen==0.3.0",
+    "python-dotenv==0.21.1",
+    "einops==0.6.0",
+    "timm==0.9.2",
+]
+
+[project.urls]
+Homepage = "https://github.com/gifale95/BERG"
+Repository = "https://github.com/gifale95/BERG"
+
+[tool.setuptools]
+packages = {find = {}}
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools.dynamic]
+version = {attr = "berg._version.__version__"}

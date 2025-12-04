@@ -25,7 +25,7 @@ def register_model(
     class_name : str, optional
         Name of the model class. If not provided, defaults to model_id.
     modality : str, optional
-        Associated data modality (e.g., 'fmri', 'eeg').
+        Associated neural recording modality (e.g., 'fmri', 'eeg').
     training_dataset : str, optional
         Dataset on which the model was trained (e.g., 'NSD', 'THINGS_EEG_2').
     yaml_path : str, optional

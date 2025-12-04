@@ -48,6 +48,285 @@ exactly three times during the NSD experiment). The models are additionally test
 the out-of-distribution component of NSD consisting of fMRI responses from the same 8 NSD subjects to 286 NSD-synthetic
 images.
 
+Metadata
+--------
+
+**'fmri'**
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
+   * - lh_ncsnr
+     - ``(163842,)``
+     - Left hemisphere noise-ceiling signal-to-noise ratio per vertex
+   * - rh_ncsnr
+     - ``(163842,)``
+     - Right hemisphere noise-ceiling signal-to-noise ratio per vertex
+   * - lh_fsaverage_rois
+     - ``dict``
+     - Left hemisphere ROI definitions on fsaverage surface
+   * - V1v
+     - ``(710,)``
+     - Visual area 1 ventral
+   * - V1d
+     - ``(828,)``
+     - Visual area 1 dorsal
+   * - V2v
+     - ``(632,)``
+     - Visual area 2 ventral
+   * - V2d
+     - ``(692,)``
+     - Visual area 2 dorsal
+   * - V3v
+     - ``(567,)``
+     - Visual area 3 ventral
+   * - V3d
+     - ``(669,)``
+     - Visual area 3 dorsal
+   * - hV4
+     - ``(531,)``
+     - Human V4 complex
+   * - EBA
+     - ``(3231,)``
+     - Extrastriate body area
+   * - FBA-1
+     - ``(574,)``
+     - Fusiform body area 1
+   * - FBA-2
+     - ``(0,)``
+     - Fusiform body area 2
+   * - mTL-bodies
+     - ``(0,)``
+     - Medial temporal lobe body-selective region
+   * - OFA
+     - ``(432,)``
+     - Occipital face area
+   * - FFA-1
+     - ``(552,)``
+     - Fusiform face area 1
+   * - FFA-2
+     - ``(0,)``
+     - Fusiform face area 2
+   * - mTL-faces
+     - ``(0,)``
+     - Medial temporal lobe face-selective region
+   * - aTL-faces
+     - ``(329,)``
+     - Anterior temporal lobe face-selective region
+   * - OPA
+     - ``(2021,)``
+     - Occipital place area
+   * - PPA
+     - ``(1859,)``
+     - Parahippocampal place area
+   * - RSC
+     - ``(1298,)``
+     - Retrosplenial complex
+   * - OWFA
+     - ``(317,)``
+     - Occipital word form area
+   * - VWFA-1
+     - ``(1395,)``
+     - Visual word form area 1
+   * - VWFA-2
+     - ``(474,)``
+     - Visual word form area 2
+   * - mfs-words
+     - ``(490,)``
+     - Mid-fusiform sulcus word-selective region
+   * - mTL-words
+     - ``(475,)``
+     - Medial temporal lobe word-selective region
+   * - early
+     - ``(5758,)``
+     - Early visual cortex (V1-V3)
+   * - midventral
+     - ``(867,)``
+     - Mid-level ventral stream
+   * - midlateral
+     - ``(1091,)``
+     - Mid-level lateral stream
+   * - midparietal
+     - ``(1079,)``
+     - Mid-level parietal regions
+   * - ventral
+     - ``(9680,)``
+     - Ventral visual stream
+   * - lateral
+     - ``(10253,)``
+     - Lateral visual stream
+   * - parietal
+     - ``(5176,)``
+     - Parietal regions
+   * - rh_fsaverage_rois
+     - ``dict``
+     - Right hemisphere ROI definitions on fsaverage surface
+   * - V1v
+     - ``(444,)``
+     - Visual area 1 ventral
+   * - V1d
+     - ``(991,)``
+     - Visual area 1 dorsal
+   * - V2v
+     - ``(887,)``
+     - Visual area 2 ventral
+   * - V2d
+     - ``(725,)``
+     - Visual area 2 dorsal
+   * - V3v
+     - ``(682,)``
+     - Visual area 3 ventral
+   * - V3d
+     - ``(535,)``
+     - Visual area 3 dorsal
+   * - hV4
+     - ``(765,)``
+     - Human V4 complex
+   * - EBA
+     - ``(4421,)``
+     - Extrastriate body area
+   * - FBA-1
+     - ``(206,)``
+     - Fusiform body area 1
+   * - FBA-2
+     - ``(1234,)``
+     - Fusiform body area 2
+   * - mTL-bodies
+     - ``(0,)``
+     - Medial temporal lobe body-selective region
+   * - OFA
+     - ``(305,)``
+     - Occipital face area
+   * - FFA-1
+     - ``(330,)``
+     - Fusiform face area 1
+   * - FFA-2
+     - ``(1003,)``
+     - Fusiform face area 2
+   * - mTL-faces
+     - ``(0,)``
+     - Medial temporal lobe face-selective region
+   * - aTL-faces
+     - ``(283,)``
+     - Anterior temporal lobe face-selective region
+   * - OPA
+     - ``(2849,)``
+     - Occipital place area
+   * - PPA
+     - ``(1250,)``
+     - Parahippocampal place area
+   * - RSC
+     - ``(1136,)``
+     - Retrosplenial complex
+   * - OWFA
+     - ``(590,)``
+     - Occipital word form area
+   * - VWFA-1
+     - ``(397,)``
+     - Visual word form area 1
+   * - VWFA-2
+     - ``(649,)``
+     - Visual word form area 2
+   * - mfs-words
+     - ``(0,)``
+     - Mid-fusiform sulcus word-selective region
+   * - mTL-words
+     - ``(0,)``
+     - Medial temporal lobe word-selective region
+   * - early
+     - ``(5634,)``
+     - Early visual cortex (V1-V3)
+   * - midventral
+     - ``(1050,)``
+     - Mid-level ventral stream
+   * - midlateral
+     - ``(1191,)``
+     - Mid-level lateral stream
+   * - midparietal
+     - ``(1181,)``
+     - Mid-level parietal regions
+   * - ventral
+     - ``(9393,)``
+     - Ventral visual stream
+   * - lateral
+     - ``(10535,)``
+     - Lateral visual stream
+   * - parietal
+     - ``(4818,)``
+     - Parietal regions
+
+**'encoding_models'**
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
+   * - train_img_num
+     - ``(9000,)``
+     - Image indices used for training
+   * - val_img_num
+     - ``(485,)``
+     - Image indices used for validation
+   * - test_img_num
+     - ``(515,)``
+     - Image indices used for testing
+   * - lh_correlation_nsdcore
+     - ``(163842,)``
+     - Left hemisphere correlation on NSD core dataset
+   * - rh_correlation_nsdcore
+     - ``(163842,)``
+     - Right hemisphere correlation on NSD core dataset
+   * - lh_r2_nsdcore
+     - ``(163842,)``
+     - Left hemisphere R² on NSD core dataset
+   * - rh_r2_nsdcore
+     - ``(163842,)``
+     - Right hemisphere R² on NSD core dataset
+   * - lh_noise_ceiling_nsdcore
+     - ``(163842,)``
+     - Left hemisphere noise ceiling on NSD core dataset
+   * - rh_noise_ceiling_nsdcore
+     - ``(163842,)``
+     - Right hemisphere noise ceiling on NSD core dataset
+   * - lh_explained_variance_nsdcore
+     - ``(163842,)``
+     - Left hemisphere % explained variance on NSD core dataset
+   * - rh_explained_variance_nsdcore
+     - ``(163842,)``
+     - Right hemisphere % explained variance on NSD core dataset
+   * - lh_correlation_nsdsynthetic
+     - ``(163842,)``
+     - Left hemisphere correlation on NSD synthetic dataset
+   * - rh_correlation_nsdsynthetic
+     - ``(163842,)``
+     - Right hemisphere correlation on NSD synthetic dataset
+   * - lh_r2_nsdsynthetic
+     - ``(163842,)``
+     - Left hemisphere R² on NSD synthetic dataset
+   * - rh_r2_nsdsynthetic
+     - ``(163842,)``
+     - Right hemisphere R² on NSD synthetic dataset
+   * - lh_noise_ceiling_nsdsynthetic
+     - ``(163842,)``
+     - Left hemisphere noise ceiling on NSD synthetic dataset
+   * - rh_noise_ceiling_nsdsynthetic
+     - ``(163842,)``
+     - Right hemisphere noise ceiling on NSD synthetic dataset
+   * - lh_explained_variance_nsdsynthetic
+     - ``(163842,)``
+     - Left hemisphere % explained variance on NSD synthetic dataset
+   * - rh_explained_variance_nsdsynthetic
+     - ``(163842,)``
+     - Right hemisphere % explained variance on NSD synthetic dataset
+
+
 Input
 -----
 
@@ -135,8 +414,8 @@ This function loads the encoding model.
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** 'cpu', 'cuda', 'auto'
-       | **Example:** 'auto'
+       | **Valid Values:** cpu, cuda, auto
+       | **Example:** auto
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -160,7 +439,7 @@ This function generates in silico neural responses using the encoding model prev
 Performance
 ----------
 
-**Accuracy Plots:**
+**Accuracy Plots (AWS directory):**
 
 * ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-vit_b_32/encoding_models_accuracy``
 
@@ -182,7 +461,6 @@ Example Usage
         selection={
             "roi": "V1d"
         },
-        device="auto"
     )
     
     # Prepare the stimulus images
@@ -215,7 +493,7 @@ Example Usage
 References
 ---------
 
-* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-nsd_fsaverage/model-vit_b_32
+* Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code
 * NSD paper (Allen et al., 2022): https://doi.org/10.1038/s41593-021-00962-x
 * NSD-synthetic paper (Gifford et al., 2025): https://doi.org/10.48550/arXiv.2503.06286
 * COCO dataset (Lin et al., 2014): https://cocodataset.org/#home

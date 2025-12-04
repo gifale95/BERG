@@ -1,6 +1,6 @@
 model_id: eeg-things_eeg_2-vit_b_32
 modality: EEG
-training_dataset:  THINGS EEG2
+training_dataset: THINGS EEG2
 species: Human
 stimuli: Images
 model_type: Vision transformer (ViT-B/32)
@@ -29,6 +29,22 @@ description: |
   Independent encoding models were trained for each of the 4 training data repeats, and as a result the trained encoding models 
   generate 4 instances (i.e., repeats) of in silico EEG responses.  Indepedent encoding models were trained for each subject,
   channel, and time point.
+
+metadata: |
+  'eeg':
+      ch_names                           : (63,)       - EEG channel names 
+      times                              : (140,)      - Time points relative to stimulus onset
+  'encoding_models':
+      correlation_averaged_repetitions   : (63, 140)   - Correlation scores across channels and time (averaged over repetitions)
+      correlation_single_repetitions     : (4, 63, 140) - Correlation scores for individual repetitions across channels and time
+      train_img_info                     : dict        
+          train_img_concepts             : (16540,)    - list of strings containing the concept names of the 16,540 training images, ordered alphabetically, and additionally sorted through numbers ranging from 1 to 1,654.
+          train_img_concepts_THINGS      : (16540,)    - list of strings containing the concept names of the 16,540 training images, ordered alphabetically, and additionally sorted through the original THINGS concept numbers, ranging from 1 to 1,854.
+          train_img_files                : (16540,)    - list of strings containing the filenames of the 16,540 training images.
+      test_img_info                      : dict        
+          test_img_concepts              : (200,)      - list of strings containing the 200 test image concept names, ordered alphabetically, and additionally sorted through numbers ranging from 1 to 200.
+          test_img_concepts_THINGS       : (200,)      - list of strings containing the 200 test image concept names, ordered alphabetically, and additionally sorted through the original THINGS concept numbers, ranging from 1 to 1,854.
+          test_img_files                 : (200,)      - list of strings containing the filenames of the 200 test images.
 
 # Input stimulus information
 input:

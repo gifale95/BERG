@@ -14,7 +14,7 @@ BERG contains several encoding models, defined by the following model ID naming 
 
 where
 
-* ``modality``: The neural recording recording modality on which the encoding model was trained.
+* ``modality``: The neural recording modality on which the encoding model was trained.
 * ``dataset``: The neural dataset on which the encoding model was trained.
 * ``model``: The type of encoding model used.
 
@@ -45,7 +45,7 @@ You can get detailed information about any model using:
 Available models
 ----------------------
 
-Following is a list of all available models, grouped by ``modality`` and ``dataset``. The ✅ icon indicates the best model for each dataset and modality.
+Following is a list of all available models, grouped by ``modality``. The ✅ icon indicates the best model for each ``dataset``.
 
 modality-fmri
 ~~~~~~~~~~
@@ -74,7 +74,7 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
    * - 
      - :doc:`model_cards/fmri-nsd_fsaverage-vit_b_32`
      - Linear mapping of vision transformer image features onto fMRI responses.
-     - Natural Scenes Dataset(surface space)
+     - Natural Scenes Dataset (surface space)
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-vit_b_32/encoding_models_accuracy/>`_
