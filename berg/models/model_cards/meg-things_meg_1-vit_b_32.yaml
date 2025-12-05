@@ -37,7 +37,7 @@ metadata: |
   'meg':
       times                      : (281,)   - Time points (e.g., -0.1s to 1.3s relative to stimulus onset)
       subject_id                 : str      - Subject identifier
-  'sensors:
+  'sensors':
       sensor_names               : (271,)   - MEG sensor name strings
       sensor_prefixes            : (271,)   - Sensor prefixes (e.g., 'MLF', 'MRC', 'MZO')
       sensor_hemispheres         : (271,)   - Hemisphere labels ('Left', 'Right', 'Midline')
