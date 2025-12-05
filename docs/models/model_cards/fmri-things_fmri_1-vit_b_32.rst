@@ -1,6 +1,6 @@
-==========================
+===========================
 fmri-things_fmri_1-vit_b_32
-==========================
+===========================
 
 Model Summary
 ------------
@@ -140,6 +140,9 @@ Metadata
    * - Key
      - Shape/Type
      - Description
+   * - V1, V2, V3, hV4, VO1, VO2, LO1_prf, LO2_prf, TO1, TO2, V3b, V3a, lFFA, rFFA, lOFA, rOFA, lEBA, rEBA, lPPA, rPPA, lRSC, rRSC, lTOS, rTOS, lLOC, rLOC, IT, lSTS, rSTS
+     - ``variable length``
+     - Each ROI entry contains voxel indices (variable length) for that functional region
 
 
 Input
