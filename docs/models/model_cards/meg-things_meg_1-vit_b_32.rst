@@ -1,5 +1,5 @@
 ========================
-meg-things_meg1-vit_b_32
+meg-things_meg_1-vit_b_32
 ========================
 
 Model Summary
