@@ -1,4 +1,4 @@
-model_id: meg-things_meg1-vit_b_32
+model_id: meg-things_meg_1-vit_b_32
 modality: MEG
 training_dataset: THINGS MEG1
 species: Human
