@@ -40,7 +40,7 @@ description: |
 
 
 metadata: |
-    'utah-array':
+    'utah_array':
         times                : (300,)   - Time points (-100ms to 199ms)
         electrode_order      : (1024,)  - Electrode mapping order (0-based)
         monkey_id            : str      - Monkey identifier
