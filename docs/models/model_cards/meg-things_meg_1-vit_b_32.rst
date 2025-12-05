@@ -1,6 +1,6 @@
-========================
+=========================
 meg-things_meg_1-vit_b_32
-========================
+=========================
 
 Model Summary
 ------------
@@ -66,10 +66,10 @@ Metadata
      - ``(281,)``
      - Time points (e.g., -0.1s to 1.3s relative to stimulus onset)
    * - subject_id
-     - ``str``
+     - ``int``
      - Subject identifier
 
-**'sensors'**
+**'sensors**
 
 .. list-table::
    :widths: 30 20 50
@@ -196,11 +196,11 @@ This function loads the encoding model.
    :header-rows: 0
 
    * - **subject**
-     - | **Type:** str
+     - | **Type:** int
        | **Required:** Yes
        | **Description:** Subject ID from the THINGS MEG1 dataset.
-       | **Valid Values:** P1, P2, P3, P4
-       | **Example:** P1
+       | **Valid Values:** 1, 2, 3, 4
+       | **Example:** 1
    * - **selection**
      - | **Type:** dict
        | **Required:** No
@@ -300,7 +300,7 @@ Example Usage
     # Load the model
     model = berg.get_encoding_model(
         "meg-things_meg_1-vit_b_32",
-        subject=P1,
+        subject=1,
         selection={
             "region": ["Central", "Frontal", "Occipital"]
             "sensors": ["MLC", "MLF", "MLO"]

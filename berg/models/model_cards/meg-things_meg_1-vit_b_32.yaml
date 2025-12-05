@@ -36,7 +36,7 @@ description: |
 metadata: |
   'meg':
       times                      : (281,)   - Time points (e.g., -0.1s to 1.3s relative to stimulus onset)
-      subject_id                 : str      - Subject identifier
+      subject_id                 : int      - Subject identifier
   'sensors:
       sensor_names               : (271,)   - MEG sensor name strings
       sensor_prefixes            : (271,)   - Sensor prefixes (e.g., 'MLF', 'MRC', 'MZO')
@@ -86,10 +86,10 @@ output:
 # Model parameters and their usage
 parameters:
   subject:
-    type: str
+    type: int
     required: true
-    valid_values: ["P1", "P2", "P3", "P4"]
-    example: "P1"
+    valid_values: [1, 2, 3, 4]
+    example: 1
     description: "Subject ID from the THINGS MEG1 dataset."
     function: "get_encoding_model"
 
