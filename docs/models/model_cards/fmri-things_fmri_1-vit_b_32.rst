@@ -1,5 +1,5 @@
 ==========================
-fmri-things_fmri1-vit_b_32
+fmri-things_fmri_1-vit_b_32
 ==========================
 
 Model Summary
