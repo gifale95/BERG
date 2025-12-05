@@ -299,7 +299,7 @@ Example Usage
     
     # Load the model
     model = berg.get_encoding_model(
-        "meg-things_meg1-vit_b_32",
+        "meg-things_meg_1-vit_b_32",
         subject=P1,
         selection={
             "region": ["Central", "Frontal", "Occipital"]

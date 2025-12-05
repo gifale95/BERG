@@ -271,7 +271,7 @@ Example Usage
     
     # Load the model
     model = berg.get_encoding_model(
-        "fmri-things_fmri1-vit_b_32",
+        "fmri-things_fmri_1-vit_b_32",
         subject=sub-01,
         selection={
             "roi": ["V1", "V2", "IT"]
