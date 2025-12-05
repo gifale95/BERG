@@ -55,7 +55,7 @@ subsets) across 300 time points for each input image.
 Metadata
 --------
 
-**'utah-array'**
+**'utah_array'**
 
 .. list-table::
    :widths: 30 20 50
