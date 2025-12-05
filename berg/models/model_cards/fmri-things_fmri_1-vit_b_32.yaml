@@ -1,4 +1,4 @@
-model_id: fmri-things_fmri1-vit_b_32
+model_id: fmri-things_fmri_1-vit_b_32
 modality: fMRI
 training_dataset: THINGS fMRI1
 species: Human
