@@ -165,7 +165,7 @@ class fMRIEncodingModel(BaseModelInterface):
                 'train_dataset-things_fmri_1',
                 'model-vit_b_32',
                 'metadata',
-                f'metadata_{self.subject}.npy'
+                f'metadata_sub-0{self.subject}.npy'
             )
             self.metadata = np.load(metadata_dir, allow_pickle=True).item()
             
@@ -267,7 +267,7 @@ class fMRIEncodingModel(BaseModelInterface):
             'train_dataset-things_fmri_1', 
             'model-vit_b_32',
             'encoding_models_weights',
-            f'weights_{self.subject}.npy'
+            f'weights_sub-0{self.subject}.npy'
         )
         weights_data = np.load(weights_dir, allow_pickle=True).item()
         
@@ -456,7 +456,7 @@ class fMRIEncodingModel(BaseModelInterface):
             'train_dataset-things_fmri_1',
             'model-vit_b_32',
             'metadata',
-            f'metadata_{subject}.npy'
+            f'metadata_sub-0{subject}.npy'
         )
         
         # Load metadata if file exists

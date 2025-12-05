@@ -195,7 +195,7 @@ class MEGEncodingModel(BaseModelInterface):
                 'train_dataset-things_meg_1',
                 'model-vit_b_32',
                 'metadata',
-                f'metadata_{self.subject}.npy'
+                f'metadata_P{self.subject}.npy'
             )
             self.metadata = np.load(metadata_dir, allow_pickle=True).item()
             
@@ -312,7 +312,7 @@ class MEGEncodingModel(BaseModelInterface):
             'train_dataset-things_meg_1', 
             'model-vit_b_32',
             'encoding_models_weights',
-            f'weights_{self.subject}.npy'
+            f'weights_P{self.subject}.npy'
         )
         weights = np.load(weights_dir, allow_pickle=True).item()
         
@@ -481,7 +481,7 @@ class MEGEncodingModel(BaseModelInterface):
         berg_dir : str
             Path to BERG directory.
         subject : str
-            Subject ID ("P1", "P2", "P3", or "P4").
+            Subject ID (1,2,3,4).
         model_instance : BaseModelInterface
             If provided, extract parameters from this model instance.
         **kwargs
@@ -525,7 +525,7 @@ class MEGEncodingModel(BaseModelInterface):
             'train_dataset-things_meg_1',
             'model-vit_b_32',
             'metadata',
-            f'metadata_{subject}.npy'
+            f'metadata_P{subject}.npy'
         )
         
         # Load metadata if file exists

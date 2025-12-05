@@ -182,3 +182,8 @@ THINGS_MEG.ipynb
 TVSD.ipynb
 understand_eeg.ipynb
 video_creator.ipynb
+debug_fMRI.ipynb
+debug_MEG.ipynb
+debug_TVSD.ipynb
+test_models.py
+upload_berg_models.sh

@@ -37,7 +37,7 @@ metadata: |
   'fmri':
       voxel_coords               : (211339, 3) - Voxel coordinates in volume space (x, y, z indices)
       n_voxels                   : int         - Total number of voxels (211339)
-      subject_id                 : str         - Subject identifier (e.g., 'sub-01')
+      subject_id                 : int         - Subject identifier (e.g., '1')
   'encoding_model':
       train_stimuli              : (8640,)     - Stimulus filenames for training trials
       train_concepts             : (8640,)     - Concept labels for training trials
@@ -83,10 +83,10 @@ output:
 # Model parameters and their usage
 parameters:
   subject:
-    type: str
+    type: int
     required: true
-    valid_values: ["sub-01", "sub-02", "sub-03"]
-    example: "sub-01"
+    valid_values: [1, 2, 3]
+    example: 1
     description: "Subject ID from the THINGS fMRI dataset."
     function: "get_encoding_model"
 

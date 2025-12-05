@@ -69,8 +69,8 @@ Metadata
      - ``int``
      - Total number of voxels (211339)
    * - subject_id
-     - ``str``
-     - Subject identifier (e.g., 'sub-01')
+     - ``int``
+     - Subject identifier (e.g., '1')
 
 **'encoding_model'**
 
@@ -192,11 +192,11 @@ This function loads the encoding model.
    :header-rows: 0
 
    * - **subject**
-     - | **Type:** str
+     - | **Type:** int
        | **Required:** Yes
        | **Description:** Subject ID from the THINGS fMRI dataset.
-       | **Valid Values:** sub-01, sub-02, sub-03
-       | **Example:** sub-01
+       | **Valid Values:** 1, 2, 3
+       | **Example:** 1
    * - **selection**
      - | **Type:** dict
        | **Required:** No
@@ -275,7 +275,7 @@ Example Usage
     # Load the model
     model = berg.get_encoding_model(
         "fmri-things_fmri_1-vit_b_32",
-        subject=sub-01,
+        subject=1,
         selection={
             "roi": ["V1", "V2", "IT"]
             "voxel_index": [0, 0, '...', 1, 1, 0]
