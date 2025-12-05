@@ -69,7 +69,7 @@ Metadata
      - ``int``
      - Subject identifier
 
-**'sensors**
+**'sensors'**
 
 .. list-table::
    :widths: 30 20 50
