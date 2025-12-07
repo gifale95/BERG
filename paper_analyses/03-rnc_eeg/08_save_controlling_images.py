@@ -47,7 +47,7 @@ time_2 = args.time_pair[idx+1:]
 # Load the multivariate RNC stats
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'rnc_eeg', 'multivariate_rnc', 'stats',
-    'cv-'+format(args.cv), args.time_pair, 'stats.npy')
+    'cv-0', args.time_pair, 'stats.npy')
 
 data_dict = np.load(data_dir, allow_pickle=True).item()
 

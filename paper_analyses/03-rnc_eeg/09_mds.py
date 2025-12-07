@@ -19,7 +19,7 @@ from sklearn.manifold import MDS
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 
 print('>>> MDS multivariate responses <<<')
 print('\nInput parameters:')

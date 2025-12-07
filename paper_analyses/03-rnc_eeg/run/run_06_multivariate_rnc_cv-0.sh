@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=03-rnc_eeg-06_multivariate_rnc_cv-0
 #SBATCH --mail-type=end
-#SBATCH --mem=4000
-#SBATCH --time=20:00:00
+#SBATCH --mem=2500
+#SBATCH --time=04:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

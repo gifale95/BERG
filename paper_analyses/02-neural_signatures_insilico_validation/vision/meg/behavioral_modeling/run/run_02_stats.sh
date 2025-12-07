@@ -1,23 +1,23 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=03-rnc_eeg-05_baseline_cv-0
+#SBATCH --job-name=berg_insilico_validation-behavioral_modeling-02_stats
 #SBATCH --mail-type=end
-#SBATCH --mem=2500
-#SBATCH --time=02:00:00
+#SBATCH --mem=1000
+#SBATCH --time=00:20:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
-declare -a time_pair_all
+declare -a channels_all
 index=0
-for t in '0.1-0.2' '0.1-0.3' '0.1-0.4' '0.2-0.3' '0.2-0.4' '0.3-0.4' ; do
-    time_pair_all[$index]=$t
+for c in 'O' 'P' 'T' 'C' 'F' 'O,P' ; do
+    channels_all[$index]=$c
     ((index=index+1))
 done
 
 # Extract the parameters
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
-time_pair=${time_pair_all[$SLURM_ARRAY_TASK_ID]}
-echo time_pair: $time_pair
+channels=${channels_all[$SLURM_ARRAY_TASK_ID]}
+echo channels: $channels
 
 # Wait a bit so it doesn't crash
 sleep 8
@@ -27,7 +27,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/03-rnc_eeg
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/eeg/behavioral_modeling
 
 # Run the job
-python 05_baseline.py --time_pair $time_pair --cv '0'
+python 02_stats.py --channels $channels
