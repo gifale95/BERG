@@ -9,7 +9,7 @@
 # Create the parameters combinations
 declare -a time_pair_all
 index=0
-for t in '0.1-0.2' '0.1-0.3' '0.1-0.4' '0.2-0.3' '0.2-0.4' '0.3-0.4' ; do
+for t in '0.2-0.4' ; do
     time_pair_all[$index]=$t
     ((index=index+1))
 done

@@ -11,8 +11,8 @@ declare -a cv_subject_all
 declare -a time_pair_all
 declare -a control_condition_all
 index=0
-for s in '1' ; do
-    for t in '0.1-0.4' ; do
+for s in '10' ; do
+    for t in '0.2-0.4' ; do
         for c in 'disentangle' ; do
             cv_subject_all[$index]=$s
             time_pair_all[$index]=$t

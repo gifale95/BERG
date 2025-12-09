@@ -84,6 +84,7 @@ elif args.cv == 1:
         best_gen_scores_train = []
         best_gen_chromosomes = []
         for sub in args.all_subjects:
+        #for sub in [1, 2, 3, 5, 6, 7, 8]:
             data_dir = os.path.join(args.berg_dir, 'rnc_eeg',
                 'multivariate_rnc', 'best_image_batches',
                 'cv-'+format(args.cv), args.time_pair, 'control_condition-'+c,
