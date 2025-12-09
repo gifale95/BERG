@@ -1,19 +1,17 @@
-"""Perform RSA between in silico EEG responses and behavioral embeddings.
+"""Perform RSA between in silico fMRI responses and behavioral embeddings.
 
 Parameters
 ----------
 encoding_model : str
-    The name of BERG's encoding model used for generating the in silico EEG
+    The name of BERG's encoding model used for generating the in silico fMRI
     responses.
 subject : int
-    The subject identifier for the EEG encoding models. Since the used
-    encoidng models are trained on THINGS EEG2 data, valid subject identifiers
-    are integers from 1 to 10.
-channels : string
-    String containing the EEG channel type(s) retained for the analyses,
-    separated by a comma. Possible values are: 'O' (occipital), 'P'
-    (posterior), 'T' (temporal), 'C' (central), 'F' (frontal). Alternatively,
-    the list can also contain the names of the individual channels used.
+    The subject identifier for the fMRI encoding models. Since the used
+    encoding models are trained on NSD data, valid subject identifiers
+    are integers from 1 to 8.
+hemisphere : str
+    String containing the hemisphere used for the analyses. Possible values 
+    are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
 berg_dir : str
     Directory of the BERG.
 things_dir : str
@@ -34,9 +32,9 @@ from sklearn.svm import SVC
 from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subject', default=1, type=int)
-parser.add_argument('--channels', default='O,P', type=lambda s: s.split(','))
+parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
@@ -52,6 +50,9 @@ random.seed(seed)
 np.random.seed(seed)
 
 
+Remove hemisphere selection after finding way of vectorizing correlations
+
+
 # =============================================================================
 # Load the THINGS EEG2 image metadata
 # =============================================================================
@@ -59,7 +60,7 @@ np.random.seed(seed)
 
 # Load the metadata
 metadata_dir = os.path.join(args.berg_dir, args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'eeg',
+    'neural_signatures_insilico_validation', 'vision', 'fmri',
     'behavioral_modeling', 'image_metadata.npy')
 
 metadata = np.load(metadata_dir, allow_pickle=True).item()
@@ -74,34 +75,32 @@ test_img_concepts_THINGS = metadata['test_img_concepts_THINGS']
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
-# Get the model metadata
-metadata = berg.get_model_metadata(
-    args.encoding_model,
-    subject=args.subject
-    )
-times = metadata['eeg']['times']
-
-# EEG channel selection
-ch_names = metadata['eeg']['ch_names']
-kept_ch_names = []
-for c in ch_names:
-    for ch_select in args.channels:
-        if ch_select in c:
-            kept_ch_names.append(c)
-            break
+# Select the vertices from the chosen hemisphere
+n_vertices = 163842
+if args.hemisphere == 'lh':
+    lh_vertices = np.ones(n_vertices, dtype=int)
+    rh_vertices = np.zeros(n_vertices, dtype=int)
+    rh_vertices[0] = 1 # At least one vertex must be selected
+elif args.hemisphere == 'rh':
+    lh_vertices = np.zeros(n_vertices, dtype=int)
+    lh_vertices[0] = 1 # At least one vertex must be selected
+    rh_vertices = np.ones(n_vertices, dtype=int)
 
 # Load the encoding model
 model = berg.get_encoding_model(
     args.encoding_model,
     subject=args.subject,
-    selection={'channels': kept_ch_names}
+    selection={
+        'lh_vertices': lh_vertices,
+        'rh_vertices': rh_vertices
+        }
     )
 
 
 # =============================================================================
-# Generate the in silico EEG responses
+# Generate the in silico fMRI responses # !!!
 # =============================================================================
-eeg = []
+fmri = []
 
 # Loop across test object concepts
 for cat in tqdm(test_img_concepts_THINGS):
@@ -127,65 +126,17 @@ for cat in tqdm(test_img_concepts_THINGS):
     images = np.array(images)
     images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
 
-    # Generate the in silico EEG responses
-    eeg_cat, metadata = berg.encode(model, images, return_metadata=True)
+    # Generate the in silico fMRI responses
+    fmri_cat, metadata = berg.encode(model, images, return_metadata=True)
 
-    # Store the in silico EEG responses averaged across image exemplars
-    eeg.append(np.mean(eeg_cat, 0))
+    # Store the in silico fMRI responses averaged across image exemplars
+    fmri.append(np.mean(fmri_cat, 0))
 
     # Delete unused variables
-    del eeg_cat, images
+    del fmri_cat, images
 
-# Convert the EEG responses to numpy arrays
-eeg = np.array(eeg)
-times = metadata['eeg']['times']
-
-
-# =============================================================================
-# Create the EEG RDM (pairwise decoding)
-# =============================================================================
-# The code assumes EEG responses in the format:
-# (Image conditions × Repeats × Channels × Time points)
-
-# Results array of shape:
-# (Image conditions × Image conditions × EEG time points)
-eeg_rdm = np.zeros((len(eeg), len(eeg), len(times)), dtype=np.float32)
-
-# Loop over EEG time points and images
-for t in tqdm(range(len(times))):
-    for i1 in range(len(eeg)):
-        for i2 in range(i1):
-
-            # Select the image condition data
-            eeg_cond_1 = eeg[i1,:,:,t] # type: ignore
-            eeg_cond_2 = eeg[i2,:,:,t] # type: ignore
-
-            # SVM target vectors
-            y_train = np.zeros(((len(eeg_cond_1)-1)*2))
-            y_train[int(len(y_train)/2):] = 1
-            y_test = np.asarray((0, 1))
-            scores = np.zeros(len(eeg_cond_1))
-
-            # Loop across repeats (leave-one-repeat-out cross-decoding)
-            for r in range(len(eeg_cond_1)):
-
-                # Define the train/test partitions
-                X_train = np.append(np.delete(eeg_cond_1, r, 0),
-                    np.delete(eeg_cond_2, r, 0), 0)
-                X_test = np.append(np.expand_dims(eeg_cond_1[r], 0),
-                    np.expand_dims(eeg_cond_2[r], 0), 0)
-
-                # Train the classifier
-                dec_svm = SVC(kernel='linear')
-                dec_svm.fit(X_train, y_train)
-
-                # Test the classifier
-                y_pred = dec_svm.predict(X_test)
-                scores[r] = sum(y_pred == y_test) / len(y_test)
-
-            # Store the accuracy
-            eeg_rdm[i1,i2,t] = np.mean(scores)
-            eeg_rdm[i2,i1,t] = eeg_rdm[i1,i2,t]
+# Convert the fMRI responses to numpy arrays
+fmri = np.array(fmri)
 
 
 # =============================================================================
@@ -214,8 +165,15 @@ for i1 in range(len(beh_embeddings)):
 
 
 # =============================================================================
-# Perform RSA
+# Perform searchlight RSA # !!!
 # =============================================================================
+See how Adrien implements the searchlight
+
+
+# Loop across fMRI vertices
+
+# Create the fMRI RDMs
+
 # Take the lower triangle of the EEG and behavior RDMs
 idx = np.tril_indices(len(eeg_rdm), -1)
 eeg_rdm_tril = eeg_rdm[idx]
@@ -231,17 +189,46 @@ for t in range(len(times)):
 # Save the results
 # =============================================================================
 results = {
-    'eeg_rdm': eeg_rdm,
+    'fmri_rdm': fmri_rdm,
     'beh_rdm': beh_rdm,
     'rsa': rsa,
     'metadata': metadata
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'behavioral_modeling', 'rsa')
+    'vision', 'fmri', 'behavioral_modeling', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'rsa_sub-' + format(args.subject, '02') + '_channels-' + \
-    '-'.join(args.channels) + '.npy'
+file_name = 'rsa_sub-' + format(args.subject, '02') + '_' + args.hemisphere + \
+    '.npy'
 
 np.save(os.path.join(save_dir, file_name), results) # type: ignore
+
+
+
+
+
+
+
+X = np.random.randn(500, 1000).astype(np.float32)
+y = np.random.randn(500).astype(np.float32)
+
+def ultra_fast_corr(X, y):
+    Xc = X - X.mean(axis=0)
+    yc = y - y.mean()
+    num = Xc.T @ yc
+    den = np.sqrt((Xc**2).sum(axis=0) * (yc**2).sum())
+    return num / den
+
+def corr_matrix(X):
+    Xc = X - X.mean(axis=0)
+    Xc /= np.sqrt((Xc**2).sum(axis=0))
+    return Xc.T @ Xc
+
+corr = corr_matrix(X)
+
+corr_2 = np.ones((X.shape[1], X.shape[1]), dtype=np.float32)
+for i in tqdm(range(X.shape[1])):
+    for j in range(i):
+        corr_2[i,j] = pearsonr(X[:,i], X[:,j])[0]
+        corr_2[j,i] = corr_2[i,j]

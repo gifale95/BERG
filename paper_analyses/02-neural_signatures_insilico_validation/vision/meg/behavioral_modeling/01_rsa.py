@@ -1,5 +1,4 @@
-"""Perform exemplar and animacy pairwise decoding on in silico EEG responses
-for 200 ImageNet images (100 animate categories, and 100 inanimate categories).
+"""Perform RSA between in silico MEG responses and behavioral embeddings.
 
 Parameters
 ----------
@@ -37,7 +36,7 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subject', default=1, type=int)
-parser.add_argument('--channels', default='O', type=lambda s: s.split(','))
+parser.add_argument('--channels', default='O,P', type=lambda s: s.split(','))
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()

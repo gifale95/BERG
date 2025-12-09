@@ -1,5 +1,6 @@
-"""Compute the stats on the results of the decoding and rsa analyses. The stats
-consist of bootstrapped 95% confidence intervals and significance estimates.
+"""Compute the stats on the results of the RSA analysis between in silico MEG
+responses and behavioral embeddings. The stats consist of bootstrapped 95%
+confidence intervals and significance estimates.
 
 Parameters
 ----------
@@ -36,7 +37,7 @@ from statsmodels.stats.multitest import multipletests
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
-parser.add_argument('--channels', default='O', type=lambda s: s.split(','))
+parser.add_argument('--channels', default='O,P', type=lambda s: s.split(','))
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
