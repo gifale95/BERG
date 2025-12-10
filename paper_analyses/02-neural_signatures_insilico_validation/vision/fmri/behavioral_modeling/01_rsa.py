@@ -1,4 +1,5 @@
-"""Perform RSA between in silico fMRI responses and behavioral embeddings.
+"""Perform searchlight RSA between in silico fMRI responses and behavioral
+embeddings.
 
 Parameters
 ----------
@@ -12,6 +13,14 @@ subject : int
 hemisphere : str
     String containing the hemisphere used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+criterion : str
+    Criterion to define the searchlight neighborhood: 'radius' for all vertices
+    within a geodesic radius, 'nearest' for k-nearest neighbors.
+radius_mm : float
+    Geodesic radius in millimeters (default = 10 mm), if criterion is 'radius'.
+k : int
+    Number of nearest geodesic neighbors (default = 10), if criterion is
+    'nearest'.
 berg_dir : str
     Directory of the BERG.
 things_dir : str
@@ -22,19 +31,21 @@ things_dir : str
 
 import argparse
 import os
-import random
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
 from berg import BERG
 import pandas as pd
-from sklearn.svm import SVC
 from scipy.stats import pearsonr
+import h5py
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subject', default=1, type=int)
 parser.add_argument('--hemisphere', default='lh', type=str)
+parser.add_argument('--criterion', default='radius', type=str)
+parser.add_argument('--radius_mm', default=10, type=float)
+parser.add_argument('--k', default=10, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
@@ -44,13 +55,28 @@ print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
-# Set random seed for reproducible results
-seed = 20200220
-random.seed(seed)
-np.random.seed(seed)
 
+# =============================================================================
+# Define the vectorized correlation function
+# =============================================================================
+def corr_matrix(X):
+    """
+    Computes the correlation matrix of the input data.
+    Parameters
+    ----------
+    X : (N, M) float array
+        Input data matrix with N features and M samples.
 
-Remove hemisphere selection after finding way of vectorizing correlations
+    Returns
+    -------
+    corr : (M, M) float array
+        Correlation matrix of the input data.
+    """
+
+    Xc = X - X.mean(axis=0)
+    Xc /= np.sqrt((Xc**2).sum(axis=0))
+
+    return (Xc.T @ Xc).astype(np.float32)
 
 
 # =============================================================================
@@ -98,7 +124,7 @@ model = berg.get_encoding_model(
 
 
 # =============================================================================
-# Generate the in silico fMRI responses # !!!
+# Generate the in silico fMRI responses
 # =============================================================================
 fmri = []
 
@@ -130,13 +156,16 @@ for cat in tqdm(test_img_concepts_THINGS):
     fmri_cat, metadata = berg.encode(model, images, return_metadata=True)
 
     # Store the in silico fMRI responses averaged across image exemplars
-    fmri.append(np.mean(fmri_cat, 0))
+    if args.hemisphere == 'lh':
+        fmri.append(np.mean(fmri_cat[0], 0))
+    if args.hemisphere == 'rh':
+        fmri.append(np.mean(fmri_cat[1], 0))
 
     # Delete unused variables
     del fmri_cat, images
 
 # Convert the fMRI responses to numpy arrays
-fmri = np.array(fmri)
+fmri = np.array(fmri).astype(np.float32)
 
 
 # =============================================================================
@@ -148,7 +177,7 @@ embedding_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
     'behavioral_modeling', 'spose_embedding_66d_sorted.txt')
 beh_embeddings_all = np.array(pd.read_csv(embedding_dir, delim_whitespace=True,
-    header=None))
+    header=None)).astype(np.float32)
 
 # Retain the embeddings from the 200 test image concepts
 idx_test = np.zeros(len(test_img_concepts_THINGS), dtype=int)
@@ -157,40 +186,62 @@ for i, img in enumerate(test_img_concepts_THINGS):
 beh_embeddings = beh_embeddings_all[idx_test]
 
 # Create the RDM
-beh_rdm = np.zeros((len(beh_embeddings), len(beh_embeddings)), dtype=np.float32)
-for i1 in range(len(beh_embeddings)):
-    for i2 in range(i1):
-        beh_rdm[i1,i2] = 1 - pearsonr(beh_embeddings[i1], beh_embeddings[i2])[0] # type: ignore
-        beh_rdm[i2,i1] = beh_rdm[i1,i2]
+beh_rdm = 1 - corr_matrix(beh_embeddings.T)
 
 
 # =============================================================================
-# Perform searchlight RSA # !!!
+# Perform searchlight RSA
 # =============================================================================
-See how Adrien implements the searchlight
+# Empty RSA results array
+rsa = np.zeros(fmri.shape[1], dtype=np.float32)
 
+# Take the lower triangle of the behavior RDMs
+idx_tril = np.tril_indices(len(beh_rdm), -1)
+beh_rdm_tril = beh_rdm[idx_tril]
+
+# Get info regarding the vertex splits of the geodesic distances
+n_vertices = fmri.shape[1]
+total_vertex_splits = 81
+vertices_per_split = n_vertices // total_vertex_splits
 
 # Loop across fMRI vertices
+for v in tqdm(range(fmri.shape[1])):
 
-# Create the fMRI RDMs
+    # Only load the precomputed geodesic distances for the first vertex of each
+    # split
+    idx = v % vertices_per_split
+    if idx == 0:
+        vertex_split = v // vertices_per_split # Get the split of the target vertex
+        data_dir = np.load(os.path.join(args.berg_dir,
+            'neural_signatures_insilico_validation', 'vision', 'fmri',
+            'behavioral_modeling', 'vertex_geodesic_distances',
+            'vertex_geodesic_distances_'+args.hemisphere+'_split-'+
+            format(vertex_split, '03')+'.h5py'))
+        geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances'][:]
 
-# Take the lower triangle of the EEG and behavior RDMs
-idx = np.tril_indices(len(eeg_rdm), -1)
-eeg_rdm_tril = eeg_rdm[idx]
-beh_rdm_tril = beh_rdm[idx]
+    # Select the neighborhood based on the chosen criterion
+    if args.criterion == 'nearest':
+        # Get k-smallest distances (including the target vertex)
+        neighborhood = np.argsort(geodesic_distances[idx])[:args.k]
+    elif args.criterion == 'radius':
+        # Select all vertices whose distance is within the radius
+        mask = geodesic_distances[idx] <= args.radius_mm
+        neighborhood = np.where(mask)[0]
 
-# Perform RSA
-rsa = np.zeros(len(times), dtype=np.float32)
-for t in range(len(times)): 
-    rsa[t] = pearsonr(beh_rdm_tril, eeg_rdm_tril[:,t])[0]
+    # Create the fMRI RDM
+    fmri_rdm = 1 - corr_matrix(fmri[:,neighborhood].T)
+
+    # Take the lower triangle of the fMRI RDM
+    fmri_rdm_tril = fmri_rdm[idx_tril]
+
+    # Perform RSA
+    rsa[v] = pearsonr(beh_rdm_tril, fmri_rdm_tril)[0]
 
 
 # =============================================================================
 # Save the results
 # =============================================================================
 results = {
-    'fmri_rdm': fmri_rdm,
-    'beh_rdm': beh_rdm,
     'rsa': rsa,
     'metadata': metadata
 }
@@ -202,33 +253,4 @@ os.makedirs(save_dir, exist_ok=True)
 file_name = 'rsa_sub-' + format(args.subject, '02') + '_' + args.hemisphere + \
     '.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
-
-
-
-
-
-
-
-X = np.random.randn(500, 1000).astype(np.float32)
-y = np.random.randn(500).astype(np.float32)
-
-def ultra_fast_corr(X, y):
-    Xc = X - X.mean(axis=0)
-    yc = y - y.mean()
-    num = Xc.T @ yc
-    den = np.sqrt((Xc**2).sum(axis=0) * (yc**2).sum())
-    return num / den
-
-def corr_matrix(X):
-    Xc = X - X.mean(axis=0)
-    Xc /= np.sqrt((Xc**2).sum(axis=0))
-    return Xc.T @ Xc
-
-corr = corr_matrix(X)
-
-corr_2 = np.ones((X.shape[1], X.shape[1]), dtype=np.float32)
-for i in tqdm(range(X.shape[1])):
-    for j in range(i):
-        corr_2[i,j] = pearsonr(X[:,i], X[:,j])[0]
-        corr_2[j,i] = corr_2[i,j]
+np.save(os.path.join(save_dir, file_name), results)

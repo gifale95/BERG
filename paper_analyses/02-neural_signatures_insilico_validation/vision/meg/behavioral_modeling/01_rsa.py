@@ -53,6 +53,15 @@ np.random.seed(seed)
 
 
 # =============================================================================
+# Define the vectorized correlation function to compute the RDMs
+# =============================================================================
+def corr_matrix(X):
+    Xc = X - X.mean(axis=0)
+    Xc /= np.sqrt((Xc**2).sum(axis=0))
+    return (Xc.T @ Xc).astype(np.float32)
+
+
+# =============================================================================
 # Load the THINGS EEG2 image metadata
 # =============================================================================
 # The THINGS EEG2 image metadata can be downloaded from: https://osf.io/y63gw/files/qkgtf
@@ -194,7 +203,7 @@ embedding_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
     'behavioral_modeling', 'spose_embedding_66d_sorted.txt')
 beh_embeddings_all = np.array(pd.read_csv(embedding_dir, delim_whitespace=True,
-    header=None))
+    header=None)).astype(np.float32)
 
 # Retain the embeddings from the 200 test image concepts
 idx_test = np.zeros(len(test_img_concepts_THINGS), dtype=int)
@@ -203,11 +212,7 @@ for i, img in enumerate(test_img_concepts_THINGS):
 beh_embeddings = beh_embeddings_all[idx_test]
 
 # Create the RDM
-beh_rdm = np.zeros((len(beh_embeddings), len(beh_embeddings)), dtype=np.float32)
-for i1 in range(len(beh_embeddings)):
-    for i2 in range(i1):
-        beh_rdm[i1,i2] = 1 - pearsonr(beh_embeddings[i1], beh_embeddings[i2])[0] # type: ignore
-        beh_rdm[i2,i1] = beh_rdm[i1,i2]
+beh_rdm = 1 - corr_matrix(beh_embeddings.T)
 
 
 # =============================================================================
