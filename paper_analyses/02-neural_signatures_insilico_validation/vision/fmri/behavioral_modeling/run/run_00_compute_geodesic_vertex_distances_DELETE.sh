@@ -1,29 +1,29 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-fmri-behavioral_modeling-01_rsa
+#SBATCH --job-name=berg_insilico_validation-fmri-behavioral_modeling-00_compute_geodesic_vertex_distances
 #SBATCH --mail-type=end
-#SBATCH --mem=3000
-#SBATCH --time=00:10:00
+#SBATCH --mem=5000
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
-declare -a subject_all
 declare -a hemisphere_all
+declare -a vertex_split_all
 index=0
-for s in `seq 1 10` ; do
-    for h in 'lh' 'rh' ; do
-        subject_all[$index]=$s
+for h in 'lh' ; do
+    for v in '2' '3' ; do
         hemisphere_all[$index]=$h
+        vertex_split_all[$index]=$v
         ((index=index+1))
     done
 done
 
 # Extract the parameters
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
-subject=${subject_all[$SLURM_ARRAY_TASK_ID]}
 hemisphere=${hemisphere_all[$SLURM_ARRAY_TASK_ID]}
-echo subject: $subject
+vertex_split=${vertex_split_all[$SLURM_ARRAY_TASK_ID]}
 echo hemisphere: $hemisphere
+echo vertex_split: $vertex_split
 
 # Wait a bit so it doesn't crash
 sleep 8
@@ -36,4 +36,4 @@ conda activate general
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/behavioral_modeling
 
 # Run the job
-python 01_rsa.py --subject $subject --hemisphere $hemisphere
+python 00_compute_geodesic_vertex_distances.py --hemisphere $hemisphere --vertex_split $vertex_split

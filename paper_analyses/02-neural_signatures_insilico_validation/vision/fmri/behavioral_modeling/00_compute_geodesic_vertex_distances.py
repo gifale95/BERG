@@ -28,6 +28,7 @@ import pygeodesic.geodesic as geodesic
 parser = argparse.ArgumentParser()
 parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--total_vertex_splits', default=81, type=int)
+parser.add_argument('--vertex_split', default=0, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 

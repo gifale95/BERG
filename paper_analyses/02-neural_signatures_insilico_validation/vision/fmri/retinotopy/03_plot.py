@@ -177,7 +177,7 @@ fig = cortex.quickshow(
 # Save the figure
 file_name = os.path.join(save_dir, 'polar_angle_encoding_model-'+
     args.encoding_model+'_subject-'+str(args.subject)+'.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')
 
 
@@ -216,7 +216,7 @@ fig = cortex.quickshow(
 # Save the figure
 file_name = os.path.join(save_dir, 'eccentricity_encoding_model-'+
     args.encoding_model+'_subject-'+str(args.subject)+'.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')
 
 
@@ -259,7 +259,7 @@ plt.show()
 
 # Save the polar angle color wheel
 file_name = os.path.join(save_dir, 'polar_angle_colorwheel.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')
 
 
@@ -305,5 +305,5 @@ ax.plot([ s, s], [-s, s], 'k--', linewidth=2)
 
 # Save the eccentricity map
 file_name = os.path.join(save_dir, 'eccentricity_map.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')

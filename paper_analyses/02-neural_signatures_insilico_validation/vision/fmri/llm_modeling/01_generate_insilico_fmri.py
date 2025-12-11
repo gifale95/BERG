@@ -1,5 +1,4 @@
-"""Perform searchlight RSA between in silico fMRI responses and behavioral
-embeddings.
+"""Perform searchlight RSA between in silico fMRI responses and LLM embeddings.
 
 Parameters
 ----------
@@ -23,10 +22,9 @@ k : int
     'nearest'.
 berg_dir : str
     Directory of the BERG.
-things_dir : str
-    Directory of the THINGS database.
-    https://osf.io/jum2f/
-
+nsd_dir : str
+    Directory of the Natural Scenes Dataset.
+    https://naturalscenesdataset.org/
 """
 
 import argparse
@@ -36,6 +34,8 @@ from PIL import Image
 from tqdm import tqdm
 from berg import BERG
 import pandas as pd
+from pycocotools.coco import COCO
+from sentence_transformers import SentenceTransformer
 from scipy.stats import pearsonr
 import h5py
 
@@ -47,7 +47,7 @@ parser.add_argument('--criterion', default='radius', type=str)
 parser.add_argument('--radius_mm', default=10, type=float)
 parser.add_argument('--k', default=10, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
+parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> RSA <<<')
@@ -80,22 +80,6 @@ def corr_matrix(X):
 
 
 # =============================================================================
-# Load the THINGS EEG2 image metadata
-# =============================================================================
-# The THINGS EEG2 image metadata can be downloaded from: https://osf.io/y63gw/files/qkgtf
-
-# Load the metadata
-metadata_dir = os.path.join(args.berg_dir, args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'behavioral_modeling', 'image_metadata.npy')
-
-metadata = np.load(metadata_dir, allow_pickle=True).item()
-
-# Get the test image category number based on the original THINGS database
-test_img_concepts_THINGS = metadata['test_img_concepts_THINGS']
-
-
-# =============================================================================
 # Load BERG's encoding model
 # =============================================================================
 # Initialize BERG
@@ -124,69 +108,97 @@ model = berg.get_encoding_model(
 
 
 # =============================================================================
-# Generate the in silico fMRI responses
+# Load the test images
 # =============================================================================
-fmri = []
+# The test images consist of the 515 images that all NSD subjects saw for three
+# times, and which were used to test BERG's encoding models
 
-# Loop across test object concepts
-for cat in tqdm(test_img_concepts_THINGS):
+# Get the test image number
+metadata = berg.get_model_metadata(
+    args.encoding_model,
+    subject=args.subject
+)
+test_img_num = metadata['encoding_models']['test_img_num']
 
-    # Get the image exemplar file names for each concept
-    image_list = os.listdir(os.path.join(args.things_dir,
-        'image-database_things', cat[6:]))
-    image_list.sort()
-
-    # Loop across image exemplars
-    images = []
-    for ifile in image_list:
-
-        # Load the images
-        img_path = os.path.join(args.things_dir, 'image-database_things',
-            cat[6:], ifile)
-        img = Image.open(img_path)
-        img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
-        img = np.array(img)
-        images.append(img)
-    
-    # Format the images
-    images = np.array(images)
-    images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
-
-    # Generate the in silico fMRI responses
-    fmri_cat, metadata = berg.encode(model, images, return_metadata=True)
-
-    # Store the in silico fMRI responses averaged across image exemplars
-    if args.hemisphere == 'lh':
-        fmri.append(np.mean(fmri_cat[0], 0))
-    if args.hemisphere == 'rh':
-        fmri.append(np.mean(fmri_cat[1], 0))
-
-    # Delete unused variables
-    del fmri_cat, images
-
-# Convert the fMRI responses to numpy arrays
-fmri = np.array(fmri).astype(np.float32)
+# Load the test images
+sf = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli', 'stimuli', 'nsd',
+    'nsd_stimuli.hdf5'), 'r')
+sdataset = sf.get('imgBrick')
+images = sdataset[test_img_num]
+images = np.swapaxes(np.swapaxes(images, 1, 3), 2, 3)
 
 
 # =============================================================================
-# Create the behavioral RDM
+# Generate the in silico fMRI response
 # =============================================================================
-# Load the behavioral embeddings (the behavioral emebddings can be downloaded
-# from: https://osf.io/f5rn6/overview)
-embedding_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'behavioral_modeling', 'spose_embedding_66d_sorted.txt')
-beh_embeddings_all = np.array(pd.read_csv(embedding_dir, delim_whitespace=True,
-    header=None)).astype(np.float32)
+fmri, metadata = berg.encode(model, images, return_metadata=True)
 
-# Retain the embeddings from the 200 test image concepts
-idx_test = np.zeros(len(test_img_concepts_THINGS), dtype=int)
-for i, img in enumerate(test_img_concepts_THINGS):
-    idx_test[i] = int(img[:5]) - 1
-beh_embeddings = beh_embeddings_all[idx_test]
+# Only retain responses from the hemisphere of interest
+if args.hemisphere == 'lh':
+    fmri = fmri[0].astype(np.float32)
+if args.hemisphere == 'rh':
+    fmri = fmri[1].astype(np.float32)
+
+
+# =============================================================================
+# Create the LLM RDM # !!!
+# =============================================================================
+# Load the captions
+
+
+
+
+
+dataDir='..'
+dataType='val2017'
+annFile='{}/annotations/instances_{}.json'.format(dataDir,dataType)
+
+# initialize COCO api for instance annotations
+coco=COCO(annFile)
+
+# display COCO categories and supercategories
+cats = coco.loadCats(coco.getCatIds())
+nms=[cat['name'] for cat in cats]
+print('COCO categories: \n{}\n'.format(' '.join(nms)))
+nms = set([cat['supercategory'] for cat in cats])
+print('COCO supercategories: \n{}'.format(' '.join(nms)))
+
+# get all images containing given categories, select one at random
+catIds = coco.getCatIds(catNms=['person','dog','skateboard']);
+imgIds = coco.getImgIds(catIds=catIds );
+imgIds = coco.getImgIds(imgIds = [324158])
+img = coco.loadImgs(imgIds[np.random.randint(0,len(imgIds))])[0]
+
+
+# initialize COCO api for caption annotations
+annFile = '{}/annotations/captions_{}.json'.format(dataDir,dataType)
+coco_caps=COCO(annFile)
+
+# load and display caption annotations
+annIds = coco_caps.getAnnIds(imgIds=img['id']);
+anns = coco_caps.loadAnns(annIds)
+coco_caps.showAnns(anns)
+plt.imshow(I); plt.axis('off'); plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+embedding_model = SentenceTransformer('all-mpnet-base-v2')
+embedding = embedding_model.encode(['This is my sentence'])
+
+
 
 # Create the RDM
-beh_rdm = 1 - corr_matrix(beh_embeddings.T)
+llm_rdm = 1 - corr_matrix(llm_embeddings.T)
 
 
 # =============================================================================
@@ -195,9 +207,9 @@ beh_rdm = 1 - corr_matrix(beh_embeddings.T)
 # Empty RSA results array
 rsa = np.zeros(fmri.shape[1], dtype=np.float32)
 
-# Take the lower triangle of the behavior RDMs
-idx_tril = np.tril_indices(len(beh_rdm), -1)
-beh_rdm_tril = beh_rdm[idx_tril]
+# Take the lower triangle of the LLM RDM
+idx_tril = np.tril_indices(len(llm_rdm), -1)
+llm_rdm_tril = llm_rdm[idx_tril]
 
 # Get info regarding the vertex splits of the geodesic distances
 n_vertices = fmri.shape[1]
@@ -235,7 +247,7 @@ for v in tqdm(range(fmri.shape[1])):
     fmri_rdm_tril = fmri_rdm[idx_tril]
 
     # Perform RSA
-    rsa[v] = pearsonr(beh_rdm_tril, fmri_rdm_tril)[0]
+    rsa[v] = pearsonr(llm_rdm_tril, fmri_rdm_tril)[0]
 
 
 # =============================================================================
@@ -247,7 +259,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'behavioral_modeling', 'rsa')
+    'vision', 'fmri', 'llm_modeling', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'rsa_sub-' + format(args.subject, '02') + '_' + args.hemisphere + \
