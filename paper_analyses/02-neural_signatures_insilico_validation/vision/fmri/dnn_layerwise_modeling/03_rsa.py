@@ -1,5 +1,4 @@
-"""Perform searchlight RSA between in silico fMRI responses and behavioral
-embeddings.
+"""Perform searchlight RSA between in silico fMRI responses and LLM embeddings.
 
 Parameters
 ----------
@@ -18,11 +17,11 @@ radius_mm : float
 k : int
     Number of nearest geodesic neighbors (default = 10), if criterion is
     'nearest'.
+model : str
+    Name of deep neural network model used to extract the image features.
+    Available options are 'alexnet' and 'resnet50'.
 berg_dir : str
     Directory of the BERG.
-things_dir : str
-    Directory of the THINGS database.
-    https://osf.io/jum2f/
 
 """
 
@@ -30,7 +29,6 @@ import argparse
 import os
 import numpy as np
 from tqdm import tqdm
-import pandas as pd
 from scipy.stats import pearsonr
 import h5py
 
@@ -40,8 +38,8 @@ parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--criterion', default='radius', type=str)
 parser.add_argument('--radius_mm', default=10, type=float)
 parser.add_argument('--k', default=10, type=int)
+parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> RSA <<<')
@@ -77,7 +75,7 @@ def corr_matrix(X):
 # Load the in silico fMRI responses
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'behavioral_modeling', 'insilico_fmri_responses',
+    'vision', 'fmri', 'dnn_layerwise_modeling', 'insilico_fmri_responses',
     'insilico_fmri_responses_sub-'+format(args.subject, '02')+'_'+
     args.hemisphere+'.npy')
 
@@ -87,44 +85,28 @@ metadata = data['metadata']
 
 
 # =============================================================================
-# Create the behavioral RDM
+# Load the DNN layerwise RDMs
 # =============================================================================
-# Load the THINGS EEG2 image metadata
-# The THINGS EEG2 image metadata can be downloaded from: https://osf.io/y63gw/files/qkgtf
-metadata_dir = os.path.join(args.berg_dir, args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'behavioral_modeling', 'image_metadata.npy')
-metadata = np.load(metadata_dir, allow_pickle=True).item()
-# Get the test image category number based on the original THINGS database
-test_img_concepts_THINGS = metadata['test_img_concepts_THINGS']
+data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
+    'vision', 'fmri', 'dnn_layerwise_modeling', 'dnn_rdms',
+    'dnn_rdms_'+args.model+'.npy')
 
-# Load the behavioral embeddings (the behavioral emebddings can be downloaded
-# from: https://osf.io/f5rn6/overview)
-embedding_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'behavioral_modeling', 'spose_embedding_66d_sorted.txt')
-beh_embeddings_all = np.array(pd.read_csv(embedding_dir, delim_whitespace=True,
-    header=None)).astype(np.float32)
-
-# Retain the embeddings from the 200 test image concepts
-idx_test = np.zeros(len(test_img_concepts_THINGS), dtype=int)
-for i, img in enumerate(test_img_concepts_THINGS):
-    idx_test[i] = int(img[:5]) - 1
-beh_embeddings = beh_embeddings_all[idx_test]
-
-# Create the RDM
-beh_rdm = 1 - corr_matrix(beh_embeddings.T)
+dnn_rdms = np.load(data_dir, allow_pickle=True).item()
 
 
 # =============================================================================
 # Perform searchlight RSA # !!! FULL GEO DIST MATRIX
 # =============================================================================
-# Empty RSA results array
-rsa = np.zeros(fmri.shape[1], dtype=np.float32)
+# Empty RSA results arrays
+rsa = {}
+for key in dnn_rdms.keys():
+    rsa[key] = np.zeros(fmri.shape[1], dtype=np.float32)
 
-# Take the lower triangle of the behavior RDM
-idx_tril = np.tril_indices(len(beh_rdm), -1)
-beh_rdm_tril = beh_rdm[idx_tril]
+# Take the lower triangle of the DNN RDMs
+idx_tril = np.tril_indices(len(fmri), -1)
+dnn_rdm_tril = {}
+for key, val in dnn_rdms.items():
+    dnn_rdm_tril[key] = val[idx_tril]
 
 # Access the precomputed geodesic distances
 data_dir = np.load(os.path.join(args.berg_dir,
@@ -148,19 +130,24 @@ for v in tqdm(range(fmri.shape[1])):
     # Create the fMRI RDM
     fmri_rdm = 1 - corr_matrix(fmri[:,neighborhood].T)
 
-    # Perform RSA
-    rsa[v] = pearsonr(beh_rdm_tril, fmri_rdm[idx_tril])[0]
+    # Perform RSA with each DNN layer
+    for key, val in dnn_rdm_tril.items():
+        rsa[key][v] = pearsonr(val, fmri_rdm[idx_tril])[0]
 
 
 # =============================================================================
 # Perform searchlight RSA # !!! GEO DIST MATRIX SPLITS
 # =============================================================================
-# Empty RSA results array
-rsa = np.zeros(fmri.shape[1], dtype=np.float32)
+# Empty RSA results arrays
+rsa = {}
+for key in dnn_rdms.keys():
+    rsa[key] = np.zeros(fmri.shape[1], dtype=np.float32)
 
-# Take the lower triangle of the LLM RDM
-idx_tril = np.tril_indices(len(beh_rdm), -1)
-beh_rdm_tril = beh_rdm[idx_tril]
+# Take the lower triangle of the DNN RDMs
+idx_tril = np.tril_indices(len(fmri), -1)
+dnn_rdm_tril = {}
+for key, val in dnn_rdms.items():
+    dnn_rdm_tril[key] = val[idx_tril]
 
 # Get info regarding the vertex splits of the geodesic distances
 n_vertices = fmri.shape[1]
@@ -194,12 +181,9 @@ for v in tqdm(range(fmri.shape[1])):
     # Create the fMRI RDM
     fmri_rdm = 1 - corr_matrix(fmri[:,neighborhood].T)
 
-    # Take the lower triangle of the fMRI RDM
-    fmri_rdm_tril = fmri_rdm[idx_tril]
-
-    # Perform RSA
-    rsa[v] = pearsonr(beh_rdm_tril, fmri_rdm_tril)[0]
-
+    # Perform RSA with each DNN layer
+    for key, val in dnn_rdm_tril.items():
+        rsa[key][v] = pearsonr(val, fmri_rdm[idx_tril])[0]
 
 
 # =============================================================================
@@ -211,10 +195,10 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'behavioral_modeling', 'rsa')
+    'vision', 'fmri', 'dnn_layerwise_modeling', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'rsa_sub-' + format(args.subject, '02') + '_' + args.hemisphere + \
-    '.npy'
+    '_model-' + args.model + '.npy'
 
 np.save(os.path.join(save_dir, file_name), results)

@@ -1,5 +1,5 @@
 """Compute the significance of the RSA analysis between in silico fMRI
-responses and behavioral embeddings.
+responses and LLM embeddings.
 
 Parameters
 ----------

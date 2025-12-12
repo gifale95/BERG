@@ -103,12 +103,20 @@ for sub in args.subjects:
 # =============================================================================
 # Save the in silico fMRI responses
 # =============================================================================
+    data_lh = {
+        'fmri': fmri_lh,
+        'metadata': metadata
+    }
+    data_rh = {
+        'fmri': fmri_rh,
+        'metadata': metadata
+    }
     file_name_lh = 'insilico_fmri_responses_sub-' + format(sub, '02') + \
         '_lh.npy'
     file_name_rh = 'insilico_fmri_responses_sub-' + format(sub, '02') + \
         '_rh.npy'
-    np.save(os.path.join(save_dir, file_name_lh), fmri_lh)
-    np.save(os.path.join(save_dir, file_name_rh), fmri_rh)
+    np.save(os.path.join(save_dir, file_name_lh), data_lh)
+    np.save(os.path.join(save_dir, file_name_rh), data_rh)
 
     # Delete unused variables
     del fmri, fmri_lh, fmri_rh

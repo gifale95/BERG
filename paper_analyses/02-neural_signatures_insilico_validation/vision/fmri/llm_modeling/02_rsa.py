@@ -2,9 +2,6 @@
 
 Parameters
 ----------
-encoding_model : str
-    The name of BERG's encoding model used for generating the in silico fMRI
-    responses.
 subject : int
     The subject identifier for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers
@@ -42,7 +39,6 @@ from scipy.stats import pearsonr
 import h5py
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subject', default=1, type=int)
 parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--criterion', default='radius', type=str)
@@ -107,7 +103,9 @@ data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'insilico_fmri_responses_sub-'+format(args.subject, '02')+'_'+
     args.hemisphere+'.npy')
 
-fmri = np.load(data_dir, allow_pickle=True).item().astype(np.float32)
+data = np.load(data_dir, allow_pickle=True).item()
+fmri = data['fmri'].astype(np.float32)
+metadata = data['metadata']
 
 
 # =============================================================================
@@ -234,11 +232,8 @@ for v in tqdm(range(fmri.shape[1])):
     # Create the fMRI RDM
     fmri_rdm = 1 - corr_matrix(fmri[:,neighborhood].T)
 
-    # Take the lower triangle of the fMRI RDM
-    fmri_rdm_tril = fmri_rdm[idx_tril]
-
     # Perform RSA
-    rsa[v] = pearsonr(llm_rdm_tril, fmri_rdm_tril)[0]
+    rsa[v] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
 
 
 # =============================================================================

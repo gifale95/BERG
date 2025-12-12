@@ -1,4 +1,5 @@
-"""Generate the in silico fMRI responses for the 200 THINGS EEG2 test images.
+"""Generate the in silico fMRI responses for the 515 images that all NSD
+subjects saw for three times.
 
 Parameters
 ----------
@@ -11,9 +12,9 @@ subjects : list
     integers from 1 8.
 berg_dir : str
     Directory of the BERG.
-things_dir : str
-    Directory of the THINGS database.
-    https://osf.io/jum2f/
+nsd_dir : str
+    Directory of the Natural Scenes Dataset.
+    https://naturalscenesdataset.org/
 
 """
 
@@ -31,7 +32,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
+parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Generate in silico fMRI <<<')
@@ -44,24 +45,32 @@ for key, val in vars(args).items():
 # Create the save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'behavioral_modeling', 'insilico_fmri_responses')
+    'vision', 'fmri', 'dnn_layerwise_modeling', 'insilico_fmri_responses')
 os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
-# Load the THINGS EEG2 image metadata
+# Load the 515 test images
 # =============================================================================
-# The THINGS EEG2 image metadata can be downloaded from: https://osf.io/y63gw/files/qkgtf
+# The test images consist of the 515 images that all NSD subjects saw for three
+# times, and which were used to test BERG's encoding models
 
-# Load the metadata
-metadata_dir = os.path.join(args.berg_dir, args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'behavioral_modeling', 'image_metadata.npy')
+# Initialize BERG
+berg = BERG(berg_dir=args.berg_dir)
 
-metadata = np.load(metadata_dir, allow_pickle=True).item()
+# Get the test image number
+metadata = berg.get_model_metadata(
+    args.encoding_model,
+    subject=1
+)
+test_img_num = metadata['encoding_models']['test_img_num']
 
-# Get the test image category number based on the original THINGS database
-test_img_concepts_THINGS = metadata['test_img_concepts_THINGS']
+# Load the test images
+sf = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli', 'stimuli', 'nsd',
+    'nsd_stimuli.hdf5'), 'r')
+sdataset = sf.get('imgBrick')
+images = sdataset[test_img_num]
+images = np.swapaxes(np.swapaxes(images, 1, 3), 2, 3)
 
 
 # =============================================================================
@@ -83,46 +92,12 @@ for sub in args.subjects:
 # =============================================================================
 # Generate and save the in silico fMRI responses
 # =============================================================================
-    fmri_lh = []
-    fmri_rh = []
-
-    # Loop across test object concepts
-    for cat in tqdm(test_img_concepts_THINGS):
-
-        # Get the image exemplar file names for each concept
-        image_list = os.listdir(os.path.join(args.things_dir,
-            'image-database_things', cat[6:]))
-        image_list.sort()
-
-        # Loop across image exemplars
-        images = []
-        for ifile in image_list:
-
-            # Load the images
-            img_path = os.path.join(args.things_dir, 'image-database_things',
-                cat[6:], ifile)
-            img = Image.open(img_path)
-            img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
-            img = np.array(img)
-            images.append(img)
-        
-        # Format the images
-        images = np.array(images)
-        images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
-
-        # Generate the in silico fMRI responses
-        fmri_cat = berg.encode(model, images, return_metadata=False)
-
-        # Store the in silico fMRI responses averaged across image exemplars
-        fmri_lh.append(np.mean(fmri_cat[0], 0))
-        fmri_rh.append(np.mean(fmri_cat[1], 0))
-
-        # Delete unused variables
-        del fmri_cat, images
+    # Generate the in silico fMRI responses
+    fmri = berg.encode(model, images, return_metadata=False)
 
     # Convert the in silico fMRI resposnes to numpy arrays
-    fmri_lh = np.array(fmri_lh).astype(np.float32)
-    fmri_rh = np.array(fmri_rh).astype(np.float32)
+    fmri_lh = np.array(fmri[0]).astype(np.float32)
+    fmri_rh = np.array(fmri[1]).astype(np.float32)
 
 
 # =============================================================================
@@ -144,6 +119,6 @@ for sub in args.subjects:
     np.save(os.path.join(save_dir, file_name_rh), data_rh)
 
     # Delete unused variables
-    del fmri_lh, fmri_rh
+    del fmri, fmri_lh, fmri_rh
     torch.cuda.empty_cache()
     gc.collect()
