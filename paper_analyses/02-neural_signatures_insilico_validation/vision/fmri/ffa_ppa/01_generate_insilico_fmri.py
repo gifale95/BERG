@@ -19,7 +19,6 @@ import argparse
 import numpy as np
 import os
 from PIL import Image
-import torch
 from berg import BERG
 from tqdm import tqdm
 import gc

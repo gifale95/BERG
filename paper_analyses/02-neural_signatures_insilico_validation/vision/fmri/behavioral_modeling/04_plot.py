@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
+parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--ncsnr_threshold', default=0.0, type=float) # 0.2
 parser.add_argument('--encoding_threshold', default=0, type=float) # 20
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)

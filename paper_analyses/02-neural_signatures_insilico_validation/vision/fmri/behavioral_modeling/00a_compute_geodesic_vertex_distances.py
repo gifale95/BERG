@@ -32,7 +32,7 @@ parser.add_argument('--vertex_split', default=0, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Geodesic distance <<<')
+print('>>> Compute geodesic distance <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -91,7 +91,7 @@ save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'vertex_geodesic_distances_' + args.hemisphere + '_split-' + \
-    format(args.vertex_split, '03') + '.h5py'
+    format(args.vertex_split, '03') + '.h5'
 
 with h5py.File(os.path.join(save_dir, file_name), 'w') as f:
     f.create_dataset('geodesic_distances', data=geodesic_distances,

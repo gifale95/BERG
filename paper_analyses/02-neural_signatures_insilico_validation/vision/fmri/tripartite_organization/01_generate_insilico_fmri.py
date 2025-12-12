@@ -25,7 +25,6 @@ import torch
 from berg import BERG
 from tqdm import tqdm
 import gc
-import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
