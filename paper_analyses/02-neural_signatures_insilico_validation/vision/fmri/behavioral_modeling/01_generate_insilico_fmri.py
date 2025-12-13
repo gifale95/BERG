@@ -79,6 +79,12 @@ for sub in args.subjects:
         subject=sub
         )
 
+    # Load the metadata
+    metadata = berg.get_model_metadata(
+    args.encoding_model,
+    subject=sub
+    )
+
 
 # =============================================================================
 # Generate and save the in silico fMRI responses
@@ -111,7 +117,7 @@ for sub in args.subjects:
         images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
 
         # Generate the in silico fMRI responses
-        fmri_cat, metadata = berg.encode(model, images, return_metadata=True)
+        fmri_cat = berg.encode(model, images, return_metadata=False)
 
         # Store the in silico fMRI responses averaged across image exemplars
         fmri_lh.append(np.mean(fmri_cat[0], 0))
