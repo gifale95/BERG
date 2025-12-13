@@ -152,7 +152,7 @@ llm_rdm = 1 - corr_matrix(llm_embeddings.T)
 
 
 # =============================================================================
-# Perform searchlight RSA # !!! FULL GEO DIST MATRIX
+# Perform searchlight RSA
 # =============================================================================
 # Empty RSA results array
 rsa = np.zeros(fmri.shape[1], dtype=np.float32)
@@ -162,10 +162,10 @@ idx_tril = np.tril_indices(len(llm_rdm), -1)
 llm_rdm_tril = llm_rdm[idx_tril]
 
 # Access the precomputed geodesic distances
-data_dir = np.load(os.path.join(args.berg_dir,
+data_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri',
     'behavioral_modeling', 'vertex_geodesic_distances',
-    'vertex_geodesic_distances_'+args.hemisphere+'.h5'))
+    'vertex_geodesic_distances_'+args.hemisphere+'.h5')
 geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
 
 # Loop across fMRI vertices
@@ -188,52 +188,6 @@ for v in tqdm(range(fmri.shape[1])):
 
     # Perform RSA
     rsa[v] = pearsonr(llm_rdm_tril, fmri_rdm_tril)[0]
-
-
-# =============================================================================
-# Perform searchlight RSA # !!! GEO DIST MATRIX SPLITS
-# =============================================================================
-# Empty RSA results array
-rsa = np.zeros(fmri.shape[1], dtype=np.float32)
-
-# Take the lower triangle of the LLM RDM
-idx_tril = np.tril_indices(len(llm_rdm), -1)
-llm_rdm_tril = llm_rdm[idx_tril]
-
-# Get info regarding the vertex splits of the geodesic distances
-n_vertices = fmri.shape[1]
-total_vertex_splits = 81
-vertices_per_split = n_vertices // total_vertex_splits
-
-# Loop across fMRI vertices
-for v in tqdm(range(fmri.shape[1])):
-
-    # Only load the precomputed geodesic distances for the first vertex of each
-    # split
-    idx = v % vertices_per_split
-    if idx == 0:
-        vertex_split = v // vertices_per_split # Get the split of the target vertex
-        data_dir = np.load(os.path.join(args.berg_dir,
-            'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'behavioral_modeling', 'vertex_geodesic_distances',
-            'vertex_geodesic_distances_'+args.hemisphere+'_split-'+
-            format(vertex_split, '03')+'.h5'))
-        geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances'][:]
-
-    # Select the neighborhood based on the chosen criterion
-    if args.criterion == 'nearest':
-        # Get k-smallest distances (including the target vertex)
-        neighborhood = np.argsort(geodesic_distances[idx])[:args.k]
-    elif args.criterion == 'radius':
-        # Select all vertices whose distance is within the radius
-        mask = geodesic_distances[idx] <= args.radius_mm
-        neighborhood = np.where(mask)[0]
-
-    # Create the fMRI RDM
-    fmri_rdm = 1 - corr_matrix(fmri[:,neighborhood].T)
-
-    # Perform RSA
-    rsa[v] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
 
 
 # =============================================================================

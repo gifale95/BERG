@@ -94,20 +94,60 @@ for key in lh_rsa.keys():
     sig, pval_corrected, _, _ = multipletests(pval_all, 0.05, 'fdr_bh')
 
     # Split the significance results into hemispheres
-    sig_lh_rsa[key] = sig[:len(sig//2)]
-    sig_rh_rsa[key] = sig[len(sig//2):]
-    pval_corrected_lh_rsa[key] = pval_corrected[:len(sig//2)]
-    pval_corrected_rh_rsa[key] = pval_corrected[len(sig//2):]
+    sig_lh_rsa[key] = sig[:len(sig)//2]
+    sig_rh_rsa[key] = sig[:len(sig)//2]
+    pval_corrected_lh_rsa[key] = pval_corrected[:len(sig)//2]
+    pval_corrected_rh_rsa[key] = pval_corrected[:len(sig)//2]
 
     # Delete unused variables
     del pval_lh_rsa, pval_rh_rsa, pval_all, sig, pval_corrected
 
 
 # =============================================================================
-# Color code the vertices based on the layer leading to highest RSA scores
-# (Guclu & van Gerven, 2015, Fig. 4A; Lin et al., 2024, Fig. 6-7). # !!!
+# Assign vertices to the DNN layer leading to highest RSA scores
 # =============================================================================
+if args.model == 'alexnet':
+    model_layers = [
+        'features.2',
+        'features.5',
+        'features.7',
+        'features.9',
+        'features.12',
+        'classifier.2',
+        'classifier.5',
+        'classifier.6'
+        ]
+elif args.model == 'resnet50':
+    model_layers = [
+        'layer1.2.relu_2',
+        'layer2.3.relu_2',
+        'layer3.5.relu_2',
+        'layer4.2.relu_2',
+        'fc'
+        ]
 
+lh_best_layer = []
+rh_best_layer = []
+
+# Loop across subjects
+for s, sub in enumerate(args.subjects):
+
+    # Append the results across all layers
+    lh_rsa_all_layers = []
+    rh_rsa_all_layers = []
+    for layer in model_layers:
+        lh_rsa_all_layers.append(lh_rsa[layer][s])
+        rh_rsa_all_layers.append(rh_rsa[layer][s])
+    lh_rsa_all_layers = np.array(lh_rsa_all_layers)
+    rh_rsa_all_layers = np.array(rh_rsa_all_layers)
+
+    # Get the layer number leading to highest RSA scores
+    lh_best_layer.append(np.argsort(lh_rsa_all_layers, axis=0)[-1])
+    rh_best_layer.append(np.argsort(rh_rsa_all_layers, axis=0)[-1])
+
+# Format to numpy arrays
+lh_best_layer = np.array(lh_best_layer)
+rh_best_layer = np.array(rh_best_layer)
 
 
 # =============================================================================
@@ -121,13 +161,15 @@ for key in lh_rsa.keys():
 
 
 # =============================================================================
-# Save the results # !!!
+# Save the results
 # =============================================================================
 results = {
     'sig_lh_rsa': sig_lh_rsa,
     'sig_rh_rsa': sig_rh_rsa,
     'pval_corrected_lh_rsa': pval_corrected_lh_rsa,
     'pval_corrected_rh_rsa': pval_corrected_rh_rsa,
+    'lh_best_layer': lh_best_layer,
+    'rh_best_layer': rh_best_layer
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',

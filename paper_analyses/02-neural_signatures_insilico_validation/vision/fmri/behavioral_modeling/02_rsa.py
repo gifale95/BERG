@@ -39,7 +39,7 @@ parser.add_argument('--subject', default=1, type=int)
 parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--criterion', default='radius', type=str)
 parser.add_argument('--radius_mm', default=10, type=float)
-parser.add_argument('--k', default=10, type=int)
+parser.add_argument('--k', default=100, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
@@ -94,9 +94,9 @@ metadata = data['metadata']
 metadata_dir = os.path.join(args.berg_dir, args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri',
     'behavioral_modeling', 'image_metadata.npy')
-metadata = np.load(metadata_dir, allow_pickle=True).item()
+metadata_things = np.load(metadata_dir, allow_pickle=True).item()
 # Get the test image category number based on the original THINGS database
-test_img_concepts_THINGS = metadata['test_img_concepts_THINGS']
+test_img_concepts_THINGS = metadata_things['test_img_concepts_THINGS']
 
 # Load the behavioral embeddings (the behavioral emebddings can be downloaded
 # from: https://osf.io/f5rn6/overview)
@@ -117,7 +117,7 @@ beh_rdm = 1 - corr_matrix(beh_embeddings.T)
 
 
 # =============================================================================
-# Perform searchlight RSA # !!! FULL GEO DIST MATRIX
+# Perform searchlight RSA
 # =============================================================================
 # Empty RSA results array
 rsa = np.zeros(fmri.shape[1], dtype=np.float32)
@@ -127,10 +127,10 @@ idx_tril = np.tril_indices(len(beh_rdm), -1)
 beh_rdm_tril = beh_rdm[idx_tril]
 
 # Access the precomputed geodesic distances
-data_dir = np.load(os.path.join(args.berg_dir,
+data_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri',
     'behavioral_modeling', 'vertex_geodesic_distances',
-    'vertex_geodesic_distances_'+args.hemisphere+'.h5'))
+    'vertex_geodesic_distances_'+args.hemisphere+'.h5')
 geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
 
 # Loop across fMRI vertices
@@ -150,56 +150,6 @@ for v in tqdm(range(fmri.shape[1])):
 
     # Perform RSA
     rsa[v] = pearsonr(beh_rdm_tril, fmri_rdm[idx_tril])[0]
-
-
-# =============================================================================
-# Perform searchlight RSA # !!! GEO DIST MATRIX SPLITS
-# =============================================================================
-# Empty RSA results array
-rsa = np.zeros(fmri.shape[1], dtype=np.float32)
-
-# Take the lower triangle of the LLM RDM
-idx_tril = np.tril_indices(len(beh_rdm), -1)
-beh_rdm_tril = beh_rdm[idx_tril]
-
-# Get info regarding the vertex splits of the geodesic distances
-n_vertices = fmri.shape[1]
-total_vertex_splits = 81
-vertices_per_split = n_vertices // total_vertex_splits
-
-# Loop across fMRI vertices
-for v in tqdm(range(fmri.shape[1])):
-
-    # Only load the precomputed geodesic distances for the first vertex of each
-    # split
-    idx = v % vertices_per_split
-    if idx == 0:
-        vertex_split = v // vertices_per_split # Get the split of the target vertex
-        data_dir = np.load(os.path.join(args.berg_dir,
-            'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'behavioral_modeling', 'vertex_geodesic_distances',
-            'vertex_geodesic_distances_'+args.hemisphere+'_split-'+
-            format(vertex_split, '03')+'.h5'))
-        geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances'][:]
-
-    # Select the neighborhood based on the chosen criterion
-    if args.criterion == 'nearest':
-        # Get k-smallest distances (including the target vertex)
-        neighborhood = np.argsort(geodesic_distances[idx])[:args.k]
-    elif args.criterion == 'radius':
-        # Select all vertices whose distance is within the radius
-        mask = geodesic_distances[idx] <= args.radius_mm
-        neighborhood = np.where(mask)[0]
-
-    # Create the fMRI RDM
-    fmri_rdm = 1 - corr_matrix(fmri[:,neighborhood].T)
-
-    # Take the lower triangle of the fMRI RDM
-    fmri_rdm_tril = fmri_rdm[idx_tril]
-
-    # Perform RSA
-    rsa[v] = pearsonr(beh_rdm_tril, fmri_rdm_tril)[0]
-
 
 
 # =============================================================================

@@ -32,8 +32,8 @@ import matplotlib.pyplot as plt
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
-parser.add_argument('--ncsnr_threshold', default=0.0, type=float) # 0.2
-parser.add_argument('--encoding_threshold', default=0, type=float) # 20
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
+parser.add_argument('--encoding_threshold', default=20, type=float) # 20
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -67,7 +67,7 @@ for sub in args.subjects:
         ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
         idx_ncsnr = ncsnr > args.ncsnr_threshold
         encoding = results['metadata']['encoding_models']\
-            [hemi+'_explained_variance']
+            [hemi+'_explained_variance_nsdcore']
         idx_encoding = encoding > args.encoding_threshold
         idx_nan = ~np.logical_and(idx_ncsnr, idx_ncsnr)
         rsa = results['rsa']
@@ -123,7 +123,7 @@ vertex_data = cortex.Vertex(
     subject=subject,
     cmap='hot',
     vmin=0,
-    vmax=1,
+    vmax=0.5,
     with_colorbar=True
     )
 
@@ -139,7 +139,7 @@ fig = cortex.quickshow(
     with_labels=True,
     labelsize=15,
     curvature_brightness=0.5,
-    with_colorbar=False
+    with_colorbar=True
     )
 
 # Save the figure

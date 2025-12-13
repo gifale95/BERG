@@ -58,10 +58,10 @@ metadata_dir = os.path.join(args.berg_dir, args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri',
     'behavioral_modeling', 'image_metadata.npy')
 
-metadata = np.load(metadata_dir, allow_pickle=True).item()
+metadata_things = np.load(metadata_dir, allow_pickle=True).item()
 
 # Get the test image category number based on the original THINGS database
-test_img_concepts_THINGS = metadata['test_img_concepts_THINGS']
+test_img_concepts_THINGS = metadata_things['test_img_concepts_THINGS']
 
 
 # =============================================================================
@@ -111,7 +111,7 @@ for sub in args.subjects:
         images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
 
         # Generate the in silico fMRI responses
-        fmri_cat = berg.encode(model, images, return_metadata=False)
+        fmri_cat, metadata = berg.encode(model, images, return_metadata=True)
 
         # Store the in silico fMRI responses averaged across image exemplars
         fmri_lh.append(np.mean(fmri_cat[0], 0))

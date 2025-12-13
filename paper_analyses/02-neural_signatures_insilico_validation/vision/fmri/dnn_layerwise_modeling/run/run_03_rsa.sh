@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-fmri-dnn_layerwise_modeling-03_rsa
 #SBATCH --mail-type=end
-#SBATCH --mem=3000
-#SBATCH --time=00:10:00
+#SBATCH --mem=4000
+#SBATCH --time=01:30:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -11,7 +11,7 @@ declare -a subject_all
 declare -a hemisphere_all
 declare -a model_all
 index=0
-for s in `seq 1 10` ; do
+for s in `seq 1 8` ; do
     for h in 'lh' 'rh' ; do
         for m in 'alexnet' 'resnet50' ; do
             subject_all[$index]=$s
