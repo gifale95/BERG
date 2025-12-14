@@ -93,7 +93,7 @@ for sub in args.subjects:
 # Generate and save the in silico fMRI responses
 # =============================================================================
     # Generate the in silico fMRI responses
-    fmri = berg.encode(model, images, return_metadata=False)
+    fmri, metadata = berg.encode(model, images, return_metadata=True)
 
     # Convert the in silico fMRI resposnes to numpy arrays
     fmri_lh = np.array(fmri[0]).astype(np.float32)
@@ -119,6 +119,6 @@ for sub in args.subjects:
     np.save(os.path.join(save_dir, file_name_rh), data_rh)
 
     # Delete unused variables
-    del fmri, fmri_lh, fmri_rh
+    del fmri, fmri_lh, fmri_rh, data_lh, data_rh, metadata
     torch.cuda.empty_cache()
     gc.collect()

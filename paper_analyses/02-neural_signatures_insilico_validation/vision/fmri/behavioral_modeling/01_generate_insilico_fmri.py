@@ -81,9 +81,9 @@ for sub in args.subjects:
 
     # Load the metadata
     metadata = berg.get_model_metadata(
-    args.encoding_model,
-    subject=sub
-    )
+        args.encoding_model,
+        subject=sub
+        )
 
 
 # =============================================================================
@@ -150,6 +150,6 @@ for sub in args.subjects:
     np.save(os.path.join(save_dir, file_name_rh), data_rh)
 
     # Delete unused variables
-    del fmri_lh, fmri_rh
+    del fmri_lh, fmri_rh, data_lh, data_rh, metadata
     torch.cuda.empty_cache()
     gc.collect()

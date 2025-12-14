@@ -28,6 +28,7 @@ import cortex
 import cortex.polyutils
 import matplotlib
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 
 # =============================================================================
@@ -35,7 +36,7 @@ import matplotlib.pyplot as plt
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
-parser.add_argument('--model', default='alexnet', type=str)
+parser.add_argument('--model', default='resnet50', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
 parser.add_argument('--encoding_threshold', default=20, type=float) # 20
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -142,7 +143,7 @@ subject = 'fsaverage'
 # Plot the RSA results
 # =============================================================================
 # Loop across model layers
-for key in lh_rsa.keys():
+for key in tqdm(lh_rsa.keys()):
 
     # Average the results across subjects, and append them across left and
     # right hemishperes
@@ -216,7 +217,6 @@ fig = cortex.quickshow(
 file_name = os.path.join(save_dir, 'rsa_layer_assigment_model-'+args.model+
     '.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-
 
 
 # =============================================================================
