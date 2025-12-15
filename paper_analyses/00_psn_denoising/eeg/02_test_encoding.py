@@ -5,18 +5,9 @@ PSN GitHub: https://github.com/jacob-prince/PSN
 
 Parameters
 ----------
-subject : int
-    Subject identifier for the THINGS EEG2 data. Valid subject identifiers are
-    integers from 1 to 10.
-psn_invivo_train : int
-    If 0, do not apply PSN on the in vivo EEG training responses.
-    If 1, apply PSN on the in vivo EEG training responses.
-psn_invivo_test : int
-    If 0, do not apply PSN on the in vivo EEG testing responses.
-    If 1, apply PSN on the in vivo EEG testing responses.
-psn_insilico_test : int
-    If 0, do not apply PSN on the in silico EEG testing responses.
-    If 1, apply PSN on the in silico EEG testing responses.
+subjects : list
+    List of subject identifier sfor the THINGS EEG2 data. Valid subject
+    identifiers are integers from 1 to 10.
 berg_dir : str
     Directory of the BERG.
 
@@ -25,18 +16,11 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-import h5py
-import copy
-import psn
-from psn import PSN
 from tqdm import tqdm
 from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--subject', default=1, type=int)
-parser.add_argument('--psn_invivo_train', default=0, type=int)
-parser.add_argument('--psn_invivo_test', default=0, type=int)
-parser.add_argument('--psn_insilico_test', default=0, type=int)
+parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -47,13 +31,32 @@ for key, val in vars(args).items():
 
 
 # =============================================================================
-# Load the in vivo EEG test responses
+# Load the EEG test responses
 # =============================================================================
-# Load the EEG responses
-eeg_dir = os.path.join(args.berg_dir, 'model_training_datasets',
-    'train_dataset-things_eeg_2', 'eeg_sub-'+format(args.subject, '02')+
-    '_split-test.h5')
-invivo_eeg_test = h5py.File(eeg_dir, 'r')['eeg'][:].astype(np.float32)
+# Loop across subjects
+for s, sub in enumerate(tqdm(range(args.subjects))):
+
+    # Load the EEG responses
+    eeg_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
+    'eeg_test_responses', 'eeg_test_subject-'+format(sub, '02')+'.npy')
+    eeg = np.load(eeg_dir, allow_pickle=True).item()
+
+
+eeg = {
+    'invivo_eeg_vte-0': np.mean(eeg_test, 2), # Average across repeats
+    'invivo_eeg_vte-1': np.mean(eeg_test_denoised, 2), # Average across repeats
+    'insilico_eeg_vtr-0_ste-0': eeg_test_pred,
+    'insilico_eeg_vtr-1_ste-0': eeg_test_pred_psn_train,
+    'insilico_eeg_vtr-0_ste-1': eeg_test_pred_denoised,
+    'insilico_eeg_vtr-1_ste-1': eeg_test_pred_psn_train_denoised
+
+}
+save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
+    'eeg_test_responses')
+os.makedirs(save_dir, exist_ok=True)
+file_name = 'eeg_test_subject-' + format(args.subject, '02') + '.npy'
+np.save(os.path.join(save_dir, file_name), eeg_test_pred)
+
 
 # Reshape the EEG responses to (Units, Conditions, Repeats)
 n_cond = invivo_eeg_test.shape[0]
@@ -65,58 +68,7 @@ invivo_eeg_test = np.swapaxes(np.swapaxes(invivo_eeg_test, 0, 2), 1, 2)
 
 
 # =============================================================================
-# Load the in silico EEG test responses
-# =============================================================================
-data_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
-    'insilico_test_responses', 'eeg_test_pred_subject-'+
-    format(args.subject, '02')+'_psn_invivo_train-'+
-    str(args.psn_invivo_train)+'.npy')
-insilico_eeg_test = np.load(data_dir)
-
-# Reshape the EEG responses to (Units, Conditions, Repeats)
-insilico_eeg_test = np.reshape(insilico_eeg_test, (n_cond, n_trial, -1))
-insilico_eeg_test = np.swapaxes(np.swapaxes(insilico_eeg_test, 0, 2), 1, 2)
-
-
-# =============================================================================
-# Denoise the EEG test responses
-# =============================================================================
-if args.psn_invivo_test == 1 or args.psn_insilico_test == 1:
-
-    # denoisingtype : int, default=0
-    #     Type of denoising to perform:
-    #     - 0: Trial-averaged denoising (returns nunits x nconds)
-    #     - 1: Single-trial denoising (returns nunits x nconds x ntrials)
-
-    denoiser = PSN(
-        basis='signal',
-        cv='unit',
-        scoring='mse',
-        mag_threshold=0.95,
-        unit_groups=None,
-        truncate=0,
-        ranking=None,
-        cv_thresholds=None,
-        cv_mode=None,
-        denoisingtype=1,
-        verbose=True,
-        wantfig=False,
-        gsn_kwargs=None
-    )
-
-    denoiser.fit(invivo_eeg_test)
-
-if args.psn_invivo_test == 1:
-
-    invivo_eeg_test = denoiser.transform(invivo_eeg_test)
-
-if args.psn_insilico_test == 1:
-
-    insilico_eeg_test = denoiser.transform(insilico_eeg_test)
-
-
-# =============================================================================
-# Compute the NCSNR (in vivo EEG test responses)
+# Compute the NCSNR # !!! ALL data types
 # =============================================================================
     # Estimate the noise standard deviation (calculate the variance of the
     # responses across the 30 presentations of each test image).
@@ -146,37 +98,7 @@ if args.psn_insilico_test == 1:
 
 
 # =============================================================================
-# Compute the NCSNR (in silico EEG test responses)
-# =============================================================================
-    # Estimate the noise standard deviation (calculate the variance of the
-    # responses across the 30 presentations of each test image).
-    var = np.nanvar(insilico_eeg_test, axis=2, ddof=1)
-
-    # Average the variance across images and compute the square root of the
-    # result
-    sigma_noise = np.sqrt(np.nanmean(var, 1))
-
-    # Estimate the signal standard deviation (total variance - noise variance)
-    tot_var_data = np.nanvar(np.reshape(insilico_eeg_test,
-        (insilico_eeg_test.shape[0], -1)), axis=1, ddof=1)
-    sigma_signal = tot_var_data - (sigma_noise ** 2)
-    sigma_signal[sigma_signal<0] = 0
-    sigma_signal = np.sqrt(sigma_signal)
-
-    # Compute the ncsnr
-    ncsnr_insilico = sigma_signal / sigma_noise
-
-    # Convert the ncsnr to noise ceiling (the noise ceiling is in r² explained
-    # variance units)
-    noise_ceiling_insilico = 100 * (ncsnr_insilico ** 2) / ((ncsnr_insilico ** 2) + (1 / n_trial))
-
-    # Reshape the scores to (n_sensors, n_timepoints)
-    ncsnr_insilico = ncsnr_insilico.reshape(n_chan, n_time)
-    noise_ceiling_insilico = noise_ceiling_insilico.reshape(n_chan, n_time)
-
-
-# =============================================================================
-# Compute the encoding accuracy
+# Compute the encoding accuracy # !!! ALL DATA COMBINATION PAIRS
 # =============================================================================
 # Average the EEG test responses across repeats
 invivo_eeg_test = np.mean(invivo_eeg_test, 2)
@@ -190,8 +112,19 @@ for u in tqdm(range(invivo_eeg_test.shape[0])):
 # Reshape the scores to (n_sensors, n_timepoints)
 corr = corr.reshape(n_chan, n_time)
 
+
 # =============================================================================
-# Save the results
+# Confidence intervals # !!! ALL DATA COMBINATION PAIRS
+# =============================================================================
+
+
+# =============================================================================
+# Significance # !!! ALL DATA COMBINATION PAIRS
+# =============================================================================
+
+
+# =============================================================================
+# Save the results # !!!
 # =============================================================================
 results = {
     'ncsnr_invivo': ncsnr_invivo,
