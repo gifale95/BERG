@@ -28,7 +28,6 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.utils import resample
 from scipy.stats import ttest_1samp
-import itertools
 from statsmodels.stats.multitest import multipletests
 
 

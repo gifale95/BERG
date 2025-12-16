@@ -196,7 +196,6 @@ eeg = {
     'insilico_eeg_vtr-1_ste-0': eeg_test_pred_psn_train,
     'insilico_eeg_vtr-0_ste-1': eeg_test_pred_denoised,
     'insilico_eeg_vtr-1_ste-1': eeg_test_pred_psn_train_denoised
-
 }
 save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
     'eeg_test_responses')
