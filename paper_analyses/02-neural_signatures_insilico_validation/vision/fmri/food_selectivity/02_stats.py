@@ -1,4 +1,4 @@
-"""Test the categorical selectivity of high-level visual cortex ROIs on in
+"""Test the food categorical selectivity of high-level visual cortex ROIs on in
 silico fMRI responses.
 
 Parameters
@@ -32,7 +32,7 @@ parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> HVC selectivity - Stats <<<')
+print('>>> Food selectivity - Stats <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))

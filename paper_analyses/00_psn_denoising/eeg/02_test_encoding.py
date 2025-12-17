@@ -44,8 +44,8 @@ np.random.seed(seed)
 # =============================================================================
 # Load the EEG channel names and time points
 # =============================================================================
-metadata_dir = os.path.join(args.berg_dir, 'model_training_datasets',
-    'train_dataset-things_eeg_2', 'metadata_subject-1.npy')
+metadata_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
+    'eeg_test_responses', 'eeg_metadata.npy')
 
 metadata = np.load(metadata_dir, allow_pickle=True).item()
 

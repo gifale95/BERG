@@ -1,5 +1,4 @@
-"""Use BERG to generate the in silico fMRI responses to face, body, and scene
-images.
+"""Use BERG to generate the in silico fMRI responses to food images.
 
 Parameters
 ----------
@@ -42,23 +41,20 @@ for key, val in vars(args).items():
 # =============================================================================
 # Image directories
 img_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'stimuli')
-categories = ['Bodies', 'Faces', 'Objects', 'Scenes']
-img_type = ['Sel', 'Test']
+    'vision', 'fmri', 'food_selectivity', 'stimuli')
+categories = ['food', 'body', 'face', 'house', 'word']
 
-# Loop across image categories and types
+# Load and format the images
 images = {}
 for cat in tqdm(categories):
     img_cat = []
-    for itype in img_type:
-        # Load the images
-        img_list = os.listdir(os.path.join(img_dir, cat+'-'+itype))
-        img_list.sort()
-        for img_name in img_list:
-            img_path = os.path.join(img_dir, cat+'-'+itype, img_name)
-            img = Image.open(img_path).convert('RGB')
-            img = np.array(img)
-            img_cat.append(img)
+    img_list = os.listdir(os.path.join(img_dir, cat))
+    img_list.sort()
+    for img_name in img_list:
+        img_path = os.path.join(img_dir, cat, img_name)
+        img = Image.open(img_path).convert('RGB')
+        img = np.array(img)
+        img_cat.append(img)
     img_cat = np.array(img_cat)
     img_cat = np.swapaxes(img_cat, 1, 3)  # BHWC to BCHW
     images[cat] = img_cat
@@ -121,9 +117,9 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'insilico_fmri_responses')
+    'vision', 'fmri', 'food_selectivity', 'insilico_fmri_responses')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'insilico_fmri_responses.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

@@ -62,6 +62,33 @@ eeg_dir_test = os.path.join(args.berg_dir, 'model_training_datasets',
 eeg_train = h5py.File(eeg_dir_train, 'r')['eeg'][:].astype(np.float32)
 eeg_test = h5py.File(eeg_dir_test, 'r')['eeg'][:].astype(np.float32)
 
+# Load the EEG channel names and time points
+metadata_dir = os.path.join(args.berg_dir, 'model_training_datasets',
+    'train_dataset-things_eeg_2', 'metadata_subject-1.npy')
+metadata = np.load(metadata_dir, allow_pickle=True).item()
+ch_names = metadata['ch_names']
+times = metadata['times']
+
+# Channel selection
+ch_idx = []
+kept_ch_names = []
+for c, ch_name in enumerate(ch_names):
+    if 'O' in ch_name or 'P' in ch_name:
+        ch_idx.append(c)
+        kept_ch_names.append(ch_name)
+ch_idx = np.array(ch_idx)
+eeg_train = eeg_train[:,:,ch_idx]
+eeg_test = eeg_test[:,:,ch_idx]
+
+# Time point selection
+tmin = -0.1
+tmax = 0.4
+idx_min  = np.where(np.round(times, 3) == tmin)[0][0]
+idx_max  = np.where(np.round(times, 3) == tmax)[0][0]
+eeg_train = eeg_train[:,:,:,idx_min:idx_max]
+eeg_test = eeg_test[:,:,:,idx_min:idx_max]
+kept_times = times[idx_min:idx_max]
+
 # Reshape the EEG responses to (Units, Conditions, Repeats)
 n_cond_train = eeg_train.shape[0]
 n_trial_train = eeg_train.shape[1]
@@ -202,6 +229,14 @@ save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
 os.makedirs(save_dir, exist_ok=True)
 file_name = 'eeg_test_subject-' + format(args.subject, '02') + '.npy'
 np.save(os.path.join(save_dir, file_name), eeg_test_pred)
+
+# Save the kept channel names and time points
+metadata = {
+    'ch_names': kept_ch_names,
+    'times': kept_times
+}
+file_name = 'eeg_metadata.npy'
+np.save(os.path.join(save_dir, file_name), metadata)
 
 # Save the trained encoding model weights
 weights = {
