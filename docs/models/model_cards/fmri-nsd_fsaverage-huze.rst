@@ -1,6 +1,12 @@
 =======================
 fmri-nsd_fsaverage-huze
 =======================
+.. |nbsp| unicode:: 0xA0
+   :trim:
+
+.. |rarr| unicode:: 0x2192
+   :trim:
+
 
 Model Summary
 ------------
@@ -74,196 +80,196 @@ Metadata
    * - rh_ncsnr
      - ``(163842,)``
      - Right hemisphere noise-ceiling signal-to-noise ratio per vertex
-   * - lh_fsaverage_rois
+   * - **lh_fsaverage_rois**
      - ``dict``
      - Left hemisphere ROI definitions on fsaverage surface
-   * - V1v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1v
      - ``(710,)``
      - Visual area 1 ventral
-   * - V1d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1d
      - ``(828,)``
      - Visual area 1 dorsal
-   * - V2v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2v
      - ``(632,)``
      - Visual area 2 ventral
-   * - V2d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2d
      - ``(692,)``
      - Visual area 2 dorsal
-   * - V3v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3v
      - ``(567,)``
      - Visual area 3 ventral
-   * - V3d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3d
      - ``(669,)``
      - Visual area 3 dorsal
-   * - hV4
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| hV4
      - ``(531,)``
      - Human V4 complex
-   * - EBA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| EBA
      - ``(3231,)``
      - Extrastriate body area
-   * - FBA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-1
      - ``(574,)``
      - Fusiform body area 1
-   * - FBA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-2
      - ``(0,)``
      - Fusiform body area 2
-   * - mTL-bodies
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-bodies
      - ``(0,)``
      - Medial temporal lobe body-selective region
-   * - OFA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OFA
      - ``(432,)``
      - Occipital face area
-   * - FFA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-1
      - ``(552,)``
      - Fusiform face area 1
-   * - FFA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-2
      - ``(0,)``
      - Fusiform face area 2
-   * - mTL-faces
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-faces
      - ``(0,)``
      - Medial temporal lobe face-selective region
-   * - aTL-faces
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| aTL-faces
      - ``(329,)``
      - Anterior temporal lobe face-selective region
-   * - OPA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OPA
      - ``(2021,)``
      - Occipital place area
-   * - PPA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| PPA
      - ``(1859,)``
      - Parahippocampal place area
-   * - RSC
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| RSC
      - ``(1298,)``
      - Retrosplenial complex
-   * - OWFA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OWFA
      - ``(317,)``
      - Occipital word form area
-   * - VWFA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-1
      - ``(1395,)``
      - Visual word form area 1
-   * - VWFA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-2
      - ``(474,)``
      - Visual word form area 2
-   * - mfs-words
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mfs-words
      - ``(490,)``
      - Mid-fusiform sulcus word-selective region
-   * - mTL-words
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-words
      - ``(475,)``
      - Medial temporal lobe word-selective region
-   * - early
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| early
      - ``(5758,)``
      - Early visual cortex (V1-V3)
-   * - midventral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midventral
      - ``(867,)``
      - Mid-level ventral stream
-   * - midlateral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midlateral
      - ``(1091,)``
      - Mid-level lateral stream
-   * - midparietal
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midparietal
      - ``(1079,)``
      - Mid-level parietal regions
-   * - ventral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| ventral
      - ``(9680,)``
      - Ventral visual stream
-   * - lateral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| lateral
      - ``(10253,)``
      - Lateral visual stream
-   * - parietal
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| parietal
      - ``(5176,)``
      - Parietal regions
-   * - rh_fsaverage_rois
+   * - **rh_fsaverage_rois**
      - ``dict``
      - Right hemisphere ROI definitions on fsaverage surface
-   * - V1v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1v
      - ``(444,)``
      - Visual area 1 ventral
-   * - V1d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1d
      - ``(991,)``
      - Visual area 1 dorsal
-   * - V2v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2v
      - ``(887,)``
      - Visual area 2 ventral
-   * - V2d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2d
      - ``(725,)``
      - Visual area 2 dorsal
-   * - V3v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3v
      - ``(682,)``
      - Visual area 3 ventral
-   * - V3d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3d
      - ``(535,)``
      - Visual area 3 dorsal
-   * - hV4
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| hV4
      - ``(765,)``
      - Human V4 complex
-   * - EBA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| EBA
      - ``(4421,)``
      - Extrastriate body area
-   * - FBA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-1
      - ``(206,)``
      - Fusiform body area 1
-   * - FBA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-2
      - ``(1234,)``
      - Fusiform body area 2
-   * - mTL-bodies
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-bodies
      - ``(0,)``
      - Medial temporal lobe body-selective region
-   * - OFA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OFA
      - ``(305,)``
      - Occipital face area
-   * - FFA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-1
      - ``(330,)``
      - Fusiform face area 1
-   * - FFA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-2
      - ``(1003,)``
      - Fusiform face area 2
-   * - mTL-faces
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-faces
      - ``(0,)``
      - Medial temporal lobe face-selective region
-   * - aTL-faces
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| aTL-faces
      - ``(283,)``
      - Anterior temporal lobe face-selective region
-   * - OPA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OPA
      - ``(2849,)``
      - Occipital place area
-   * - PPA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| PPA
      - ``(1250,)``
      - Parahippocampal place area
-   * - RSC
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| RSC
      - ``(1136,)``
      - Retrosplenial complex
-   * - OWFA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OWFA
      - ``(590,)``
      - Occipital word form area
-   * - VWFA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-1
      - ``(397,)``
      - Visual word form area 1
-   * - VWFA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-2
      - ``(649,)``
      - Visual word form area 2
-   * - mfs-words
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mfs-words
      - ``(0,)``
      - Mid-fusiform sulcus word-selective region
-   * - mTL-words
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-words
      - ``(0,)``
      - Medial temporal lobe word-selective region
-   * - early
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| early
      - ``(5634,)``
      - Early visual cortex (V1-V3)
-   * - midventral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midventral
      - ``(1050,)``
      - Mid-level ventral stream
-   * - midlateral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midlateral
      - ``(1191,)``
      - Mid-level lateral stream
-   * - midparietal
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midparietal
      - ``(1181,)``
      - Mid-level parietal regions
-   * - ventral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| ventral
      - ``(9393,)``
      - Ventral visual stream
-   * - lateral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| lateral
      - ``(10535,)``
      - Lateral visual stream
-   * - parietal
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| parietal
      - ``(4818,)``
      - Parietal regions
 
