@@ -71,7 +71,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         rst_content.extend(["Metadata", "--------", ""])
         metadata = data.get("metadata", "").strip()
         
-        # Parse metadata structure
+        # Parse metadata structure with support for nested dictionaries
         lines = metadata.split("\n")
         current_section = None
         section_data = {}
@@ -80,6 +80,9 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
             line_stripped = line.strip()
             if not line_stripped:
                 continue
+            
+            # Get original indentation level
+            indent_level = len(line) - len(line.lstrip())
             
             # Check if this is a top-level key (ends with : and no -)
             if line_stripped.endswith(":") and " - " not in line_stripped:
@@ -96,8 +99,16 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     rst_content.append("     - Shape/Type")
                     rst_content.append("     - Description")
                     
-                    for key, shape, desc in section_data[current_section]:
-                        rst_content.append(f"   * - {key}")
+                    for key, shape, desc, is_nested in section_data[current_section]:
+                        if is_nested:
+                            # Add extra indentation for nested items with arrow
+                            rst_content.append(f"   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| {key}")
+                        else:
+                            # Check if this is a dict type (parent of nested items)
+                            if shape.lower() == "dict":
+                                rst_content.append(f"   * - **{key}**")
+                            else:
+                                rst_content.append(f"   * - {key}")
                         rst_content.append(f"     - ``{shape}``")
                         rst_content.append(f"     - {desc}")
                     
@@ -118,8 +129,11 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     shape = shape_part.strip()
                     desc = desc_part.strip()
                     
+                    # Determine if this is a nested entry (has extra indentation)
+                    is_nested = indent_level > 6  # Nested items have more indentation
+                    
                     if current_section:
-                        section_data[current_section].append((key, shape, desc))
+                        section_data[current_section].append((key, shape, desc, is_nested))
         
         # Handle the last section
         if current_section and current_section in section_data:
@@ -133,12 +147,34 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
             rst_content.append("     - Shape/Type")
             rst_content.append("     - Description")
             
-            for key, shape, desc in section_data[current_section]:
-                rst_content.append(f"   * - {key}")
+            for key, shape, desc, is_nested in section_data[current_section]:
+                if is_nested:
+                    # Add extra indentation for nested items with arrow
+                    rst_content.append(f"   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| {key}")
+                else:
+                    # Check if this is a dict type (parent of nested items)
+                    if shape.lower() == "dict":
+                        rst_content.append(f"   * - **{key}**")
+                    else:
+                        rst_content.append(f"   * - {key}")
                 rst_content.append(f"     - ``{shape}``")
                 rst_content.append(f"     - {desc}")
             
             rst_content.append("")
+        
+        # Add non-breaking space definition at the top if nested items exist
+        has_nested = any(
+            any(item[3] for item in items) 
+            for items in section_data.values()
+        )
+        if has_nested:
+            # Insert the directive at the beginning of the document
+            rst_content.insert(3, ".. |nbsp| unicode:: 0xA0")
+            rst_content.insert(4, "   :trim:")
+            rst_content.insert(5, "")
+            rst_content.insert(6, ".. |rarr| unicode:: 0x2192")
+            rst_content.insert(7, "   :trim:")
+            rst_content.insert(8, "")
         
         rst_content.append("")
     
@@ -590,5 +626,6 @@ if __name__ == "__main__":
 # 2. Convert a YAML file to RST with specific output path:
 #    python yaml_to_rst.py fmri_nsd_fwrf.yaml docs/model_cards/fmri_nsd_fwrf.rst
     
-# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/meg-things_meg_1-vit_b_32.yaml docs/models/model_cards/meg-things_meg_1-vit_b_32.rst
+
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-nsd_fsaverage-huze.yaml docs/models/model_cards/fmri-nsd_fsaverage-huze.rst
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml source/models/model_cards/eeg-things_eeg_2-vit_b_32.rst
