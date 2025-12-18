@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=psn_denoising-eeg-01_train_encoding
 #SBATCH --mail-type=end
-#SBATCH --mem=100000
-#SBATCH --time=30:00:00
+#SBATCH --mem=10000
+#SBATCH --time=20:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

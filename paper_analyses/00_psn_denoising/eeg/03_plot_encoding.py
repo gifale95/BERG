@@ -98,64 +98,42 @@ colors = [
 # =============================================================================
 # Plot the ncsnr
 # =============================================================================
-fig, axs = plt.subplots(nrows=2, ncols=3, sharex=True, sharey=True,
+fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(13, 7))
-axs = np.reshape(axs, (-1)) # type: ignore
+axs = np.reshape(axs, (-1))
 
-# Loop across channel groups
-channels = ['O', 'P', 'T', 'C', 'F']
-for c, chan in enumerate(channels):
+# Plot the chance and stimulus onset dashed lines
+axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
+    linewidth=2, alpha=.5, label='_nolegend_')
 
-    # Get the channel indices
-    ch_idx = []
-    for cn, ch_name in enumerate(ch_names):
-        if chan in ch_name:
-            ch_idx.append(cn)
-    ch_idx = np.array(ch_idx)
+# Plot the results
+for i, (key, val) in enumerate(ncsnr.items()):
+    axs[0].plot(times, np.mean(val, 0), color=colors[i],
+        linewidth=2, label=key)
 
-    # Plot the chance and stimulus onset dashed lines
-    axs[c].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
-        linewidth=2, alpha=.5, label='_nolegend_')
+# Plot the confidence intervals
+for i, (key, val) in enumerate(ci_ncsnr.items()):
+    axs[0].fill_between(times, np.mean(val[1], 0),
+        np.mean(val[0], 0), color=colors[i], alpha=.2,
+        label='_nolegend_')
 
-    # Plot the results
-    for i, (key, val) in enumerate(ncsnr.items()):
-        if c == 0:
-            axs[c].plot(times, np.mean(val[ch_idx], 0), color=colors[i],
-                linewidth=2, label=key)
-        else:
-            axs[c].plot(times, np.mean(val[ch_idx], 0), color=colors[i],
-                linewidth=2, label='_nolegend_')
+# x-axis parameters
+axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
+xticks = [0, .1, .2, .3, .4, .5]
+xlabels = [0, 100, 200, 300, 400, 500]
+axs[0].set_xticks(ticks=xticks, labels=xlabels)
+axs[0].set_xlim(left=min(times), right=max(times))
 
-    # Plot the confidence intervals
-    for i, (key, val) in enumerate(ci_ncsnr.items()):
-        axs[c].fill_between(times, np.mean(val[1,ch_idx], 0),
-            np.mean(val[0,ch_idx], 0), color=colors[i], alpha=.2,
-            label='_nolegend_')
+# y-axis parameters
+axs[0].set_ylabel("NCSNR", fontsize=fontsize)
+yticks = [0, 0.5, 1]
+ylabels = [0, 0.5, 1]
+axs[0].set_yticks(ticks=yticks, labels=ylabels)
+axs[0].set_ylim(bottom=0, top=1)
 
-    # x-axis parameters
-    if c in [3, 4, 5]:
-        axs[c].set_xlabel('Time (ms)', fontsize=fontsize)
-        xticks = [0, .1, .2, .3, .4, .5]
-        xlabels = [0, 100, 200, 300, 400, 500]
-        axs[c].set_xticks(ticks=xticks, labels=xlabels)
-        axs[c].set_xlim(left=min(times), right=max(times))
-
-    # y-axis parameters
-    if c in [0, 3]:
-        axs[c].set_ylabel("NCSNR", fontsize=fontsize)
-        yticks = [0, 0.5, 1]
-        ylabels = [0, 0.5, 1]
-        axs[c].set_yticks(ticks=yticks, labels=ylabels)
-        axs[c].set_ylim(bottom=0, top=1)
-
-    # Title
-    title = 'Channel group: ' + chan
-    axs[c].set_title(title)
-
-    # Legend
-    if c == 4:
-        axs[c].legend(loc=2, ncol=1, fontsize=fontsize,
-            bbox_to_anchor=(1.525, -6.5), frameon=False)
+# Legend
+axs[0].legend(loc=2, ncol=1, fontsize=fontsize,
+    bbox_to_anchor=(1.525, -6.5), frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'ncsnr.svg')
@@ -165,64 +143,41 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 # =============================================================================
 # Plot the noise ceiling
 # =============================================================================
-fig, axs = plt.subplots(nrows=2, ncols=3, sharex=True, sharey=True,
+fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(13, 7))
-axs = np.reshape(axs, (-1)) # type: ignore
+axs = np.reshape(axs, (-1))
 
-# Loop across channel groups
-channels = ['O', 'P', 'T', 'C', 'F']
-for c, chan in enumerate(channels):
+# Plot the chance and stimulus onset dashed lines
+axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
+    linewidth=2, alpha=.5, label='_nolegend_')
 
-    # Get the channel indices
-    ch_idx = []
-    for cn, ch_name in enumerate(ch_names):
-        if chan in ch_name:
-            ch_idx.append(cn)
-    ch_idx = np.array(ch_idx)
+# Plot the results
+for i, (key, val) in enumerate(noise_ceiling.items()):
+        axs[0].plot(times, np.mean(val, 0), color=colors[i],
+            linewidth=2, label=key)
 
-    # Plot the chance and stimulus onset dashed lines
-    axs[c].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
-        linewidth=2, alpha=.5, label='_nolegend_')
+# Plot the confidence intervals
+for i, (key, val) in enumerate(ci_noise_ceiling.items()):
+    axs[0].fill_between(times, np.mean(val[1], 0),
+        np.mean(val[0], 0), color=colors[i], alpha=.2,
+        label='_nolegend_')
 
-    # Plot the results
-    for i, (key, val) in enumerate(noise_ceiling.items()):
-        if c == 0:
-            axs[c].plot(times, np.mean(val[ch_idx], 0), color=colors[i],
-                linewidth=2, label=key)
-        else:
-            axs[c].plot(times, np.mean(val[ch_idx], 0), color=colors[i],
-                linewidth=2, label='_nolegend_')
+# x-axis parameters
+axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
+xticks = [0, .1, .2, .3, .4, .5]
+xlabels = [0, 100, 200, 300, 400, 500]
+axs[0].set_xticks(ticks=xticks, labels=xlabels)
+axs[0].set_xlim(left=min(times), right=max(times))
 
-    # Plot the confidence intervals
-    for i, (key, val) in enumerate(ci_noise_ceiling.items()):
-        axs[c].fill_between(times, np.mean(val[1,ch_idx], 0),
-            np.mean(val[0,ch_idx], 0), color=colors[i], alpha=.2,
-            label='_nolegend_')
+# y-axis parameters
+axs[0].set_ylabel("Noise ceiling", fontsize=fontsize)
+yticks = [0, 0.5, 1]
+ylabels = [0, 0.5, 1]
+axs[0].set_yticks(ticks=yticks, labels=ylabels)
+axs[0].set_ylim(bottom=0, top=1)
 
-    # x-axis parameters
-    if c in [3, 4, 5]:
-        axs[c].set_xlabel('Time (ms)', fontsize=fontsize)
-        xticks = [0, .1, .2, .3, .4, .5]
-        xlabels = [0, 100, 200, 300, 400, 500]
-        axs[c].set_xticks(ticks=xticks, labels=xlabels)
-        axs[c].set_xlim(left=min(times), right=max(times))
-
-    # y-axis parameters
-    if c in [0, 3]:
-        axs[c].set_ylabel("Noise ceiling", fontsize=fontsize)
-        yticks = [0, 0.5, 1]
-        ylabels = [0, 0.5, 1]
-        axs[c].set_yticks(ticks=yticks, labels=ylabels)
-        axs[c].set_ylim(bottom=0, top=1)
-
-    # Title
-    title = 'Channel group: ' + chan
-    axs[c].set_title(title)
-
-    # Legend
-    if c == 4:
-        axs[c].legend(loc=2, ncol=1, fontsize=fontsize,
-            bbox_to_anchor=(1.525, -6.5), frameon=False)
+axs[0].legend(loc=2, ncol=1, fontsize=fontsize,
+    bbox_to_anchor=(1.525, -6.5), frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'noise_ceiling.svg')
@@ -232,64 +187,41 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 # =============================================================================
 # Plot the correlation
 # =============================================================================
-fig, axs = plt.subplots(nrows=2, ncols=3, sharex=True, sharey=True,
+fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(13, 7))
-axs = np.reshape(axs, (-1)) # type: ignore
+axs = np.reshape(axs, (-1))
 
-# Loop across channel groups
-channels = ['O', 'P', 'T', 'C', 'F']
-for c, chan in enumerate(channels):
+# Plot the chance and stimulus onset dashed lines
+axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
+    linewidth=2, alpha=.5, label='_nolegend_')
 
-    # Get the channel indices
-    ch_idx = []
-    for cn, ch_name in enumerate(ch_names):
-        if chan in ch_name:
-            ch_idx.append(cn)
-    ch_idx = np.array(ch_idx)
+# Plot the results
+for i, (key, val) in enumerate(correlation.items()):
+    axs[0].plot(times, np.mean(val, 0), color=colors[i],
+        linewidth=2, label=key)
 
-    # Plot the chance and stimulus onset dashed lines
-    axs[c].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
-        linewidth=2, alpha=.5, label='_nolegend_')
+# Plot the confidence intervals
+for i, (key, val) in enumerate(ci_correlation.items()):
+    axs[0].fill_between(times, np.mean(val[1], 0),
+        np.mean(val[0], 0), color=colors[i], alpha=.2,
+        label='_nolegend_')
 
-    # Plot the results
-    for i, (key, val) in enumerate(correlation.items()):
-        if c == 0:
-            axs[c].plot(times, np.mean(val[ch_idx], 0), color=colors[i],
-                linewidth=2, label=key)
-        else:
-            axs[c].plot(times, np.mean(val[ch_idx], 0), color=colors[i],
-                linewidth=2, label='_nolegend_')
+# x-axis parameters
+axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
+xticks = [0, .1, .2, .3, .4, .5]
+xlabels = [0, 100, 200, 300, 400, 500]
+axs[0].set_xticks(ticks=xticks, labels=xlabels)
+axs[0].set_xlim(left=min(times), right=max(times))
 
-    # Plot the confidence intervals
-    for i, (key, val) in enumerate(ci_correlation.items()):
-        axs[c].fill_between(times, np.mean(val[1,ch_idx], 0),
-            np.mean(val[0,ch_idx], 0), color=colors[i], alpha=.2,
-            label='_nolegend_')
+# y-axis parameters
+axs[0].set_ylabel("Pearson's $r$", fontsize=fontsize)
+yticks = [0, 0.5, 1]
+ylabels = [0, 0.5, 1]
+axs[0].set_yticks(ticks=yticks, labels=ylabels)
+axs[0].set_ylim(bottom=0, top=1)
 
-    # x-axis parameters
-    if c in [3, 4, 5]:
-        axs[c].set_xlabel('Time (ms)', fontsize=fontsize)
-        xticks = [0, .1, .2, .3, .4, .5]
-        xlabels = [0, 100, 200, 300, 400, 500]
-        axs[c].set_xticks(ticks=xticks, labels=xlabels)
-        axs[c].set_xlim(left=min(times), right=max(times))
-
-    # y-axis parameters
-    if c in [0, 3]:
-        axs[c].set_ylabel("Pearson's $r$", fontsize=fontsize)
-        yticks = [0, 0.5, 1]
-        ylabels = [0, 0.5, 1]
-        axs[c].set_yticks(ticks=yticks, labels=ylabels)
-        axs[c].set_ylim(bottom=0, top=1)
-
-    # Title
-    title = 'Channel group: ' + chan
-    axs[c].set_title(title)
-
-    # Legend
-    if c == 4:
-        axs[c].legend(loc=2, ncol=2, fontsize=fontsize,
-            bbox_to_anchor=(1.525, -6.5), frameon=False)
+axs[0].legend(loc=2, ncol=2, fontsize=fontsize,
+    bbox_to_anchor=(1.525, -6.5), frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'correlation.svg')
