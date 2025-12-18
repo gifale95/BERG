@@ -10,8 +10,6 @@ hemisphere : str
     The hemisphere to use to draw the ROI masks.
 berg_dir : str
     Directory of the BERG.
-nsd_dir : str
-    Directory of the NSD.
 
 """
 
@@ -28,7 +26,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--hemisphere', type=str, default='rh')
 parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
-parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
 args, unknown = parser.parse_known_args()
 
 

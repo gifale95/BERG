@@ -25,7 +25,7 @@ from matplotlib import pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--hemisphere', type=str, default='lh')
-parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
 
@@ -65,6 +65,6 @@ vertex_data = cortex.Vertex(data, subject, vmin=1, vmax=4, cmap='gist_rainbow',
     with_colorbar=False)
 
 # Create the ROI labels: https://gallantlab.org/pycortex/generated/cortex.utils.add_roi.html
-cortex.utils.add_roi(vertex_data, name='ffa_eba_ppa__'+args.hemisphere)
+cortex.utils.add_roi(vertex_data, name='ffa_eba_ppa_'+args.hemisphere)
 
 # Then manually draw the ROI labels using Inkscape paths.
