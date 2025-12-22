@@ -123,6 +123,6 @@ for split in ['test', 'train']:
     file_name_lh = f'things_eeg_2_{split}_sub-{args.fmri_subject:02d}_lh'
     file_name_rh = f'things_eeg_2_{split}_sub-{args.fmri_subject:02d}_rh'
     with h5py.File(os.path.join(save_dir, file_name_lh), 'w') as f:
-        f.create_dataset('insilico_fmri', data=lh, dtype=np.float32)
+        f.create_dataset('fmri', data=lh, dtype=np.float32)
     with h5py.File(os.path.join(save_dir, file_name_rh), 'w') as f:
-        f.create_dataset('insilico_fmri', data=rh, dtype=np.float32)
+        f.create_dataset('fmri', data=rh, dtype=np.float32)
