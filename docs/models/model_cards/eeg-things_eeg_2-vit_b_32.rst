@@ -87,6 +87,9 @@ Metadata
    * - correlation_single_repetitions
      - ``(4, 63, 140)``
      - Correlation scores for individual repetitions across channels and time
+   * - **train_img_info**
+     - ``dict``
+     - 
    * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_img_concepts
      - ``(16540,)``
      - list of strings containing the concept names of the 16,540 training images, ordered alphabetically, and additionally sorted through numbers ranging from 1 to 1,654.
@@ -96,6 +99,9 @@ Metadata
    * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_img_files
      - ``(16540,)``
      - list of strings containing the filenames of the 16,540 training images.
+   * - **test_img_info**
+     - ``dict``
+     - 
    * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_img_concepts
      - ``(200,)``
      - list of strings containing the 200 test image concept names, ordered alphabetically, and additionally sorted through numbers ranging from 1 to 200.
