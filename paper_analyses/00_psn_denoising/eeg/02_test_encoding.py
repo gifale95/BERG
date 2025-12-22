@@ -62,7 +62,7 @@ correlation = {}
 n_chan = len(ch_names)
 n_time = len(times)
 
-for s, sub in enumerate(tqdm(range(args.subjects))):
+for s, sub in enumerate(tqdm(args.subjects)):
 
 
 # =============================================================================

@@ -54,7 +54,7 @@ os.makedirs(save_dir, exist_ok=True)
 # The THINGS EEG2 image metadata can be downloaded from: https://osf.io/y63gw/files/qkgtf
 
 # Load the metadata
-metadata_dir = os.path.join(args.berg_dir, args.berg_dir,
+metadata_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri',
     'behavioral_modeling', 'image_metadata.npy')
 
@@ -87,7 +87,7 @@ for sub in args.subjects:
 
 
 # =============================================================================
-# Generate and save the in silico fMRI responses
+# Generate the in silico fMRI responses
 # =============================================================================
     fmri_lh = []
     fmri_rh = []

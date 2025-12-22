@@ -228,7 +228,7 @@ save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
     'eeg_test_responses')
 os.makedirs(save_dir, exist_ok=True)
 file_name = 'eeg_test_subject-' + format(args.subject, '02') + '.npy'
-np.save(os.path.join(save_dir, file_name), eeg_test_pred)
+np.save(os.path.join(save_dir, file_name), eeg)
 
 # Save the kept channel names and time points
 metadata = {
@@ -247,4 +247,4 @@ save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
     'encoding_models_weights')
 os.makedirs(save_dir, exist_ok=True)
 file_name = 'weights_subject-' + format(args.subject, '02') + '.npy'
-np.save(os.path.join(save_dir, file_name), eeg_test_pred)
+np.save(os.path.join(save_dir, file_name), weights)
