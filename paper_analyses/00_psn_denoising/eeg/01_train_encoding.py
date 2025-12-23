@@ -206,13 +206,7 @@ eeg_test_pred_psn_train_denoised = denoiser.transform(eeg_test_pred_psn_train)
 # =============================================================================
 # Save the results
 # =============================================================================
-# Reshape the in vivo EEG responses to: (n_cond, n_trial, n_chan, n_time)
-eeg_test = np.reshape(np.swapaxes(np.swapaxes(eeg_test, 0, 1), 1, 2),
-    (n_cond_test, n_trial_test, n_chan, n_time))
-eeg_test_denoised = np.reshape(np.swapaxes(np.swapaxes(eeg_test_denoised, 0, 1), 1, 2),
-    (n_cond_test, n_trial_test, n_chan, n_time))
-
-# Save the EEG responses for the test images
+# Reshape the EEG responses to: (n_cond, n_trial, n_chan, n_time)
 # vtr: PSN applied to in vivo (v) train data (tr)
 # vte: PSN applied to in vivo (v) test data (te)
 # ste: PSN applied to in silico (s) test data (te)
@@ -224,6 +218,11 @@ eeg = {
     'insilico_eeg_vtr-0_ste-1': eeg_test_pred_denoised,
     'insilico_eeg_vtr-1_ste-1': eeg_test_pred_psn_train_denoised
 }
+for key, val in eeg.items():
+    eeg[key] = np.reshape(np.swapaxes(np.swapaxes(val, 0, 1), 1, 2),
+        (n_cond_test, n_trial_test, n_chan, n_time))
+
+# Save the EEG responses for the test images
 save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
     'eeg_test_responses')
 os.makedirs(save_dir, exist_ok=True)

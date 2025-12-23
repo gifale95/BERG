@@ -24,7 +24,7 @@ from matplotlib import pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
-parser.add_argument('--hemisphere', type=str, default='rh')
+parser.add_argument('--hemisphere', type=str, default='lh')
 parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 

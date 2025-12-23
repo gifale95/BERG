@@ -76,7 +76,11 @@ for s, sub in enumerate(tqdm(args.subjects)):
 # =============================================================================
 # Compute the NCSNR and noise ceiling
 # =============================================================================
+    # Loop across test EEG response instances
     for key, val in eeg.items():
+
+        # Reshape the EEG responses to: (n_cond, n_trial, n_units)
+        val = np.reshape(val, (val.shape[0], val.shape[1], -1))
 
         # Empty result variables
         if s == 0:
@@ -85,14 +89,14 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
         # Estimate the noise standard deviation (calculate the variance of the
         # responses across the 30 presentations of each test image).
-        var = np.nanvar(val, axis=2, ddof=1)
+        var = np.nanvar(val, axis=1, ddof=1)
 
         # Average the variance across images and compute the square root of the
         # result
-        sigma_noise = np.sqrt(np.nanmean(var, 1))
+        sigma_noise = np.sqrt(np.nanmean(var, 0))
 
         # Estimate the signal standard deviation (total variance - noise variance)
-        tot_var_data = np.nanvar(np.reshape(val, (val.shape[0], -1)), axis=1,
+        tot_var_data = np.nanvar(np.reshape(val, (-1, val.shape[2])), axis=0,
             ddof=1)
         sigma_signal = tot_var_data - (sigma_noise ** 2)
         sigma_signal[sigma_signal<0] = 0
@@ -103,7 +107,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
         # Convert the ncsnr to noise ceiling (the noise ceiling is in r² explained
         # variance units)
-        n_trial = val.shape[2]
+        n_trial = val.shape[1]
         noise_ceiling_sub = 100 * (ncsnr_sub ** 2) / ((ncsnr_sub ** 2) + (1 / n_trial))
 
         # Store the results
@@ -124,17 +128,21 @@ for s, sub in enumerate(tqdm(args.subjects)):
                     correlation[key_1+'_vs_'+key_2] = []
 
                 # Average the EEG test responses across repeats
-                invivo_eeg_test = np.mean(invivo_eeg_test, 2)
-                insilico_eeg_test = np.mean(insilico_eeg_test, 2)
+                val_1 = np.mean(val_1, 1)
+                val_2 = np.mean(val_2, 1)
 
-                corr_sub = np.zeros(invivo_eeg_test.shape[0], dtype=np.float32)
+                # Reshape the EEG responses to: (n_cond, n_units)
+                val_1 = np.reshape(val_1, (val_1.shape[0], -1))
+                val_2 = np.reshape(val_2, (val_2.shape[0], -1))
 
-                for u in range(invivo_eeg_test.shape[0]):
-                    corr_sub[u] = pearsonr(invivo_eeg_test[u],
-                        insilico_eeg_test[u])[0]
+                # Compute the encoding accuracy
+                corr_sub = np.zeros(val_1.shape[1], dtype=np.float32)
+                for u in range(val_1.shape[1]):
+                    corr_sub[u] = pearsonr(val_1[:,u], val_2[:,u])[0]
 
                 # Store the results
                 correlation[key_1+'_vs_'+key_2].append(corr_sub)
+                del corr_sub
 
 
 # =============================================================================
