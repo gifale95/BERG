@@ -33,6 +33,11 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 
+Edit code such that it generates two instances of EEG responses:
+    1) Averaged across repeats (as done now)
+    2) Single repeats (PCA applied on single repeats; for the decoding analyses of t-fMRI data)
+
+
 # =============================================================================
 # Load and append the EEG responses across subjects
 # =============================================================================
