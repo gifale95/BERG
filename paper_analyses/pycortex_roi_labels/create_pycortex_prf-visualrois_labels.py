@@ -1,4 +1,4 @@
-"""Create Pycortex' stream labels based on NSD's EVC ROIs.
+"""Create Pycortex' ROI labels based on NSD's pRF visual ROIs (V1, V2, V3, V4).
 
 Parameters
 ----------
@@ -60,7 +60,7 @@ if args.hemisphere == 'lh':
     data = np.append(fsaverage_rois, data_nan)
 elif args.hemisphere == 'rh':
     data = np.append(data_nan, fsaverage_rois)
-subject = 'fsaverage_nsd_sub-' + str(args.subject)
+subject = 'fsaverage_nsd_sub-0' + str(args.subject)
 vertex_data = cortex.Vertex(data, subject, vmin=1, vmax=7, cmap='gist_rainbow',
     with_colorbar=False)
 

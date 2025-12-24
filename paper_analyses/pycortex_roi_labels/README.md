@@ -2,7 +2,7 @@
 
 For the encoding models trained on NSD, we plotted the results of some analyses on flattened cortical surfaces using [pycortex' fsaverage subject](https://figshare.com/articles/dataset/fsaverage_subject_for_pycortex/9916166).
 
-However, since the ROI surface labels of pycortex' fsaverage subject are based on templates, we replaced these labels with the [subject-defined ROI lebels provided in NSD](https://cvnlab.slite.page/p/X_7BBMgghj/ROIs). 
+However, since the ROI surface labels of pycortex' fsaverage subject are based on templates, we replaced these labels with the [subject-defined ROI lebels provided in NSD](https://cvnlab.slite.page/p/X_7BBMgghj/ROIs) (using the Python scripts found in this GitHub directory, and Inkscape). 
 
 To use these subject-specific ROI labels, copy the `./fsaverage_nsd_sub-0*/overlays.svg` files from this GitHub directory onto your local pycortex surface folder of the subject of interest (within an Anaconda environment, you should find this folder at: `../anaconda3/envs/env_name/share/pycortex/db/fsaverage_nsd_sub-0*/overlays.svg`).
 
