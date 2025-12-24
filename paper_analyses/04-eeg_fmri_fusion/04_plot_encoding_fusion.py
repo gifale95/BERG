@@ -233,8 +233,41 @@ np.save(os.path.join(save_dir, file_name), results)
 
 
 
+import numpy as np
+import cortex
 
+# Create dummy data in fsaverage space
+data = np.random.randn(163842*2)
 
+# Choose the NSD subject you to plot
+subject = 'fsaverage_nsd_sub-01'
+
+# Create the flat brain surface
+vertex_data = cortex.Vertex(
+    data,
+    subject=subject,
+    cmap='coolwarm',
+    vmin=None,
+    vmax=None,
+    with_colorbar=True
+    )
+
+# Plot the flat brain surface
+fig = cortex.quickshow(
+    vertex_data,
+    height=2000, # Increase resolution of map and ROI contours
+    with_curvature=True,
+    with_rois=True,
+    roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4', 'FFA-1',
+        'FFA-2', 'EBA', 'PPA', 'Early', 'Intermediate', 'Ventral', 'Lateral',
+        'Dorsal'],
+    linewidth=3,
+    linecolor=(1, 1, 1),
+    with_labels=True,
+    labelsize=25,
+    curvature_brightness=0.5,
+    with_colorbar=True
+    )
 
 
 

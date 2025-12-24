@@ -219,8 +219,12 @@ eeg = {
     'insilico_eeg_vtr-1_ste-1': eeg_test_pred_psn_train_denoised
 }
 for key, val in eeg.items():
-    eeg[key] = np.reshape(np.swapaxes(np.swapaxes(val, 0, 1), 1, 2),
-        (n_cond_test, n_trial_test, n_chan, n_time))
+    if key in ['invivo_eeg_vte-0', 'invivo_eeg_vte-1']:
+        eeg[key] = np.reshape(np.swapaxes(np.swapaxes(val, 0, 1), 1, 2),
+            (n_cond_test, n_trial_test, n_chan, n_time))
+    else:
+        eeg[key] = np.reshape(np.swapaxes(np.swapaxes(val, 0, 1), 1, 2),
+            (n_cond_test, n_trial_train, n_chan, n_time))
 
 # Save the EEG responses for the test images
 save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
