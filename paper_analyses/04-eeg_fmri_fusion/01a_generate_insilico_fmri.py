@@ -120,8 +120,8 @@ for split in ['test', 'train']:
     rh = np.array(rh).astype(np.float32)
 
     # Save the in silico fMRI responses
-    file_name_lh = f'things_eeg_2_{split}_sub-{args.fmri_subject:02d}_lh'
-    file_name_rh = f'things_eeg_2_{split}_sub-{args.fmri_subject:02d}_rh'
+    file_name_lh = f'things_eeg_2_{split}_sub-{args.fmri_subject:02d}_lh.h5'
+    file_name_rh = f'things_eeg_2_{split}_sub-{args.fmri_subject:02d}_rh.h5'
     with h5py.File(os.path.join(save_dir, file_name_lh), 'w') as f:
         f.create_dataset('fmri', data=lh, dtype=np.float32)
     with h5py.File(os.path.join(save_dir, file_name_rh), 'w') as f:

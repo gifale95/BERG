@@ -51,7 +51,7 @@ for r, roi in enumerate(rois):
 
 
 # =============================================================================
-# Create the stream labels (LH)
+# Create the stream labels
 # =============================================================================
 # Prepare the data in Pycortex format
 data_nan = np.empty(163842)

@@ -105,8 +105,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
         # Compute the ncsnr
         ncsnr_sub = sigma_signal / sigma_noise
 
-        # Convert the ncsnr to noise ceiling (the noise ceiling is in r² explained
-        # variance units)
+        # Convert the ncsnr to noise ceiling (the noise ceiling is in r²
+        # explained variance units)
         n_trial = val.shape[1]
         noise_ceiling_sub = 100 * (ncsnr_sub ** 2) / ((ncsnr_sub ** 2) + (1 / n_trial))
 

@@ -133,8 +133,8 @@ axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor=colors[0],
 label = 'Animacy'
 peak = times[np.argmax(np.mean(decoding_animacy, 0))]
 max_dec = max(np.mean(decoding_animacy, 0))
-axs[0].scatter(peak, max_dec, color=colors[1], s=200, marker='o', edgecolors='k',
-    linewidths=1, zorder=3)
+axs[0].scatter(peak, max_dec, color=colors[1], s=200, marker='o',
+    edgecolors='k', linewidths=1, zorder=3)
 axs[0].plot(times, np.mean(decoding_animacy, 0), color=colors[1], linewidth=3,
     label=label)
 axs[0].fill_between(times, ci_animacy[0], ci_animacy[1], color=colors[1],
@@ -149,8 +149,8 @@ axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor=colors[1],
 label = 'Object'
 peak = times[np.argmax(np.mean(decoding_objects, 0))]
 max_dec = max(np.mean(decoding_objects, 0))
-axs[0].scatter(peak, max_dec, color=colors[2], s=200, marker='o', edgecolors='k',
-    linewidths=1, zorder=3)
+axs[0].scatter(peak, max_dec, color=colors[2], s=200, marker='o',
+    edgecolors='k', linewidths=1, zorder=3)
 axs[0].plot(times, np.mean(decoding_objects, 0), color=colors[2], linewidth=3,
     label=label)
 axs[0].fill_between(times, ci_objects[0], ci_objects[1], color=colors[2],
@@ -224,9 +224,11 @@ for t in tqdm(range(len(times))):
     plt.title(title, fontsize=fontsize)
 
     # Save the figure
-    file_name = os.path.join(save_dir, 'mds_animacy_time-'+format(t, '03')+'.svg')
+    file_name = os.path.join(save_dir, 'mds_animacy_time-'+format(t, '03')+
+        '.svg')
     fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-    file_name = os.path.join(save_dir, 'mds_animacy_time-'+format(t, '03')+'.png')
+    file_name = os.path.join(save_dir, 'mds_animacy_time-'+format(t, '03')+
+        '.png')
     fig.savefig(file_name, bbox_inches='tight', transparent=False, format='png')
 
     # Close the figure

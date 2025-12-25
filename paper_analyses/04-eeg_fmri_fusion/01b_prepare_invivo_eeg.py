@@ -33,9 +33,9 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 
-Edit code such that it generates two instances of EEG responses:
-    1) Averaged across repeats (as done now)
-    2) Single repeats (PCA applied on single repeats; for the decoding analyses of t-fMRI data)
+# Edit code such that it generates two instances of EEG responses: # !!!
+#     1) Averaged across repeats (as done now)
+#     2) Single repeats (PCA applied on single repeats; for the decoding analyses of t-fMRI data)
 
 
 # =============================================================================
@@ -119,8 +119,8 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'invivo_eeg_responses')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name_train = 'things_eeg_2_train'
-file_name_test = 'things_eeg_2_test'
+file_name_train = 'things_eeg_2_train.h5'
+file_name_test = 'things_eeg_2_test.h5'
 
 with h5py.File(os.path.join(save_dir, file_name_train), 'w') as f:
     f.create_dataset('eeg', data=eeg_train_pca, dtype=np.float32)

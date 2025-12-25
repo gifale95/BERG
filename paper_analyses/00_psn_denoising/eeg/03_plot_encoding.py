@@ -48,16 +48,17 @@ ci_correlation = results['ci_correlation']
 ch_names = results['ch_names']
 times = results['times']
 
+n_sub = len(args.subjects)
 n_chan = len(ch_names)
 n_time = len(times)
 for key in ncsnr.keys():
-    ncsnr[key] = ncsnr[key].reshape(n_chan, n_time)
-    noise_ceiling[key] = noise_ceiling[key].reshape(n_chan, n_time)
+    ncsnr[key] = ncsnr[key].reshape(n_sub, n_chan, n_time)
+    noise_ceiling[key] = noise_ceiling[key].reshape(n_sub, n_chan, n_time)
     ci_ncsnr[key] = ci_ncsnr[key].reshape(2, n_chan, n_time)
     ci_noise_ceiling[key] = ci_noise_ceiling[key].reshape(2, n_chan, n_time)
 
 for key in correlation.keys():
-    correlation[key] = correlation[key].reshape(n_chan, n_time)
+    correlation[key] = correlation[key].reshape(n_sub, n_chan, n_time)
     ci_correlation[key] = ci_correlation[key].reshape(2, n_chan, n_time)
 
 

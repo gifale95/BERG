@@ -4,13 +4,16 @@ responses (independently for each vertex and time point).
 
 Parameters
 ----------
-fmri_subject : list
+fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
     are integers from 1 8.
 hemisphere : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+n_iter : int
+    Amount of iterations for creating the confidence intervals bootstrapped
+    distribution.
 berg_dir : str
     Directory of the BERG.
 
@@ -18,6 +21,7 @@ berg_dir : str
 
 import argparse
 import os
+import random
 import numpy as np
 import h5py
 from tqdm import tqdm
@@ -25,10 +29,12 @@ from scipy.stats import pearsonr
 from berg import BERG
 from scipy.stats import ttest_1samp
 from statsmodels.stats.multitest import multipletests
+from sklearn.utils import resample
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
+parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -37,6 +43,11 @@ print('Input arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
+# Set random seed for reproducible results
+seed = 20200220
+random.seed(seed)
+np.random.seed(seed)
+
 
 # =============================================================================
 # Empty result arrays
@@ -44,13 +55,20 @@ for key, val in vars(args).items():
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
+# Load the EEG time points
+metadata_eeg = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    siubject=1
+)
+times = metadata_eeg['eeg']['times']
+
 # Empty metadata list
 metadata = []
 
 n_sub = len(args.fmri_subjects)
 n_hemi = len(args.hemispheres)
 n_vertex = 163842
-n_time = 140
+n_time = len(times)
 
 # Empty correlation array of shape:
 # (8 subjects, 2 hemispheres, 163842 fMRI vertices, 140 EEG time points)
@@ -80,7 +98,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # =============================================================================
         data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
             'insilico_fmri_responses')
-        file_name = f'things_eeg_2_test_sub-{sub:02d}_{hemi}'
+        file_name = f'things_eeg_2_test_sub-{sub:02d}_{hemi}.h5'
 
         fmri_test = h5py.File(os.path.join(data_dir, file_name), 'r')['fmri'][:]
 
@@ -90,7 +108,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # =============================================================================
         data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
             'tfmri_responses', 'things_eeg_2_test_images')
-        file_name = f'tfmri_sub-{sub:02d}_hemi-{hemi}'
+        file_name = f'tfmri_sub-{sub:02d}_hemi-{hemi}.h5'
 
         tfmri_test = h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'][:]
 
@@ -173,8 +191,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # Compute the significance (in silico fMRI vs t-fMRI correlation scores)
 # =============================================================================
 # Calculate the p-values with t-tests
-pval = ttest_1samp(corr_tfmri_fmri, 0, axis=0,
-    alternative='two-sided')[1]
+pval = ttest_1samp(corr_tfmri_fmri, 0, axis=0, alternative='two-sided')[1]
 
 # Correct for multiple comparisons
 shape = pval.shape
@@ -205,22 +222,53 @@ for key in corr_fmri_ncsnr.keys():
 
 
 # =============================================================================
+# Bootstrap the confidence intervals (t-fMRI encoding accuracies vs. NSD NCSNR
+# and in silico fMRI encodimg accuracies)
+# =============================================================================
+ci_corr_fmri_ncsnr = {}
+ci_corr_insilico_fmri_encoding_acc = {}
+
+for key in corr_fmri_ncsnr.keys():
+
+    ci_corr_fmri_ncsnr[key] = np.zeros((2, n_time))
+    ci_corr_insilico_fmri_encoding_acc[key] = np.zeros((2, n_time))
+
+    ncsnr_dist = np.zeros((args.n_iter, n_time))
+    encoding_acc_dist = np.zeros((args.n_iter, n_time))
+
+    for i in tqdm(range(args.n_iter)):
+        idx = resample(np.arange(len(args.fmri_subjects)))
+        ncsnr_dist[i] = np.mean(corr_fmri_ncsnr[key][idx], 0)
+        encoding_acc_dist[i] = np.mean(corr_insilico_fmri_encoding_acc[idx], 0)
+
+    ci_corr_fmri_ncsnr[key][0] = np.percentile(ncsnr_dist, 2.5, axis=0)
+    ci_corr_fmri_ncsnr[key][1] = np.percentile(ncsnr_dist, 97.5, axis=0)
+    ci_corr_insilico_fmri_encoding_acc[key][0] = np.percentile(
+        encoding_acc_dist, 2.5, axis=0)
+    ci_corr_insilico_fmri_encoding_acc[key][1] = np.percentile(
+        encoding_acc_dist, 97.5, axis=0)
+
+
+# =============================================================================
 # Save the results
 # =============================================================================
 results = {
     'metadata': metadata,
+    'times': times,
     'corr_tfmri_fmri': corr_tfmri_fmri,
     'corr_fmri_ncsnr': corr_fmri_ncsnr,
     'corr_insilico_fmri_encoding_acc': corr_insilico_fmri_encoding_acc,
     'sig_corr_tfmri_fmri': sig_corr_tfmri_fmri,
     'sig_corr_fmri_ncsnr': sig_corr_fmri_ncsnr,
-    'sig_corr_insilico_fmri_encoding_acc': sig_corr_insilico_fmri_encoding_acc
+    'sig_corr_insilico_fmri_encoding_acc': sig_corr_insilico_fmri_encoding_acc,
+    'ci_corr_fmri_ncsnr': ci_corr_fmri_ncsnr,
+    'ci_corr_insilico_fmri_encoding_acc': ci_corr_insilico_fmri_encoding_acc
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'encoding_fusion_accuracy')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'encoding_fusion_accuracy'
+file_name = 'encoding_fusion_accuracy.npy'
 
 np.save(os.path.join(save_dir, file_name), results)

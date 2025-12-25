@@ -46,7 +46,7 @@ for key, val in vars(args).items():
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'insilico_fmri_responses')
-file_name = f'things_eeg_2_train_sub-{args.fmri_subject:02d}_{args.hemisphere}'
+file_name = f'things_eeg_2_train_sub-{args.fmri_subject:02d}_{args.hemisphere}.h5'
 
 fmri_train = h5py.File(os.path.join(data_dir, file_name), 'r')['fmri'][:]
 
@@ -56,8 +56,8 @@ fmri_train = h5py.File(os.path.join(data_dir, file_name), 'r')['fmri'][:]
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'invivo_eeg_responses')
-file_train = 'things_eeg_2_train'
-file_test = 'things_eeg_2_test'
+file_train = 'things_eeg_2_train.h5'
+file_test = 'things_eeg_2_test.h5'
 
 eeg_train = h5py.File(os.path.join(data_dir, file_train), 'r')['eeg']
 eeg_test = h5py.File(os.path.join(data_dir, file_test), 'r')['eeg']
@@ -88,7 +88,7 @@ for t in tqdm(range(eeg_train.shape[2])):
         'encoding_fusion_weights')
     os.makedirs(save_dir, exist_ok=True)
     file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
-                f'hemi-{args.hemisphere}_eeg_time-{t:03d}')
+                f'hemi-{args.hemisphere}_eeg_time-{t:03d}.npy')
     np.save(os.path.join(save_dir, file_name), reg_param)
 
 
@@ -102,6 +102,6 @@ for t in tqdm(range(eeg_train.shape[2])):
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'tfmri_responses',
     'things_eeg_2_test_images')
 os.makedirs(save_dir, exist_ok=True)
-file_name = f'tfmri_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}'
+file_name = f'tfmri_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}.h5'
 with h5py.File(os.path.join(save_dir, file_name), 'w') as f:
     f.create_dataset('tfmri', data=tfmri_test, dtype=np.float32)

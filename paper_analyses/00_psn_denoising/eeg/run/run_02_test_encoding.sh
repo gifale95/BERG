@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=psn_denoising-eeg-02_test_encoding
 #SBATCH --mail-type=end
-#SBATCH --mem=5000
-#SBATCH --time=02:00:00
+#SBATCH --mem=15000
+#SBATCH --time=00:30:00
 #SBATCH --qos=extended
 
 # Activate the Anaconda environment
