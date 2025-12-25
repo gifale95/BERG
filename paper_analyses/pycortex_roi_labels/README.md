@@ -1,12 +1,23 @@
 # Pycortex ROI labels
 
-For the encoding models trained on NSD, we plotted the results of some analyses on flattened cortical surfaces using [pycortex' fsaverage subject](https://figshare.com/articles/dataset/fsaverage_subject_for_pycortex/9916166).
+For the encoding models trained on NSD, we plotted the results of some analyses on flattened cortical surfaces using [pycortex' `fsaverage` subject](https://figshare.com/articles/dataset/fsaverage_subject_for_pycortex/9916166).
 
-However, since the ROI surface labels of pycortex' fsaverage subject are based on templates, we replaced these labels with the [subject-defined ROI lebels provided in NSD](https://cvnlab.slite.page/p/X_7BBMgghj/ROIs) (using the Python scripts found in this GitHub directory, and Inkscape). 
+However, since the ROI surface labels of pycortex' fsaverage subject are based on templates, we replaced these labels with the [subject-specific ROI lebels provided in NSD](https://cvnlab.slite.page/p/X_7BBMgghj/ROIs) (using the Python scripts found in this GitHub directory, and Inkscape).
 
-To use these subject-specific ROI labels, copy the `./fsaverage_nsd_sub-0*/overlays.svg` files from this GitHub directory onto your local pycortex surface folder of the subject of interest (within an Anaconda environment, you should find this folder at: `../anaconda3/envs/env_name/share/pycortex/db/fsaverage_nsd_sub-0*/overlays.svg`).
+To use these subject-specific ROI labels, follow these steps:
 
-Once you copied the `overlays.svg` files, you can plot fMRI surfaces with the NSD subject-specific ROI labels using the following Python commands:
+1. Download the pycortex' `fsaverage` subject (within an Anaconda environment, you should find the downloaded `fsaverage` subject at: `../anaconda3/envs/env_name/share/pycortex/db/fsaverage/`).
+
+2. Make one copy of the `fsaverage` subject for each of the 8 NSD subjects:
+
+```bash
+cd ../anaconda3/envs/env_name/share/pycortex/db/
+cp fsaverage -r fsaverage_nsd_sub-0*
+```
+
+3. Replace the overlay files in your your pycortex surface folder of the subject of interest (`../anaconda3/envs/env_name/share/pycortex/db/fsaverage_nsd_sub-0*/overlays.svg`) files with the overlay files from this GitHub directory (`./fsaverage_nsd_sub-0*/overlays.svg`).
+
+4. You can now plot fMRI surfaces with the NSD subject-specific ROI labels using the following Python commands:
 
 ```python
 import numpy as np
