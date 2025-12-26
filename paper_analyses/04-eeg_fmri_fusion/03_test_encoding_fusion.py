@@ -11,6 +11,9 @@ fmri_subjects : list
 hemisphere : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+ncsnr_threshold : float
+    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
+    vertex selection.
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
     distribution.
@@ -34,6 +37,7 @@ from sklearn.utils import resample
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -58,7 +62,7 @@ berg = BERG(berg_dir=args.berg_dir)
 # Load the EEG time points
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
-    siubject=1
+    subject=1
 )
 times = metadata_eeg['eeg']['times']
 
@@ -69,10 +73,18 @@ n_sub = len(args.fmri_subjects)
 n_hemi = len(args.hemispheres)
 n_vertex = 163842
 n_time = len(times)
+rois = ['V1', 'V2', 'V3', 'hV4', 'OFA', 'FFA', 'OWFA', 'VWFA', 'OPA', 'PPA',
+    'RSC', 'EBA', 'FBA', 'early', 'midventral', 'midlateral', 'midparietal',
+    'ventral', 'lateral', 'parietal']
+n_roi = len(rois)
 
 # Empty correlation array of shape:
 # (8 subjects, 2 hemispheres, 163842 fMRI vertices, 140 EEG time points)
 corr_tfmri_fmri = np.zeros((n_sub, n_hemi, n_vertex, n_time), dtype=np.float32)
+
+# Empty ROI correlation array of shape:
+# (8 subjects, N ROIs, 140 EEG time points)
+corr_tfmri_fmri_roi = np.zeros((n_sub, n_roi, n_time), dtype=np.float32)
 
 # Empty correlation dictionaries
 corr_fmri_ncsnr = {}
@@ -100,7 +112,8 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
             'insilico_fmri_responses')
         file_name = f'things_eeg_2_test_sub-{sub:02d}_{hemi}.h5'
 
-        fmri_test = h5py.File(os.path.join(data_dir, file_name), 'r')['fmri'][:]
+        fmri_test = h5py.File(os.path.join(data_dir, file_name),
+            'r')['fmri'][:]
 
 
 # =============================================================================
@@ -110,7 +123,8 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
             'tfmri_responses', 'things_eeg_2_test_images')
         file_name = f'tfmri_sub-{sub:02d}_hemi-{hemi}.h5'
 
-        tfmri_test = h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'][:]
+        tfmri_test = h5py.File(os.path.join(data_dir, file_name),
+            'r')['tfmri'][:]
 
 
 # =============================================================================
@@ -143,7 +157,6 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
         # (3) Using vertices with NCSNR below threshold.
 
         # Get the vertex indices for the three correlation types
-        threshold = 0.2
         if h == 0:
             ncsnr = metadata[s]['fmri'][f'{hemi}_ncsnr']
             enc_acc = metadata[s]['encoding_models']\
@@ -153,11 +166,13 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
             enc_acc = np.append(enc_acc, metadata[s]['encoding_models']\
                 [f'{hemi}_correlation_nsdcore'])
             correlation = np.append(corr_tfmri_fmri[s,0], corr_tfmri_fmri[s,1],
-                1)
+                0)
             vertex_idx = {}
             vertex_idx['all'] = np.arange(n_vertex*2)
-            vertex_idx['below_threshold'] = np.where(ncsnr < 0.2)[0]
-            vertex_idx['above_threshold'] = np.where(ncsnr >= 0.2)[0]
+            vertex_idx['below_threshold'] = np.where(
+                ncsnr < args.ncsnr_threshold)[0]
+            vertex_idx['above_threshold'] = np.where(
+                ncsnr >= args.ncsnr_threshold)[0]
 
             # Loop across correlation types
             for key, val in vertex_idx.items():
@@ -173,7 +188,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
                 # Center the data
                 nc = ncsnr[val] - ncsnr[val].mean()
                 acc = enc_acc[val] - enc_acc[val].mean()
-                corr = correlation[s,val] - correlation[s,val].mean(axis=0)
+                corr = correlation[val] - correlation[val].mean(axis=0)
 
                 # Normalize the data
                 nc /= np.linalg.norm(nc)
@@ -185,6 +200,42 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
                 corr_insilico_fmri_encoding_acc[key][s] = acc @ corr
                 del nc, acc, corr
             del ncsnr, enc_acc, correlation
+
+
+# =============================================================================
+# Get the ROI-wise correlations between t-fMRI and in silico fMRI responses
+# =============================================================================
+# Loop across subjects, ROIs, and hemispheres
+for s, sub in enumerate(tqdm(args.fmri_subjects)):
+    for r, roi in enumerate(rois):
+        for h, hemi in enumerate(args.hemispheres):
+
+            # Get the indices of the ROI vertices
+            if roi in ['V1', 'V2', 'V3']:
+                idx_roi = np.append(
+                    metadata[s]['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}v'],
+                    metadata[s]['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}d'])
+                idx_roi.sort()
+            elif roi in ['FFA', 'VWFA', 'FBA']:
+                idx_roi = np.append(
+                    metadata[s]['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}-1'],
+                    metadata[s]['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}-2'])
+                idx_roi.sort()
+            else:
+                idx_roi = metadata[s]['fmri'][f'{hemi}_fsaverage_rois'][roi]
+
+            # NCNSR vertex selection
+            ncsnr = metadata[s]['fmri'][f'{hemi}_ncsnr'][idx_roi]
+            idx_ncsnr = np.where(ncsnr >= args.ncsnr_threshold)[0]
+            idx_roi = idx_roi[idx_ncsnr]
+
+            # Get the correlation scores of the above-NCSNR-threshold vertices
+            # from the chosen ROI
+            if h == 0:
+                corr = corr_tfmri_fmri[s,h,idx_roi]
+            else:
+                corr = np.append(corr, corr_tfmri_fmri[s,h,idx_roi], 0)
+                corr_tfmri_fmri_roi[s,r] = np.mean(corr, 0)
 
 
 # =============================================================================
@@ -200,8 +251,37 @@ sig_corr_tfmri_fmri = np.reshape(sig_corr_tfmri_fmri, (shape))
 
 
 # =============================================================================
+# Compute the significance (ROI-wise in silico fMRI vs t-fMRI correlation
+# scores)
+# =============================================================================
+# Calculate the p-values with t-tests
+pval = ttest_1samp(corr_tfmri_fmri_roi, 0, axis=0, alternative='two-sided')[1]
+
+# Correct for multiple comparisons
+shape = pval.shape
+sig_corr_tfmri_fmri_roi = multipletests(pval.flatten(), 0.05, 'fdr_bh')[0]
+sig_corr_tfmri_fmri_roi = np.reshape(sig_corr_tfmri_fmri_roi, (shape))
+
+
+# =============================================================================
+# Bootstrap the confidence intervals (ROI-wise in silico fMRI vs t-fMRI
+# correlation scores)
+# =============================================================================
+ci_corr_tfmri_fmri_roi = np.zeros((2, n_roi, n_time))
+
+corr_dist = np.zeros((args.n_iter, n_roi, n_time))
+
+for i in tqdm(range(args.n_iter)):
+    idx = resample(np.arange(len(args.fmri_subjects)))
+    corr_dist[i] = np.mean(corr_tfmri_fmri_roi[idx], 0)
+
+ci_corr_tfmri_fmri_roi[0] = np.percentile(corr_dist, 2.5, axis=0)
+ci_corr_tfmri_fmri_roi[1] = np.percentile(corr_dist, 97.5, axis=0)
+
+
+# =============================================================================
 # Compute the significance (t-fMRI encoding accuracies vs. NSD NCSNR and in
-# silico fMRI encodimg accuracies)
+# silico fMRI encoding accuracies)
 # =============================================================================
 # Empty result dictionaries
 sig_corr_fmri_ncsnr = {}
@@ -223,7 +303,7 @@ for key in corr_fmri_ncsnr.keys():
 
 # =============================================================================
 # Bootstrap the confidence intervals (t-fMRI encoding accuracies vs. NSD NCSNR
-# and in silico fMRI encodimg accuracies)
+# and in silico fMRI encoding accuracies)
 # =============================================================================
 ci_corr_fmri_ncsnr = {}
 ci_corr_insilico_fmri_encoding_acc = {}
@@ -256,11 +336,14 @@ results = {
     'metadata': metadata,
     'times': times,
     'corr_tfmri_fmri': corr_tfmri_fmri,
+    'corr_tfmri_fmri_roi': corr_tfmri_fmri_roi,
     'corr_fmri_ncsnr': corr_fmri_ncsnr,
     'corr_insilico_fmri_encoding_acc': corr_insilico_fmri_encoding_acc,
     'sig_corr_tfmri_fmri': sig_corr_tfmri_fmri,
+    'sig_corr_tfmri_fmri_roi': sig_corr_tfmri_fmri_roi,
     'sig_corr_fmri_ncsnr': sig_corr_fmri_ncsnr,
     'sig_corr_insilico_fmri_encoding_acc': sig_corr_insilico_fmri_encoding_acc,
+    'ci_corr_tfmri_fmri_roi': ci_corr_tfmri_fmri_roi,
     'ci_corr_fmri_ncsnr': ci_corr_fmri_ncsnr,
     'ci_corr_insilico_fmri_encoding_acc': ci_corr_insilico_fmri_encoding_acc
 }

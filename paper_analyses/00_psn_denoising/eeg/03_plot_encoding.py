@@ -8,6 +8,8 @@ Parameters
 subjects : list
     List of subject identifier sfor the THINGS EEG2 data. Valid subject
     identifiers are integers from 1 to 10.
+psn_mode : int
+    PSN mode, randing from 1 to 5.
 berg_dir : str
     Directory of the BERG.
 
@@ -21,6 +23,7 @@ from matplotlib import pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
+parser.add_argument('--psn_mode', default=1, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -31,12 +34,11 @@ args, unknown = parser.parse_known_args()
 save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
-
 # =============================================================================
 # Load the results, and reshape to (channels, times)
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg', 'test_encoding',
-    'test_encoding_stats.npy')
+    f'psn_mode-{args.psn_mode}', 'test_encoding_stats.npy')
 results = np.load(data_dir, allow_pickle=True).item()
 
 ncsnr = results['ncsnr']
@@ -60,6 +62,9 @@ for key in ncsnr.keys():
 for key in correlation.keys():
     correlation[key] = correlation[key].reshape(n_sub, n_chan, n_time)
     ci_correlation[key] = ci_correlation[key].reshape(2, n_chan, n_time)
+
+
+PLOT ERPS!!!!!
 
 
 # =============================================================================
@@ -137,7 +142,7 @@ axs[0].legend(loc=2, ncol=1, fontsize=fontsize,
     bbox_to_anchor=(1.525, -6.5), frameon=False)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'ncsnr.svg')
+file_name = os.path.join(save_dir, 'ncsnr_psn_mode-'+str(args.psn_mode)+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 
 
@@ -181,7 +186,7 @@ axs[0].legend(loc=2, ncol=1, fontsize=fontsize,
     bbox_to_anchor=(1.525, -6.5), frameon=False)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'noise_ceiling.svg')
+file_name = os.path.join(save_dir, 'noise_ceiling_psn_mode-'+str(args.psn_mode)+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 
 
@@ -225,5 +230,5 @@ axs[0].legend(loc=2, ncol=2, fontsize=fontsize,
     bbox_to_anchor=(1.525, -6.5), frameon=False)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'correlation.svg')
+file_name = os.path.join(save_dir, 'correlation_psn_mode-'+str(args.psn_mode)+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')

@@ -5,11 +5,11 @@ more than images of objects.
 Parameters
 ----------
 ncsnr_threshold : float
-    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) to
-    consider a vertex for the tripartite organization analysis.
+    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
+    vertex selection.
 encoding_threshold : float
-    The threshold on the encoding models explained variance to consider a
-    vertex for the tripartite organization analysis (in % units).
+    The threshold on the encoding models explained variance for vertex
+    selection (in % units).
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
     distribution.

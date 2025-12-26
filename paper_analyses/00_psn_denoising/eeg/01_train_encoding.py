@@ -8,6 +8,8 @@ Parameters
 subject : int
     Subject identifier for the THINGS EEG2 data. Valid subject identifiers are
     integers from 1 to 10.
+psn_mode : int
+    PSN mode, randing from 1 to 5.
 berg_dir : str
     Directory of the BERG.
 
@@ -24,6 +26,7 @@ from sklearn.linear_model import LinearRegression
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', default=1, type=int)
+parser.add_argument('--psn_mode', default=1, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -101,36 +104,59 @@ n_trial_test = eeg_test.shape[1]
 eeg_test = np.reshape(eeg_test, (n_cond_test, n_trial_test, -1))
 eeg_test = np.swapaxes(np.swapaxes(eeg_test, 0, 2), 1, 2)
 
+# Create the "unit_groups" array (array of non-negative integers specifying
+# which units must share the same threshold)
+unit_groups = np.arange(len(kept_ch_names)) + 1
+unit_groups = np.reshape(unit_groups, (1, -1))
+unit_groups = np.repeat(unit_groups, len(kept_times), 0)
+unit_groups = np.reshape(unit_groups, (-1))
+
 
 # =============================================================================
 # Denoise the EEG responses
 # =============================================================================
-
-# denoisingtype : int, default=0
-#     Type of denoising to perform:
-#     - 0: Trial-averaged denoising (returns nunits x nconds)
-#     - 1: Single-trial denoising (returns nunits x nconds x ntrials)
-
-denoiser = PSN(
-    basis='signal',
-    cv='unit',
-    scoring='mse',
-    mag_threshold=0.95,
-    unit_groups=None,
-    truncate=0,
-    ranking=None,
-    cv_thresholds=None,
-    cv_mode=None,
-    denoisingtype=1,
-    verbose=True,
-    wantfig=False,
-    gsn_kwargs=None
+if args.psn_mode == 1:
+    denoiser = PSN(
+        mode='conservative'
+    )
+elif args.psn_mode == 2:
+    denoiser = PSN(
+        basis='signal',
+        criterion='variance',
+        threshold_method='unit'
+    )
+elif args.psn_mode == 3:
+    denoiser = PSN(
+        basis='signal',
+        criterion='variance',
+        threshold_method='unit',
+        unit_groups=unit_groups
+    )
+elif args.psn_mode == 4:
+    denoiser = PSN(
+        basis='difference',
+        criterion='prediction',
+        threshold_method='hybrid'
+    )
+elif args.psn_mode == 5:
+    denoiser = PSN(
+        basis='difference',
+        criterion='prediction',
+        threshold_method='hybrid',
+        unit_groups=unit_groups
 )
 
 denoiser.fit(eeg_train)
 
-eeg_train_denoised = denoiser.transform(eeg_train)
-eeg_test_denoised = denoiser.transform(eeg_test)
+eeg_train_denoised = np.zeros((eeg_train.shape), dtype=np.float32)
+for r in range(eeg_train.shape[2]):
+    eeg_train_denoised[:,:,r] = denoiser.transform(np.reshape(eeg_train[:,:,r],
+        (eeg_train.shape[0], eeg_train.shape[1], 1)))
+
+eeg_test_denoised = np.zeros((eeg_test.shape), dtype=np.float32)
+for r in range(eeg_test.shape[2]):
+    eeg_test_denoised[:,:,r] = denoiser.transform(np.reshape(eeg_test[:,:,r],
+        (eeg_test.shape[0], eeg_test.shape[1], 1)))
 
 
 # =============================================================================
@@ -199,8 +225,18 @@ for r in range(n_trial_train):
 # =============================================================================
 # Denoise the in silico EEG responses
 # =============================================================================
-eeg_test_pred_denoised = denoiser.transform(eeg_test_pred)
-eeg_test_pred_psn_train_denoised = denoiser.transform(eeg_test_pred_psn_train)
+eeg_test_pred_denoised = np.zeros((eeg_test_pred.shape), dtype=np.float32)
+for r in range(eeg_test_pred.shape[2]):
+    eeg_test_pred_denoised[:,:,r] = denoiser.transform(np.reshape(
+        eeg_test_pred[:,:,r], (eeg_test_pred.shape[0], eeg_test_pred.shape[1],
+        1)))
+
+eeg_test_pred_psn_train_denoised = np.zeros((
+    eeg_test_pred_psn_train.shape), dtype=np.float32)
+for r in range(eeg_test_pred_psn_train.shape[2]):
+    eeg_test_pred_psn_train_denoised[:,:,r] = denoiser.transform(np.reshape(
+        eeg_test_pred_psn_train[:,:,r], (eeg_test_pred_psn_train.shape[0],
+        eeg_test_pred_psn_train.shape[1], 1)))
 
 
 # =============================================================================
@@ -228,7 +264,7 @@ for key, val in eeg.items():
 
 # Save the EEG responses for the test images
 save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
-    'eeg_test_responses')
+    'eeg_test_responses', f'psn_mode-{args.psn_mode}')
 os.makedirs(save_dir, exist_ok=True)
 file_name = 'eeg_test_subject-' + format(args.subject, '02') + '.npy'
 np.save(os.path.join(save_dir, file_name), eeg)
@@ -247,7 +283,7 @@ weights = {
     'reg_param_vtr-1': reg_param_psn_train
     }
 save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
-    'encoding_models_weights')
+    'encoding_models_weights', f'psn_mode-{args.psn_mode}')
 os.makedirs(save_dir, exist_ok=True)
 file_name = 'weights_subject-' + format(args.subject, '02') + '.npy'
 np.save(os.path.join(save_dir, file_name), weights)

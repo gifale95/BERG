@@ -8,6 +8,8 @@ Parameters
 subjects : list
     List of subject identifier sfor the THINGS EEG2 data. Valid subject
     identifiers are integers from 1 to 10.
+psn_mode : int
+    PSN mode, randing from 1 to 5.
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
     distribution.
@@ -26,6 +28,7 @@ from sklearn.utils import resample
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
+parser.add_argument('--psn_mode', default=1, type=int)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -45,7 +48,7 @@ np.random.seed(seed)
 # Load the EEG channel names and time points
 # =============================================================================
 metadata_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
-    'eeg_test_responses', 'eeg_metadata.npy')
+    'eeg_test_responses', f'psn_mode-{args.psn_mode}', 'eeg_metadata.npy')
 
 metadata = np.load(metadata_dir, allow_pickle=True).item()
 
@@ -69,7 +72,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
 # Load the EEG test responses
 # =============================================================================
     eeg_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
-    'eeg_test_responses', 'eeg_test_subject-'+format(sub, '02')+'.npy')
+    'eeg_test_responses', f'psn_mode-{args.psn_mode}',
+    'eeg_test_subject-'+format(sub, '02')+'.npy')
     eeg = np.load(eeg_dir, allow_pickle=True).item()
 
 
@@ -207,7 +211,8 @@ results = {
     'times': times
     }
 
-save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg', 'test_encoding')
+save_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg', 'test_encoding',
+    f'psn_mode-{args.psn_mode}')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'test_encoding_stats.npy'

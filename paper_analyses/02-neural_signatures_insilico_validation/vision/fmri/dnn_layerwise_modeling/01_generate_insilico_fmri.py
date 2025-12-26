@@ -88,6 +88,12 @@ for sub in args.subjects:
         subject=sub
         )
 
+    # Load the encoding model metadata
+    metadata = berg.get_model_metadata(
+        args.encoding_model,
+        subject=sub
+        )
+
 
 # =============================================================================
 # Generate and save the in silico fMRI responses

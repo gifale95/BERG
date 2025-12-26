@@ -1,5 +1,4 @@
-"""Perform searchlight RSA between in silico fMRI responses and layerwise DNN
-features.
+"""Perform searchlight RSA between t-fMRI responses and DNN layerwise features.
 
 Parameters
 ----------

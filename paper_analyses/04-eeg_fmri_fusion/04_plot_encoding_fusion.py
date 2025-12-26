@@ -10,11 +10,11 @@ hemisphere : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
 ncsnr_threshold : float
-    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) to
-    consider a vertex for the tripartite organization analysis.
+    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
+    vertex selection.
 encoding_threshold : float
-    The threshold on the encoding models explained variance to consider a
-    vertex for the tripartite organization analysis (in % units).
+    The threshold on the encoding models explained variance for vertex
+    selection (in % units).
 berg_dir : str
     Directory of the BERG.
 
@@ -35,6 +35,9 @@ parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
+
+
+PLOT RESULTS FOR SINGLE ROIS AND COMPARE PEAKS!
 
 
 # =============================================================================
@@ -107,12 +110,13 @@ for t, time in enumerate(tqdm(times)):
         np.nanmean(corr_tfmri_fmri[:,1,:,t], 0))
     
     # Create the flat brain surface
-    vertex_data = cortex.Vertex(data,
-                                subject,
-                                cmap='hot',
-                                vmin=0,
-                                vmax=1,
-                                with_colorbar=True)
+    vertex_data = cortex.Vertex(
+        data,
+        subject,
+        cmap='hot',
+        vmin=0,
+        vmax=1,
+        with_colorbar=True)
     
     # Plot the flat brain surface
     fig = cortex.quickshow(

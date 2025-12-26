@@ -11,11 +11,11 @@ subject : int
     encoding models are trained on NSD data, valid subject identifiers are
     integers from 1 to 8.
 ncsnr_threshold : float
-    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) to
-    consider a vertex for the tripartite organization analysis.
+    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
+    vertex selection.
 encoding_threshold : float
-    The threshold on the encoding models explained variance to consider a
-    vertex for the tripartite organization analysis (in % units).
+    The threshold on the encoding models explained variance for vertex
+    selection (in % units).
 FIELD_SIZE : float
     The total width and height of the simulated visual field in degrees of
     visual angle. The coordinate system spans from -FIELD_SIZE/2 to

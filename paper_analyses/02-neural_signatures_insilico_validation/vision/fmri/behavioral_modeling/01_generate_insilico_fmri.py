@@ -51,17 +51,18 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 # Load the THINGS EEG2 image metadata
 # =============================================================================
-# The THINGS EEG2 image metadata can be downloaded from: https://osf.io/y63gw/files/qkgtf
+# Initialize BERG
+berg = BERG(berg_dir=args.berg_dir)
 
 # Load the metadata
-metadata_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'behavioral_modeling', 'image_metadata.npy')
-
-metadata_things = np.load(metadata_dir, allow_pickle=True).item()
+metadata = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b-32',
+    subject=1
+    )
 
 # Get the test image category number based on the original THINGS database
-test_img_concepts_THINGS = metadata_things['test_img_concepts_THINGS']
+test_img_concepts_THINGS = metadata['encoding_models']['test_img_info']\
+    ['test_img_concepts_THINGS']
 
 
 # =============================================================================

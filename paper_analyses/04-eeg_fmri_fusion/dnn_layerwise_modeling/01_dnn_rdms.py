@@ -7,9 +7,9 @@ model : str
     Available options are 'alexnet' and 'resnet50'.
 berg_dir : str
     Directory of the BERG.
-nsd_dir : str
-    Directory of the Natural Scenes Dataset.
-    https://naturalscenesdataset.org/
+things_dir : str
+    Directory of the THINGS database.
+    https://osf.io/jum2f/
 
 """
 
@@ -31,7 +31,7 @@ from sklearn.decomposition import PCA
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> DNN RDMs <<<')
@@ -67,25 +67,19 @@ def corr_matrix(X):
 
 
 # =============================================================================
-# Load the 515 test images
+# Get the 200 THINGS EEG2 test images file names
 # =============================================================================
-# The test images consist of the 515 images that all NSD subjects saw for three
-# times, and which were used to test BERG's encoding models
-
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
-# Get the test image number
+# Load the THINGS EEG 2 metadata
 metadata = berg.get_model_metadata(
-    'fmri-nsd_fsaverage-huze',
+    'eeg-things_eeg_2-vit_b_32',
     subject=1
-)
-test_img_num = metadata['encoding_models']['test_img_num']
+    )
 
-# Load the test images
-sf = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli', 'stimuli', 'nsd',
-    'nsd_stimuli.hdf5'), 'r')
-sdataset = sf.get('imgBrick')
+# Get the test image file names
+test_img_files = metadata['encoding_models']['test_img_info']['test_img_files']
 
 
 # =============================================================================
@@ -142,9 +136,15 @@ transform = trn.Compose([
 # Extract the image features
 # =============================================================================
 with torch.no_grad():
-    for i, img in enumerate(tqdm(test_img_num, leave=False)):
+    for i, file in enumerate(tqdm(test_img_files, leave=False)):
+        # Find correct subfolder
+        img_path = None
+        for root, _, files in os.walk(os.path.join(args.things_dir)):
+            if file in files:
+                img_path = os.path.join(root, file)
+                break
         # Preprocess the images
-        img = Image.fromarray(sdataset[img]).convert('RGB')
+        img = Image.open(img_path).convert('RGB')
         img = transform(img).unsqueeze(0)
         img = img.to(device)
         # Extract the features
@@ -185,8 +185,8 @@ for key, val in ft_dict.items():
 # =============================================================================
 # Save the DNN RDMs
 # =============================================================================
-save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'dnn_layerwise_modeling', 'dnn_rdms')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'dnn_layerwise_modeling', 'dnn_rdms')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'dnn_rdms_' + args.model + '.npy'

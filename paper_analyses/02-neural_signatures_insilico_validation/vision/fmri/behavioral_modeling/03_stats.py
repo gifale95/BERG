@@ -77,8 +77,7 @@ sig, pval_corrected, _, _ = multipletests(pval_all, 0.05, 'fdr_bh')
 sig_lh_rsa = sig[:len(sig)//2]
 sig_rh_rsa = sig[len(sig)//2:]
 pval_corrected_lh_rsa = pval_corrected[:len(sig)//2]
-pval_corrected_rh_rsa = pval_corrected[len(sig)//2:]cd
-
+pval_corrected_rh_rsa = pval_corrected[len(sig)//2:]
 
 
 # =============================================================================

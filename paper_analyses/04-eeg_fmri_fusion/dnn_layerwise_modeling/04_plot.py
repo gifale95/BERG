@@ -1,5 +1,5 @@
-"""Plot the searchlight RSA scores between in silico fMRI responses and DNN
-layerwise features.
+"""Plot the searchlight RSA scores between t-fMRI responses and DNN layerwise
+features.
 
 Parameters
 ----------
@@ -36,7 +36,7 @@ from tqdm import tqdm
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
-parser.add_argument('--model', default='alexnet', type=str)
+parser.add_argument('--model', default='resnet50', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
 parser.add_argument('--encoding_threshold', default=20, type=float) # 20
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)

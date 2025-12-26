@@ -1,6 +1,5 @@
-"""Compute the significance of the RSA analysis between in silico fMRI
-responses and DNN layerwise features, and assign vertices to the DNN layer
-leading to highest RSA scores
+"""Compute the significance of the RSA analysis between t-fMRI responses and
+DNN layerwise features.
 
 Parameters
 ----------
@@ -67,41 +66,6 @@ for s, sub in enumerate(args.subjects):
 for key in lh_rsa.keys():
     lh_rsa[key] = np.array(lh_rsa[key])
     rh_rsa[key] = np.array(rh_rsa[key])
-
-
-# =============================================================================
-# Compute the significance
-# =============================================================================
-# Significance threshold set by a two-tailed t-test across participants (N = 8)
-# with Benjamini–Hochberg false discovery rate (FDR) correction; P = 0.05
-
-# Empty result dictionaries
-sig_lh_rsa = {}
-sig_rh_rsa = {}
-pval_corrected_lh_rsa = {}
-pval_corrected_rh_rsa = {}
-
-# Loop across model layers
-for key in lh_rsa.keys():
-
-    # Compute the p-values with t-test
-    pval_lh_rsa = ttest_1samp(lh_rsa[key], 0, axis=0,
-        alternative='two-sided')[1]
-    pval_rh_rsa = ttest_1samp(rh_rsa[key], 0, axis=0,
-        alternative='two-sided')[1]
-
-    # Correct for multiple comparisons
-    pval_all = np.append(pval_lh_rsa, pval_rh_rsa)
-    sig, pval_corrected, _, _ = multipletests(pval_all, 0.05, 'fdr_bh')
-
-    # Split the significance results into hemispheres
-    sig_lh_rsa[key] = sig[:len(sig)//2]
-    sig_rh_rsa[key] = sig[:len(sig)//2]
-    pval_corrected_lh_rsa[key] = pval_corrected[:len(sig)//2]
-    pval_corrected_rh_rsa[key] = pval_corrected[:len(sig)//2]
-
-    # Delete unused variables
-    del pval_lh_rsa, pval_rh_rsa, pval_all, sig, pval_corrected
 
 
 # =============================================================================

@@ -1,4 +1,4 @@
-"""Plot the searchlight RSA scores between in silico fMRI responses and LLM
+"""Plot the searchlight RSA scores between t-fMRI responses and behavioral
 embeddings.
 
 Parameters
@@ -21,8 +21,9 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
+from berg import BERG
+from tqdm import tqdm
 import cortex
-import cortex.polyutils
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -32,8 +33,8 @@ import matplotlib.pyplot as plt
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
-parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
-parser.add_argument('--encoding_threshold', default=20, type=float) # 20
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
+parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -41,8 +42,8 @@ args, unknown = parser.parse_known_args()
 # =============================================================================
 # Create the plots save directory
 # =============================================================================
-save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'llm_modeling', 'plots')
+save_dir = os.path.join(args.berg_dir,'eeg_fmri_fusion', 'behavioral_modeling',
+    'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -55,9 +56,8 @@ rh_rsa = []
 for sub in args.subjects:
     for hemi in ['lh', 'rh']:
 
-        results_dir = os.path.join(args.berg_dir,
-            'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'llm_modeling', 'rsa', 'rsa_sub-'+format(sub, '02')+'_'+hemi+'.npy')
+        results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+            'behavioral_modeling', 'rsa', f'rsa_sub-{sub:02d}_hemi.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         # NCSNR and noise ceiling vertex selection
@@ -82,29 +82,28 @@ rh_rsa = np.array(rh_rsa)
 
 
 # =============================================================================
-# Threshold the vertices by significance
+# Load the EEG time points
 # =============================================================================
-# Load the significance
-stats_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri', 'llm_modeling',
-    'stats', 'stats.npy')
-stats = np.load(stats_dir, allow_pickle=True).item()
+berg = BERG(berg_dir=args.berg_dir)
 
-# Set non significant vertices to NaN
-lh_rsa[:,~stats['sig_lh_rsa']] = np.nan
-rh_rsa[:,~stats['sig_rh_rsa']] = np.nan
+metadata_eeg = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    siubject=1
+)
+
+times = metadata_eeg['eeg']['times']
 
 
 # =============================================================================
 # Plot parameters
 # =============================================================================
-# Plot parameters for colorbar
+fontsize = 40
 plt.rc('xtick', labelsize=19)
 plt.rc('ytick', labelsize=19)
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-subject = 'fsaverage'
+subject = 'fsaverage_nsd_sub-01'
 
 
 # =============================================================================
@@ -114,31 +113,43 @@ subject = 'fsaverage'
 # hemishperes
 data = np.append(np.nanmean(lh_rsa, 0), np.nanmean(rh_rsa, 0))
 
-# Create the flat brain surface
-vertex_data = cortex.Vertex(
-    data,
-    subject=subject,
-    cmap='hot',
-    vmin=0,
-    vmax=0.5,
-    with_colorbar=True
-    )
+# Loop over EEG time points
+for t, time in enumerate(tqdm(times)):
 
-# Plot the flat brain surface
-fig = cortex.quickshow(
-    vertex_data,
-    height=2000, # Increase resolution of map and ROI contours
-    with_curvature=True,
-    with_rois=True,
-    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-    linewidth=2,
-    linecolor=(1, 1, 1),
-    with_labels=True,
-    labelsize=15,
-    curvature_brightness=0.5,
-    with_colorbar=True
-    )
-
-# Save the figure
-file_name = os.path.join(save_dir, 'rsa.svg')
-fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+    # Average the results across subjects, and append them across left and
+    # right hemishperes
+    data = np.append(np.nanmean(lh_rsa[:,:,t], 0),
+        np.nanmean(rh_rsa[:,:,t], 0))
+    
+    # Create the flat brain surface
+    vertex_data = cortex.Vertex(
+        data,
+        subject,
+        cmap='hot',
+        vmin=0,
+        vmax=1,
+        with_colorbar=True)
+    
+    # Plot the flat brain surface
+    fig = cortex.quickshow(
+        vertex_data,
+        height=2000, # Increase resolution of map and ROI contours
+        with_curvature=True,
+        with_rois=True,
+        roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
+        linewidth=3,
+        linecolor=(1, 1, 1),
+        with_labels=True,
+        labelsize=15,
+        curvature_brightness=0.5,
+        with_colorbar=True
+        )
+    
+    # Add title
+    title = f'Time (s): {np.round(time, 3)}'
+    plt.title(title, fontsize=fontsize)
+    
+    # Save the plot
+    plot_file = os.path.join(save_dir, f'rsa_time-{t:03d}.png')
+    plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
+    plt.close()
