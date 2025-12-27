@@ -23,7 +23,7 @@ from matplotlib import pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
-parser.add_argument('--psn_mode', default=1, type=int)
+parser.add_argument('--psn_mode', default=2, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -70,15 +70,17 @@ PLOT ERPS!!!!!
 # =============================================================================
 # Plot parameters
 # =============================================================================
-fontsize = 30
+fontsize = 25
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams["font.weight"] = "normal"
+matplotlib.rcParams["axes.labelweight"] = "normal"
 matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
 matplotlib.rcParams['axes.linewidth'] = 1
-matplotlib.rcParams['xtick.major.width'] = 1
+matplotlib.rcParams['xtick.major.width'] = 0
 matplotlib.rcParams['xtick.major.size'] = 5
-matplotlib.rcParams['ytick.major.width'] = 1
+matplotlib.rcParams['ytick.major.width'] = 0
 matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
@@ -114,7 +116,7 @@ axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
 
 # Plot the results
 for i, (key, val) in enumerate(ncsnr.items()):
-    axs[0].plot(times, np.mean(val, 0), color=colors[i],
+    axs[0].plot(times, np.mean(np.mean(val, 0), 0), color=colors[i],
         linewidth=2, label=key)
 
 # Plot the confidence intervals
@@ -138,8 +140,7 @@ axs[0].set_yticks(ticks=yticks, labels=ylabels)
 axs[0].set_ylim(bottom=0, top=1)
 
 # Legend
-axs[0].legend(loc=2, ncol=1, fontsize=fontsize,
-    bbox_to_anchor=(1.525, -6.5), frameon=False)
+axs[0].legend(loc=0, ncol=1, fontsize=fontsize, frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'ncsnr_psn_mode-'+str(args.psn_mode)+'.svg')
@@ -159,7 +160,7 @@ axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
 
 # Plot the results
 for i, (key, val) in enumerate(noise_ceiling.items()):
-        axs[0].plot(times, np.mean(val, 0), color=colors[i],
+        axs[0].plot(times, np.mean(np.mean(val, 0), 0), color=colors[i],
             linewidth=2, label=key)
 
 # Plot the confidence intervals
@@ -177,13 +178,12 @@ axs[0].set_xlim(left=min(times), right=max(times))
 
 # y-axis parameters
 axs[0].set_ylabel("Noise ceiling", fontsize=fontsize)
-yticks = [0, 0.5, 1]
-ylabels = [0, 0.5, 1]
+yticks = [0, 50, 100]
+ylabels = [0, 50, 100]
 axs[0].set_yticks(ticks=yticks, labels=ylabels)
-axs[0].set_ylim(bottom=0, top=1)
+axs[0].set_ylim(bottom=0, top=100)
 
-axs[0].legend(loc=2, ncol=1, fontsize=fontsize,
-    bbox_to_anchor=(1.525, -6.5), frameon=False)
+axs[0].legend(loc=0, ncol=1, fontsize=fontsize, frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'noise_ceiling_psn_mode-'+str(args.psn_mode)+'.svg')
@@ -193,6 +193,25 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 # =============================================================================
 # Plot the correlation
 # =============================================================================
+comparisons = [
+    'insilico_eeg_vtr-1_ste-0_vs_invivo_eeg_vte-0',
+    'insilico_eeg_vtr-1_ste-0_vs_invivo_eeg_vte-1',
+    'insilico_eeg_vtr-1_ste-1_vs_invivo_eeg_vte-0',
+    'insilico_eeg_vtr-1_ste-1_vs_invivo_eeg_vte-1',
+    'insilico_eeg_vtr-0_ste-0_vs_invivo_eeg_vte-0',
+    'insilico_eeg_vtr-0_ste-0_vs_invivo_eeg_vte-1',
+    'insilico_eeg_vtr-0_ste-1_vs_invivo_eeg_vte-0',
+    'insilico_eeg_vtr-0_ste-1_vs_invivo_eeg_vte-1'
+]
+
+comparisons = [
+    'insilico_eeg_vtr-0_ste-0_vs_invivo_eeg_vte-0',
+    'insilico_eeg_vtr-0_ste-1_vs_invivo_eeg_vte-0',
+    'insilico_eeg_vtr-1_ste-0_vs_invivo_eeg_vte-0',
+    'insilico_eeg_vtr-1_ste-1_vs_invivo_eeg_vte-0',
+]
+
+
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(13, 7))
 axs = np.reshape(axs, (-1))
@@ -202,15 +221,13 @@ axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=2, alpha=.5, label='_nolegend_')
 
 # Plot the results
-for i, (key, val) in enumerate(correlation.items()):
-    axs[0].plot(times, np.mean(val, 0), color=colors[i],
-        linewidth=2, label=key)
+for i, key in enumerate(comparisons):
+    axs[0].plot(times, np.mean(np.mean(correlation[key], 0), 0), linewidth=2, label=key) # color=colors[i]
 
 # Plot the confidence intervals
-for i, (key, val) in enumerate(ci_correlation.items()):
-    axs[0].fill_between(times, np.mean(val[1], 0),
-        np.mean(val[0], 0), color=colors[i], alpha=.2,
-        label='_nolegend_')
+for i, key in enumerate(comparisons):
+    axs[0].fill_between(times, np.mean(ci_correlation[key][1], 0),
+        np.mean(ci_correlation[key][0], 0), alpha=.2, label='_nolegend_') # color=colors[i]
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
@@ -226,9 +243,11 @@ ylabels = [0, 0.5, 1]
 axs[0].set_yticks(ticks=yticks, labels=ylabels)
 axs[0].set_ylim(bottom=0, top=1)
 
-axs[0].legend(loc=2, ncol=2, fontsize=fontsize,
-    bbox_to_anchor=(1.525, -6.5), frameon=False)
+axs[0].legend(loc=0, ncol=1, fontsize=fontsize, frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'correlation_psn_mode-'+str(args.psn_mode)+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+
+
+'invivo_eeg_vte-1_vs_invivo_eeg_vte-0', 'insilico_eeg_vtr-0_ste-0_vs_invivo_eeg_vte-0', 'insilico_eeg_vtr-0_ste-0_vs_invivo_eeg_vte-1', 'insilico_eeg_vtr-1_ste-0_vs_invivo_eeg_vte-0', 'insilico_eeg_vtr-1_ste-0_vs_invivo_eeg_vte-1', 'insilico_eeg_vtr-1_ste-0_vs_insilico_eeg_vtr-0_ste-0', 'insilico_eeg_vtr-0_ste-1_vs_invivo_eeg_vte-0', 'insilico_eeg_vtr-0_ste-1_vs_invivo_eeg_vte-1', 'insilico_eeg_vtr-0_ste-1_vs_insilico_eeg_vtr-0_ste-0', 'insilico_eeg_vtr-0_ste-1_vs_insilico_eeg_vtr-1_ste-0', 'insilico_eeg_vtr-1_ste-1_vs_invivo_eeg_vte-0', 'insilico_eeg_vtr-1_ste-1_vs_invivo_eeg_vte-1', 'insilico_eeg_vtr-1_ste-1_vs_insilico_eeg_vtr-0_ste-0', 'insilico_eeg_vtr-1_ste-1_vs_insilico_eeg_vtr-1_ste-0', 'insilico_eeg_vtr-1_ste-1_vs_insilico_eeg_vtr-0_ste-1'

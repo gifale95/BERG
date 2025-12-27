@@ -2,10 +2,10 @@
 
 Parameters
 ----------
-subject : int
-    The subject identifier for the fMRI encoding models. Since the used
-    encoding models are trained on NSD data, valid subject identifiers
-    are integers from 1 to 8.
+fmri_subject : int
+    The subject identifiers for the fMRI encoding models. Since the used
+    encoding models are trained on NSD data, valid subject identifiers are
+    integers from 1 8.
 hemisphere : str
     String containing the hemisphere used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
@@ -31,9 +31,10 @@ import numpy as np
 from tqdm import tqdm
 from scipy.stats import pearsonr
 import h5py
+from berg import BERG
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--subject', default=1, type=int)
+parser.add_argument('--fmri_subject', default=1, type=int)
 parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--criterion', default='radius', type=str)
 parser.add_argument('--radius_mm', default=10, type=float)
@@ -72,16 +73,20 @@ def corr_matrix(X):
 
 
 # =============================================================================
-# Load the in silico fMRI responses
+# Load the t-fMRI responses and metadata
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'dnn_layerwise_modeling', 'insilico_fmri_responses',
-    'insilico_fmri_responses_sub-'+format(args.subject, '02')+'_'+
-    args.hemisphere+'.npy')
+# Access the t-fMRI
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'tfmri_responses',
+    'things_eeg_2_test_images')
+file_name = f'tfmri_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}.h5'
+fmri = h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'][:]
 
-data = np.load(data_dir, allow_pickle=True).item()
-fmri = data['fmri'].astype(np.float32)
-metadata = data['metadata']
+# Load the metadata
+berg = BERG(berg_dir=args.berg_dir)
+metadata = berg.get_model_metadata(
+    'fmri-nsd_fsaverage-huze',
+    subject=args.fmri_subject
+    )
 
 
 # =============================================================================
@@ -95,12 +100,13 @@ dnn_rdms = np.load(data_dir, allow_pickle=True).item()
 
 
 # =============================================================================
-# Perform searchlight RSA
+# Perform searchlight RSA # !!!
 # =============================================================================
 # Empty RSA results arrays
 rsa = {}
 for key in dnn_rdms.keys():
-    rsa[key] = np.zeros(fmri.shape[1], dtype=np.float32)
+    rsa[key] = np.empty((fmri.shape[1], fmri.shape[2]), dtype=np.float32)
+    rsa[key][:] = np.nan
 
 # Take the lower triangle of the DNN RDMs
 idx_tril = np.tril_indices(len(fmri), -1)
@@ -115,8 +121,16 @@ data_dir = os.path.join(args.berg_dir,
     'vertex_geodesic_distances_'+args.hemisphere+'.h5')
 geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
 
+# Only use vertices falling within the NSD visual streams
+idx_v = np.zeros(fmri.shape[1], dtype=int)
+streams = ['early', 'midventral', 'midlateral', 'midparietal', 'ventral',
+    'lateral', 'parietal']
+for stream in streams:
+    idx_v[metadata['fmri'][f'{args.hemisphere}_fsaverage_rois'][stream]] = 1
+idx_v = np.where(idx_v == 1)[0]
+
 # Loop across fMRI vertices
-for v in tqdm(range(fmri.shape[1])):
+for v in tqdm(idx_v):
 
     # Select the neighborhood based on the chosen criterion
     if args.criterion == 'nearest':
@@ -127,12 +141,15 @@ for v in tqdm(range(fmri.shape[1])):
         mask = geodesic_distances[v] <= args.radius_mm
         neighborhood = np.where(mask)[0]
 
-    # Create the fMRI RDM
-    fmri_rdm = 1 - corr_matrix(fmri[:,neighborhood].T)
+    # Loop across EEG time points
+    for t in range(fmri.shape[2]):
 
-    # Perform RSA with each DNN layer
-    for key, val in dnn_rdm_tril.items():
-        rsa[key][v] = pearsonr(val, fmri_rdm[idx_tril])[0]
+        # Create the fMRI RDM
+        fmri_rdm = 1 - corr_matrix(fmri[:,neighborhood,t].T)
+
+        # Perform RSA with each DNN layer
+        for key, val in dnn_rdm_tril.items():
+            rsa[key][v,t] = pearsonr(val, fmri_rdm[idx_tril])[0]
 
 
 # =============================================================================
@@ -143,11 +160,10 @@ results = {
     'metadata': metadata
 }
 
-save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'dnn_layerwise_modeling', 'rsa')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'dnn_layerwise_modeling', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'rsa_sub-' + format(args.subject, '02') + '_' + args.hemisphere + \
-    '_model-' + args.model + '.npy'
+file_name = f'rsa_sub-{args.fmri_subject:02d}_{args.hemisphere}.npy'
 
 np.save(os.path.join(save_dir, file_name), results)

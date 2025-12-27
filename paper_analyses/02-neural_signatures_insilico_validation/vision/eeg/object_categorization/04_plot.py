@@ -39,10 +39,14 @@ args, unknown = parser.parse_known_args()
 
 
 # =============================================================================
-# Create the plots save directory
+# Create the plots save directories
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'eeg', 'object_categorization', 'plots')
+os.makedirs(save_dir, exist_ok=True)
+
+save_dir_mds = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
+    'vision', 'eeg', 'object_categorization', 'plots', 'mds')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -224,10 +228,10 @@ for t in tqdm(range(len(times))):
     plt.title(title, fontsize=fontsize)
 
     # Save the figure
-    file_name = os.path.join(save_dir, 'mds_animacy_time-'+format(t, '03')+
+    file_name = os.path.join(save_dir_mds, 'mds_animacy_time-'+format(t, '03')+
         '.svg')
     fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-    file_name = os.path.join(save_dir, 'mds_animacy_time-'+format(t, '03')+
+    file_name = os.path.join(save_dir_mds, 'mds_animacy_time-'+format(t, '03')+
         '.png')
     fig.savefig(file_name, bbox_inches='tight', transparent=False, format='png')
 
@@ -282,11 +286,11 @@ for s, sub in enumerate(tqdm(args.subjects)):
         plt.title(title, fontsize=fontsize)
 
         # Save the figure
-        file_name = os.path.join(save_dir, 'mds_animacy_sub-'+
+        file_name = os.path.join(save_dir_mds, 'mds_animacy_sub-'+
             format(sub, '02')+'_time-'+format(t, '03')+'.svg')
         fig.savefig(file_name, bbox_inches='tight', transparent=True,
             format='svg')
-        file_name = os.path.join(save_dir, 'mds_animacy_sub-'+
+        file_name = os.path.join(save_dir_mds, 'mds_animacy_sub-'+
             format(sub, '02')+'_time-'+format(t, '03')+'.png')
         fig.savefig(file_name, bbox_inches='tight', transparent=False,
             format='png')

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-fmri-dnn_layerwise_modeling-04_stats
+#SBATCH --job-name=berg_eeg_fmri_fusion-dnn_layerwise_modeling-03_stats
 #SBATCH --mail-type=end
 #SBATCH --mem=3000
 #SBATCH --time=00:10:00
@@ -27,7 +27,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/dnn_layerwise_modeling
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/dnn_layerwise_modeling
 
 # Run the job
-python 04_stats.py --model $model
+python 03_stats.py --model $model

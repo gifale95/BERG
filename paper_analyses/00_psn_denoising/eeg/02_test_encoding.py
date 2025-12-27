@@ -65,6 +65,15 @@ correlation = {}
 n_chan = len(ch_names)
 n_time = len(times)
 
+data_types = [
+    'invivo_eeg_vte-0',
+    'invivo_eeg_vte-1',
+    'insilico_eeg_vtr-0_ste-0',
+    'insilico_eeg_vtr-1_ste-0',
+    'insilico_eeg_vtr-0_ste-1',
+    'insilico_eeg_vtr-1_ste-1'
+]
+
 for s, sub in enumerate(tqdm(args.subjects)):
 
 
@@ -123,30 +132,35 @@ for s, sub in enumerate(tqdm(args.subjects)):
 # =============================================================================
 # Compute the encoding accuracy (Pearson's r)
 # =============================================================================
-    for key_1, val_1 in eeg.items():
-        for key_2, val_2 in eeg.items():
-            if key_2 != key_1:
+    for i1 in range(len(data_types)):
+        for i2 in range(i1):
 
-                # Empty result variables
-                if s == 0:
-                    correlation[key_1+'_vs_'+key_2] = []
+            # Get the data
+            key_1 = data_types[i1]
+            key_2 = data_types[i2]
+            val_1 = eeg[key_1]
+            val_2 = eeg[key_2]
 
-                # Average the EEG test responses across repeats
-                val_1 = np.mean(val_1, 1)
-                val_2 = np.mean(val_2, 1)
+            # Empty result variables
+            if s == 0:
+                correlation[key_1+'_vs_'+key_2] = []
 
-                # Reshape the EEG responses to: (n_cond, n_units)
-                val_1 = np.reshape(val_1, (val_1.shape[0], -1))
-                val_2 = np.reshape(val_2, (val_2.shape[0], -1))
+            # Average the EEG test responses across repeats
+            val_1 = np.mean(val_1, 1)
+            val_2 = np.mean(val_2, 1)
 
-                # Compute the encoding accuracy
-                corr_sub = np.zeros(val_1.shape[1], dtype=np.float32)
-                for u in range(val_1.shape[1]):
-                    corr_sub[u] = pearsonr(val_1[:,u], val_2[:,u])[0]
+            # Reshape the EEG responses to: (n_cond, n_units)
+            val_1 = np.reshape(val_1, (val_1.shape[0], -1))
+            val_2 = np.reshape(val_2, (val_2.shape[0], -1))
 
-                # Store the results
-                correlation[key_1+'_vs_'+key_2].append(corr_sub)
-                del corr_sub
+            # Compute the encoding accuracy
+            corr_sub = np.zeros(val_1.shape[1], dtype=np.float32)
+            for u in range(val_1.shape[1]):
+                corr_sub[u] = pearsonr(val_1[:,u], val_2[:,u])[0]
+
+            # Store the results
+            correlation[key_1+'_vs_'+key_2].append(corr_sub)
+            del corr_sub
 
 
 # =============================================================================

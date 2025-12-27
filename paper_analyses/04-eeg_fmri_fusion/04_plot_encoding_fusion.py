@@ -29,7 +29,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
@@ -37,26 +37,26 @@ parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-
 args, unknown = parser.parse_known_args()
 
 
-PLOT RESULTS FOR SINGLE ROIS AND COMPARE PEAKS!
-
-
 # =============================================================================
 # Load the results
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'encoding_fusion_accuracy', 'encoding_fusion_accuracy',
-    'encoding_fusion_accuracy.npy')
+    'encoding_fusion_accuracy', 'encoding_fusion_accuracy.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
 metadata = results['metadata']
 times = results['times']
 corr_tfmri_fmri = results['corr_tfmri_fmri']
+corr_tfmri_fmri_roi = results['corr_tfmri_fmri_roi']
 corr_fmri_ncsnr = results['corr_fmri_ncsnr']
 corr_insilico_fmri_encoding_acc = results['corr_insilico_fmri_encoding_acc']
 sig_corr_tfmri_fmri = results['sig_corr_tfmri_fmri']
+sig_corr_tfmri_fmri_roi = results['sig_corr_tfmri_fmri_roi']
 sig_corr_fmri_ncsnr = results['sig_corr_fmri_ncsnr']
 sig_corr_insilico_fmri_encoding_acc = results['sig_corr_insilico_fmri_encoding_acc']
+ci_corr_tfmri_fmri_roi = results['ci_corr_tfmri_fmri_roi']
+ci_corr_tfmri_fmri_roi_peak_lat = results['ci_corr_tfmri_fmri_roi_peak_lat']
 ci_corr_fmri_ncsnr = results['ci_corr_fmri_ncsnr']
 ci_corr_insilico_fmri_encoding_acc = results['ci_corr_insilico_fmri_encoding_acc']
 
@@ -78,7 +78,7 @@ for s, sub in enumerate(args.fmri_subjects):
         corr_tfmri_fmri[s,h,idx_nan] = np.nan
 
 # Threshold the vertices by significance
-corr_tfmri_fmri[:,~sig_corr_tfmri_fmri] = np.nan
+#corr_tfmri_fmri[:,~sig_corr_tfmri_fmri] = np.nan
 
 
 # =============================================================================
@@ -121,7 +121,7 @@ for t, time in enumerate(tqdm(times)):
     # Plot the flat brain surface
     fig = cortex.quickshow(
         vertex_data,
-        height=2000, # Increase resolution of map and ROI contours
+        #height=2000, # Increase resolution of map and ROI contours
         with_curvature=True,
         with_rois=True,
         roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
@@ -132,11 +132,11 @@ for t, time in enumerate(tqdm(times)):
         curvature_brightness=0.5,
         with_colorbar=True
         )
-    
+
     # Add title
     title = f'Time (s): {np.round(time, 3)}'
     plt.title(title, fontsize=fontsize)
-    
+
     # Save the plot
     plot_file = os.path.join(save_dir, f'correlation_time-{t:03d}.png')
     plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
@@ -144,18 +144,19 @@ for t, time in enumerate(tqdm(times)):
 
 
 # =============================================================================
-# Plot the correlations between the t-fMRI encoding accuracies and the NSD
-# NCSNR or the in silico fMRI encoding accuracy
+# Plot parameters
 # =============================================================================
-fontsize = 30
+fontsize = 25
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams["font.weight"] = "normal"
+matplotlib.rcParams["axes.labelweight"] = "normal"
 matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
 matplotlib.rcParams['axes.linewidth'] = 1
-matplotlib.rcParams['xtick.major.width'] = 1
+matplotlib.rcParams['xtick.major.width'] = 0
 matplotlib.rcParams['xtick.major.size'] = 5
-matplotlib.rcParams['ytick.major.width'] = 1
+matplotlib.rcParams['ytick.major.width'] = 0
 matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
@@ -168,9 +169,21 @@ matplotlib.rcParams['grid.alpha'] = .3
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-colors = [(166/255, 77/255, 121/255), (100/255, 149/255, 237/255),
-    (105/255, 105/255, 105/255)] # (169/255, 169/255, 169/255)]
+colors = [
+    (103/255, 78/255, 167/255),
+    (166/255, 77/255, 121/255),
+    (105/255, 105/255, 105/255),
+    (169/255, 169/255, 169/255),
+    (100/255, 149/255, 237/255),
+    (90/255, 130/255, 200/255),
+    (40/255, 65/255, 150/255)
+    ]
 
+
+# =============================================================================
+# Plot the correlations between the t-fMRI encoding accuracies and the NSD
+# NCSNR or the in silico fMRI encoding accuracy
+# =============================================================================
 # Create the plots save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
     'control_correlations')
@@ -189,7 +202,7 @@ for i, (key, val) in enumerate(corr_fmri_ncsnr.items()):
     axs[0].plot(times, np.mean(val, 0), color=colors[i], linewidth=3,
         label=key)
     axs[0].fill_between(times, ci_corr_fmri_ncsnr[key][0],
-        ci_corr_fmri_ncsnr[key][1], color=colors[2], alpha=.2)
+        ci_corr_fmri_ncsnr[key][1], color=colors[i], alpha=.2)
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
 xticks = [0, .1, .2, .3, .4, .5]
@@ -221,7 +234,7 @@ for i, (key, val) in enumerate(corr_insilico_fmri_encoding_acc.items()):
     axs[0].plot(times, np.mean(val, 0), color=colors[i], linewidth=3,
         label=key)
     axs[0].fill_between(times, ci_corr_insilico_fmri_encoding_acc[key][0],
-        ci_corr_insilico_fmri_encoding_acc[key][1], color=colors[2], alpha=.2)
+        ci_corr_insilico_fmri_encoding_acc[key][1], color=colors[i], alpha=.2)
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
 xticks = [0, .1, .2, .3, .4, .5]
@@ -239,4 +252,61 @@ axs[0].legend(ncol=1, fontsize=fontsize, loc=1, frameon=False)
 # Save the figure
 file_name = os.path.join(save_dir,
     'corr-tfmri_encoding_acc-insilico_fmri_acc.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+
+
+# =============================================================================
+# Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
+# =============================================================================
+# Create the figure
+fig= plt.figure(figsize=(10, 5))
+
+# Plot the stimulus onset and chance dashed line
+plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
+    alpha=.5, label='_nolegend_')
+
+# Loop across ROIs
+rois = ['V1', 'V2', 'V3', 'hV4']
+rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
+for r, roi in enumerate(rois):
+
+    # Plot the correlation
+    plt.plot(times, np.mean(corr_tfmri_fmri_roi[roi], 0), color=colors[r],
+        linewidth=2, label=roi)
+
+    # Plot the CIs
+    plt.fill_between(times, ci_corr_tfmri_fmri_roi[roi][1],
+        ci_corr_tfmri_fmri_roi[roi][0], color=colors[r], alpha=.1)
+
+    # Plot the peak time point
+    peak = times[np.argmax(np.mean(corr_tfmri_fmri_roi[roi], 0))]
+    max_corr = max(np.mean(corr_tfmri_fmri_roi[roi], 0))
+    plt.scatter(peak, max_corr, color=colors[r], s=200, marker='o',
+        edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
+    ci_low = peak - ci_corr_tfmri_fmri_roi_peak_lat[roi][0]
+    ci_up = ci_corr_tfmri_fmri_roi_peak_lat[roi][1] - peak
+    conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
+    plt.errorbar(peak, max_corr, xerr=conf_int, fmt="none",
+        ecolor='k', elinewidth=1, capsize=3)
+
+# x-axis parameters
+plt.xlabel('Time (ms)', fontsize=fontsize)
+xticks = [0, .1, .2, .3, .4, .5]
+xlabels = [0, 100, 200, 300, 400, 500]
+plt.xticks(ticks=xticks, labels=xlabels) # type: ignore
+plt.xlim(left=min(times), right=max(times))
+
+# y-axis parameters
+plt.ylabel("Pearson's $r$", fontsize=fontsize)
+yticks = [0, 0.2, 0.4, 0.6, 0.8]
+ylabels = [0, 0.2, 0.4, 0.6, 0.8]
+plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
+plt.ylim(bottom=-.1, top=.8)
+
+# Legend
+plt.legend(ncol=4, fontsize=20, loc=4, ncols=2, frameon=False)
+
+# Save the figure
+file_name = os.path.join(save_dir, 'roi_correlation_streams.svg')
+file_name = os.path.join(save_dir, 'roi_correlation_evc.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')

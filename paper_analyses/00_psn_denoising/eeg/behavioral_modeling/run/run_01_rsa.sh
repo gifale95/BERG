@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=psn_denoising-eeg-01_train_encoding
+#SBATCH --job-name=psn_denoising-behavioral_modeling-01_rsa
 #SBATCH --mail-type=end
-#SBATCH --mem=20000
+#SBATCH --mem=3000
 #SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
@@ -33,7 +33,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/00_psn_denoising/eeg
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/00_psn_denoising/eeg/behavioral_modeling
 
 # Run the job
-python 01_train_encoding.py --subject $subject --psn_mode $psn_mode
+python 01_rsa.py --subject $subject --psn_mode $psn_mode

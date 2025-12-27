@@ -3,10 +3,10 @@ features.
 
 Parameters
 ----------
-subjects : list
-    The subject identifiers for the fMRI encoding models. Since the used
-    encoding models are trained on NSD data, valid subject identifiers are
-    integers from 1 8.
+fmri_subjects : list
+    List containing the subject identifiers for the fMRI encoding models. Since
+    the used encoding models are trained on NSD data, valid subject identifiers
+    are integers from 1 8.
 model : str
     Name of deep neural network model used to extract the image features.
     Available options are 'alexnet' and 'resnet50'.
@@ -24,8 +24,8 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
+from berg import BERG
 import cortex
-import cortex.polyutils
 import matplotlib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -35,7 +35,7 @@ from tqdm import tqdm
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--model', default='resnet50', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
 parser.add_argument('--encoding_threshold', default=20, type=float) # 20
@@ -46,17 +46,16 @@ args, unknown = parser.parse_known_args()
 # =============================================================================
 # Create the plots save directory
 # =============================================================================
-save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'dnn_layerwise_modeling', 'plots')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'dnn_layerwise_modeling', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
 # Load the stats
 # =============================================================================
-stats_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'dnn_layerwise_modeling', 'stats', 'stats_model-'+args.model+'.npy')
+stats_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'dnn_layerwise_modeling', 'stats', f'stats_model-{args.model}.npy')
 
 stats = np.load(stats_dir, allow_pickle=True).item()
 
@@ -69,13 +68,11 @@ rh_rsa = {}
 lh_best_layer = []
 rh_best_layer = []
 
-for s, sub in enumerate(args.subjects):
+for s, sub in enumerate(args.fmri_subjects):
     for hemi in ['lh', 'rh']:
 
-        results_dir = os.path.join(args.berg_dir,
-            'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'dnn_layerwise_modeling', 'rsa', 'rsa_sub-'+format(sub, '02')+
-            '_'+hemi+'_model-'+args.model+'.npy')
+        results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+            'dnn_layerwise_modeling', 'rsa', f'rsa_sub-{sub:02d}_{hemi}.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         # NCSNR and noise ceiling vertex selection
@@ -120,49 +117,55 @@ rh_best_layer = np.array(rh_best_layer)
 
 
 # =============================================================================
-# Threshold the vertices by significance
+# Load the EEG time points
 # =============================================================================
-for key in lh_rsa.keys():
-    lh_rsa[key][:,~stats['sig_lh_rsa'][key]] = np.nan
-    rh_rsa[key][:,~stats['sig_rh_rsa'][key]] = np.nan
+berg = BERG(berg_dir=args.berg_dir)
+
+metadata_eeg = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    siubject=1
+)
+
+times = metadata_eeg['eeg']['times']
 
 
 # =============================================================================
 # Plot parameters
 # =============================================================================
-# Plot parameters for colorbar
+fontsize = 40
 plt.rc('xtick', labelsize=19)
 plt.rc('ytick', labelsize=19)
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-subject = 'fsaverage'
+subject = 'fsaverage_nsd_sub-01'
 
 
 # =============================================================================
-# Plot the RSA results
+# Plot the vertex DNN layer assignment
 # =============================================================================
-# Loop across model layers
-for key in tqdm(lh_rsa.keys()):
+# Loop over EEG time points
+for t, time in enumerate(tqdm(times)):
 
     # Average the results across subjects, and append them across left and
     # right hemishperes
-    data = np.append(np.nanmean(lh_rsa[key], 0), np.nanmean(rh_rsa[key], 0))
+    data = np.append(np.nanmean(lh_rsa[:,:,t], 0),
+        np.nanmean(rh_rsa[:,:,t], 0))
 
     # Create the flat brain surface
     vertex_data = cortex.Vertex(
         data,
         subject=subject,
-        cmap='hot',
-        vmin=0,
-        vmax=0.4,
+        cmap='gist_rainbow',
+        vmin=1,
+        vmax=len(lh_rsa.keys()),
         with_colorbar=True
         )
 
     # Plot the flat brain surface
     fig = cortex.quickshow(
         vertex_data,
-        height=2000, # Increase resolution of map and ROI contours
+        #height=2000, # Increase resolution of map and ROI contours
         with_curvature=True,
         with_rois=True,
         roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
@@ -174,53 +177,12 @@ for key in tqdm(lh_rsa.keys()):
         with_colorbar=True
         )
 
+    # Add title
+    title = f'Time (s): {np.round(time, 3)}'
+    plt.title(title, fontsize=fontsize)
+
     # Save the figure
-    file_name = os.path.join(save_dir, 'rsa_model-'+args.model+'_layer-'+key+
-        '.svg')
-    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-
-
-# =============================================================================
-# Plot the vertex DNN layer assignment
-# =============================================================================
-# Average the results across subjects, and append them across left and
-# right hemishperes
-data = np.append(np.nanmean(lh_best_layer, 0),
-    np.nanmean(rh_best_layer, 0)) + 1 # Add 1 so that the layers start from 1
-
-# Create the flat brain surface
-vertex_data = cortex.Vertex(
-    data,
-    subject=subject,
-    cmap='gist_rainbow',
-    vmin=1,
-    vmax=len(lh_rsa.keys()),
-    with_colorbar=True
-    )
-
-# Plot the flat brain surface
-fig = cortex.quickshow(
-    vertex_data,
-    height=2000, # Increase resolution of map and ROI contours
-    with_curvature=True,
-    with_rois=True,
-    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-    linewidth=2,
-    linecolor=(1, 1, 1),
-    with_labels=True,
-    labelsize=15,
-    curvature_brightness=0.5,
-    with_colorbar=True
-    )
-
-# Save the figure
-file_name = os.path.join(save_dir, 'rsa_layer_assigment_model-'+args.model+
-    '.svg')
-fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-
-
-# =============================================================================
-# - Plot scatter-barplot of best layer of each ROI (averaged across ROI vertices) # !!!
-#    - One dot for each subject, and then plot the mean with CIs.
-#    - Likely don't use all ROIs, but only a selection of them.
-# =============================================================================
+    plot_file = os.path.join(save_dir,
+        f'rsa_layer_assigment_model-{args.model}_time-{t:03d}.png')
+    fig.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
+    plt.close()

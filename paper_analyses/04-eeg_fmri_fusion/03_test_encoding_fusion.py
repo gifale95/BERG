@@ -74,17 +74,13 @@ n_hemi = len(args.hemispheres)
 n_vertex = 163842
 n_time = len(times)
 rois = ['V1', 'V2', 'V3', 'hV4', 'OFA', 'FFA', 'OWFA', 'VWFA', 'OPA', 'PPA',
-    'RSC', 'EBA', 'FBA', 'early', 'midventral', 'midlateral', 'midparietal',
-    'ventral', 'lateral', 'parietal']
+    'RSC', 'EBA', 'FBA', 'early', 'intermediate', 'ventral', 'lateral',
+    'parietal']
 n_roi = len(rois)
 
 # Empty correlation array of shape:
 # (8 subjects, 2 hemispheres, 163842 fMRI vertices, 140 EEG time points)
 corr_tfmri_fmri = np.zeros((n_sub, n_hemi, n_vertex, n_time), dtype=np.float32)
-
-# Empty ROI correlation array of shape:
-# (8 subjects, N ROIs, 140 EEG time points)
-corr_tfmri_fmri_roi = np.zeros((n_sub, n_roi, n_time), dtype=np.float32)
 
 # Empty correlation dictionaries
 corr_fmri_ncsnr = {}
@@ -205,9 +201,18 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # =============================================================================
 # Get the ROI-wise correlations between t-fMRI and in silico fMRI responses
 # =============================================================================
-# Loop across subjects, ROIs, and hemispheres
-for s, sub in enumerate(tqdm(args.fmri_subjects)):
-    for r, roi in enumerate(rois):
+# Empty result dictionary
+corr_tfmri_fmri_roi = {}
+
+# Loop across ROIs
+for r, roi in enumerate(rois):
+
+    # Empty ROI correlation array of shape:
+    # (8 subjects, 140 EEG time points)
+    corr_tfmri_fmri_roi[roi] = np.zeros((n_sub, n_time), dtype=np.float32)
+
+    # Loop across subjects and hemispheres
+    for s, sub in enumerate(tqdm(args.fmri_subjects)):
         for h, hemi in enumerate(args.hemispheres):
 
             # Get the indices of the ROI vertices
@@ -220,6 +225,13 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
                 idx_roi = np.append(
                     metadata[s]['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}-1'],
                     metadata[s]['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}-2'])
+                idx_roi.sort()
+            elif roi in ['intermediate']:
+                idx_roi = np.append(
+                    metadata[s]['fmri'][f'{hemi}_fsaverage_rois']['midventral'],
+                    metadata[s]['fmri'][f'{hemi}_fsaverage_rois']['midlateral'])
+                idx_roi = np.append(idx_roi,
+                    metadata[s]['fmri'][f'{hemi}_fsaverage_rois']['midparietal'])
                 idx_roi.sort()
             else:
                 idx_roi = metadata[s]['fmri'][f'{hemi}_fsaverage_rois'][roi]
@@ -235,14 +247,14 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
                 corr = corr_tfmri_fmri[s,h,idx_roi]
             else:
                 corr = np.append(corr, corr_tfmri_fmri[s,h,idx_roi], 0)
-                corr_tfmri_fmri_roi[s,r] = np.mean(corr, 0)
+                corr_tfmri_fmri_roi[roi][s] = np.mean(corr, 0)
 
 
 # =============================================================================
 # Compute the significance (in silico fMRI vs t-fMRI correlation scores)
 # =============================================================================
 # Calculate the p-values with t-tests
-pval = ttest_1samp(corr_tfmri_fmri, 0, axis=0, alternative='two-sided')[1]
+pval = ttest_1samp(corr_tfmri_fmri, 0, axis=0, alternative='greater')[1]
 
 # Correct for multiple comparisons
 shape = pval.shape
@@ -254,29 +266,40 @@ sig_corr_tfmri_fmri = np.reshape(sig_corr_tfmri_fmri, (shape))
 # Compute the significance (ROI-wise in silico fMRI vs t-fMRI correlation
 # scores)
 # =============================================================================
-# Calculate the p-values with t-tests
-pval = ttest_1samp(corr_tfmri_fmri_roi, 0, axis=0, alternative='two-sided')[1]
+sig_corr_tfmri_fmri_roi = {}
 
-# Correct for multiple comparisons
-shape = pval.shape
-sig_corr_tfmri_fmri_roi = multipletests(pval.flatten(), 0.05, 'fdr_bh')[0]
-sig_corr_tfmri_fmri_roi = np.reshape(sig_corr_tfmri_fmri_roi, (shape))
+for key, val in corr_tfmri_fmri_roi.items():
+
+    # Calculate the p-values with t-tests
+    pval = ttest_1samp(val, 0, axis=0, alternative='greater')[1]
+
+    # Correct for multiple comparisons
+    sig_corr_tfmri_fmri_roi[key] = multipletests(pval, 0.05, 'fdr_bh')[0]
 
 
 # =============================================================================
 # Bootstrap the confidence intervals (ROI-wise in silico fMRI vs t-fMRI
 # correlation scores)
 # =============================================================================
-ci_corr_tfmri_fmri_roi = np.zeros((2, n_roi, n_time))
+ci_corr_tfmri_fmri_roi = {}
+ci_corr_tfmri_fmri_roi_peak_lat = {}
 
-corr_dist = np.zeros((args.n_iter, n_roi, n_time))
+for key, val in tqdm(corr_tfmri_fmri_roi.items()):
 
-for i in tqdm(range(args.n_iter)):
-    idx = resample(np.arange(len(args.fmri_subjects)))
-    corr_dist[i] = np.mean(corr_tfmri_fmri_roi[idx], 0)
+    ci_corr_tfmri_fmri_roi[key] = np.zeros((2, n_time))
+    ci_corr_tfmri_fmri_roi_peak_lat[key] = np.zeros((2))
+    corr_dist = np.zeros((args.n_iter, n_time))
+    peak_lat_dist = np.zeros((args.n_iter))
 
-ci_corr_tfmri_fmri_roi[0] = np.percentile(corr_dist, 2.5, axis=0)
-ci_corr_tfmri_fmri_roi[1] = np.percentile(corr_dist, 97.5, axis=0)
+    for i in range(args.n_iter):
+        idx = resample(np.arange(len(args.fmri_subjects)))
+        corr_dist[i] = np.mean(val[idx], 0)
+        peak_lat_dist[i] = times[np.argmax(np.mean(val[idx], 0))]
+
+    ci_corr_tfmri_fmri_roi[key][0] = np.percentile(corr_dist, 2.5, axis=0)
+    ci_corr_tfmri_fmri_roi[key][1] = np.percentile(corr_dist, 97.5, axis=0)
+    ci_corr_tfmri_fmri_roi_peak_lat[key][0] = np.percentile(peak_lat_dist, 2.5)
+    ci_corr_tfmri_fmri_roi_peak_lat[key][1] = np.percentile(peak_lat_dist, 97.5)
 
 
 # =============================================================================
@@ -290,9 +313,9 @@ sig_corr_insilico_fmri_encoding_acc = {}
 # Calculate the p-values with t-tests
 for key in corr_fmri_ncsnr.keys():
     pval_corr_fmri_ncsnr = ttest_1samp(corr_fmri_ncsnr[key], 0, axis=0,
-        alternative='two-sided')[1]
+        alternative='greater')[1]
     pval_corr_insilico_fmri_encoding_acc = ttest_1samp(corr_fmri_ncsnr[key], 0,
-        axis=0, alternative='two-sided')[1]
+        axis=0, alternative='greater')[1]
 
     # Correct for multiple comparisons
     sig_corr_fmri_ncsnr[key] = multipletests(pval_corr_fmri_ncsnr,
@@ -319,7 +342,8 @@ for key in corr_fmri_ncsnr.keys():
     for i in tqdm(range(args.n_iter)):
         idx = resample(np.arange(len(args.fmri_subjects)))
         ncsnr_dist[i] = np.mean(corr_fmri_ncsnr[key][idx], 0)
-        encoding_acc_dist[i] = np.mean(corr_insilico_fmri_encoding_acc[idx], 0)
+        encoding_acc_dist[i] = np.mean(
+            corr_insilico_fmri_encoding_acc[key][idx], 0)
 
     ci_corr_fmri_ncsnr[key][0] = np.percentile(ncsnr_dist, 2.5, axis=0)
     ci_corr_fmri_ncsnr[key][1] = np.percentile(ncsnr_dist, 97.5, axis=0)
@@ -344,6 +368,7 @@ results = {
     'sig_corr_fmri_ncsnr': sig_corr_fmri_ncsnr,
     'sig_corr_insilico_fmri_encoding_acc': sig_corr_insilico_fmri_encoding_acc,
     'ci_corr_tfmri_fmri_roi': ci_corr_tfmri_fmri_roi,
+    'ci_corr_tfmri_fmri_roi_peak_lat': ci_corr_tfmri_fmri_roi_peak_lat,
     'ci_corr_fmri_ncsnr': ci_corr_fmri_ncsnr,
     'ci_corr_insilico_fmri_encoding_acc': ci_corr_insilico_fmri_encoding_acc
 }

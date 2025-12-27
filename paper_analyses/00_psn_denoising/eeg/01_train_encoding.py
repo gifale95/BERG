@@ -84,13 +84,14 @@ eeg_train = eeg_train[:,:,ch_idx]
 eeg_test = eeg_test[:,:,ch_idx]
 
 # Time point selection
-tmin = -0.1
-tmax = 0.4
-idx_min  = np.where(np.round(times, 3) == tmin)[0][0]
-idx_max  = np.where(np.round(times, 3) == tmax)[0][0]
-eeg_train = eeg_train[:,:,:,idx_min:idx_max]
-eeg_test = eeg_test[:,:,:,idx_min:idx_max]
-kept_times = times[idx_min:idx_max]
+# tmin = -0.1
+# tmax = 0.5
+# idx_min  = np.where(np.round(times, 3) == tmin)[0][0]
+# idx_max  = np.where(np.round(times, 3) == tmax)[0][0]
+# eeg_train = eeg_train[:,:,:,idx_min:idx_max]
+# eeg_test = eeg_test[:,:,:,idx_min:idx_max]
+# kept_times = times[idx_min:idx_max]
+kept_times = times
 
 # Reshape the EEG responses to (Units, Conditions, Repeats)
 n_cond_train = eeg_train.shape[0]

@@ -78,15 +78,13 @@ def corr_matrix(X):
 
 
 # =============================================================================
-# Access the in t-fMRI responses and metadata
+# Load the t-fMRI responses and metadata
 # =============================================================================
-# Access the in t-fMRI
+# Access the t-fMRI
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'tfmri_responses',
-    'things_eeg_2_test_images',
-    f'tfmri_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}.h5')
-data = np.load(data_dir, allow_pickle=True).item()
-fmri = data['fmri'].astype(np.float32)
-metadata = data['metadata']
+    'things_eeg_2_test_images')
+file_name = f'tfmri_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}.h5'
+fmri = h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'][:]
 
 # Load the metadata
 berg = BERG(berg_dir=args.berg_dir)
@@ -150,6 +148,7 @@ streams = ['early', 'midventral', 'midlateral', 'midparietal', 'ventral',
     'lateral', 'parietal']
 for stream in streams:
     idx_v[metadata['fmri'][f'{args.hemisphere}_fsaverage_rois'][stream]] = 1
+idx_v = np.where(idx_v == 1)[0]
 
 # Loop across fMRI vertices and EEG time points
 for v in tqdm(idx_v):

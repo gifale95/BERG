@@ -165,10 +165,12 @@ for key, val in ft_dict.items():
     scaler = StandardScaler()
     ft_dict[key] = scaler.fit_transform(val)
 
-
 # Downsample the features with PCA
+n_components = 250
+if n_components > len(test_img_files):
+    n_components = len(test_img_files)
 for key, val in ft_dict.items():
-    pca = PCA(n_components=250, random_state=20200220)
+    pca = PCA(n_components=n_components, random_state=20200220)
     ft_dict[key] = pca.fit_transform(val)
 
 

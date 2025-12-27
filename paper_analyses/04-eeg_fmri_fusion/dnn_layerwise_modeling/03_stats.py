@@ -3,7 +3,7 @@ DNN layerwise features.
 
 Parameters
 ----------
-subjects : list
+fmri_subject : int
     The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
     integers from 1 8.
@@ -27,7 +27,7 @@ from statsmodels.stats.multitest import multipletests
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
+parser.add_argument('--fmri_subject', default=1, type=int)
 parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -47,10 +47,8 @@ rh_rsa = {}
 for s, sub in enumerate(args.subjects):
     for hemi in ['lh', 'rh']:
 
-        results_dir = os.path.join(args.berg_dir,
-            'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'dnn_layerwise_modeling', 'rsa', 'rsa_sub-'+format(sub, '02')+
-            '_'+hemi+'_model-'+args.model+'.npy')
+        results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+            'dnn_layerwise_modeling', 'rsa', f'rsa_sub-{sub:02d}_{hemi}.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         for key, val in results['rsa'].items():
@@ -129,18 +127,14 @@ rh_best_layer = np.array(rh_best_layer)
 # Save the results
 # =============================================================================
 results = {
-    'sig_lh_rsa': sig_lh_rsa,
-    'sig_rh_rsa': sig_rh_rsa,
-    'pval_corrected_lh_rsa': pval_corrected_lh_rsa,
-    'pval_corrected_rh_rsa': pval_corrected_rh_rsa,
     'lh_best_layer': lh_best_layer,
     'rh_best_layer': rh_best_layer
 }
 
-save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'dnn_layerwise_modeling', 'stats')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'dnn_layerwise_modeling', 'stats')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'stats_model-' + args.model + '.npy'
+file_name = f'stats_model-{args.model}.npy'
 
 np.save(os.path.join(save_dir, file_name), results)

@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion-03_test_encoding_fusion
+#SBATCH --job-name=eeg_fmri_fusion-04_plot_encoding_fusion
 #SBATCH --mail-type=end
-#SBATCH --mem=20000
-#SBATCH --time=00:30:00
+#SBATCH --mem=5000
+#SBATCH --time=02:00:00
 #SBATCH --qos=extended
 
 # Change to the .py script directory
@@ -14,4 +14,4 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Run the job
-python 03_test_encoding_fusion.py
+python 04_plot_encoding_fusion.py
