@@ -153,7 +153,7 @@ for key in tqdm(lh_rsa.keys()):
     vertex_data = cortex.Vertex(
         data,
         subject=subject,
-        cmap='hot',
+        cmap='afmhot',
         vmin=0,
         vmax=0.4,
         with_colorbar=True

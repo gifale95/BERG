@@ -120,7 +120,7 @@ for t, time in enumerate(tqdm(times)):
     vertex_data = cortex.Vertex(
         data,
         subject,
-        cmap='hot',
+        cmap='afmhot',
         vmin=0,
         vmax=1,
         with_colorbar=True)

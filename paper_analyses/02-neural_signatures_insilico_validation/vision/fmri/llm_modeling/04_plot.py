@@ -118,7 +118,7 @@ data = np.append(np.nanmean(lh_rsa, 0), np.nanmean(rh_rsa, 0))
 vertex_data = cortex.Vertex(
     data,
     subject=subject,
-    cmap='hot',
+    cmap='afmhot',
     vmin=0,
     vmax=0.5,
     with_colorbar=True

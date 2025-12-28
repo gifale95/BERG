@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_eeg_fmri_fusion-llm_modeling-01_generate_tfmri
 #SBATCH --mail-type=end
-#SBATCH --mem=50000
+#SBATCH --mem=100000
 #SBATCH --time=20:00:00
 #SBATCH --qos=extended
 
