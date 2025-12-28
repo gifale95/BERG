@@ -182,13 +182,21 @@ performance:
     - 'brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-mosaic_all/model-cnn8_visual/encoding_models_accuracy'
   
 references:
-    - MOSAIC Paper (Lahner et al., 2025): 
-    - MOSAIC Repository: 
-    - BOLD5000 (Chang et al., 2019): 
-    - deeprecon (Gifford et al., 2025):
-    - GenericObjectDecoding/GOD (Horikawa & Kamitani, 2017):
-    - NaturalScenesDataset/NSD (Allen et al., 2022): 
-    - THINGS fMRI (Hebart et al., 2023): 
-    - BOLDMomentsDataset/BMD: 
-    - NaturalObjectDataset/NOD (Gong et al., 2023):
-    - HumanActionsDataset/HAD (Zhou et al., 2023): 
+    - MOSAIC Paper (Lahner et al., 2025): https://www.biorxiv.org/content/10.64898/2025.11.28.690060v1
+    - MOSAIC Repository: https://github.com/murtylab/mosaic-dataset/tree/1d26b5b4ccdf77eba76e47404f6b9041e28e9a33
+    - BOLD5000 Dataset (Chang et al., 2019): https://openneuro.org/datasets/ds001499
+    - BOLD5000 Paper (Chang et al., 2019): https://arxiv.org/abs/1809.01281
+    - deeprecon Dataset (Shen et al., 2019): https://openneuro.org/datasets/ds001506
+    - deeprecon Paper (Shen et al., 2019): https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1006633
+    - GenericObjectDecoding/GOD Dataset (Horikawa & Kamitani, 2017): https://openneuro.org/datasets/ds001246
+    - GenericObjectDecoding/GOD Paper (Horikawa & Kamitani, 2017): https://www.nature.com/articles/ncomms15037
+    - NaturalScenesDataset/NSD Dataset (Allen et al., 2022): https://registry.opendata.aws/nsd/
+    - NaturalScenesDataset/NSD Paper (Allen et al., 2022): https://www.nature.com/articles/s41593-021-00962-x
+    - THINGS fMRI Dataset (Hebart et al., 2023): https://openneuro.org/datasets/ds004192
+    - THINGS fMRI Paper (Hebart et al., 2023): https://elifesciences.org/articles/82580
+    - BOLDMomentsDataset/BMD Dataset: https://openneuro.org/datasets/ds005165
+    - BOLDMomentsDataset/BMD Paper: https://www.nature.com/articles/s41467-024-50310-3
+    - NaturalObjectDataset/NOD Dataset (Gong et al., 2023): https://openneuro.org/datasets/ds004496
+    - NaturalObjectDataset/NOD Paper (Gong et al., 2023): https://www.nature.com/articles/s41597-023-02471-x
+    - HumanActionsDataset/HAD Dataset (Zhou et al., 2023): https://openneuro.org/datasets/ds004488
+    - HumanActionsDataset/HAD Paper (Zhou et al., 2023): https://www.nature.com/articles/s41597-023-02325-6

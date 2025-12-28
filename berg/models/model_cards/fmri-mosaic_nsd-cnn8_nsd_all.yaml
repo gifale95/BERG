@@ -237,6 +237,7 @@ performance:
     - 'brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-mosaic_nsd/model-cnn8_all/encoding_models_accuracy'
   
 references:
-    - MOSAIC Paper (Lahner et al., 2025): 
-    - MOSAIC Repository: 
-    - Natural Scenes Dataset/NSD (Allen et al., 2022): 
+    - MOSAIC Paper (Lahner et al., 2025): https://www.biorxiv.org/content/10.64898/2025.11.28.690060v1
+    - MOSAIC Repository: https://github.com/murtylab/mosaic-dataset/tree/1d26b5b4ccdf77eba76e47404f6b9041e28e9a33
+    - NaturalScenesDataset/NSD Dataset (Allen et al., 2022): https://registry.opendata.aws/nsd/
+    - NaturalScenesDataset/NSD Paper (Allen et al., 2022): https://www.nature.com/articles/s41593-021-00962-x
