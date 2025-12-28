@@ -11,7 +11,7 @@ declare -a subject_all
 declare -a channels_all
 index=0
 for s in `seq 1 10` ; do
-    for c in 'O' 'P' 'T' 'C' 'F' 'O,P' ; do
+    for c in 'O,P' ; do
         subject_all[$index]=$s
         channels_all[$index]=$c
         ((index=index+1))
@@ -33,7 +33,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/eeg/behavioral_modeling
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/eeg/behavioral_modeling
 
 # Run the job
 python 01_rsa.py --subject $subject --channels $channels

@@ -100,7 +100,7 @@ dnn_rdms = np.load(data_dir, allow_pickle=True).item()
 
 
 # =============================================================================
-# Perform searchlight RSA # !!!
+# Perform searchlight RSA
 # =============================================================================
 # Empty RSA results arrays
 rsa = {}

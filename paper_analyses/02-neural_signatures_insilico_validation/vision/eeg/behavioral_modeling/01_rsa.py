@@ -62,27 +62,24 @@ def corr_matrix(X):
 
 
 # =============================================================================
-# Load the THINGS EEG2 image metadata
+# Get the THINGS EEG2 test image metadata
 # =============================================================================
-# The THINGS EEG2 image metadata can be downloaded from: https://osf.io/y63gw/files/qkgtf
+berg = BERG(berg_dir=args.berg_dir)
 
-# Load the metadata
-metadata_dir = os.path.join(args.berg_dir, args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'behavioral_modeling', 'image_metadata.npy')
+metadata_things = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    subject=1
+    )
 
-metadata = np.load(metadata_dir, allow_pickle=True).item()
-
-# Get the test image category number based on the original THINGS database
-test_img_concepts_THINGS = metadata['test_img_concepts_THINGS']
+test_img_files = metadata_things['encoding_models']['test_img_info']\
+    ['test_img_files']
+test_img_concepts_THINGS = metadata_things['encoding_models']['test_img_info']\
+    ['test_img_concepts_THINGS']
 
 
 # =============================================================================
 # Load BERG's encoding model
 # =============================================================================
-# Initialize BERG
-berg = BERG(berg_dir=args.berg_dir)
-
 # Get the model metadata
 metadata = berg.get_model_metadata(
     args.encoding_model,
@@ -110,43 +107,28 @@ model = berg.get_encoding_model(
 # =============================================================================
 # Generate the in silico EEG responses
 # =============================================================================
-eeg = []
-
 # Loop across test object concepts
-for cat in tqdm(test_img_concepts_THINGS):
+images = []
+for file in tqdm(test_img_files):
 
-    # Get the image exemplar file names for each concept
-    image_list = os.listdir(os.path.join(args.things_dir,
-        'image-database_things', cat[6:]))
-    image_list.sort()
-
-    # Loop across image exemplars
-    images = []
-    for ifile in image_list:
-
-        # Load the images
-        img_path = os.path.join(args.things_dir, 'image-database_things',
-            cat[6:], ifile)
-        img = Image.open(img_path)
-        img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
-        img = np.array(img)
-        images.append(img)
+    # Find correct subfolder
+    img_path = None
+    for root, _, files in os.walk(os.path.join(args.things_dir)):
+        if file in files:
+            img_path = os.path.join(root, file)
+            break
     
-    # Format the images
-    images = np.array(images)
-    images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
+    # Load and transform the image
+    img = Image.open(img_path)
+    img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
+    img = np.array(img).transpose(2, 0, 1)  # Convert to (C, H, W)
+    images.append(img)
 
-    # Generate the in silico EEG responses
-    eeg_cat, metadata = berg.encode(model, images, return_metadata=True)
+# Format the images to a numpy array
+images = np.array(images)
 
-    # Store the in silico EEG responses averaged across image exemplars
-    eeg.append(np.mean(eeg_cat, 0))
-
-    # Delete unused variables
-    del eeg_cat, images
-
-# Convert the EEG responses to numpy arrays
-eeg = np.array(eeg)
+# Generate the in silico EEG responses
+eeg, metadata = berg.encode(model, images, return_metadata=True)
 times = metadata['eeg']['times']
 
 
@@ -166,8 +148,8 @@ for t in tqdm(range(len(times))):
         for i2 in range(i1):
 
             # Select the image condition data
-            eeg_cond_1 = eeg[i1,:,:,t] # type: ignore
-            eeg_cond_2 = eeg[i2,:,:,t] # type: ignore
+            eeg_cond_1 = eeg[i1,:,:,t]
+            eeg_cond_2 = eeg[i2,:,:,t]
 
             # SVM target vectors
             y_train = np.zeros(((len(eeg_cond_1)-1)*2))
@@ -249,4 +231,4 @@ os.makedirs(save_dir, exist_ok=True)
 file_name = 'rsa_sub-' + format(args.subject, '02') + '_channels-' + \
     '-'.join(args.channels) + '.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

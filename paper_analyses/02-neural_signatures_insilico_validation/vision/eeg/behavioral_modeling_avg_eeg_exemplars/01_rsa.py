@@ -1,4 +1,4 @@
-"""Perform RSA between in silico MEG responses and behavioral embeddings.
+"""Perform RSA between in silico EEG responses and behavioral embeddings.
 
 Parameters
 ----------
@@ -131,7 +131,7 @@ for cat in tqdm(test_img_concepts_THINGS):
         img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
         img = np.array(img)
         images.append(img)
-    
+
     # Format the images
     images = np.array(images)
     images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
@@ -153,6 +153,9 @@ times = metadata['eeg']['times']
 # =============================================================================
 # Create the EEG RDM (pairwise decoding)
 # =============================================================================
+# The code assumes EEG responses in the format:
+# (Image conditions × Repeats × Channels × Time points)
+
 # Results array of shape:
 # (Image conditions × Image conditions × EEG time points)
 eeg_rdm = np.zeros((len(eeg), len(eeg), len(times)), dtype=np.float32)

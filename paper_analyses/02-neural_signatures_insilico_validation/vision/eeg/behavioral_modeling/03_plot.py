@@ -43,11 +43,16 @@ os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
-# Load the RSA results
+# Load the results
 # =============================================================================
 rsa = {}
 ci_rsa = {}
+ci_peak_latency_ci_rsa = {}
 sig_rsa = {}
+decoding = {}
+ci_decoding = {}
+ci_peak_latency_ci_decoding = {}
+sig_decoding = {}
 
 for chan in args.channels:
 
@@ -59,22 +64,29 @@ for chan in args.channels:
 
     rsa[chan] = results['rsa']
     ci_rsa[chan] = results['ci_rsa']
+    ci_peak_latency_ci_rsa[chan] = results['ci_peak_latency_ci_rsa']
     sig_rsa[chan] = results['sig_rsa']
+    decoding[chan] = results['decoding']
+    ci_decoding[chan] = results['ci_decoding']
+    ci_peak_latency_ci_decoding[chan] = results['ci_peak_latency_ci_decoding']
+    sig_decoding[chan] = results['sig_decoding']
     times = results['times']
 
 
 # =============================================================================
 # Plot parameters
 # =============================================================================
-fontsize = 30
+fontsize = 25
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams["font.weight"] = "normal"
+matplotlib.rcParams["axes.labelweight"] = "normal"
 matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
 matplotlib.rcParams['axes.linewidth'] = 1
-matplotlib.rcParams['xtick.major.width'] = 1
+matplotlib.rcParams['xtick.major.width'] = 0
 matplotlib.rcParams['xtick.major.size'] = 5
-matplotlib.rcParams['ytick.major.width'] = 1
+matplotlib.rcParams['ytick.major.width'] = 0
 matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
@@ -90,53 +102,115 @@ colors = [(139/255, 0/255, 0/255), (166/255, 77/255, 121/255),
 
 
 # =============================================================================
-# Plot the RSA results
+# Plot the EEG pairwise decoding results
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(13, 7))
-axs = np.reshape(axs, (-1)) # type: ignore
+axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
-axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
-    linewidth=3, alpha=.5, label='_nolegend_')
+axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
+    linewidth=2, alpha=.5, label='_nolegend_')
 
 # Loop across channel groups
 for c, chan in enumerate(args.channels):
 
     # Plot the RSA subject-average results
-    axs[0].plot(times, np.mean(rsa[chan], 0), color=colors[c], linewidth=3)
+    axs[0].plot(times, np.mean(decoding[chan], 0), color=colors[c],
+        linewidth=2)
 
     # Plot the peak time point
-    peak = times[np.argsort(np.mean(rsa[chan], 0))[::-1][0]]
-    text = str(int(peak * 1000)) + ' ms'
+    peak = times[np.argmax(np.mean(decoding[chan], 0))]
+    max_dec = max(np.mean(decoding[chan], 0))
+    axs[0].scatter(peak, max_dec, color=colors[c], s=200, marker='o',
+        edgecolors='k', linewidths=1, zorder=3)
+    ci_low = peak - ci_peak_latency_ci_decoding[chan][0]
+    ci_up = ci_peak_latency_ci_decoding[chan][1] - peak
+    conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
+    axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
+        elinewidth=1, capsize=3)
+
+    # Plot the confidence intervals
+    axs[0].fill_between(times, ci_decoding[chan][1], ci_decoding[chan][0],
+        color=colors[c], alpha=.2)
+
+    # Plot the significance time points
+    # sig = np.empty(len(times))
+    # sig[:] = np.nan
+    # sig[sig_decoding[chan]] = 48
+    # plt.scatter(times, sig, s=100, color=colors[c])
+
+# x-axis parameters
+axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
+xticks = [0, .1, .2, .3, .4, .5]
+xlabels = [0, 100, 200, 300, 400, 500]
+plt.xticks(ticks=xticks, labels=xlabels)
+axs[0].set_xlim(left=min(times), right=max(times))
+
+# y-axis parameters
+axs[0].set_ylabel("Decoding accuracy (%)", fontsize=fontsize)
+yticks = [50, 60, 70, 80, 90, 100]
+ylabels = [50, 60, 70, 80, 90, 100]
+plt.yticks(ticks=yticks, labels=ylabels)
+axs[0].set_ylim(bottom=47, top=100)
+
+# Save the figure
+file_name = os.path.join(save_dir, 'decoding_channels-'+
+    '-'.join(args.channels)+'.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+
+
+# =============================================================================
+# Plot the RSA results
+# =============================================================================
+fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
+    figsize=(13, 7))
+axs = np.reshape(axs, (-1))
+
+# Plot the chance and stimulus onset dashed lines
+axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
+    linewidth=2, alpha=.5, label='_nolegend_')
+
+# Loop across channel groups
+for c, chan in enumerate(args.channels):
+
+    # Plot the RSA subject-average results
+    axs[0].plot(times, np.mean(rsa[chan], 0), color=colors[c], linewidth=2)
+
+    # Plot the peak time point
+    peak = times[np.argmax(np.mean(rsa[chan], 0))]
     max_rsa = max(np.mean(rsa[chan], 0))
-    axs[0].text(peak, max_rsa+0.015, text, color='k', ha='center')
-    #axs[0].plot([peak, peak], [max_rsa, -100], '--', linewidth=3, color=colors[0],
-    #    alpha=.5)
+    axs[0].scatter(peak, max_rsa, color=colors[c], s=200, marker='o',
+        edgecolors='k', linewidths=1, zorder=3)
+    ci_low = peak - ci_peak_latency_ci_rsa[chan][0]
+    ci_up = ci_peak_latency_ci_rsa[chan][1] - peak
+    conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
+    axs[0].errorbar(peak, max_rsa, xerr=conf_int, fmt="none", ecolor='k',
+        elinewidth=1, capsize=3)
 
     # Plot the confidence intervals
     axs[0].fill_between(times, ci_rsa[chan][1], ci_rsa[chan][0],
         color=colors[c], alpha=.2)
 
     # Plot the significance time points
-    sig = np.empty(len(times))
-    sig[:] = np.nan
-    sig[sig_rsa[chan]] = -.015
-    plt.scatter(times, sig, s=100, color=colors[c])
+    # sig = np.empty(len(times))
+    # sig[:] = np.nan
+    # sig[sig_rsa[chan]] = -.015
+    # plt.scatter(times, sig, s=100, color=colors[c])
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
 xticks = [0, .1, .2, .3, .4, .5]
 xlabels = [0, 100, 200, 300, 400, 500]
-plt.xticks(ticks=xticks, labels=xlabels) # type: ignore
+plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
 
 # y-axis parameters
 axs[0].set_ylabel("RSA (Pearson's $r$)", fontsize=fontsize)
-yticks = [0, 0.05, 0.1, 0.15, 0.2, 0.25]
-ylabels = [0, 0.05, 0.1, 0.15, 0.2, 0.25]
-plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
-axs[0].set_ylim(bottom=-.03, top=.25)
+yticks = [0, 0.1, 0.2]
+ylabels = [0, 0.1, 0.2]
+plt.yticks(ticks=yticks, labels=ylabels)
+axs[0].set_ylim(bottom=-.02, top=.2)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'rsa_channels-'+'-'.join(args.channels)+

@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=psn_denoising-behavioral_modeling-01_rsa
 #SBATCH --mail-type=end
-#SBATCH --mem=3000
-#SBATCH --time=10:00:00
+#SBATCH --mem=1750
+#SBATCH --time=12:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -11,7 +11,7 @@ declare -a subject_all
 declare -a psn_mode_all
 index=0
 for s in `seq 1 10` ; do
-    for p in '1' '2' ; do
+    for p in '3' ; do
         subject_all[$index]=$s
         psn_mode_all[$index]=$p
         ((index=index+1))

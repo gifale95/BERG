@@ -84,21 +84,31 @@ rsa = np.asarray(rsa)
 # =============================================================================
 # Bootstrap the confidence intervals (CIs)
 # =============================================================================
-ci_decoding = np.zeros((2, len(times))) # type: ignore
-ci_rsa = np.zeros((2, len(times))) # type: ignore
+ci_decoding = np.zeros((2, len(times)))
+ci_rsa = np.zeros((2, len(times)))
+ci_peak_latency_ci_decoding = np.zeros((2))
+ci_peak_latency_ci_rsa = np.zeros((2))
 
-decoding_dist = np.zeros((args.n_iter, len(times))) # type: ignore
-rsa_dist = np.zeros((args.n_iter, len(times))) # type: ignore
+decoding_dist = np.zeros((args.n_iter, len(times)))
+rsa_dist = np.zeros((args.n_iter, len(times)))
+peak_lat_dec_dist = np.zeros((args.n_iter))
+peak_lat_rsa_dist = np.zeros((args.n_iter))
 
 for i in tqdm(range(args.n_iter)):
     idx = resample(np.arange(len(args.subjects)))
     decoding_dist[i] = np.mean(decoding[idx], 0)
     rsa_dist[i] = np.mean(rsa[idx], 0)
+    peak_lat_dec_dist[i] = times[np.argmax(np.mean(decoding[idx], 0))]
+    peak_lat_rsa_dist[i] = times[np.argmax(np.mean(rsa[idx], 0))]
 
 ci_decoding[0] = np.percentile(decoding_dist, 2.5, axis=0)
 ci_decoding[1] = np.percentile(decoding_dist, 97.5, axis=0)
 ci_rsa[0] = np.percentile(rsa_dist, 2.5, axis=0)
 ci_rsa[1] = np.percentile(rsa_dist, 97.5, axis=0)
+ci_peak_latency_ci_decoding[0] = np.percentile(peak_lat_dec_dist, 2.5, axis=0)
+ci_peak_latency_ci_decoding[1] = np.percentile(peak_lat_dec_dist, 97.5, axis=0)
+ci_peak_latency_ci_rsa[0] = np.percentile(peak_lat_rsa_dist, 2.5, axis=0)
+ci_peak_latency_ci_rsa[1] = np.percentile(peak_lat_rsa_dist, 97.5, axis=0)
 
 
 # =============================================================================
@@ -122,11 +132,13 @@ results = {
     'rsa': rsa,
     'ci_decoding': ci_decoding,
     'ci_rsa': ci_rsa,
+    'ci_peak_latency_ci_decoding': ci_peak_latency_ci_decoding,
+    'ci_peak_latency_ci_rsa': ci_peak_latency_ci_rsa,
     'pval_decoding': pval_decoding,
     'pval_rsa': pval_rsa,
     'sig_decoding': sig_decoding,
     'sig_rsa': sig_rsa,
-    'times': times # type: ignore
+    'times': times
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
@@ -135,4 +147,4 @@ os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats_' + 'channels-' + '-'.join(args.channels) + '.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

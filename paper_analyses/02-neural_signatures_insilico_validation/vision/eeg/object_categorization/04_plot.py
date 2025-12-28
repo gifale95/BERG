@@ -80,15 +80,17 @@ eeg_mds_single_sub = results['eeg_mds_single_sub']
 # =============================================================================
 # Plot parameters
 # =============================================================================
-fontsize = 30
+fontsize = 25
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams["font.weight"] = "normal"
+matplotlib.rcParams["axes.labelweight"] = "normal"
 matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
 matplotlib.rcParams['axes.linewidth'] = 1
-matplotlib.rcParams['xtick.major.width'] = 1
+matplotlib.rcParams['xtick.major.width'] = 0
 matplotlib.rcParams['xtick.major.size'] = 5
-matplotlib.rcParams['ytick.major.width'] = 1
+matplotlib.rcParams['ytick.major.width'] = 0
 matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
@@ -114,7 +116,7 @@ axs = np.reshape(axs, (-1)) # type: ignore
 
 # Plot the chance and stimulus onset dashed lines
 axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
-    linewidth=3, alpha=.5, label='_nolegend_')
+    linewidth=2, alpha=.5, label='_nolegend_')
 
 # Plot the decoding subject-average results
 # Exemplar decoding
@@ -122,7 +124,7 @@ label = 'Exemplar'
 peak = times[np.argmax(np.mean(decoding_exemplars, 0))]
 max_dec = max(np.mean(decoding_exemplars, 0))
 axs[0].plot(times, np.mean(decoding_exemplars, 0), color=colors[0],
-    linewidth=3, label=label)
+    linewidth=2, label=label)
 axs[0].fill_between(times, ci_exemplars[0], ci_exemplars[1], color=colors[0],
     alpha=.2)
 axs[0].scatter(peak, max_dec, color=colors[0], s=200, marker='o',
@@ -130,7 +132,7 @@ axs[0].scatter(peak, max_dec, color=colors[0], s=200, marker='o',
 ci_low = peak - ci_peak_latency_exemplars[0]
 ci_up = ci_peak_latency_exemplars[1] - peak
 conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor=colors[0],
+axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
     elinewidth=1, capsize=3)
 
 # Animacy decoding
@@ -139,14 +141,14 @@ peak = times[np.argmax(np.mean(decoding_animacy, 0))]
 max_dec = max(np.mean(decoding_animacy, 0))
 axs[0].scatter(peak, max_dec, color=colors[1], s=200, marker='o',
     edgecolors='k', linewidths=1, zorder=3)
-axs[0].plot(times, np.mean(decoding_animacy, 0), color=colors[1], linewidth=3,
+axs[0].plot(times, np.mean(decoding_animacy, 0), color=colors[1], linewidth=2,
     label=label)
 axs[0].fill_between(times, ci_animacy[0], ci_animacy[1], color=colors[1],
     alpha=.2)
 ci_low = peak - ci_peak_latency_animacy[0]
 ci_up = ci_peak_latency_animacy[1] - peak
 conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor=colors[1],
+axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
     elinewidth=1, capsize=3)
 
 # Object decoding
@@ -155,14 +157,14 @@ peak = times[np.argmax(np.mean(decoding_objects, 0))]
 max_dec = max(np.mean(decoding_objects, 0))
 axs[0].scatter(peak, max_dec, color=colors[2], s=200, marker='o',
     edgecolors='k', linewidths=1, zorder=3)
-axs[0].plot(times, np.mean(decoding_objects, 0), color=colors[2], linewidth=3,
+axs[0].plot(times, np.mean(decoding_objects, 0), color=colors[2], linewidth=2,
     label=label)
 axs[0].fill_between(times, ci_objects[0], ci_objects[1], color=colors[2],
     alpha=.2)
 ci_low = peak - ci_peak_latency_objects[0]
 ci_up = ci_peak_latency_objects[1] - peak
 conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor=colors[2],
+axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
     elinewidth=1, capsize=3)
 
 # x-axis parameters

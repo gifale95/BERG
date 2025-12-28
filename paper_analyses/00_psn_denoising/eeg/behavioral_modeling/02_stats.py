@@ -70,7 +70,7 @@ for s, sub in enumerate(args.subjects):
         if s == 0:
             decoding[key] = []
             idx_tril = np.tril_indices(len(val), -1)
-        rsa[key].append(np.mean(val[idx_tril], 0))
+        decoding[key].append(np.mean(val[idx_tril], 0))
 
     # Get the RSA results
     for key, val in results['rsa'].items():
@@ -79,7 +79,7 @@ for s, sub in enumerate(args.subjects):
         rsa[key].append(val)
 
     # EEG metadata
-    times = results['metadata']['eeg']['times']
+    times = results['metadata']['times']
 
 # Convert to numpy arrays
 for key, val in decoding.items():

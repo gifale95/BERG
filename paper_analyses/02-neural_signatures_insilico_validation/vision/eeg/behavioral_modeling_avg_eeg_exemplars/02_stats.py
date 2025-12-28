@@ -1,4 +1,4 @@
-"""Compute the stats on the results of the RSA analysis between in silico MEG
+"""Compute the stats on the results of the RSA analysis between in silico EEG
 responses and behavioral embeddings. The stats consist of bootstrapped 95%
 confidence intervals and significance estimates.
 
@@ -28,7 +28,6 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.utils import resample
 from scipy.stats import ttest_1samp
-import itertools
 from statsmodels.stats.multitest import multipletests
 
 

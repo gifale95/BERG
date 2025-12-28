@@ -45,7 +45,6 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 # Load the results
 # =============================================================================
-
 results_dir = os.path.join(args.berg_dir, 'psn_denoising', 'eeg',
     'behavioral_modeling', 'stats', 'stats_psn_mode-'+str(args.psn_mode)+'.npy')
 
@@ -101,11 +100,11 @@ fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
 axs = np.reshape(axs, (-1)) # type: ignore
 
 # Plot the chance and stimulus onset dashed lines
-axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
+axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=3, alpha=.5, label='_nolegend_')
 
 # Loop across EEG data types
-for c, key in enumerate(decoding.keys):
+for c, key in enumerate(decoding.keys()):
 
     # Plot the subject-average results
     axs[0].plot(times, np.mean(decoding[key], 0), color=colors[c], linewidth=2,
@@ -116,10 +115,10 @@ for c, key in enumerate(decoding.keys):
         color=colors[c], alpha=.2)
 
     # Plot the significance time points
-    sig = np.empty(len(times))
-    sig[:] = np.nan
-    sig[sig_decoding[key]] = 50 - 0.75 * c
-    plt.scatter(times, sig, s=100, color=colors[c])
+    # sig = np.empty(len(times))
+    # sig[:] = np.nan
+    # sig[sig_decoding[key]] = 50 - 0.75 * c
+    # plt.scatter(times, sig, s=100, color=colors[c])
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
@@ -133,10 +132,10 @@ axs[0].set_ylabel("Decoding accuracy (%)", fontsize=fontsize)
 yticks = [50, 60, 70, 80, 90, 100]
 ylabels = [50, 60, 70, 80, 90, 100]
 plt.yticks(ticks=yticks, labels=ylabels)
-axs[0].set_ylim(bottom=-45, top=100)
+axs[0].set_ylim(bottom=45, top=100)
 
 # Legend
-axs[0].legend(loc=0, ncol=1, fontsize=fontsize, frameon=False)
+axs[0].legend(loc=0, ncol=1, fontsize=20, frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'decoding_psn_mode-'+str(args.psn_mode)+'.svg')
@@ -155,7 +154,7 @@ axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=3, alpha=.5, label='_nolegend_')
 
 # Loop across EEG data types
-for c, key in enumerate(rsa.keys):
+for c, key in enumerate(rsa.keys()):
 
     # Plot the subject-average results
     axs[0].plot(times, np.mean(rsa[key], 0), color=colors[c], linewidth=2,
@@ -186,8 +185,60 @@ plt.yticks(ticks=yticks, labels=ylabels)
 axs[0].set_ylim(bottom=-.03, top=.25)
 
 # Legend
-axs[0].legend(loc=0, ncol=1, fontsize=fontsize, frameon=False)
+axs[0].legend(loc=0, ncol=1, fontsize=20, frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'rsa_psn_mode-'+str(args.psn_mode)+'.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+
+
+
+
+
+
+
+fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
+    figsize=(13, 7))
+axs = np.reshape(axs, (-1)) # type: ignore
+
+# Plot the chance and stimulus onset dashed lines
+axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
+    linewidth=3, alpha=.5, label='_nolegend_')
+
+# Loop across EEG data types
+for c, key in enumerate(['insilico_eeg_vtr-0_ste-1', 'insilico_eeg_vtr-1_ste-0']):
+
+    # Plot the subject-average results
+    axs[0].plot(times, np.mean(decoding[key], 0), color=colors[c], linewidth=2,
+        label=key)
+
+    # Plot the confidence intervals
+    axs[0].fill_between(times, ci_decoding[key][1], ci_decoding[key][0],
+        color=colors[c], alpha=.2)
+
+    # Plot the significance time points
+    # sig = np.empty(len(times))
+    # sig[:] = np.nan
+    # sig[sig_decoding[key]] = 50 - 0.75 * c
+    # plt.scatter(times, sig, s=100, color=colors[c])
+
+# x-axis parameters
+axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
+xticks = [0, .1, .2, .3, .4, .5]
+xlabels = [0, 100, 200, 300, 400, 500]
+plt.xticks(ticks=xticks, labels=xlabels)
+axs[0].set_xlim(left=min(times), right=max(times))
+
+# y-axis parameters
+axs[0].set_ylabel("Decoding accuracy (%)", fontsize=fontsize)
+yticks = [50, 60, 70, 80, 90, 100]
+ylabels = [50, 60, 70, 80, 90, 100]
+plt.yticks(ticks=yticks, labels=ylabels)
+axs[0].set_ylim(bottom=45, top=100)
+
+# Legend
+axs[0].legend(loc=0, ncol=1, fontsize=20, frameon=False)
+
+# Save the figure
+file_name = os.path.join(save_dir, 'decoding_psn_mode-'+str(args.psn_mode)+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')

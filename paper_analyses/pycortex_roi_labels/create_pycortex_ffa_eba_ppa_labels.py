@@ -65,6 +65,7 @@ vertex_data = cortex.Vertex(data, subject, vmin=1, vmax=4, cmap='gist_rainbow',
     with_colorbar=False)
 
 # Create the ROI labels: https://gallantlab.org/pycortex/generated/cortex.utils.add_roi.html
-cortex.utils.add_roi(vertex_data, name='ffa_eba_ppa_'+args.hemisphere)
+cortex.utils.add_roi(vertex_data, name='ffa_eba_ppa_'+args.hemisphere,
+    with_colorbar=False)
 
 # Then manually draw the ROI labels using Inkscape paths.
