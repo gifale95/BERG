@@ -57,6 +57,18 @@ class FMRIEncodingModel(BaseModelInterface):
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     N_VERTICES = 7831  # Total visual cortex vertices
     
+    # Mapping from subject prefix to MOSAIC dataset name
+    DATASET_NAME_MAPPING = {
+        'BOLD5000': 'BOLD5000',
+        'deeprecon': 'deeprecon',
+        'GOD': 'GenericObjectDecoding',
+        'NSD': 'NaturalScenesDataset',
+        'THINGS': 'THINGS',
+        'BMD': 'BOLDMomentsDataset',
+        'NOD': 'NaturalObjectDataset',
+        'HAD': 'HumanActionsDataset'
+    }
+    
     def __init__(
         self, 
         subject: str, 
@@ -88,6 +100,7 @@ class FMRIEncodingModel(BaseModelInterface):
         self.inference = None
         
         # Parse dataset and subject number from subject string
+        # dataset_name will be the full MOSAIC dataset name (e.g., 'NaturalScenesDataset')
         self.dataset_name, self.subject_number = self._parse_subject_id(subject)
         
         # Parameters from selection
@@ -116,7 +129,8 @@ class FMRIEncodingModel(BaseModelInterface):
         Returns
         -------
         tuple
-            (dataset_name, subject_number) where subject_number is an int
+            (mosaic_dataset_name, subject_number) where mosaic_dataset_name is the 
+            full name expected by MOSAIC inference and subject_number is an int
         """
         if '-' not in subject:
             raise InvalidParameterError(
@@ -129,7 +143,7 @@ class FMRIEncodingModel(BaseModelInterface):
                 f"Subject ID must be in format 'DATASET-##', got '{subject}'"
             )
         
-        dataset_name = parts[0]
+        dataset_prefix = parts[0]
         try:
             subject_number = int(parts[1])
         except ValueError:
@@ -137,7 +151,16 @@ class FMRIEncodingModel(BaseModelInterface):
                 f"Subject number must be an integer, got '{parts[1]}'"
             )
         
-        return dataset_name, subject_number
+        # Map the short prefix to the full MOSAIC dataset name
+        if dataset_prefix not in self.DATASET_NAME_MAPPING:
+            raise InvalidParameterError(
+                f"Unknown dataset prefix '{dataset_prefix}'. "
+                f"Valid prefixes: {list(self.DATASET_NAME_MAPPING.keys())}"
+            )
+        
+        mosaic_dataset_name = self.DATASET_NAME_MAPPING[dataset_prefix]
+        
+        return mosaic_dataset_name, subject_number
         
     def _validate_parameters(self):
         """
