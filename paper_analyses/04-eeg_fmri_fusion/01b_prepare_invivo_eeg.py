@@ -91,7 +91,7 @@ for t in tqdm(range(eeg_train.shape[2])):
     scaler_param.append(scaler_param_t)
 
     # Transform the EEG responses with PCA, and store the parameters
-    pca = PCA(n_components=eeg_train_zscore.shape[1]) 
+    pca = PCA(n_components=eeg_train_zscore.shape[1], random_state=20200220) 
     pca.fit(eeg_train_zscore)
     eeg_train_pca[:,:,t] = pca.transform(eeg_train_zscore)
     eeg_test_pca[:,:,t] = pca.transform(eeg_test_zscore)
@@ -127,5 +127,5 @@ with h5py.File(os.path.join(save_dir, file_name_train), 'w') as f:
 with h5py.File(os.path.join(save_dir, file_name_test), 'w') as f:
     f.create_dataset('eeg', data=eeg_test_pca, dtype=np.float32)
 
-np.save(os.path.join(save_dir, 'scaler_param'), scaler_param)
-np.save(os.path.join(save_dir, 'pca_param'), pca_param)
+np.save(os.path.join(save_dir, 'scaler_param.npy'), scaler_param)
+np.save(os.path.join(save_dir, 'pca_param.npy'), pca_param)

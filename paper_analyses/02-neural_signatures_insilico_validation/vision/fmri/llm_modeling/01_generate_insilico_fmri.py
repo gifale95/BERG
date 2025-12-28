@@ -90,7 +90,7 @@ for sub in args.subjects:
 
 
 # =============================================================================
-# Generate and save the in silico fMRI responses
+# Generate the in silico fMRI responses
 # =============================================================================
     # Generate the in silico fMRI responses
     fmri, metadata = berg.encode(model, images, return_metadata=True)
