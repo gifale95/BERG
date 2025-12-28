@@ -1,8 +1,8 @@
 """Prepare MOSAIC fMRI datasets for encoding model training:
- - download noise ceilings from MOSAIC HDF5 files,
- - create subject-wise metadata with stimulus mappings,
- - add ROI binary masks for visual and full cortex spaces,
- - map noise ceilings to prediction spaces.
+ - Download noise ceilings from MOSAIC HDF5 files,
+ - Download metadata and create subject-wise metadata with stimulus mappings,
+ - Add ROI binary masks for visual and full cortex spaces,
+ - Map noise ceilings to prediction spaces.
 
 After preparation, metadata files contain stimulus information, train/test
 splits, ROI masks, and noise ceiling estimates for each subject.
@@ -13,9 +13,6 @@ Parameters
 ----------
 berg_dir : str
     Directory of the BERG framework.
-download_nc : bool
-    Whether to download noise ceilings from MOSAIC HDF5 files (optional).
-
 
 Output Files Created (per subject):
 ────────────────────────────────────────────────────────────────
@@ -77,7 +74,6 @@ download_noise_ceilings(nc_dir)
 # Generate metadata linking neural responses to stimulus information for
 # each subject. Includes participant demographics, stimulus filenames,
 # train/test splits, and subject-specific repetition counts.
-print("")
 print("Creating subject metadata")
 download_metadata(metadata_dir)
 
@@ -86,7 +82,6 @@ download_metadata(metadata_dir)
 # =============================================================================
 # Create binary masks indicating which vertices belong to each brain region
 # for both visual cortex space (7831 vertices) and full cortex space (57051 vertices).
-print("")
 print("Adding ROI masks to metadata")
 add_roi_masks_to_metadata(metadata_dir)
 
@@ -95,6 +90,5 @@ add_roi_masks_to_metadata(metadata_dir)
 # =============================================================================
 # Map full cortex noise ceilings (91282 vertices) to prediction spaces:
 # visual cortex (7831 vertices) and full cortex (57051 vertices).
-print("")
 print("Adding noise ceilings to metadata")
 add_noise_ceilings_to_metadata(metadata_dir, nc_dir)

@@ -122,7 +122,7 @@ def download_metadata(save_path):
         print(f"Saved {len(subject_ids)} subjects to {ds_dir}/")
 
 
-def download_noise_ceilings(output_dir="./noise_ceilings"):
+def download_noise_ceilings(output_dir):
     """
     Download test noise ceiling values from MOSAIC datasets.
     
