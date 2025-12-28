@@ -176,6 +176,9 @@ Metadata
    * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| parietal
      - ``(5176,)``
      - Parietal regions
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| nsdgeneral
+     - ``(18461,)``
+     - NSD general visual cortex mask
    * - **rh_fsaverage_rois**
      - ``dict``
      - Right hemisphere ROI definitions on fsaverage surface
@@ -272,6 +275,9 @@ Metadata
    * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| parietal
      - ``(4818,)``
      - Parietal regions
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| nsdgeneral
+     - ``(19523,)``
+     - NSD general visual cortex mask
 
 **'encoding_models'**
 
@@ -291,30 +297,54 @@ Metadata
    * - test_img_num
      - ``(515,)``
      - Image indices used for testing
-   * - lh_correlation
+   * - lh_correlation_nsdcore
      - ``(163842,)``
-     - Left hemisphere correlation scores
-   * - rh_correlation
+     - Left hemisphere correlation scores (NSD core)
+   * - rh_correlation_nsdcore
      - ``(163842,)``
-     - Right hemisphere correlation scores
-   * - lh_r2
+     - Right hemisphere correlation scores (NSD core)
+   * - lh_r2_nsdcore
      - ``(163842,)``
-     - Left hemisphere R² scores
-   * - rh_r2
+     - Left hemisphere R² scores (NSD core)
+   * - rh_r2_nsdcore
      - ``(163842,)``
-     - Right hemisphere R² scores
-   * - lh_noise_ceiling
+     - Right hemisphere R² scores (NSD core)
+   * - lh_noise_ceiling_nsdcore
      - ``(163842,)``
-     - Left hemisphere noise ceiling
-   * - rh_noise_ceiling
+     - Left hemisphere noise ceiling (NSD core)
+   * - rh_noise_ceiling_nsdcore
      - ``(163842,)``
-     - Right hemisphere noise ceiling
-   * - lh_explained_variance
+     - Right hemisphere noise ceiling (NSD core)
+   * - lh_explained_variance_nsdcore
      - ``(163842,)``
-     - Left hemisphere % explained variance
-   * - rh_explained_variance
+     - Left hemisphere % explained variance (NSD core)
+   * - rh_explained_variance_nsdcore
      - ``(163842,)``
-     - Right hemisphere % explained variance
+     - Right hemisphere % explained variance (NSD core)
+   * - lh_correlation_nsdsynthetic
+     - ``(163842,)``
+     - Left hemisphere correlation scores (NSD synthetic)
+   * - rh_correlation_nsdsynthetic
+     - ``(163842,)``
+     - Right hemisphere correlation scores (NSD synthetic)
+   * - lh_r2_nsdsynthetic
+     - ``(163842,)``
+     - Left hemisphere R² scores (NSD synthetic)
+   * - rh_r2_nsdsynthetic
+     - ``(163842,)``
+     - Right hemisphere R² scores (NSD synthetic)
+   * - lh_noise_ceiling_nsdsynthetic
+     - ``(163842,)``
+     - Left hemisphere noise ceiling (NSD synthetic)
+   * - rh_noise_ceiling_nsdsynthetic
+     - ``(163842,)``
+     - Right hemisphere noise ceiling (NSD synthetic)
+   * - lh_explained_variance_nsdsynthetic
+     - ``(163842,)``
+     - Left hemisphere % explained variance (NSD synthetic)
+   * - rh_explained_variance_nsdsynthetic
+     - ``(163842,)``
+     - Right hemisphere % explained variance (NSD synthetic)
 
 
 Input

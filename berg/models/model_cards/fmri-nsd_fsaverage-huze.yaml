@@ -76,6 +76,7 @@ metadata: |
           ventral                        : (9680,)     - Ventral visual stream
           lateral                        : (10253,)    - Lateral visual stream
           parietal                       : (5176,)     - Parietal regions
+          nsdgeneral                     : (18461,)    - NSD general visual cortex mask
       rh_fsaverage_rois                  : dict        - Right hemisphere ROI definitions on fsaverage surface
           V1v                            : (444,)      - Visual area 1 ventral
           V1d                            : (991,)      - Visual area 1 dorsal
@@ -108,18 +109,27 @@ metadata: |
           ventral                        : (9393,)     - Ventral visual stream
           lateral                        : (10535,)    - Lateral visual stream
           parietal                       : (4818,)     - Parietal regions
+          nsdgeneral                     : (19523,)    - NSD general visual cortex mask
   'encoding_models':
       train_img_num                      : (9000,)     - Image indices used for training
       val_img_num                        : (485,)      - Image indices used for validation
       test_img_num                       : (515,)      - Image indices used for testing
-      lh_correlation                     : (163842,)   - Left hemisphere correlation scores
-      rh_correlation                     : (163842,)   - Right hemisphere correlation scores
-      lh_r2                              : (163842,)   - Left hemisphere R² scores
-      rh_r2                              : (163842,)   - Right hemisphere R² scores
-      lh_noise_ceiling                   : (163842,)   - Left hemisphere noise ceiling
-      rh_noise_ceiling                   : (163842,)   - Right hemisphere noise ceiling
-      lh_explained_variance              : (163842,)   - Left hemisphere % explained variance
-      rh_explained_variance              : (163842,)   - Right hemisphere % explained variance
+      lh_correlation_nsdcore             : (163842,)   - Left hemisphere correlation scores (NSD core)
+      rh_correlation_nsdcore             : (163842,)   - Right hemisphere correlation scores (NSD core)
+      lh_r2_nsdcore                      : (163842,)   - Left hemisphere R² scores (NSD core)
+      rh_r2_nsdcore                      : (163842,)   - Right hemisphere R² scores (NSD core)
+      lh_noise_ceiling_nsdcore           : (163842,)   - Left hemisphere noise ceiling (NSD core)
+      rh_noise_ceiling_nsdcore           : (163842,)   - Right hemisphere noise ceiling (NSD core)
+      lh_explained_variance_nsdcore      : (163842,)   - Left hemisphere % explained variance (NSD core)
+      rh_explained_variance_nsdcore      : (163842,)   - Right hemisphere % explained variance (NSD core)
+      lh_correlation_nsdsynthetic        : (163842,)   - Left hemisphere correlation scores (NSD synthetic)
+      rh_correlation_nsdsynthetic        : (163842,)   - Right hemisphere correlation scores (NSD synthetic)
+      lh_r2_nsdsynthetic                 : (163842,)   - Left hemisphere R² scores (NSD synthetic)
+      rh_r2_nsdsynthetic                 : (163842,)   - Right hemisphere R² scores (NSD synthetic)
+      lh_noise_ceiling_nsdsynthetic      : (163842,)   - Left hemisphere noise ceiling (NSD synthetic)
+      rh_noise_ceiling_nsdsynthetic      : (163842,)   - Right hemisphere noise ceiling (NSD synthetic)
+      lh_explained_variance_nsdsynthetic : (163842,)   - Left hemisphere % explained variance (NSD synthetic)
+      rh_explained_variance_nsdsynthetic : (163842,)   - Right hemisphere % explained variance (NSD synthetic)
 
 # Input stimulus information
 input:

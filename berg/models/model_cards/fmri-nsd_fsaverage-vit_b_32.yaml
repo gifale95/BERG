@@ -67,6 +67,7 @@ metadata: |
           ventral                        : (9680,)     - Ventral visual stream
           lateral                        : (10253,)    - Lateral visual stream
           parietal                       : (5176,)     - Parietal regions
+          nsdgeneral                     : (18461,)    - NSD general visual cortex mask
       rh_fsaverage_rois                  : dict        - Right hemisphere ROI definitions on fsaverage surface
           V1v                            : (444,)      - Visual area 1 ventral
           V1d                            : (991,)      - Visual area 1 dorsal
@@ -99,6 +100,7 @@ metadata: |
           ventral                        : (9393,)     - Ventral visual stream
           lateral                        : (10535,)    - Lateral visual stream
           parietal                       : (4818,)     - Parietal regions
+          nsdgeneral                     : (19523,)    - NSD general visual cortex mask
   'encoding_models':
       train_img_num                      : (9000,)     - Image indices used for training
       val_img_num                        : (485,)      - Image indices used for validation
