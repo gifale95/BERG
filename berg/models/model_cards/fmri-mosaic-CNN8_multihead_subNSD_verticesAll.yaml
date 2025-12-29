@@ -35,13 +35,30 @@ description: |
   error loss, and batch size 64 with random sampling across all NSD subjects. Maximum training duration was 
   100 epochs.
 
-  **Model testing partition.** Models are evaluated on held-out naturalistic test images and artificial test
-  images (shapes, noise patterns, gratings) from the NSD test set.
+  **Model testing partition.** Models are evaluated on held-out naturalistic test images
+  and on artificial test images from the NSD stimulus set. Naturalistic images consist
+  of real-world photographs (objects, scenes, people, animals) drawn from standard
+  computer vision datasets. Artificial images consist of controlled, non-naturalistic
+  visual stimuli such as gratings, noise patterns, checkerboards, and simple geometric
+  shapes that do not follow natural image statistics.
 
-  **Noise ceiling.** Vertex-wise noise ceilings were computed from split-half reliability across repeated
-  stimulus presentations using single-trial beta values. The noise ceiling SNR (ncsnr) represents the ratio
-  of signal to noise standard deviations, with the final noise ceiling expressed as percent variance explained:
-  NC = (ncsnr² / (ncsnr² + 1/n_avg)) × 100, where n_avg is the number of trials averaged.
+  **Noise ceiling.** Vertex-wise noise ceilings were computed using the MOSAIC
+  preprocessing pipeline from GLMsingle beta estimates. Noise ceilings are provided
+  separately for naturalistic training stimuli, naturalistic test stimuli, and artificial
+  stimuli. For each stimulus group, reliability was estimated from split-half correlations
+  across repeated stimulus presentations and converted to a noise ceiling signal-to-noise
+  ratio (NCSNR). Noise ceilings are reported for single-trial estimates (n-1) and for
+  repeat-averaged responses (n-avg).
+
+  **Vertex space mapping.** The model predicts 57,051 vertices, a subset of the full
+  HCP grayordinate space (91,282 vertices), because it only covers cortical surface vertices
+  within Glasser atlas groups 1-22 (excluding subcortical structures and remaining cortical
+  areas). ROI vertex indices from the Glasser atlas are defined in the full 91k space and
+  cannot be directly applied to the 57k model predictions. To align model predictions with
+  noise ceilings or extract ROI-specific responses: (1) expand predictions to full 91k space
+  using the vertex mapping from GlasserGroups 1-22, (2) index using ROI vertex indices or
+  noise ceiling values at the expanded positions. All noise ceilings and ROI definitions are
+  provided in the full 91k HCP grayordinate space for direct indexing after expansion.
 
   **Output.** The model predicts fMRI responses for 57,051 vertices spanning most of cortex, corresponding
   to MMP 1.0 parcellation GlasserGroups 1-22 (visual, somatomotor, auditory, and higher-order association
@@ -49,19 +66,19 @@ description: |
 
 metadata: |
   'fmri':
-      participant_id         : str         - Subject identifier (e.g., 'sub-01')
-      age                    : int         - Subject age
-      sex                    : str         - Subject sex
-      filenames              : (70850,)    - Stimulus filenames
-      alias                  : (70850,)    - Stimulus aliases
-      source                 : (70850,)    - Stimulus source datasets
-      train_idx              : (69566,)    - Training trial indices
-      test_idx               : (1284,)     - Test trial indices
-      train_filenames        : (69566,)    - Training stimulus filenames
-      test_filenames         : (1284,)     - Test stimulus filenames
-      reps                   : (1284,)     - Stimulus repetition counts per subject
-      roi_all_vertices       : dict        - ROI masks for all cortical vertices (57051,) (L and R versions available)
-          L_V1, L_V2, L_V3, L_V3A, L_V3B, L_V3CD, L_V4, L_V4t, L_V6, L_V6A, L_V7, L_V8,
+      participant_id       : str      - Subject identifier
+      age                  : int      - Subject age
+      sex                  : str      - Subject sex
+      filenames            : (70850,)   - All stimulus filenames
+      alias                : (70850,)   - Stimulus aliases
+      source               : (70850,)   - Stimulus sources
+      train_idx            : (69566,)   - Indices of training trials
+      test_idx             : (1284,)    - Indices of test trials
+      train_filenames      : (69566,)   - Training stimulus filenames
+      test_filenames       : (1284,)    - Test stimulus filenames
+      reps                 : (70850,)   - Repetition count per stimulus for this subject
+      roi                  : dict - ROI name → vertex indices in full HCP grayordinate space (e.g., 'L_V1' → array([3319, 3320, ...]))
+        L_V1, L_V2, L_V3, L_V3A, L_V3B, L_V3CD, L_V4, L_V4t, L_V6, L_V6A, L_V7, L_V8,
                   L_VMV1, L_VMV2, L_VMV3, L_VVC, L_FFC, L_FST, L_IPS1, L_LO1, L_LO2, L_LO3,
                   L_MST, L_MT, L_PH, L_PIT, L_1, L_2, L_3a, L_3b, L_4, L_5L, L_5m, L_5mv, L_6a, L_6d, L_6ma, L_6mp,
                        L_6r, L_6v, L_43, L_A1, L_A4, L_A5, L_LBelt, L_MBelt, L_PBelt, L_RI, L_TA2, 
@@ -79,8 +96,14 @@ metadata: |
                        L_TPOJ2, L_TPOJ3, L_VIP, L_a10p, L_a24, L_a24pr, L_a32pr, L_a47r,
                        L_a9-46v, L_d23ab, L_d32, L_i6-8, L_p10p, L_p24, L_p24pr, L_p32, L_p32pr,
                        L_p47r, L_p9-46v, L_pOFC, L_s32, L_s6-8, L_v23ab
+
   'encoding_models':
-      test_n-avg_noiseceiling_all_vertices : (57051,) - Max explainable variance per vertex (trial-averaged test set)
+      test_n-avg_noiseceiling       : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
+      test_n-1_noiseceiling         : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
+      train_n-avg_noiseceiling      : (91282,) - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
+      train_n-1_noiseceiling        : (91282,) - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using single-trial beta estimates.
+      artificial_n-avg_noiseceiling : (91282,) - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using repeat-averaged beta estimates.
+      artificial_n-1_noiseceiling   : (91282,) - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using single-trial beta estimates.
 
 # Input stimulus information
 input:

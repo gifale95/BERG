@@ -78,7 +78,8 @@ class FMRIEncodingModel(BaseModelInterface):
     VALID_SUBJECTS = [s for s in model_info["parameters"]["subject"]["valid_values"] if s != "all"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
-    N_VERTICES = 7831  # Visual cortex vertices
+    N_VERTICES_MODEL = 7831   # Model output size (visual cortex)
+    N_VERTICES_FULL = 91282   # Full fsLR32k brain space
     
     def __init__(
         self, 
@@ -148,9 +149,10 @@ class FMRIEncodingModel(BaseModelInterface):
             
             if "voxel_index" in self.selection:
                 vertex_index = self.selection["voxel_index"]
+                # Validate as binary array in full 91k space
                 validated_array = validate_binary_array(
                     vertex_index,
-                    expected_length=self.N_VERTICES,
+                    expected_length=self.N_VERTICES_FULL,
                     parameter_name="voxel_index"
                 )
                 self.vertex_index = validated_array.astype(bool)
@@ -249,11 +251,21 @@ class FMRIEncodingModel(BaseModelInterface):
     
     def _prepare_vertex_mask(self):
         """
-        Prepare the combined vertex selection mask from ROI and/or vertex indices.
+        Prepare vertex selection from ROI and/or vertex indices in full 91k space.
+        Stores indices that will be used to slice predictions after expanding to 91k.
         Uses the first subject in the list for loading ROI metadata.
         """
-        # Initialize mask as all False
-        combined_mask = np.zeros(self.N_VERTICES, dtype=bool)
+        from mosaic.models.transforms import SelectROIs
+        
+        # Get the vertex mapping (7831 visual model space → 91k full space)
+        visual_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 6)])
+        self.vertex_mapping = np.array(visual_selector.selected_roi_indices)
+        
+        # Validate that vertex indices don't exceed model prediction range
+        max_model_vertex = self.vertex_mapping.max()
+        
+        # Initialize combined indices set
+        selected_indices = set()
         
         # Add ROI-based selection
         if self.roi_list is not None:
@@ -264,26 +276,40 @@ class FMRIEncodingModel(BaseModelInterface):
                 subject=first_subject
             )
             
-            roi_all_vertices = metadata["fmri"]["roi_all_vertices"]
+            # Get ROI indices from metadata (organized by dataset)
+            # metadata structure: {dataset_name: {subject_key: metadata_dict}}
+            dataset_name = list(metadata.keys())[0]
+            subject_key = list(metadata[dataset_name].keys())[0]
+            roi_dict = metadata[dataset_name][subject_key]["fmri"]["roi"]
             
             # Combine all selected ROIs
             for roi in self.roi_list:
-                if roi not in roi_all_vertices:
+                if roi not in roi_dict:
                     raise InvalidParameterError(
-                        f"ROI '{roi}' not found in metadata. Available ROIs: {list(roi_all_vertices.keys())}"
+                        f"ROI '{roi}' not found in metadata. Available ROIs: {list(roi_dict.keys())}"
                     )
-                roi_mask = roi_all_vertices[roi].astype(bool)
-                combined_mask = combined_mask | roi_mask
+                roi_indices = roi_dict[roi]
+                selected_indices.update(roi_indices)
         
         # Add direct vertex index selection
         if self.vertex_index is not None:
-            combined_mask = combined_mask | self.vertex_index
+            vertex_indices = np.where(self.vertex_index)[0]
+            
+            # Validate indices are within model prediction range
+            if np.any(vertex_indices > max_model_vertex):
+                invalid_indices = vertex_indices[vertex_indices > max_model_vertex]
+                raise InvalidParameterError(
+                    f"voxel_index contains indices beyond model prediction range. "
+                    f"Max allowed: {max_model_vertex}, found: {invalid_indices[:5].tolist()}..."
+                )
+            
+            selected_indices.update(vertex_indices)
         
-        # Store the combined mask
-        self.vertex_mask = combined_mask
+        # Convert to sorted array and store
+        self.vertex_mask = np.array(sorted(selected_indices))
         
         # Check if any vertices are selected
-        if not np.any(self.vertex_mask):
+        if len(self.vertex_mask) == 0:
             raise InvalidParameterError(
                 "No vertices selected. Please check your ROI and vertex index specifications."
             )
@@ -365,10 +391,15 @@ class FMRIEncodingModel(BaseModelInterface):
                 
                 # Convert to float32
                 insilico_fmri_responses = insilico_fmri_responses.astype(np.float32)
-                
+            
                 # Apply vertex selection if specified
                 if self.vertex_mask is not None:
-                    insilico_fmri_responses = insilico_fmri_responses[:, self.vertex_mask]
+                    # Expand predictions to full 91k space
+                    predictions_full = np.full((insilico_fmri_responses.shape[0], self.N_VERTICES_FULL), np.nan, dtype=np.float32)
+                    predictions_full[:, self.vertex_mapping] = insilico_fmri_responses
+                    
+                    # Slice using selected vertex indices
+                    insilico_fmri_responses = predictions_full[:, self.vertex_mask]
                 
                 processed_dataset[subject_key] = insilico_fmri_responses
             
