@@ -1,4 +1,4 @@
-model_id: fmri-mosaic-cnn8_visual
+model_id: fmri-mosaic-CNN8_multihead_subAll_verticesVisual
 modality: fMRI
 training_dataset: MOSAIC (all datasets)
 species: Human
@@ -80,19 +80,24 @@ input:
 
 # Output information
 output:
-  type: "numpy.ndarray"
-  shape: [batch_size, n_vertices]
-  description: "The output is a 2D array containing in silico fMRI responses for visual cortex."
+  type: "dict"
+  shape: "{dataset_name: {subject_id: [batch_size, n_vertices], ...}, ...}"
+  description: |
+    Nested dictionary with structure organized by dataset and subject:
+    {"BOLD5000": {"sub-01": array, "sub-02": array}, 
+     "NaturalScenesDataset": {"sub-01": array, "sub-02": array}, ...}
+    where each array has shape [batch_size, n_vertices] and dtype float32.
   dimensions:
     - name: "batch_size"
       description: "Number of stimuli in the batch."
     - name: "n_vertices"
       description: "Number of visual cortex vertices (up to 7,831, based on ROI/vertex selection)."
 
+
 # Model parameters and their usage
 parameters:
   subject:
-    type: str
+    type: "str, list[str], or 'all'"
     required: true
     valid_values: [
       'BOLD5000-01', 'BOLD5000-02', 'BOLD5000-03', 'BOLD5000-04',
@@ -109,7 +114,14 @@ parameters:
       'HAD-21', 'HAD-22', 'HAD-23', 'HAD-24', 'HAD-25', 'HAD-26', 'HAD-27', 'HAD-28', 'HAD-29', 'HAD-30'
     ]
     example: "NSD-01"
-    description: "Subject identifier in format DATASET-##, where DATASET is one of the eight constituent datasets and ## is the zero-padded subject number (01-30 depending on dataset)."
+    description: |
+      Subject identifier(s). Can be:
+      - Single subject: "NSD-01"
+      - Multiple subjects: ["NSD-01", "BOLD5000-02", "THINGS-01"]
+      - All subjects: "all"
+      Format is DATASET-## where DATASET is one of the eight constituent datasets 
+      and ## is the zero-padded subject number. When multiple subjects are specified, 
+      the same ROI/vertex selection is applied to all subjects.
     function: "get_encoding_model"
 
   selection:

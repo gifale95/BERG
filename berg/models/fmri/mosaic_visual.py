@@ -2,12 +2,13 @@ import os
 import numpy as np
 import torch
 import yaml
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union, List
+from collections import defaultdict
 from berg.interfaces.base_model import BaseModelInterface
 from berg.core.model_registry import register_model
 from berg.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
 from berg.core.parameter_validator import (
-    validate_subject,
+    validate_subjects,
     validate_selection_keys,
     validate_roi,
     validate_binary_array,
@@ -23,10 +24,27 @@ except ImportError:
         "MOSAIC is required for this model. Please install it with: pip install mosaic"
     )
 
+# Mapping from subject prefix to MOSAIC dataset name
+DATASET_NAME_MAPPING = {
+    'BOLD5000': 'BOLD5000',
+    'deeprecon': 'deeprecon',
+    'GOD': 'GenericObjectDecoding',
+    'NSD': 'NaturalScenesDataset',
+    'THINGS': 'THINGS',
+    'BMD': 'BOLDMomentsDataset',
+    'NOD': 'NaturalObjectDataset',
+    'HAD': 'HumanActionsDataset'
+}
+
 
 # Load model_info from YAML
 def load_model_info():
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-mosaic-cnn8_visual.yaml")
+    yaml_path = os.path.join(
+        os.path.dirname(__file__), 
+        "..", 
+        "model_cards", 
+        "fmri-mosaic-CNN8_multihead_subAll_verticesVisual.yaml"
+    )
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -41,73 +59,62 @@ register_model(
     class_name="FMRIEncodingModel",
     modality=model_info.get("modality", "fmri"),
     training_dataset=model_info.get("training_dataset", "mosaic_all"),
-    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-mosaic-cnn8_visual.yaml")
+    yaml_path=os.path.join(
+        os.path.dirname(__file__), 
+        "..", 
+        "model_cards", 
+        "fmri-mosaic-CNN8_multihead_subAll_verticesVisual.yaml"
+    )
 )
 
 
 class FMRIEncodingModel(BaseModelInterface):
     """
     fMRI encoding model using MOSAIC CNN8 architecture
-    for visual cortex across all MOSAIC datasets (93 subjects).
+    for visual cortex across multiple datasets.
     """
     
     MODEL_ID = model_info["model_id"]
-    VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
+    VALID_SUBJECTS = [s for s in model_info["parameters"]["subject"]["valid_values"] if s != "all"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
-    N_VERTICES = 7831  # Total visual cortex vertices
-    
-    # Mapping from subject prefix to MOSAIC dataset name
-    DATASET_NAME_MAPPING = {
-        'BOLD5000': 'BOLD5000',
-        'deeprecon': 'deeprecon',
-        'GOD': 'GenericObjectDecoding',
-        'NSD': 'NaturalScenesDataset',
-        'THINGS': 'THINGS',
-        'BMD': 'BOLDMomentsDataset',
-        'NOD': 'NaturalObjectDataset',
-        'HAD': 'HumanActionsDataset'
-    }
+    N_VERTICES = 7831  # Visual cortex vertices
     
     def __init__(
         self, 
-        subject: str, 
+        subject: Union[str, List[str]],
         selection: Optional[Dict] = None,
         device: str = "auto", 
         berg_dir: Optional[str] = None
     ):
         """
-        Initialize the MOSAIC fMRI encoding model for a specific subject.
+        Initialize the MOSAIC fMRI encoding model for visual cortex across datasets.
         
         Parameters
         ----------
-        subject : str
-            Subject identifier in format DATASET-## (e.g., 'NSD-01', 'THINGS-02').
-            Valid datasets: BOLD5000, deeprecon, GOD, NSD, THINGS, BMD, NOD, HAD.
+        subject : str, list of str, or "all"
+            Subject identifier(s) in format DATASET-## (e.g., "NSD-01", "BOLD5000-02"),
+            or "all" for all subjects.
         selection : dict, optional
             Specifies which outputs to include in the model responses.
+            Applied equally to all subjects when multiple subjects are specified.
             - roi: List of region labels (e.g., ['L_V1', 'R_V1'])
             - voxel_index: Binary one-hot encoded vector (7831,) indicating vertices to include
         device : str, default="auto"
             Target device for computation. Options are "cpu", "cuda", or "auto".
-            If "auto", will use GPU if available, otherwise CPU.
         berg_dir : str, optional
             Path to the BERG directory containing metadata files.
         """
-        self.subject = subject
+        self.subject_input = subject
         self.berg_dir = berg_dir
         self.model = None
         self.inference = None
-        
-        # Parse dataset and subject number from subject string
-        # dataset_name will be the full MOSAIC dataset name (e.g., 'NaturalScenesDataset')
-        self.dataset_name, self.subject_number = self._parse_subject_id(subject)
         
         # Parameters from selection
         self.selection = selection
         self.roi_list = None
         self.vertex_index = None
-        self.vertex_mask = None  # Combined mask for output selection
+        self.vertex_mask = None
         
         # Validate Parameters
         self._validate_parameters()
@@ -116,61 +123,13 @@ class FMRIEncodingModel(BaseModelInterface):
         if device == "auto":
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
-    
-    def _parse_subject_id(self, subject: str) -> tuple:
-        """
-        Parse subject identifier into dataset name and subject number.
-        
-        Parameters
-        ----------
-        subject : str
-            Subject identifier (e.g., 'NSD-01', 'THINGS-02')
-        
-        Returns
-        -------
-        tuple
-            (mosaic_dataset_name, subject_number) where mosaic_dataset_name is the 
-            full name expected by MOSAIC inference and subject_number is an int
-        """
-        if '-' not in subject:
-            raise InvalidParameterError(
-                f"Subject ID must be in format 'DATASET-##', got '{subject}'"
-            )
-        
-        parts = subject.split('-')
-        if len(parts) != 2:
-            raise InvalidParameterError(
-                f"Subject ID must be in format 'DATASET-##', got '{subject}'"
-            )
-        
-        dataset_prefix = parts[0]
-        try:
-            subject_number = int(parts[1])
-        except ValueError:
-            raise InvalidParameterError(
-                f"Subject number must be an integer, got '{parts[1]}'"
-            )
-        
-        # Map the short prefix to the full MOSAIC dataset name
-        if dataset_prefix not in self.DATASET_NAME_MAPPING:
-            raise InvalidParameterError(
-                f"Unknown dataset prefix '{dataset_prefix}'. "
-                f"Valid prefixes: {list(self.DATASET_NAME_MAPPING.keys())}"
-            )
-        
-        mosaic_dataset_name = self.DATASET_NAME_MAPPING[dataset_prefix]
-        
-        return mosaic_dataset_name, subject_number
         
     def _validate_parameters(self):
         """
         Validate the subject and selection values against the model info.
-        
-        Verifies that the provided subject ID, ROI names, and vertex indices
-        are among the supported values defined in the model's YAML.
         """
-        # Validate subject
-        validate_subject(self.subject, self.VALID_SUBJECTS)
+        # Validate subjects using the unified validator
+        self.subjects = validate_subjects(self.subject_input, self.VALID_SUBJECTS)
         
         if self.selection is not None:
             # Validate selection keys
@@ -178,7 +137,6 @@ class FMRIEncodingModel(BaseModelInterface):
             
             # Individual validations
             if "roi" in self.selection:
-                # Validate each ROI in the list
                 roi_list = self.selection["roi"]
                 if not isinstance(roi_list, list):
                     raise InvalidParameterError(
@@ -190,7 +148,6 @@ class FMRIEncodingModel(BaseModelInterface):
             
             if "voxel_index" in self.selection:
                 vertex_index = self.selection["voxel_index"]
-                # Use the standard binary array validator
                 validated_array = validate_binary_array(
                     vertex_index,
                     expected_length=self.N_VERTICES,
@@ -198,6 +155,62 @@ class FMRIEncodingModel(BaseModelInterface):
                 )
                 self.vertex_index = validated_array.astype(bool)
         
+    def _parse_subject_string(self, subject_str: str) -> tuple:
+        """
+        Parse a subject string like "NSD-01" into dataset and subject number.
+        
+        Parameters
+        ----------
+        subject_str : str
+            Subject identifier in format DATASET-##
+            
+        Returns
+        -------
+        tuple
+            (mosaic_dataset_name, subject_number) e.g., ("NaturalScenesDataset", 1)
+        """
+        parts = subject_str.split('-')
+        if len(parts) != 2:
+            raise InvalidParameterError(
+                f"Subject string must be in format DATASET-##, got '{subject_str}'"
+            )
+        
+        dataset_prefix = parts[0]
+        
+        if dataset_prefix not in DATASET_NAME_MAPPING:
+            raise InvalidParameterError(
+                f"Unknown dataset prefix '{dataset_prefix}' in subject '{subject_str}'. "
+                f"Valid prefixes: {list(DATASET_NAME_MAPPING.keys())}"
+            )
+        
+        try:
+            subject_num = int(parts[1])
+        except ValueError:
+            raise InvalidParameterError(
+                f"Subject number must be an integer, got '{parts[1]}' in '{subject_str}'"
+            )
+        
+        mosaic_dataset_name = DATASET_NAME_MAPPING[dataset_prefix]
+        return mosaic_dataset_name, subject_num
+    
+    def _organize_subjects_by_dataset(self) -> Dict[str, List[int]]:
+        """
+        Organize the subject list by dataset for MOSAIC inference.
+        
+        Returns
+        -------
+        dict
+            Dictionary mapping MOSAIC dataset names to lists of subject numbers
+            e.g., {"NaturalScenesDataset": [1, 2, 3], "BOLD5000": [1, 4]}
+        """
+        organized = defaultdict(list)
+        
+        for subject_str in self.subjects:
+            mosaic_dataset_name, subject_num = self._parse_subject_string(subject_str)
+            organized[mosaic_dataset_name].append(subject_num)
+        
+        return dict(organized)
+    
     def load_model(self, device: str = "auto") -> None:
         """
         Load MOSAIC model weights and prepare for inference.
@@ -206,7 +219,6 @@ class FMRIEncodingModel(BaseModelInterface):
         ----------
         device : str, default="auto"
             Target device for computation. Options are "cpu", "cuda", or "auto".
-            If "auto", will use GPU if available, otherwise CPU.
         """
         try:
             # Load the MOSAIC model for visual cortex
@@ -229,7 +241,8 @@ class FMRIEncodingModel(BaseModelInterface):
             if self.selection is not None:
                 self._prepare_vertex_mask()
             
-            print(f"MOSAIC model loaded on {self.device} for subject {self.subject}")
+            subject_str = "all subjects" if len(self.subjects) == len(self.VALID_SUBJECTS) else f"{len(self.subjects)} subject(s)"
+            print(f"MOSAIC model loaded on {self.device} for {subject_str}")
         
         except Exception as e:
             raise ModelLoadError(f"Failed to load MOSAIC model: {str(e)}")
@@ -237,22 +250,21 @@ class FMRIEncodingModel(BaseModelInterface):
     def _prepare_vertex_mask(self):
         """
         Prepare the combined vertex selection mask from ROI and/or vertex indices.
-        
-        This method combines ROI-based selection and direct vertex index selection
-        into a single boolean mask that will be used to slice the model output.
+        Uses the first subject in the list for loading ROI metadata.
         """
         # Initialize mask as all False
         combined_mask = np.zeros(self.N_VERTICES, dtype=bool)
         
         # Add ROI-based selection
         if self.roi_list is not None:
-            # Load metadata to get ROI masks
+            # Load metadata using first subject
+            first_subject = self.subjects[0]
             metadata = self.get_metadata(
                 berg_dir=self.berg_dir,
-                subject=self.subject
+                subject=first_subject
             )
             
-            roi_all_vertices = metadata["fmri"]["roi_visual_vertices"]
+            roi_all_vertices = metadata["fmri"]["roi_all_vertices"]
             
             # Combine all selected ROIs
             for roi in self.roi_list:
@@ -275,30 +287,29 @@ class FMRIEncodingModel(BaseModelInterface):
             raise InvalidParameterError(
                 "No vertices selected. Please check your ROI and vertex index specifications."
             )
-    
+        
     def generate_response(
         self, 
         stimulus: np.ndarray,
         show_progress: bool = True
-    ) -> np.ndarray:
+    ) -> Dict[str, Dict[str, np.ndarray]]:
         """
         Generate in silico fMRI responses for a batch of images.
         
         Parameters
         ----------
         stimulus : np.ndarray
-            Images for which the in silico neural responses are generated. Must be
-            a 4-D numpy array of shape (Batch size x 3 RGB Channels x Width x
-            Height) consisting of integer values in range [0, 255].
-            Images should have square dimensions.
+            Images for which neural responses are generated. Shape: (batch, 3, height, width)
+            with integer values in range [0, 255].
         show_progress : bool, default=True
             Whether to show a progress bar during encoding.
         
         Returns
         -------
-        np.ndarray
-            Predicted fMRI responses with shape (batch_size, n_vertices).
-            The number of vertices depends on the selection (up to 7,831).
+        dict
+            Nested dict organized by dataset and subject:
+            {"BOLD5000": {"sub-01": array}, "NaturalScenesDataset": {"sub-01": array, ...}, ...}
+            where each array has shape (batch_size, n_vertices) and dtype float32.
         """
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -312,7 +323,6 @@ class FMRIEncodingModel(BaseModelInterface):
             )
         
         # Convert numpy array to PIL Images for MOSAIC
-        # MOSAIC expects list of PIL Images
         images = []
         for i in range(stimulus.shape[0]):
             # Convert from (C, H, W) to (H, W, C)
@@ -324,46 +334,56 @@ class FMRIEncodingModel(BaseModelInterface):
             pil_img = Image.fromarray(img_array, mode='RGB')
             images.append(pil_img)
         
+        # Organize subjects by dataset for MOSAIC
+        names_and_subjects = self._organize_subjects_by_dataset()
+        
         # Run inference through MOSAIC
-        # Specify the dataset and subject number
         results = self.inference.run(
             images=images,
-            names_and_subjects={self.dataset_name: [self.subject_number]}
+            names_and_subjects=names_and_subjects
         )
         
-        # Extract responses for the specified subject
-        # Results are organized as: results[dataset_name][f"sub-{subject_number:02d}"]
-        dataset_results = results[self.dataset_name]
-        subject_key = f"sub-{self.subject_number:02d}"
+        # Process results organized by dataset
+        processed_results = {}
         
-        if subject_key not in dataset_results:
-            raise ModelLoadError(
-                f"Subject {subject_key} not found in MOSAIC results for dataset {self.dataset_name}. "
-                f"Available subjects: {list(dataset_results.keys())}"
-            )
+        for mosaic_dataset_name, subject_nums in names_and_subjects.items():
+            if mosaic_dataset_name not in results:
+                raise ModelLoadError(
+                    f"Dataset '{mosaic_dataset_name}' not found in MOSAIC results. "
+                    f"Available datasets: {list(results.keys())}"
+                )
+            
+            dataset_results = results[mosaic_dataset_name]
+            processed_dataset = {}
+            
+            for subject_num in subject_nums:
+                subject_key = f"sub-{subject_num:02d}"
+                
+                insilico_fmri_responses = dataset_results[subject_key]
+                if isinstance(insilico_fmri_responses, torch.Tensor):
+                    insilico_fmri_responses = insilico_fmri_responses.cpu().numpy()
+                
+                # Convert to float32
+                insilico_fmri_responses = insilico_fmri_responses.astype(np.float32)
+                
+                # Apply vertex selection if specified
+                if self.vertex_mask is not None:
+                    insilico_fmri_responses = insilico_fmri_responses[:, self.vertex_mask]
+                
+                processed_dataset[subject_key] = insilico_fmri_responses
+            
+            processed_results[mosaic_dataset_name] = processed_dataset
         
-        # Get the tensor and convert to numpy
-        insilico_fmri_responses = dataset_results[subject_key]
-        if isinstance(insilico_fmri_responses, torch.Tensor):
-            insilico_fmri_responses = insilico_fmri_responses.cpu().numpy()
-        
-        # Apply vertex selection if specified
-        if self.vertex_mask is not None:
-            insilico_fmri_responses = insilico_fmri_responses[:, self.vertex_mask]
-        
-        # Convert to float32
-        insilico_fmri_responses = insilico_fmri_responses.astype(np.float32)
-        
-        return insilico_fmri_responses
+        return processed_results
     
     @classmethod
     def get_metadata(
         cls, 
         berg_dir: Optional[str] = None,
-        subject: Optional[str] = None,
+        subject: Optional[Union[str, List[str]]] = None,
         model_instance: Optional[BaseModelInterface] = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Retrieve metadata for the model.
         
@@ -371,27 +391,24 @@ class FMRIEncodingModel(BaseModelInterface):
         ----------
         berg_dir : str, optional
             Path to BERG directory containing metadata.
-        subject : str, optional
-            Subject identifier (e.g., 'NSD-01', 'THINGS-02').
+        subject : str, list of str, or "all", optional
+            Subject identifier(s) (e.g., "NSD-01", ["BOLD5000-01", "NSD-02"], "all").
         model_instance : BaseModelInterface, optional
             If provided, extract parameters from this model instance.
-        **kwargs
-            Additional parameters.
         
         Returns
         -------
-        Dict[str, Any]
-            Metadata dictionary containing fMRI info, ROI masks, and noise ceilings.
+        dict
+            Nested dict organized by dataset:
+            {dataset_name: {subject_key: metadata_dict}}
         """
-        # If model_instance is provided, extract parameters from it
+        # Extract parameters from model instance if provided
         if model_instance is not None:
             berg_dir = model_instance.berg_dir
-            subject = model_instance.subject
-        
-        # If this method is called on an instance (rather than the class)
+            subject = model_instance.subjects
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             berg_dir = cls.berg_dir
-            subject = cls.subject
+            subject = cls.subjects
         
         # Validate required parameters
         missing_params = []
@@ -405,38 +422,57 @@ class FMRIEncodingModel(BaseModelInterface):
                 f"Required parameters missing: {', '.join(missing_params)}"
             )
         
-        # Validate subject
-        validate_subject(subject, cls.VALID_SUBJECTS)
-        
-        # Parse subject ID to get dataset and subject number
-        if '-' not in subject:
-            raise InvalidParameterError(
-                f"Subject ID must be in format 'DATASET-##', got '{subject}'"
-            )
-        
-        dataset_name, subject_number = subject.split('-', 1)
-        
-        # Build metadata path
-        # Format: {berg_dir}/.../metadata/{DATASET}/sub-{##}.npy
-        file_name = os.path.join(
-            berg_dir,
-            'encoding_models',
-            'modality-fmri',
-            'train_dataset-mosaic',
-            'model-mosaic',
-            'metadata',
-            dataset_name,
-            f'sub-{subject_number}.npy'
-        )
-        
-        # Load metadata if file exists
-        if os.path.exists(file_name):
-            metadata = np.load(file_name, allow_pickle=True).item()
-            return metadata
+        # Validate and normalize subjects
+        if isinstance(subject, (str, list)):
+            subjects = validate_subjects(subject, cls.VALID_SUBJECTS)
         else:
-            raise FileNotFoundError(
-                f"Metadata file not found: {file_name}"
+            subjects = subject
+        
+        # Load metadata for each subject
+        metadata_dict = defaultdict(dict)
+        
+        for subject_str in subjects:
+            # Parse subject string
+            parts = subject_str.split('-')
+            if len(parts) != 2:
+                raise InvalidParameterError(
+                    f"Subject string must be in format DATASET-##, got '{subject_str}'"
+                )
+            
+            dataset_prefix = parts[0]
+            subject_num = int(parts[1])
+            
+            # Get MOSAIC dataset name
+            if dataset_prefix not in DATASET_NAME_MAPPING:
+                raise InvalidParameterError(
+                    f"Unknown dataset prefix '{dataset_prefix}' in subject '{subject_str}'"
+                )
+            
+            mosaic_dataset_name = DATASET_NAME_MAPPING[dataset_prefix]
+            
+            # Build metadata path
+            file_name = os.path.join(
+                berg_dir,
+                'encoding_models',
+                'modality-fmri',
+                'train_dataset-mosaic',
+                'model-mosaic',
+                'metadata',
+                dataset_prefix,
+                f'sub-{subject_num:02d}.npy'
             )
+            
+            # Load metadata if file exists
+            if os.path.exists(file_name):
+                metadata = np.load(file_name, allow_pickle=True).item()
+                subject_key = f"sub-{subject_num:02d}"
+                metadata_dict[mosaic_dataset_name][subject_key] = metadata
+            else:
+                raise FileNotFoundError(
+                    f"Metadata file not found: {file_name}"
+                )
+        
+        return dict(metadata_dict)
     
     @classmethod
     def get_model_id(cls) -> str:

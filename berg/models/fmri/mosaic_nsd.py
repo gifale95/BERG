@@ -2,12 +2,12 @@ import os
 import numpy as np
 import torch
 import yaml
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Union, List
 from berg.interfaces.base_model import BaseModelInterface
 from berg.core.model_registry import register_model
 from berg.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
 from berg.core.parameter_validator import (
-    validate_subject,
+    validate_subjects,
     validate_selection_keys,
     validate_roi,
     validate_binary_array,
@@ -26,7 +26,7 @@ except ImportError:
 
 # Load model_info from YAML
 def load_model_info():
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-mosaic_nsd-cnn8_nsd_all.yaml")
+    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-mosaic-CNN8_multihead_subNSD_verticesAll.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -41,7 +41,7 @@ register_model(
     class_name="FMRIEncodingModel",
     modality=model_info.get("modality", "fmri"),
     training_dataset=model_info.get("training_dataset", "mosaic_nsd"),
-    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-mosaic_nsd-cnn8_nsd_all.yaml")
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-mosaic-CNN8_multihead_subNSD_verticesAll.yaml")
 )
 
 
@@ -52,36 +52,37 @@ class FMRIEncodingModel(BaseModelInterface):
     """
     
     MODEL_ID = model_info["model_id"]
-    VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
+    VALID_SUBJECTS = [s for s in model_info["parameters"]["subject"]["valid_values"] if isinstance(s, int)]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     N_VERTICES = 57051  # Total cortical vertices
     
     def __init__(
         self, 
-        subject: int, 
+        subject: Union[int, List[int], str],
         selection: Optional[Dict] = None,
         device: str = "auto", 
         berg_dir: Optional[str] = None
     ):
         """
-        Initialize the MOSAIC fMRI encoding model for a specific subject.
+        Initialize the MOSAIC fMRI encoding model for one or more subjects.
         
         Parameters
         ----------
-        subject : int
-            Subject number from the NSD dataset (1-8).
+        subject : int, list of int, or "all"
+            Subject number(s) from the NSD dataset (1-8), or "all" for all subjects.
         selection : dict, optional
             Specifies which outputs to include in the model responses.
+            Applied equally to all subjects when multiple subjects are specified.
             - roi: List of region labels (e.g., ['L_V1', 'R_V1'])
-            - vertices: Binary one-hot encoded vector (57051,) indicating vertices to include
+            - voxel_index: Binary one-hot encoded vector (57051,) indicating vertices to include
         device : str, default="auto"
             Target device for computation. Options are "cpu", "cuda", or "auto".
             If "auto", will use GPU if available, otherwise CPU.
         berg_dir : str, optional
             Path to the BERG directory containing metadata files.
         """
-        self.subject = subject
+        self.subject_input = subject
         self.berg_dir = berg_dir
         self.model = None
         self.inference = None
@@ -108,7 +109,7 @@ class FMRIEncodingModel(BaseModelInterface):
         are among the supported values defined in the model's YAML.
         """
         # Validate subject
-        validate_subject(self.subject, self.VALID_SUBJECTS)
+        self.subjects = validate_subjects(self.subject_input, self.VALID_SUBJECTS)
         
         if self.selection is not None:
             # Validate selection keys
@@ -135,7 +136,6 @@ class FMRIEncodingModel(BaseModelInterface):
                     parameter_name="voxel_index"
                 )
                 self.vertex_index = validated_array.astype(bool)
-                print(self.vertex_index)
         
     def load_model(self, device: str = "auto") -> None:
         """
@@ -168,7 +168,8 @@ class FMRIEncodingModel(BaseModelInterface):
             if self.selection is not None:
                 self._prepare_vertex_mask()
             
-            print(f"MOSAIC model loaded on {self.device} for subject {self.subject}")
+            subject_str = "all subjects" if len(self.subjects) == len(self.VALID_SUBJECTS) else f"subject(s) {self.subjects}"
+            print(f"MOSAIC model loaded on {self.device} for {subject_str}")
         
         except Exception as e:
             raise ModelLoadError(f"Failed to load MOSAIC model: {str(e)}")
@@ -176,9 +177,7 @@ class FMRIEncodingModel(BaseModelInterface):
     def _prepare_vertex_mask(self):
         """
         Prepare the combined vertex selection mask from ROI and/or vertex indices.
-        
-        This method combines ROI-based selection and direct vertex index selection
-        into a single boolean mask that will be used to slice the model output.
+        Uses the first subject in the list for loading ROI metadata.
         """
         # Initialize mask as all False
         combined_mask = np.zeros(self.N_VERTICES, dtype=bool)
@@ -188,7 +187,7 @@ class FMRIEncodingModel(BaseModelInterface):
             # Load metadata to get ROI masks
             metadata = self.get_metadata(
                 berg_dir=self.berg_dir,
-                subject=self.subject
+                subject=self.subjects[0]
             )
             
             roi_all_vertices = metadata["fmri"]["roi_all_vertices"]
@@ -219,25 +218,24 @@ class FMRIEncodingModel(BaseModelInterface):
         self, 
         stimulus: np.ndarray,
         show_progress: bool = True
-    ) -> np.ndarray:
+    ) -> Dict[str, Dict[str, np.ndarray]]:
         """
         Generate in silico fMRI responses for a batch of images.
         
         Parameters
         ----------
         stimulus : np.ndarray
-            Images for which the in silico neural responses are generated. Must be
-            a 4-D numpy array of shape (Batch size x 3 RGB Channels x Width x
-            Height) consisting of integer values in range [0, 255].
-            Images should have square dimensions.
+            Images for which neural responses are generated. Shape: (batch, 3, height, width)
+            with integer values in range [0, 255].
         show_progress : bool, default=True
             Whether to show a progress bar during encoding.
         
         Returns
         -------
-        np.ndarray
-            Predicted fMRI responses with shape (batch_size, n_vertices).
-            The number of vertices depends on the selection (up to 57,051).
+        dict
+            Nested dict with structure:
+            {"NaturalScenesDataset": {"sub-01": array, "sub-02": array, ...}}
+            where each array has shape (batch_size, n_vertices) and dtype float32.
         """
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -264,45 +262,42 @@ class FMRIEncodingModel(BaseModelInterface):
             images.append(pil_img)
         
         # Run inference through MOSAIC
-        # Specify the subject as a list with single integer
         results = self.inference.run(
             images=images,
-            names_and_subjects={"NaturalScenesDataset": [self.subject]}
+            names_and_subjects={"NaturalScenesDataset": self.subjects}
         )
         
-        # Extract responses for the specified subject
+        # Extract responses for the specified subjects
         # Results are organized as: results["NaturalScenesDataset"][f"sub-{subject:02d}"]
         dataset_results = results["NaturalScenesDataset"]
-        subject_key = f"sub-{self.subject:02d}"
         
-        if subject_key not in dataset_results:
-            raise ModelLoadError(
-                f"Subject {subject_key} not found in MOSAIC results. "
-                f"Available subjects: {list(dataset_results.keys())}"
-            )
+        processed_results = {}
+        for subject_id in self.subjects:
+            subject_key = f"sub-{subject_id:02d}"
+            
+            insilico_fmri_responses = dataset_results[subject_key]
+            if isinstance(insilico_fmri_responses, torch.Tensor):
+                insilico_fmri_responses = insilico_fmri_responses.cpu().numpy()
+            
+            # Convert to float32
+            insilico_fmri_responses = insilico_fmri_responses.astype(np.float32)
+            
+            # Apply vertex selection if specified
+            if self.vertex_mask is not None:
+                insilico_fmri_responses = insilico_fmri_responses[:, self.vertex_mask]
+            
+            processed_results[subject_key] = insilico_fmri_responses
         
-        # Get the tensor and convert to numpy
-        insilico_fmri_responses = dataset_results[subject_key]
-        if isinstance(insilico_fmri_responses, torch.Tensor):
-            insilico_fmri_responses = insilico_fmri_responses.cpu().numpy()
-        
-        # Apply vertex selection if specified
-        if self.vertex_mask is not None:
-            insilico_fmri_responses = insilico_fmri_responses[:, self.vertex_mask]
-        
-        # Convert to float32
-        insilico_fmri_responses = insilico_fmri_responses.astype(np.float32)
-        
-        return insilico_fmri_responses
+        return {"NaturalScenesDataset": processed_results}
     
     @classmethod
     def get_metadata(
         cls, 
         berg_dir: Optional[str] = None,
-        subject: Optional[int] = None,
+        subject: Optional[Union[int, List[int], str]] = None,
         model_instance: Optional[BaseModelInterface] = None,
         **kwargs
-    ) -> Dict[str, Any]:
+    ) -> Union[Dict[str, Any], Dict[str, Dict[str, Any]]]:
         """
         Retrieve metadata for the model.
         
@@ -310,27 +305,25 @@ class FMRIEncodingModel(BaseModelInterface):
         ----------
         berg_dir : str, optional
             Path to BERG directory containing metadata.
-        subject : int, optional
-            Subject number (1-8).
+        subject : int, list of int, or "all", optional
+            Subject number(s) (1-8) or "all".
         model_instance : BaseModelInterface, optional
             If provided, extract parameters from this model instance.
-        **kwargs
-            Additional parameters.
         
         Returns
         -------
-        Dict[str, Any]
-            Metadata dictionary containing fMRI info, ROI masks, and noise ceilings.
+        dict
+            If single subject: metadata dictionary
+            If multiple subjects: dict mapping subject keys to metadata dicts
+            {"sub-01": metadata_dict, "sub-02": metadata_dict, ...}
         """
         # If model_instance is provided, extract parameters from it
         if model_instance is not None:
             berg_dir = model_instance.berg_dir
-            subject = model_instance.subject
-        
-        # If this method is called on an instance (rather than the class)
+            subject = model_instance.subjects
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             berg_dir = cls.berg_dir
-            subject = cls.subject
+            subject = cls.subjects
         
         # Validate required parameters
         missing_params = []
@@ -344,29 +337,36 @@ class FMRIEncodingModel(BaseModelInterface):
                 f"Required parameters missing: {', '.join(missing_params)}"
             )
         
-        # Validate subject
-        validate_subject(subject, cls.VALID_SUBJECTS)
-        
-        # Build metadata path
-        file_name = os.path.join(
-            berg_dir,
-            'encoding_models',
-            'modality-fmri',
-            'train_dataset-mosaic',
-            'model-mosaic',
-            'metadata',
-            'NSD',
-            f'sub-{subject:02d}.npy'
-        )
-        
-        # Load metadata if file exists
-        if os.path.exists(file_name):
-            metadata = np.load(file_name, allow_pickle=True).item()
-            return metadata
+        if isinstance(subject, (int, list, str)):
+            subjects = validate_subjects(subject, cls.VALID_SUBJECTS)
         else:
-            raise FileNotFoundError(
-                f"Metadata file not found: {file_name}"
+            subjects = subject
+        
+        metadata_dict = {}
+        for subj_id in subjects:
+            file_name = os.path.join(
+                berg_dir,
+                'encoding_models',
+                'modality-fmri',
+                'train_dataset-mosaic',
+                'model-mosaic',
+                'metadata',
+                'NSD',
+                f'sub-{subj_id:02d}.npy'
             )
+            
+            if os.path.exists(file_name):
+                metadata = np.load(file_name, allow_pickle=True).item()
+                metadata_dict[f"sub-{subj_id:02d}"] = metadata
+            else:
+                raise FileNotFoundError(
+                    f"Metadata file not found: {file_name}"
+                )
+        
+        if len(subjects) == 1:
+            return metadata_dict[f"sub-{subjects[0]:02d}"]
+        else:
+            return metadata_dict
     
     @classmethod
     def get_model_id(cls) -> str:
