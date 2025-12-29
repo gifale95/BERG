@@ -46,8 +46,7 @@ description: |
   preprocessing pipeline from GLMsingle beta estimates. Noise ceilings are provided
   separately for naturalistic training stimuli, naturalistic test stimuli, and artificial
   stimuli. For each stimulus group, reliability was estimated from split-half correlations
-  across repeated stimulus presentations and converted to a noise ceiling signal-to-noise
-  ratio (NCSNR). Noise ceilings are reported for single-trial estimates (n-1) and for
+  across repeated stimulus presentations. Noise ceilings are reported for single-trial estimates (n-1) and for
   repeat-averaged responses (n-avg).
 
   **Vertex space mapping.** The model predicts 57,051 vertices, a subset of the full
