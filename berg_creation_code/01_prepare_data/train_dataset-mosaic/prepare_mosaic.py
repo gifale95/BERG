@@ -18,31 +18,35 @@ Output Files Created (per subject):
 ────────────────────────────────────────────────────────────────
 mosaic_metadata/{dataset}/sub-{id}.npy : Subject metadata
 
-    'fmri':
-        participant_id       : str      - Subject identifier
-        age                  : int      - Subject age
-        sex                  : str      - Subject sex
-        filenames            : (70850,)   - All stimulus filenames
-        alias                : (70850,)   - Stimulus aliases
-        source               : (70850,)   - Stimulus sources
-        train_idx            : (69566,)   - Indices of training trials
-        test_idx             : (1284,)    - Indices of test trials
-        train_filenames      : (69566,)   - Training stimulus filenames
-        test_filenames       : (1284,)    - Test stimulus filenames
-        reps                 : (70850,)   - Repetition count per stimulus for this subject
-        roi_visual_vertices  : dict - ROI name → binary mask (7831,) for visual cortex
-        roi_all_vertices     : dict - ROI name → binary mask (57051,) for full cortex
-        
-    'encoding_models':
-        test_n-avg_noiseceiling_visual_vertices : (7831,) - Noise ceiling for visual cortex
-        test_n-avg_noiseceiling_all_vertices    : (57051,) - Noise ceiling for full cortex
+'fmri':
+    participant_id       : str      - Subject identifier
+    age                  : int      - Subject age
+    sex                  : str      - Subject sex
+    filenames            : (70850,)   - All stimulus filenames
+    alias                : (70850,)   - Stimulus aliases
+    source               : (70850,)   - Stimulus sources
+    train_idx            : (69566,)   - Indices of training trials
+    test_idx             : (1284,)    - Indices of test trials
+    train_filenames      : (69566,)   - Training stimulus filenames
+    test_filenames       : (1284,)    - Test stimulus filenames
+    reps                 : (70850,)   - Repetition count per stimulus for this subject
+    roi                  : dict - ROI name → vertex indices in full HCP grayordinate space (e.g., 'L_V1' → array([3319, 3320, ...]))
+
+'encoding_models':
+    test_n-avg_noiseceiling       : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
+    test_n-1_noiseceiling         : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
+    train_n-avg_noiseceiling      : (91282,) - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
+    train_n-1_noiseceiling        : (91282,) - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using single-trial beta estimates.
+    artificial_n-avg_noiseceiling : (91282,) - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using repeat-averaged beta estimates.
+    artificial_n-1_noiseceiling   : (91282,) - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using single-trial beta estimates.
+
 
 """
 
 import argparse
 import os
 from pathlib import Path
-from utils import download_noise_ceilings, download_metadata, add_noise_ceilings_to_metadata, add_roi_masks_to_metadata
+from utils import download_noise_ceilings, download_metadata, add_noise_ceilings_to_metadata, add_roi_indices_to_metadata
 
 # =============================================================================
 # Input arguments
@@ -80,10 +84,9 @@ download_metadata(metadata_dir)
 # =============================================================================
 # Add ROI masks to metadata
 # =============================================================================
-# Create binary masks indicating which vertices belong to each brain region
-# for both visual cortex space (7831 vertices) and full cortex space (57051 vertices).
-print("Adding ROI masks to metadata")
-add_roi_masks_to_metadata(metadata_dir)
+# Download ROI masks from glasser
+print("Adding ROI indices to metadata")
+add_roi_indices_to_metadata(metadata_dir)
 
 # =============================================================================
 # Add noise ceilings to metadata

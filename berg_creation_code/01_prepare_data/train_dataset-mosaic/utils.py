@@ -124,21 +124,22 @@ def download_metadata(save_path):
 
 def download_noise_ceilings(output_dir):
     """
-    Download test noise ceiling values from MOSAIC datasets.
+    Download all available noise ceiling variants from MOSAIC datasets.
     
     Noise ceilings represent the maximum predictable variance in brain responses
     and are used to evaluate encoding model performance.
     
-    Steps:
-    1. Load each subject's data from MOSAIC
-    2. Extract test-phase averaged noise ceiling from HDF5 file
-    3. Save as float32 .npy file and clean up temporary HDF5 file
-    4. Skip subjects without noise ceiling data
+    Available variants by dataset:
+    - All datasets: test_n-avg, test_n-1
+    - NSD, BMD, NOD, deeprecon: train_n-avg, train_n-1
+    - NSD, deeprecon: artificial_n-avg, artificial_n-1
     
     Output:
         {output_dir}/
         ├── BOLD5000_sub-01_test_n-avg_noise_ceiling.npy
+        ├── BOLD5000_sub-01_test_n-1_noise_ceiling.npy
         ├── NSD_sub-01_test_n-avg_noise_ceiling.npy
+        ├── NSD_sub-01_train_n-avg_noise_ceiling.npy
         └── ...
     """
     output_dir = Path(output_dir)
@@ -147,7 +148,7 @@ def download_noise_ceilings(output_dir):
     for short_id, info in DATASETS.items():
         dataset_name = info["long_name"]
         n_subjects = info["n_subjects"]
-        print(f"{short_id}:")
+        print(f"\n{short_id}:")
 
         for subj in range(1, n_subjects + 1):
             try:
@@ -163,56 +164,70 @@ def download_noise_ceilings(output_dir):
                 hdf5_filename = subject_id_to_file_mapping[dataset_name][subj]
                 hdf5_path = f"./MOSAIC/{hdf5_filename}"
 
-                # Extract noise ceiling
+                # Extract all available noise ceiling variants
                 with h5py.File(hdf5_path, "r") as f:
-                    if 'noiseceilings' in f:
-                        nc_key = f"sub-{subj:02d}_{short_id}_phase-test_n-avg_noiseceiling"
-                        
-                        if nc_key in f['noiseceilings']:
-                            nc_data = f['noiseceilings'][nc_key][:].astype(np.float32)
-                            output_path = output_dir / f"{short_id}_sub-{subj:02d}_test_n-avg_noise_ceiling.npy"
-                            np.save(output_path, nc_data)
-                            print(f"Saved: {output_path.name}")
-                        else:
-                            print(f"Skipped sub-{subj:02d}: no test n-avg")
+                    if 'noiseceilings' not in f:
+                        print(f"  sub-{subj:02d}: No noise ceilings group")
+                        continue
+                    
+                    saved_count = 0
+                    
+                    # Try all possible variants
+                    for phase in ["test", "train", "artificial"]:
+                        for method in ["n-avg", "n-1"]:
+                            nc_key = f"sub-{subj:02d}_{short_id}_phase-{phase}_{method}_noiseceiling"
+                            
+                            if nc_key in f['noiseceilings']:
+                                nc_data = f['noiseceilings'][nc_key][:].astype(np.float32)
+                                output_path = output_dir / f"{short_id}_sub-{subj:02d}_{phase}_{method}_noise_ceiling.npy"
+                                np.save(output_path, nc_data)
+                                saved_count += 1
+                    
+                    if saved_count > 0:
+                        print(f"  sub-{subj:02d}: Saved {saved_count} noise ceiling variant(s)")
+                    else:
+                        print(f"  sub-{subj:02d}: No noise ceiling variants found")
 
                 # Clean up HDF5 file
                 if os.path.exists(hdf5_path):
                     os.remove(hdf5_path)
 
             except Exception as e:
-                print(f"Failed sub-{subj:02d}: {type(e).__name__}")
+                print(f"  sub-{subj:02d}: Failed ({type(e).__name__}: {str(e)})")
 
-    print(f"All files saved to: {output_dir}/")
+    print(f"\nAll files saved to: {output_dir}/")
 
 
 def add_noise_ceilings_to_metadata(metadata_dir, noise_ceiling_dir):
     """
-    Map noise ceilings from full brain space (91k) to model prediction spaces.
+    Add noise ceiling values to metadata in their original space.
     
-    MOSAIC models predict subsets of brain vertices:
-    - Visual space: 7,831 vertices (GlasserGroups 1-5)
-    - All space: 57,051 vertices (GlasserGroups 1-22)
+    Stores all available noise ceiling variants for each subject without transformation.
+    Users can map to model prediction spaces (visual/all) when needed using vertex mappings.
     
-    Steps:
-    1. Get vertex indices for visual and all spaces using SelectROIs
-    2. For each subject, load noise ceiling in full 91k space
-    3. Extract values at model prediction vertices only
-    4. Save to metadata under 'encoding_models' key
-    5. For missing noise ceilings, fill with NaN 
+    Available noise ceiling variants:
+    - test_n-avg (all datasets)
+    - test_n-1 (all datasets)
+    - train_n-avg (only NSD, BMD, NOD, deeprecon)
+    - train_n-1 (only NSD, BMD, NOD, deeprecon)
+    - artificial_n-avg (only NSD, deeprecon)
+    - artificial_n-1 (only NSD, deeprecon)
     
-    Why: Model predictions are sized (7831,) or (57051,), so noise ceilings
-         must match to enable direct comparison.
+    Each noise ceiling is stored as a float32 array of shape (91282,) in full fsLR32k space.
+    Only variants that exist for a given subject are stored.
     """
-    # Get model vertex spaces
-    visual_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 6)])
-    all_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 23)])
-    
-    visual_indices = np.array(visual_selector.selected_roi_indices)
-    all_indices = np.array(all_selector.selected_roi_indices)
-    
     metadata_dir = Path(metadata_dir)
     noise_ceiling_dir = Path(noise_ceiling_dir)
+    
+    # Define all possible noise ceiling variants
+    nc_variants = [
+        "test_n-avg",
+        "test_n-1",
+        "train_n-avg",
+        "train_n-1",
+        "artificial_n-avg",
+        "artificial_n-1"
+    ]
     
     # Process all subjects
     for dataset_dir in sorted(metadata_dir.iterdir()):
@@ -223,96 +238,67 @@ def add_noise_ceilings_to_metadata(metadata_dir, noise_ceiling_dir):
         
         for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
             subject_id = meta_file.stem
+            subj_num = int(subject_id.split('-')[1])
             meta = np.load(meta_file, allow_pickle=True).item()
             
-            # Look for noise ceiling file
-            nc_file = noise_ceiling_dir / f"{dataset_name}_{subject_id}_test_n-avg_noise_ceiling.npy"
-            
-            if nc_file.exists():
-                # Map to model spaces
-                nc_full = np.load(nc_file).astype(np.float32)
-                nc_visual = nc_full[visual_indices]
-                nc_all = nc_full[all_indices]
-                
-                print(f"Dataset: {dataset_name:8s}, Subject: {subject_id}, "
-                      f"NC: {nc_full.shape[0]:5d} → Visual: {nc_visual.shape[0]:5d}, All: {nc_all.shape[0]:5d}")
-            else:
-                # No noise ceiling - use NaN
-                nc_visual = np.full(len(visual_indices), np.nan, dtype=np.float32)
-                nc_all = np.full(len(all_indices), np.nan, dtype=np.float32)
-                
-                print(f"Skipped: {dataset_name:8s}, Subject: {subject_id} (no noise ceiling)")
-            
-            # Add to metadata
+            # Initialize encoding_models section
             if "encoding_models" not in meta:
                 meta["encoding_models"] = {}
             
-            meta["encoding_models"]["test_n-avg_noiseceiling_visual_vertices"] = nc_visual
-            meta["encoding_models"]["test_n-avg_noiseceiling_all_vertices"] = nc_all
+            # Try to load noise ceiling from intermediate files
+            nc_found = False
+            
+            for variant in nc_variants:
+                # Look for intermediate noise ceiling file (from download step)
+                nc_file = noise_ceiling_dir / f"{dataset_name}_{subject_id}_{variant}_noise_ceiling.npy"
+                
+                if nc_file.exists():
+                    nc_data = np.load(nc_file).astype(np.float32)
+                    meta["encoding_models"][f"{variant}_noiseceiling"] = nc_data
+                    nc_found = True
+            
+            if nc_found:
+                print(f"Added noise ceilings: {dataset_name:8s}, {subject_id}")
+            else:
+                print(f"No noise ceilings found: {dataset_name:8s}, {subject_id}")
             
             np.save(meta_file, meta, allow_pickle=True)
 
 
-def add_roi_masks_to_metadata(metadata_dir):
+def add_roi_indices_to_metadata(metadata_dir):
     """
-    Add binary ROI masks for extracting region-specific predictions.
+    Add ROI vertex indices from the Glasser atlas to metadata.
     
-    Creates masks for each brain region (ROI) in the Glasser atlas, allowing
-    extraction of predictions for specific areas.
+    Stores original vertex indices (in full fsLR32k space) for each ROI,
+    allowing users to slice model predictions after expanding to full brain space.
     
     Steps:
     1. Get all cortical ROIs from Glasser atlas (360 regions)
-    2. For each ROI, create binary mask in visual (7831,) and all (57051,) spaces
-    3. Mask[i] = True if vertex i belongs to this ROI
-    4. Store masks in metadata under 'fmri'/'roi_visual_vertices' and 'roi_all_vertices'
-    5. Skip ROIs not present in visual space (only add to all space)
+    2. For each ROI, extract vertex indices in full 91k space
+    3. Store indices in metadata under 'fmri'/'roi'
     
+    Note: These are the raw indices from MOSAIC's Glasser atlas. To use with
+    model predictions, expand predictions to 91k space first using the vertex
+    mapping (GlasserGroups 1-22 or 1-5).
     """
-    
-    # Get model vertex spaces
-    visual_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 6)])
-    all_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 23)])
-    
-    visual_space_indices = np.array(visual_selector.selected_roi_indices)
-    all_space_indices = np.array(all_selector.selected_roi_indices)
     
     # Get all cortical ROIs
     all_rois = sorted([roi for roi in region_of_interest_labels.keys() 
                        if roi and (roi.startswith('L_') or roi.startswith('R_'))])
     
-    # Build masks for each ROI
-    roi_masks_visual = {}
-    roi_masks_all = {}
-    rois_in_all_not_visual = []
+    # Build dictionary of ROI indices
+    roi_indices_dict = {}
     
     for roi in all_rois:
         try:
             roi_selector = SelectROIs(selected_rois=[roi])
             roi_indices = np.array(roi_selector.selected_roi_indices)
-            
-            # Create mask for visual space
-            mask_visual = np.isin(visual_space_indices, roi_indices)
-            if mask_visual.any():
-                roi_masks_visual[roi] = mask_visual
-            
-            # Create mask for all space
-            mask_all = np.isin(all_space_indices, roi_indices)
-            if mask_all.any():
-                roi_masks_all[roi] = mask_all
-                
-                if not mask_visual.any():
-                    rois_in_all_not_visual.append(roi)
+            roi_indices_dict[roi] = roi_indices
                     
         except Exception as e:
             print(f"Error processing {roi}: {e}")
     
-    print(f"ROIs in visual space: {len(roi_masks_visual)}")
-    print(f"ROIs in all space: {len(roi_masks_all)}")
-    print(f"ROIs in 'all' but NOT in 'visual': {len(rois_in_all_not_visual)}")
-    if rois_in_all_not_visual:
-        print("  " + ", ".join(rois_in_all_not_visual[:10]))
-        if len(rois_in_all_not_visual) > 10:
-            print(f"  ... and {len(rois_in_all_not_visual) - 10} more")
+    print(f"Total ROIs extracted: {len(roi_indices_dict)}")
     
     # Add to all metadata files
     metadata_dir = Path(metadata_dir)
@@ -326,9 +312,10 @@ def add_roi_masks_to_metadata(metadata_dir):
         for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
             meta = np.load(meta_file, allow_pickle=True).item()
             
-            meta["fmri"]["roi_visual_vertices"] = roi_masks_visual
-            meta["fmri"]["roi_all_vertices"] = roi_masks_all
+            meta["fmri"]["roi"] = roi_indices_dict
             
             np.save(meta_file, meta, allow_pickle=True)
             total_updated += 1
+    
+    print(f"Updated {total_updated} metadata files")
     
