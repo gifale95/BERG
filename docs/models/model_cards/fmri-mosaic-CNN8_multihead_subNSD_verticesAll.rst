@@ -166,6 +166,12 @@ Metadata
    * - Key
      - Shape/Type
      - Description
+   * - vertex_mapping_visual
+     - ``(7831,)``
+     - Indices mapping visual cortex model predictions (GlasserGroups 1-5) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_visual] = predictions_7831
+   * - vertex_mapping_all
+     - ``(57051,)``
+     - Indices mapping full cortex model predictions (GlasserGroups 1-22) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_all] = predictions_57051
    * - test_n-avg_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
