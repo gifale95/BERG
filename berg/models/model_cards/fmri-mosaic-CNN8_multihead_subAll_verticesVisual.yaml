@@ -167,10 +167,7 @@ parameters:
         type: list[str]
         description: |
           List of region-of-interest (ROI) labels from visual cortex to include.
-          Available ROIs from the Glasser MMP 1.0 atlas:
-            • Early visual: V1, V2, V3, V3A, V3B, V3CD, V4, V4t, V6, V6A, V7, V8
-            • Ventral stream: VMV1, VMV2, VMV3, VVC, FFC, PIT, PH
-            • Dorsal stream: IPS1, LO1, LO2, LO3, MST, MT, FST
+          Available ROIs from the Glasser MMP 1.0 atlas.
           Prefix with 'L_' or 'R_' for hemisphere-specific selection.
           If multiple ROIs are listed, their vertices are concatenated.
         valid_values: [
