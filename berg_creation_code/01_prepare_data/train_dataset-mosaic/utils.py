@@ -73,7 +73,10 @@ def download_metadata(save_path):
     out_root.mkdir(exist_ok=True)
 
     for short_id, info in DATASETS.items():
-        long_name = info["long_name"]
+        if short_id == "THINGS":
+            long_name = "THINGS_fmri"  # Inconsistency in MOSAIC
+        else:
+            long_name = info["long_name"]
         print(f"[{short_id}] Exporting subject-wise metadata...")
         
         # Get dataset metadata
