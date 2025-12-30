@@ -16,6 +16,9 @@ regex
 tqdm
 clip @ git+https://github.com/openai/CLIP.git
 
+# MOSAIC model
+mosaic-dataset
+
 # memory encoding model
 yacs==0.1.8
 yacs-stubgen==0.3.0
