@@ -1,0 +1,385 @@
+=============================================
+fmri-mosaic-CNN8_multihead_subNSD_verticesAll
+=============================================
+
+Model Summary
+------------
+
+.. list-table::
+   :widths: 30 70
+   :stub-columns: 1
+
+   * - Modality
+     - fMRI
+   * - Training Dataset
+     - MOSAIC (NSD)
+   * - Species
+     - Human
+   * - Stimuli
+     - Images
+   * - Model Type
+     - CNN8 (8-layer convolutional network)
+   * - Creator
+     - MOSAIC Team (Lahner et al., 2025)
+
+Description
+----------
+
+This encoding model consists of a brain-optimized convolutional neural network (CNN8) trained to predict
+whole-brain fMRI responses for Natural Scenes Dataset (NSD) subjects. The model uses a shared 8-layer 
+convolutional core with subject-specific linear factorized readout heads. Unlike the visual cortex model,
+this variant predicts responses across 57,051 cortical vertices (GlasserGroups 1-22) but is only trained
+on NSD subjects.
+
+**Neural data.** The model was trained on 8 subjects from the Natural Scenes Dataset (NSD).
+All data underwent the shared MOSAIC preprocessing pipeline (fMRIPrep and GLMsingle) to ensure consistency.
+
+**Model architecture.** The CNN8 core consists of eight 2D convolutional blocks (each with 2D convolution,
+batch normalization, and ReLU activation). Convolutional kernel sizes range from 5×5 (blocks 1-2) to 3×3
+(blocks 3-8), with 384 channels throughout (except 3 RGB input channels). Average pooling layers (kernel
+size 2, stride 2) are inserted after blocks 2, 4, and 6, with a final pooling layer (kernel size 2, stride 1)
+after block 8. Each NSD subject has a dedicated linear factorized readout head with spatial and feature weight
+matrices initialized with L2-normalized spatial weights. The larger output dimension (57,051 vertices vs 7,831
+for visual cortex) increases readout head memory requirements.
+
+**Preprocessing.** Input images are center-cropped to square along the shorter dimension, resized to 224×224
+pixels, and normalized (mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]). fMRI data are averaged
+across trials per stimulus to increase signal-to-noise ratio.
+
+**Model training partition.** The model was trained on naturalistic stimuli using a 90%/10% train/validation
+split with early stopping (patience=7 epochs, delta=0.002). Training used Adam optimizer (initial learning rate
+1e-4, weight decay 1e-4) with ReduceLROnPlateau scheduling (factor=0.3, patience=6 epochs), mean squared
+error loss, and batch size 64 with random sampling across all NSD subjects. Maximum training duration was 
+100 epochs.
+
+**Model testing partition.** Models are evaluated on held-out naturalistic test images
+and on artificial test images from the NSD stimulus set. Naturalistic images consist
+of real-world photographs (objects, scenes, people, animals) drawn from standard
+computer vision datasets. Artificial images consist of controlled, non-naturalistic
+visual stimuli such as gratings, noise patterns, checkerboards, and simple geometric
+shapes that do not follow natural image statistics.
+
+**Noise ceiling.** Vertex-wise noise ceilings were computed using the MOSAIC
+preprocessing pipeline from GLMsingle beta estimates. Noise ceilings are provided
+separately for naturalistic training stimuli, naturalistic test stimuli, and artificial
+stimuli. For each stimulus group, reliability was estimated from split-half correlations
+across repeated stimulus presentations. Noise ceilings are reported for single-trial estimates (n-1) and for
+repeat-averaged responses (n-avg).
+
+**Vertex space mapping.** The model predicts 57,051 vertices, a subset of the full
+HCP grayordinate space (91,282 vertices), because it only covers cortical surface vertices
+within Glasser atlas groups 1-22 (excluding subcortical structures and remaining cortical
+areas). ROI vertex indices from the Glasser atlas are defined in the full 91k space and
+cannot be directly applied to the 57k model predictions. To align model predictions with
+noise ceilings or extract ROI-specific responses: (1) expand predictions to full 91k space
+using the vertex mapping from GlasserGroups 1-22, (2) index using ROI vertex indices or
+noise ceiling values at the expanded positions. All noise ceilings and ROI definitions are
+provided in the full 91k HCP grayordinate space for direct indexing after expansion.
+
+**Output.** The model predicts fMRI responses for 57,051 vertices spanning most of cortex, corresponding
+to MMP 1.0 parcellation GlasserGroups 1-22 (visual, somatomotor, auditory, and higher-order association
+cortices).
+
+Metadata
+--------
+
+**'fmri'**
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
+   * - participant_id
+     - ``str``
+     - Subject identifier
+   * - age
+     - ``int``
+     - Subject age
+   * - sex
+     - ``str``
+     - Subject sex
+   * - filenames
+     - ``(70850,)``
+     - All stimulus filenames
+   * - alias
+     - ``(70850,)``
+     - Stimulus aliases
+   * - source
+     - ``(70850,)``
+     - Stimulus sources
+   * - train_idx
+     - ``(69566,)``
+     - Indices of training trials
+   * - test_idx
+     - ``(1284,)``
+     - Indices of test trials
+   * - train_filenames
+     - ``(69566,)``
+     - Training stimulus filenames
+   * - test_filenames
+     - ``(1284,)``
+     - Test stimulus filenames
+   * - reps
+     - ``(70850,)``
+     - Repetition count per stimulus for this subject
+   * - **roi**
+     - ``dict``
+     - ROI name → vertex indices in full HCP grayordinate space
+       (e.g., 'L_V1' → array([3319, 3320, ...])).
+       Available ROIs:
+       L_V1, L_V2, L_V3, L_V3A, L_V3B, L_V3CD, L_V4, L_V4t,
+       L_V6, L_V6A, L_V7, L_V8, L_VMV1, L_VMV2, L_VMV3, L_VVC,
+       L_FFC, L_FST, L_IPS1, L_LO1, L_LO2, L_LO3, L_MST, L_MT,
+       L_PH, L_PIT, L_1, L_2, L_3a, L_3b, L_4, L_5L, L_5m,
+       L_5mv, L_6a, L_6d, L_6ma, L_6mp, L_6r, L_6v, L_43,
+       L_A1, L_A4, L_A5, L_LBelt, L_MBelt, L_PBelt, L_RI, L_TA2,
+       L_7AL, L_7Am, L_7PC, L_7PL, L_7Pm, L_7m, L_8Ad, L_8Av,
+       L_8BL, L_8BM, L_8C, L_9-46d, L_9a, L_9m, L_9p,
+       L_10d, L_10pp, L_10r, L_10v, L_11l, L_13l,
+       L_23c, L_23d, L_24dd, L_24dv, L_25, L_31a, L_31pd,
+       L_31pv, L_33pr, L_44, L_45, L_46, L_47l, L_47m,
+       L_47s, L_52, L_55b, L_AAIC, L_AIP, L_AVI, L_DVT, L_EC,
+       L_FEF, L_FOP1-5, L_IFJa, L_IFJp, L_IFSa, L_IFSp, L_Ig,
+       L_IP0, L_IP1, L_IP2, L_LIPd, L_LIPv, L_MI, L_MIP,
+       L_OFC, L_OP1, L_OP2-3, L_OP4, L_PCV, L_PEF, L_PF,
+       L_PFcm, L_PFm, L_PFop, L_PFt, L_PGi, L_PGp, L_PGs,
+       L_PHA1, L_PHA2, L_PHA3, L_PHT, L_PI, L_POS1, L_POS2,
+       L_PSL, L_PeEc, L_Pir, L_PoI1, L_PoI2, L_PreS, L_ProS,
+       L_RSC, L_SCEF, L_SFL, L_STGa, L_STSda, L_STSdp,
+       L_STSva, L_STSvp, L_STV, L_TE1a, L_TE1m, L_TE1p,
+       L_TE2a, L_TE2p, L_TF, L_TGd, L_TGv, L_TPOJ1,
+       L_TPOJ2, L_TPOJ3, L_VIP, L_a10p, L_a24, L_a24pr,
+       L_a32pr, L_a47r, L_a9-46v, L_d23ab, L_d32, L_i6-8,
+       L_p10p, L_p24, L_p24pr, L_p32, L_p32pr, L_p47r,
+       L_p9-46v, L_pOFC, L_s32, L_s6-8, L_v23ab
+       Corresponding R_* entries exist for the right hemisphere.
+
+**'encoding_models'**
+
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
+   * - test_n-avg_noiseceiling
+     - ``(91282,)``
+     - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
+   * - test_n-1_noiseceiling
+     - ``(91282,)``
+     - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
+   * - train_n-avg_noiseceiling
+     - ``(91282,)``
+     - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
+   * - train_n-1_noiseceiling
+     - ``(91282,)``
+     - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using single-trial beta estimates.
+   * - artificial_n-avg_noiseceiling
+     - ``(91282,)``
+     - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using repeat-averaged beta estimates.
+   * - artificial_n-1_noiseceiling
+     - ``(91282,)``
+     - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using single-trial beta estimates.
+
+
+Input
+-----
+
+**Type**: ``numpy.ndarray``  
+**Shape**: ``['batch_size', 3, 'height', 'width']``  
+**Description**: The input should be a batch of RGB images.
+
+**Constraints:**
+
+* Image values should be integers in range [0, 255].
+* Image dimensions (height, width) should be equal (square).
+* Minimum recommended image size: 224×224 pixels.
+
+Output
+------
+
+**Type**: ``dict or numpy.ndarray``  
+**Shape**: ``{'NaturalScenesDataset': {'sub-01': [batch_size, n_vertices], ...}} ``  
+**Description**:  
+It returns a nested dictionary with structure:
+{"NaturalScenesDataset": {"sub-01": array, "sub-02": array, ...}}
+where each array has shape [batch_size, n_vertices].
+
+**Dimensions:**
+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Name
+     - Description
+   * - batch_size
+     - Number of stimuli in the batch.
+   * - n_vertices
+     - Number of cortical vertices (up to 57,051, based on ROI/vertex selection).
+
+Parameters
+---------
+
+Parameters used in ``get_encoding_model``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function loads the encoding model.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 0
+
+   * - **subject**
+     - | **Type:** int, list[int], or str
+       | **Required:** Yes
+       | **Description:** NSD subject ID(s). Can be:
+       | - Single subject: 1
+       | - Multiple subjects: [1, 2, 3]
+       | - All subjects: "all"
+       | When multiple subjects are specified, the same ROI/vertex selection is applied to all subjects.
+       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8, all
+       | **Example:** 1
+   * - **selection**
+     - | **Type:** dict
+       | **Required:** No
+       | **Description:** Specifies which outputs to include in the model responses.
+       | Can include specific ROIs and/or vertex indices. If not provided,
+       | fMRI responses are generated for all cortical vertices.
+       | 
+       | **Properties:**
+       | 
+       | **roi**
+       |     **Type:** list[str]
+       |     **Description:** List of region-of-interest (ROI) labels from the Glasser MMP 1.0 atlas to include.
+       |     Available ROIs span visual, somatomotor, auditory, and association cortices
+       |     (GlasserGroups 1-22).
+       |     
+       |     Visual cortex: V1, V2, V3, V3A, V3B, V3CD, V4, V4t, V6, V6A, V7, V8, VMV1-3, VVC,
+       |                    FFC, FST, IPS1, LO1-3, MST, MT, PH, PIT
+       |     
+       |     Somatomotor: 1, 2, 3a, 3b, 4, 5L, 5m, 5mv, 6a, 6d, 6ma, 6mp, 6r, 6v, 43
+       |     
+       |     Auditory: A1, A4, A5, LBelt, MBelt, PBelt, RI, TA2
+       |     
+       |     Association & Higher-Order: 7AL, 7Am, 7PC, 7PL, 7Pm, 7m, 8Ad, 8Av, 8BL, 8BM, 8C,
+       |                                  9-46d, 9a, 9m, 9p, 10d, 10pp, 10r, 10v, 11l, 13l,
+       |                                  23c, 23d, 24dd, 24dv, 25, 31a, 31pd, 31pv, 33pr,
+       |                                  44, 45, 46, 47l, 47m, 47s, 52, 55b, AAIC, AIP, AVI,
+       |                                  DVT, EC, FEF, FOP1-5, IFJa, IFJp, IFSa, IFSp, Ig,
+       |                                  IP0-2, LIPd, LIPv, MI, MIP, OFC, OP1-4, PCV, PEF,
+       |                                  PF, PFcm, PFm, PFop, PFt, PGi, PGp, PGs, PHA1-3,
+       |                                  PHT, PI, POS1-2, PSL, PeEc, Pir, PoI1-2, PreS, ProS,
+       |                                  RSC, SCEF, SFL, STGa, STSda, STSdp, STSva, STSvp,
+       |                                  STV, TE1a, TE1m, TE1p, TE2a, TE2p, TF, TGd, TGv,
+       |                                  TPOJ1-3, VIP, a10p, a24, a24pr, a32pr, a47r, a9-46v,
+       |                                  d23ab, d32, i6-8, p10p, p24, p24pr, p32, p32pr, p47r,
+       |                                  p9-46v, pOFC, s32, s6-8, v23ab
+       |     
+       |     Prefix with 'L_' or 'R_' for hemisphere-specific selection.
+       |     If multiple ROIs are listed, their vertices are concatenated.
+       |     **Valid values:** "L_1", "L_2", "L_3a", "L_3b", "L_4", "L_5L", "L_5m", "L_5mv", "L_6a", "L_6d", "L_6ma", "L_6mp", "L_6r", "L_6v", "L_7AL", "L_7Am", "L_7PC", "L_7PL", "L_7Pm", "L_7m", "L_8Ad", "L_8Av", "L_8BL", "L_8BM", "L_8C", "L_9-46d", "L_9a", "L_9m", "L_9p", "L_10d", "L_10pp", "L_10r", "L_10v", "L_11l", "L_13l", "L_23c", "L_23d", "L_24dd", "L_24dv", "L_25", "L_31a", "L_31pd", "L_31pv", "L_33pr", "L_43", "L_44", "L_45", "L_46", "L_47l", "L_47m", "L_47s", "L_52", "L_55b", "L_A1", "L_A4", "L_A5", "L_AAIC", "L_AIP", "L_AVI", "L_DVT", "L_EC", "L_FEF", "L_FFC", "L_FOP1", "L_FOP2", "L_FOP3", "L_FOP4", "L_FOP5", "L_FST", "L_IFJa", "L_IFJp", "L_IFSa", "L_IFSp", "L_IP0", "L_IP1", "L_IP2", "L_IPS1", "L_Ig", "L_LBelt", "L_LIPd", "L_LIPv", "L_LO1", "L_LO2", "L_LO3", "L_MBelt", "L_MI", "L_MIP", "L_MST", "L_MT", "L_OFC", "L_OP1", "L_OP2-3", "L_OP4", "L_PBelt", "L_PCV", "L_PEF", "L_PF", "L_PFcm", "L_PFm", "L_PFop", "L_PFt", "L_PGi", "L_PGp", "L_PGs", "L_PH", "L_PHA1", "L_PHA2", "L_PHA3", "L_PHT", "L_PI", "L_PIT", "L_POS1", "L_POS2", "L_PSL", "L_PeEc", "L_Pir", "L_PoI1", "L_PoI2", "L_PreS", "L_ProS", "L_RI", "L_RSC", "L_SCEF", "L_SFL", "L_STGa", "L_STSda", "L_STSdp", "L_STSva", "L_STSvp", "L_STV", "L_TA2", "L_TE1a", "L_TE1m", "L_TE1p", "L_TE2a", "L_TE2p", "L_TF", "L_TGd", "L_TGv", "L_TPOJ1", "L_TPOJ2", "L_TPOJ3", "L_V1", "L_V2", "L_V3", "L_V3A", "L_V3B", "L_V3CD", "L_V4", "L_V4t", "L_V6", "L_V6A", "L_V7", "L_V8", "L_VIP", "L_VMV1", "L_VMV2", "L_VMV3", "L_VVC", "L_a10p", "L_a24", "L_a24pr", "L_a32pr", "L_a47r", "L_a9-46v", "L_d23ab", "L_d32", "L_i6-8", "L_p10p", "L_p24", "L_p24pr", "L_p32", "L_p32pr", "L_p47r", "L_p9-46v", "L_pOFC", "L_s32", "L_s6-8", "L_v23ab", "R_1", "R_2", "R_3a", "R_3b", "R_4", "R_5L", "R_5m", "R_5mv", "R_6a", "R_6d", "R_6ma", "R_6mp", "R_6r", "R_6v", "R_7AL", "R_7Am", "R_7PC", "R_7PL", "R_7Pm", "R_7m", "R_8Ad", "R_8Av", "R_8BL", "R_8BM", "R_8C", "R_9-46d", "R_9a", "R_9m", "R_9p", "R_10d", "R_10pp", "R_10r", "R_10v", "R_11l", "R_13l", "R_23c", "R_23d", "R_24dd", "R_24dv", "R_25", "R_31a", "R_31pd", "R_31pv", "R_33pr", "R_43", "R_44", "R_45", "R_46", "R_47l", "R_47m", "R_47s", "R_52", "R_55b", "R_A1", "R_A4", "R_A5", "R_AAIC", "R_AIP", "R_AVI", "R_DVT", "R_EC", "R_FEF", "R_FFC", "R_FOP1", "R_FOP2", "R_FOP3", "R_FOP4", "R_FOP5", "R_FST", "R_IFJa", "R_IFJp", "R_IFSa", "R_IFSp", "R_IP0", "R_IP1", "R_IP2", "R_IPS1", "R_Ig", "R_LBelt", "R_LIPd", "R_LIPv", "R_LO1", "R_LO2", "R_LO3", "R_MBelt", "R_MI", "R_MIP", "R_MST", "R_MT", "R_OFC", "R_OP1", "R_OP2-3", "R_OP4", "R_PBelt", "R_PCV", "R_PEF", "R_PF", "R_PFcm", "R_PFm", "R_PFop", "R_PFt", "R_PGi", "R_PGp", "R_PGs", "R_PH", "R_PHA1", "R_PHA2", "R_PHA3", "R_PHT", "R_PI", "R_PIT", "R_POS1", "R_POS2", "R_PSL", "R_PeEc", "R_Pir", "R_PoI1", "R_PoI2", "R_PreS", "R_ProS", "R_RI", "R_SCEF", "R_SFL", "R_STGa", "R_STSda", "R_STSdp", "R_STSva", "R_STSvp", "R_STV", "R_TA2", "R_TE1a", "R_TE1m", "R_TE1p", "R_TE2a", "R_TE2p", "R_TF", "R_TGd", "R_TGv", "R_TPOJ1", "R_TPOJ2", "R_TPOJ3", "R_V1", "R_V2", "R_V3", "R_V3A", "R_V3B", "R_V3CD", "R_V4", "R_V4t", "R_V6", "R_V6A", "R_V7", "R_V8", "R_VIP", "R_VMV1", "R_VMV2", "R_VMV3", "R_VVC", "R_a10p", "R_a24", "R_a24pr", "R_a32pr", "R_a47r", "R_a9-46v", "R_d23ab", "R_d32", "R_i6-8", "R_p10p", "R_p24", "R_p24pr", "R_p32", "R_p32pr", "R_p47r", "R_p9-46v", "R_pOFC", "R_s32", "R_s6-8", "R_v23ab"
+       |     **Example:** ['L_V1', 'R_V1', 'L_FEF', 'R_FEF']
+       | 
+       | **voxel_index**
+       |     **Type:** numpy.ndarray
+       |     **Description:** Binary one-hot encoded vector indicating which vertices to include.
+       |     Must have exactly the same length as the number of available vertices (57,051).
+       |     Each position set to 1 indicates that vertex should be included.
+       |     WARNING: This operates in the model's ~57k prediction space, which does NOT
+       |     directly correspond to positions in the full fsLR32k/HCP grayordinate space
+       |     (91,282 vertices) where ROIs and noise ceilings are defined. If you need to
+       |     select specific brain regions, use the 'roi' parameter instead, which handles
+       |     the coordinate mapping automatically.
+       |     **Example:** [0, 0, '...', 1, 1, 0]
+
+Parameters used in ``encode``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function generates in silico neural responses using the encoding model previously loaded.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 0
+
+   * - **stimulus**
+     - | **Type:** numpy.ndarray
+       | **Required:** Yes
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
+       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
+   * - **device**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Valid Values:** cpu, cuda, auto
+       | **Example:** auto
+   * - **show_progress**
+     - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to show a progress bar during encoding (for large batches).
+       | **Example:** True
+
+Performance
+----------
+
+**Accuracy Plots (AWS directory):**
+
+* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-mosaic_nsd/model-cnn8_all/encoding_models_accuracy``
+
+Example Usage
+------------
+
+
+.. code-block:: python
+
+    from berg import BERG
+    
+    # Initialize BERG
+    berg = BERG(berg_dir="path/to/brain-encoding-response-generator")
+    
+    # Load the model
+    model = berg.get_encoding_model(
+        "fmri-mosaic-CNN8_multihead_subNSD_verticesAll",
+        subject=1,
+        selection={
+            "roi": ["L_V1", "R_V1", "L_FEF", "R_FEF"]
+            "voxel_index": [0, 0, '...', 1, 1, 0]
+        },
+        device="auto"
+    )
+    
+    # Prepare the stimulus images
+    # Image shape should be [batch_size, 3 RGB channels, height, width]
+    images = np.random.randint(0, 255, (100, 3, 256, 256))
+    
+    # Generates the in silico neural responses to images using the encoding model previously loaded
+    responses = berg.encode(
+        model,
+        images,
+        show_progress=True
+    )
+    
+    # The in silico fMRI responses will be a dict or numpy.ndarray of shape:
+    # {'NaturalScenesDataset': {'sub-01': [batch_size, n_vertices], ...}} 
+    # where:
+    # - n_vertices: Number of cortical vertices (up to 57,051, based on ROI/vertex selection).
+    
+    # Generate in silico neural responses with metadata
+    responses, metadata = berg.encode(
+        model,
+        images,
+        return_metadata=True
+    )
+    
+
+References
+---------
+
+* MOSAIC Paper (Lahner et al., 2025): https://www.biorxiv.org/content/10.64898/2025.11.28.690060v1
+* MOSAIC Repository: https://github.com/murtylab/mosaic-dataset/tree/1d26b5b4ccdf77eba76e47404f6b9041e28e9a33
+* NaturalScenesDataset/NSD Dataset (Allen et al., 2022): https://registry.opendata.aws/nsd/
+* NaturalScenesDataset/NSD Paper (Allen et al., 2022): https://www.nature.com/articles/s41593-021-00962-x

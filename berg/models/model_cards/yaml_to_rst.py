@@ -76,9 +76,13 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         current_section = None
         section_data = {}
         
-        for line in lines:
+        i = 0
+        while i < len(lines):
+            line = lines[i]
             line_stripped = line.strip()
+            
             if not line_stripped:
+                i += 1
                 continue
             
             # Get original indentation level
@@ -109,23 +113,34 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                             else:
                                 rst_content.append(f"   * - {key}")
                         rst_content.append(f"     - ``{shape}``")
-                        rst_content.append(f"     - {desc}")
+                        
+                        # Handle multi-line descriptions with preserved line breaks
+                        if "\n" in desc:
+                            desc_lines = desc.split("\n")
+                            rst_content.append(f"     - {desc_lines[0]}")
+                            for desc_line in desc_lines[1:]:
+                                rst_content.append(f"       {desc_line}")
+                        else:
+                            rst_content.append(f"     - {desc}")
                     
                     rst_content.append("")
                 
                 # Start new section
                 current_section = line_stripped.rstrip(":")
                 section_data[current_section] = []
+                i += 1
             elif ":" in line_stripped and " - " not in line_stripped and "dict" in line_stripped.lower():
                 key_part, rest = line_stripped.split(":", 1)
                 key = key_part.strip()
                 shape = rest.strip()
                 if current_section:
                     section_data[current_section].append((key, shape, "", 0))
+                i += 1
             elif line_stripped.endswith(":") and " - " not in line_stripped and indent_level > 2:
                 key = line_stripped.rstrip(":")
                 if current_section:
                     section_data[current_section].append((key, "dict", "", 0))
+                i += 1
             else:
                 # Parse the line: key : shape - description
                 if ":" in line_stripped and " - " in line_stripped:
@@ -138,6 +153,48 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     shape = shape_part.strip()
                     desc = desc_part.strip()
                     
+                    # Check for continuation lines (multi-line descriptions)
+                    # Look ahead to see if next lines have higher indentation
+                    continuation_lines = [desc]
+                    j = i + 1
+                    while j < len(lines):
+                        next_line = lines[j]
+                        next_line_stripped = next_line.strip()
+                        
+                        if not next_line_stripped:
+                            j += 1
+                            continue
+                        
+                        next_indent = len(next_line) - len(next_line.lstrip())
+                        
+                        # Check if this is a continuation line
+                        # It should have higher indentation than the key line
+                        # and NOT be a new key entry
+                        # A new key would have:
+                        # - Similar or lower indentation to the original key line
+                        # - Format like "key : shape - description"
+                        
+                        # Check if this looks like a new key line
+                        is_new_key = (
+                            next_indent <= indent_level + 5 or  # Similar indentation to original key
+                            ((":" in next_line_stripped and " - " in next_line_stripped) and 
+                             next_indent < indent_level + 15)  # Has key format at reasonable indent
+                        )
+                        
+                        # If not a new key and has reasonable indentation, it's a continuation
+                        if not is_new_key and next_indent > indent_level:
+                            continuation_lines.append(next_line_stripped)
+                            j += 1
+                        else:
+                            break
+                    
+                    # If we found continuation lines, join them with newlines
+                    if len(continuation_lines) > 1:
+                        desc = "\n".join(continuation_lines)
+                        i = j  # Skip the lines we've processed
+                    else:
+                        i += 1
+                    
                     # Determine nesting level based on indentation
                     nest_level = 0
                     if indent_level > 10:
@@ -147,6 +204,8 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     
                     if current_section:
                         section_data[current_section].append((key, shape, desc, nest_level))
+                else:
+                    i += 1
         
         # Handle the last section
         if current_section and current_section in section_data:
@@ -170,7 +229,15 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     else:
                         rst_content.append(f"   * - {key}")
                 rst_content.append(f"     - ``{shape}``")
-                rst_content.append(f"     - {desc}")
+                
+                # Handle multi-line descriptions with preserved line breaks
+                if "\n" in desc:
+                    desc_lines = desc.split("\n")
+                    rst_content.append(f"     - {desc_lines[0]}")
+                    for desc_line in desc_lines[1:]:
+                        rst_content.append(f"       {desc_line}")
+                else:
+                    rst_content.append(f"     - {desc}")
             
             rst_content.append("")
         
@@ -618,11 +685,13 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="Convert YAML model specification to RST format")
     parser.add_argument("yaml_file", help="Input YAML file path")
-    parser.add_argument("output_file", nargs="?", help="Output RST file path (default: input filename with .rst extension)")
+    #parser.add_argument("output_file", nargs="?", help="Output RST file path (default: input filename with .rst extension)")
+    
     
     args = parser.parse_args()
     
-    output_file = args.output_file
+    output_file = "docs/models/model_cards/" + (args.yaml_file.split("/")[-1]).split(".")[0] + ".rst"
+    #output_file = args.yaml_file.split(".")[0] + ".rst"
     if not output_file:
         output_file = os.path.splitext(args.yaml_file)[0] + ".rst"
     
@@ -636,6 +705,8 @@ if __name__ == "__main__":
 #
 # 2. Convert a YAML file to RST with specific output path:
 #    python yaml_to_rst.py fmri_nsd_fwrf.yaml docs/model_cards/fmri_nsd_fwrf.rst
-    
+
+
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/meg-things_meg_1-vit_b_32.yaml docs/models/model_cards/meg-things_meg_1-vit_b_32.rst
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml source/models/model_cards/eeg-things_eeg_2-vit_b_32.rst

@@ -76,25 +76,36 @@ metadata: |
       train_filenames      : (69566,)   - Training stimulus filenames
       test_filenames       : (1284,)    - Test stimulus filenames
       reps                 : (70850,)   - Repetition count per stimulus for this subject
-      roi                  : dict - ROI name → vertex indices in full HCP grayordinate space (e.g., 'L_V1' → array([3319, 3320, ...]))
-        L_V1, L_V2, L_V3, L_V3A, L_V3B, L_V3CD, L_V4, L_V4t, L_V6, L_V6A, L_V7, L_V8,
-                  L_VMV1, L_VMV2, L_VMV3, L_VVC, L_FFC, L_FST, L_IPS1, L_LO1, L_LO2, L_LO3,
-                  L_MST, L_MT, L_PH, L_PIT, L_1, L_2, L_3a, L_3b, L_4, L_5L, L_5m, L_5mv, L_6a, L_6d, L_6ma, L_6mp,
-                       L_6r, L_6v, L_43, L_A1, L_A4, L_A5, L_LBelt, L_MBelt, L_PBelt, L_RI, L_TA2, 
-                       L_7AL, L_7Am, L_7PC, L_7PL, L_7Pm, L_7m, L_8Ad, L_8Av, L_8BL, L_8BM, L_8C,
-                       L_9-46d, L_9a, L_9m, L_9p, L_10d, L_10pp, L_10r, L_10v, L_11l, L_13l,
-                       L_23c, L_23d, L_24dd, L_24dv, L_25, L_31a, L_31pd, L_31pv, L_33pr,
-                       L_44, L_45, L_46, L_47l, L_47m, L_47s, L_52, L_55b,
-                       L_AAIC, L_AIP, L_AVI, L_DVT, L_EC, L_FEF, L_FOP1-5, L_IFJa, L_IFJp,
-                       L_IFSa, L_IFSp, L_Ig, L_IP0, L_IP1, L_IP2, L_LIPd, L_LIPv, L_MI, L_MIP,
-                       L_OFC, L_OP1, L_OP2-3, L_OP4, L_PBelt, L_PCV, L_PEF, L_PF, L_PFcm, L_PFm,
-                       L_PFop, L_PFt, L_PGi, L_PGp, L_PGs, L_PHA1, L_PHA2, L_PHA3, L_PHT, L_PI,
-                       L_POS1, L_POS2, L_PSL, L_PeEc, L_Pir, L_PoI1, L_PoI2, L_PreS, L_ProS,
-                       L_RSC, L_SCEF, L_SFL, L_STGa, L_STSda, L_STSdp, L_STSva, L_STSvp, L_STV,
-                       L_TE1a, L_TE1m, L_TE1p, L_TE2a, L_TE2p, L_TF, L_TGd, L_TGv, L_TPOJ1,
-                       L_TPOJ2, L_TPOJ3, L_VIP, L_a10p, L_a24, L_a24pr, L_a32pr, L_a47r,
-                       L_a9-46v, L_d23ab, L_d32, L_i6-8, L_p10p, L_p24, L_p24pr, L_p32, L_p32pr,
-                       L_p47r, L_p9-46v, L_pOFC, L_s32, L_s6-8, L_v23ab
+      roi                  : dict - ROI name → vertex indices in full HCP grayordinate space
+                               (e.g., 'L_V1' → array([3319, 3320, ...])).
+                               Available ROIs:
+                               L_V1, L_V2, L_V3, L_V3A, L_V3B, L_V3CD, L_V4, L_V4t,
+                               L_V6, L_V6A, L_V7, L_V8, L_VMV1, L_VMV2, L_VMV3, L_VVC,
+                               L_FFC, L_FST, L_IPS1, L_LO1, L_LO2, L_LO3, L_MST, L_MT,
+                               L_PH, L_PIT, L_1, L_2, L_3a, L_3b, L_4, L_5L, L_5m,
+                               L_5mv, L_6a, L_6d, L_6ma, L_6mp, L_6r, L_6v, L_43,
+                               L_A1, L_A4, L_A5, L_LBelt, L_MBelt, L_PBelt, L_RI, L_TA2,
+                               L_7AL, L_7Am, L_7PC, L_7PL, L_7Pm, L_7m, L_8Ad, L_8Av,
+                               L_8BL, L_8BM, L_8C, L_9-46d, L_9a, L_9m, L_9p,
+                               L_10d, L_10pp, L_10r, L_10v, L_11l, L_13l,
+                               L_23c, L_23d, L_24dd, L_24dv, L_25, L_31a, L_31pd,
+                               L_31pv, L_33pr, L_44, L_45, L_46, L_47l, L_47m,
+                               L_47s, L_52, L_55b, L_AAIC, L_AIP, L_AVI, L_DVT, L_EC,
+                               L_FEF, L_FOP1-5, L_IFJa, L_IFJp, L_IFSa, L_IFSp, L_Ig,
+                               L_IP0, L_IP1, L_IP2, L_LIPd, L_LIPv, L_MI, L_MIP,
+                               L_OFC, L_OP1, L_OP2-3, L_OP4, L_PCV, L_PEF, L_PF,
+                               L_PFcm, L_PFm, L_PFop, L_PFt, L_PGi, L_PGp, L_PGs,
+                               L_PHA1, L_PHA2, L_PHA3, L_PHT, L_PI, L_POS1, L_POS2,
+                               L_PSL, L_PeEc, L_Pir, L_PoI1, L_PoI2, L_PreS, L_ProS,
+                               L_RSC, L_SCEF, L_SFL, L_STGa, L_STSda, L_STSdp,
+                               L_STSva, L_STSvp, L_STV, L_TE1a, L_TE1m, L_TE1p,
+                               L_TE2a, L_TE2p, L_TF, L_TGd, L_TGv, L_TPOJ1,
+                               L_TPOJ2, L_TPOJ3, L_VIP, L_a10p, L_a24, L_a24pr,
+                               L_a32pr, L_a47r, L_a9-46v, L_d23ab, L_d32, L_i6-8,
+                               L_p10p, L_p24, L_p24pr, L_p32, L_p32pr, L_p47r,
+                               L_p9-46v, L_pOFC, L_s32, L_s6-8, L_v23ab
+                               Corresponding R_* entries exist for the right hemisphere.
+
 
   'encoding_models':
       test_n-avg_noiseceiling       : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
