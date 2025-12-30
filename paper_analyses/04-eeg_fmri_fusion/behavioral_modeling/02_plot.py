@@ -57,7 +57,7 @@ for sub in args.fmri_subjects:
     for hemi in ['lh', 'rh']:
 
         results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'behavioral_modeling', 'rsa', f'rsa_sub-{sub:02d}_hemi.npy')
+            'behavioral_modeling', 'rsa', f'rsa_sub-{sub:02d}_{hemi}.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         # NCSNR and noise ceiling vertex selection
@@ -88,7 +88,7 @@ berg = BERG(berg_dir=args.berg_dir)
 
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
-    siubject=1
+    subject=1
 )
 
 times = metadata_eeg['eeg']['times']
@@ -123,9 +123,9 @@ for t, time in enumerate(tqdm(times)):
         subject,
         cmap='afmhot',
         vmin=0,
-        vmax=1,
+        vmax=0.3,
         with_colorbar=True)
-    
+
     # Plot the flat brain surface
     fig = cortex.quickshow(
         vertex_data,
@@ -144,7 +144,7 @@ for t, time in enumerate(tqdm(times)):
     # Add title
     title = f'Time (s): {np.round(time, 3)}'
     plt.title(title, fontsize=fontsize)
-    
+
     # Save the plot
     plot_file = os.path.join(save_dir, f'rsa_time-{t:03d}.png')
     plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')

@@ -1,4 +1,4 @@
-"""Perform RSA between in silico EEG responses and behavioral embeddings.
+"""Perform RSA between in silico EEG responses and LLM embeddings.
 
 Parameters
 ----------
@@ -16,9 +16,12 @@ channels : string
     the list can also contain the names of the individual channels used.
 berg_dir : str
     Directory of the BERG.
-things_dir : str
-    Directory of the THINGS database.
-    https://osf.io/jum2f/
+nsd_dir : str
+    Directory of the Natural Scenes Dataset.
+    https://naturalscenesdataset.org/
+coco_dir : str
+    Directory of the COCO dataset.
+    https://cocodataset.org/
 
 """
 
@@ -26,10 +29,12 @@ import argparse
 import os
 import random
 import numpy as np
-from PIL import Image
+import h5py
 from tqdm import tqdm
 from berg import BERG
 import pandas as pd
+from pycocotools.coco import COCO
+from sentence_transformers import SentenceTransformer
 from sklearn.svm import SVC
 from scipy.stats import pearsonr
 
@@ -38,7 +43,8 @@ parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_
 parser.add_argument('--subject', default=1, type=int)
 parser.add_argument('--channels', default='O,P', type=lambda s: s.split(','))
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
+parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--coco_dir', default='/scratch/giffordale95/datasets/image_sets/coco', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> RSA <<<')
@@ -76,19 +82,27 @@ def corr_matrix(X):
 
 
 # =============================================================================
-# Get the THINGS EEG2 test image metadata
+# Load the 515 NSD test images
 # =============================================================================
+# The test images consist of the 515 images that all NSD subjects saw for three
+# times, and which were used to test BERG's encoding models
+
+# Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
-metadata_things = berg.get_model_metadata(
-    'eeg-things_eeg_2-vit_b_32',
+# Get the test image number
+metadata = berg.get_model_metadata(
+    'fmri-nsd_fsaverage-huze',
     subject=1
-    )
+)
+test_img_num = metadata['encoding_models']['test_img_num']
 
-test_img_files = metadata_things['encoding_models']['test_img_info']\
-    ['test_img_files']
-test_img_concepts_THINGS = metadata_things['encoding_models']['test_img_info']\
-    ['test_img_concepts_THINGS']
+# Load the test images
+sf = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli', 'stimuli', 'nsd',
+    'nsd_stimuli.hdf5'), 'r')
+sdataset = sf.get('imgBrick')
+images = sdataset[test_img_num]
+images = np.swapaxes(np.swapaxes(images, 1, 3), 2, 3)
 
 
 # =============================================================================
@@ -121,27 +135,6 @@ model = berg.get_encoding_model(
 # =============================================================================
 # Generate the in silico EEG responses
 # =============================================================================
-# Loop across test object concepts
-images = []
-for file in tqdm(test_img_files):
-
-    # Find correct subfolder
-    img_path = None
-    for root, _, files in os.walk(os.path.join(args.things_dir)):
-        if file in files:
-            img_path = os.path.join(root, file)
-            break
-    
-    # Load and transform the image
-    img = Image.open(img_path)
-    img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
-    img = np.array(img).transpose(2, 0, 1)  # Convert to (C, H, W)
-    images.append(img)
-
-# Format the images to a numpy array
-images = np.array(images)
-
-# Generate the in silico EEG responses
 eeg, metadata = berg.encode(model, images, return_metadata=True)
 times = metadata['eeg']['times']
 
@@ -194,24 +187,46 @@ for t in tqdm(range(len(times))):
 
 
 # =============================================================================
-# Create the behavioral RDM
+# Create the LLM RDM
 # =============================================================================
-# Load the behavioral embeddings (the behavioral emebddings can be downloaded
-# from: https://osf.io/f5rn6/overview)
-embedding_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'behavioral_modeling', 'spose_embedding_66d_sorted.txt')
-beh_embeddings_all = np.array(pd.read_csv(embedding_dir, delim_whitespace=True,
-    header=None)).astype(np.float32)
+# Load the LLM
+embedding_model = SentenceTransformer('all-mpnet-base-v2')
 
-# Retain the embeddings from the 200 test image concepts
-idx_test = np.zeros(len(test_img_concepts_THINGS), dtype=int)
-for i, img in enumerate(test_img_concepts_THINGS):
-    idx_test[i] = int(img[:5]) - 1
-beh_embeddings = beh_embeddings_all[idx_test]
+# Load the NSD image COCO IDs
+info_dir = os.path.join(args.nsd_dir, 'nsddata', 'experiments', 'nsd',
+    'nsd_stim_info_merged.csv') 
+nsd_stim_info = np.array(pd.read_csv(info_dir, sep=',', header=0))
+cocoId = nsd_stim_info[:,1]
+cocoSplit = nsd_stim_info[:,2]
+
+# Loop across test images
+llm_embeddings = []
+cocoSplit_img = ''
+for img in tqdm(test_img_num):
+
+    # Initialize the COCO api
+    if cocoSplit[img] != cocoSplit_img:
+        cocoSplit_img = cocoSplit[img]
+        annFile = os.path.join(args.coco_dir, 'annotations', 'annotations',
+            'captions_'+cocoSplit[img]+'.json')
+        coco = COCO(annFile)
+
+    # Get the 5 captions instances for each images
+    annIds = coco.getAnnIds(imgIds=[cocoId[img]])
+    annotations = coco.loadAnns(annIds)
+    captions = []
+    for ann in annotations:
+        captions.append(ann['caption'])
+
+    # Get the embeddings of the captions, and average them across caption
+    # instances
+    llm_embeddings.append(np.mean(embedding_model.encode(captions), 0))
+
+# Format the embeddings to numpy array
+llm_embeddings = np.array(llm_embeddings).astype(np.float32)
 
 # Create the RDM
-beh_rdm = 1 - corr_matrix(beh_embeddings.T)
+llm_rdm = 1 - corr_matrix(llm_embeddings.T)
 
 
 # =============================================================================
@@ -220,12 +235,12 @@ beh_rdm = 1 - corr_matrix(beh_embeddings.T)
 # Take the lower triangle of the EEG and behavior RDMs
 idx = np.tril_indices(len(eeg_rdm), -1)
 eeg_rdm_tril = eeg_rdm[idx]
-beh_rdm_tril = beh_rdm[idx]
+llm_rdm_tril = llm_rdm[idx]
 
 # Perform RSA
 rsa = np.zeros(len(times), dtype=np.float32)
 for t in range(len(times)): 
-    rsa[t] = pearsonr(beh_rdm_tril, eeg_rdm_tril[:,t])[0]
+    rsa[t] = pearsonr(llm_rdm_tril, eeg_rdm_tril[:,t])[0]
 
 
 # =============================================================================
@@ -233,13 +248,13 @@ for t in range(len(times)):
 # =============================================================================
 results = {
     'eeg_rdm': eeg_rdm,
-    'beh_rdm': beh_rdm,
+    'llm_rdm': llm_rdm,
     'rsa': rsa,
     'metadata': metadata
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'behavioral_modeling', 'rsa')
+    'vision', 'eeg', 'llm_modeling', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'rsa_sub-' + format(args.subject, '02') + '_channels-' + \

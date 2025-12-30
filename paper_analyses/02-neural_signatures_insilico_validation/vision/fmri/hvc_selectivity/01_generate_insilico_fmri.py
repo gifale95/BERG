@@ -1,5 +1,5 @@
-"""Use BERG to generate the in silico fMRI responses to face, body, and scene
-images.
+"""Use BERG to generate the in silico fMRI responses to face, body, scene, and object
+object images.
 
 Parameters
 ----------

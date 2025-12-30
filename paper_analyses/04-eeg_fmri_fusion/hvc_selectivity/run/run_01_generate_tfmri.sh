@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_eeg_fmri_fusion-llm_modeling-02_rsa
+#SBATCH --job-name=berg_eeg_fmri_fusion-hvc_selectivity-01_generate_tfmri
 #SBATCH --mail-type=end
 #SBATCH --mem=50000
-#SBATCH --time=30:00:00
+#SBATCH --time=06:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -25,15 +25,12 @@ hemisphere=${hemisphere_all[$SLURM_ARRAY_TASK_ID]}
 echo fmri_subject: $fmri_subject
 echo hemisphere: $hemisphere
 
-# Wait a bit so it doesn't crash
-sleep 8
+# Change to the .py script directory
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/hvc_selectivity
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
-# Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/llm_modeling
-
 # Run the job
-python 02_rsa.py --fmri_subject $fmri_subject --hemisphere $hemisphere
+python 01_generate_tfmri.py --fmri_subject $fmri_subject --hemisphere $hemisphere

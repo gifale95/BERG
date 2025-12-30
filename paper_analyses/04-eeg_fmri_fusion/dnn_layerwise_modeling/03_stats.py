@@ -3,10 +3,10 @@ DNN layerwise features.
 
 Parameters
 ----------
-fmri_subject : int
-    The subject identifiers for the fMRI encoding models. Since the used
-    encoding models are trained on NSD data, valid subject identifiers are
-    integers from 1 8.
+fmri_subjects : list
+    List containing the subject identifiers for the fMRI encoding models. Since
+    the used encoding models are trained on NSD data, valid subject identifiers
+    are integers from 1 8.
 model : str
     Name of deep neural network model used to extract the image features.
     Available options are 'alexnet' and 'resnet50'.
@@ -27,7 +27,7 @@ from statsmodels.stats.multitest import multipletests
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subject', default=1, type=int)
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -44,11 +44,12 @@ for key, val in vars(args).items():
 lh_rsa = {}
 rh_rsa = {}
 
-for s, sub in enumerate(args.subjects):
+for s, sub in enumerate(args.fmri_subjects):
     for hemi in ['lh', 'rh']:
 
         results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'dnn_layerwise_modeling', 'rsa', f'rsa_sub-{sub:02d}_{hemi}.npy')
+            'dnn_layerwise_modeling', 'rsa',
+            f'rsa_sub-{sub:02d}_{hemi}_model-{args.model}.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         for key, val in results['rsa'].items():
@@ -93,7 +94,7 @@ lh_best_layer = []
 rh_best_layer = []
 
 # Loop across subjects
-for s, sub in enumerate(args.subjects):
+for s, sub in enumerate(args.fmri_subjects):
 
     # Append the results across all layers
     lh_rsa_all_layers = []

@@ -164,6 +164,6 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'dnn_layerwise_modeling', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = f'rsa_sub-{args.fmri_subject:02d}_{args.hemisphere}.npy'
+file_name = f'rsa_sub-{args.fmri_subject:02d}_{args.hemisphere}_model-{args.model}.npy'
 
 np.save(os.path.join(save_dir, file_name), results)
