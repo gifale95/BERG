@@ -46,7 +46,7 @@ mosaic_metadata/{dataset}/sub-{id}.npy : Subject metadata
 import argparse
 import os
 from pathlib import Path
-from utils import download_noise_ceilings, download_metadata, add_noise_ceilings_to_metadata, add_roi_indices_to_metadata
+from utils import download_noise_ceilings, download_metadata, add_noise_ceilings_to_metadata, add_roi_indices_to_metadata, add_vertex_mappings_to_metadata
 
 # =============================================================================
 # Input arguments
@@ -96,3 +96,12 @@ add_roi_indices_to_metadata(metadata_dir)
 # visual cortex (7831 vertices) and full cortex (57051 vertices).
 print("Adding noise ceilings to metadata")
 add_noise_ceilings_to_metadata(metadata_dir, nc_dir)
+
+
+# =============================================================================
+# Add vertex mapping to metadata
+# =============================================================================
+# Model predictions are in reduced vertex spaces (visual or all cortex), while noise ceilings
+# and ROI indices are defined in full HCP grayordinate space (91,282 vertices). These mappings
+# allow expansion: predictions_91k[vertex_mapping] = predictions_model.
+add_vertex_mappings_to_metadata(metadata_dir)

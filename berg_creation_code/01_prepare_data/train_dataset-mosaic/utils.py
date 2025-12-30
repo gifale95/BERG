@@ -318,4 +318,55 @@ def add_roi_indices_to_metadata(metadata_dir):
             total_updated += 1
     
     print(f"Updated {total_updated} metadata files")
+
+
+def add_vertex_mappings_to_metadata(metadata_dir):
+    """
+    Add vertex mapping arrays to metadata for expanding model predictions to full HCP space.
     
+    Model predictions are in reduced vertex spaces (visual or all cortex), while noise ceilings
+    and ROI indices are defined in full HCP grayordinate space (91,282 vertices). These mappings
+    allow expansion: predictions_91k[vertex_mapping] = predictions_model.
+    
+    Adds two mappings to metadata under 'encoding_models':
+    - vertex_mapping_visual: (7,831,) array mapping visual cortex predictions to 91k space
+    - vertex_mapping_all: (57,051,) array mapping full cortex predictions to 91k space
+    
+    These correspond to:
+    - Visual: GlasserGroups 1-5 (visual cortex)
+    - All: GlasserGroups 1-22 (visual + sensorimotor + auditory + association cortex)
+    """
+    
+    # Get vertex mappings for both model variants
+    visual_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 6)])
+    all_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 23)])
+    
+    vertex_mapping_visual = np.array(visual_selector.selected_roi_indices, dtype=np.int32)
+    vertex_mapping_all = np.array(all_selector.selected_roi_indices, dtype=np.int32)
+    
+    print(f"Visual mapping: {len(vertex_mapping_visual)} vertices (range: {vertex_mapping_visual.min()}-{vertex_mapping_visual.max()})")
+    print(f"All mapping: {len(vertex_mapping_all)} vertices (range: {vertex_mapping_all.min()}-{vertex_mapping_all.max()})")
+    
+    # Add to all metadata files
+    metadata_dir = Path(metadata_dir)
+    total_updated = 0
+    
+    print("Updating metadata files...")
+    for dataset_dir in sorted(metadata_dir.iterdir()):
+        if not dataset_dir.is_dir():
+            continue
+        
+        for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
+            meta = np.load(meta_file, allow_pickle=True).item()
+            
+            # Initialize encoding_models section if needed
+            if "encoding_models" not in meta:
+                meta["encoding_models"] = {}
+            
+            meta["encoding_models"]["vertex_mapping_visual"] = vertex_mapping_visual
+            meta["encoding_models"]["vertex_mapping_all"] = vertex_mapping_all
+            
+            np.save(meta_file, meta, allow_pickle=True)
+            total_updated += 1
+    
+    print(f"Updated {total_updated} metadata files")
