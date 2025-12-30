@@ -130,10 +130,10 @@ Metadata
      - ROI name → vertex indices in full HCP grayordinate space
        (e.g., 'L_V1' → array([3319, 3320, ...])).
        Available ROIs:
-       L_V1, L_V2, L_V3, L_V3A, L_V3B, L_V3CD, L_V4, L_V4t,
-       L_V6, L_V6A, L_V7, L_V8, L_VMV1, L_VMV2, L_VMV3, L_VVC,
-       L_FFC, L_FST, L_IPS1, L_LO1, L_LO2, L_LO3, L_MST, L_MT,
-       L_PH, L_PIT.
+       'L_V1','L_V2','L_V3','L_V4','L_V6','L_V3A','L_V7','L_IPS1',
+       'L_V3B','L_V6A','L_V8','L_FFC','L_PIT','L_VMV1','L_VMV3',
+       'L_VMV2','L_VVC','L_MST','L_LO1','L_LO2','L_MT','L_PH','L_V4t',
+       'L_FST','L_V3CD','L_LO3'
        Corresponding R_* entries exist for the right hemisphere.
 
 **'encoding_models'**
@@ -250,7 +250,7 @@ This function loads the encoding model.
        |       • Dorsal stream: IPS1, LO1, LO2, LO3, MST, MT, FST
        |     Prefix with 'L_' or 'R_' for hemisphere-specific selection.
        |     If multiple ROIs are listed, their vertices are concatenated.
-       |     **Valid values:** "L_V1", "L_V2", "L_V3", "L_V3A", "L_V3B", "L_V3CD", "L_V4", "L_V4t", "L_V6", "L_V6A", "L_V7", "L_V8", "L_VMV1", "L_VMV2", "L_VMV3", "L_VVC", "L_FFC", "L_FST", "L_IPS1", "L_LO1", "L_LO2", "L_LO3", "L_MST", "L_MT", "L_PH", "L_PIT", "R_V1", "R_V2", "R_V3", "R_V3A", "R_V3B", "R_V3CD", "R_V4", "R_V4t", "R_V6", "R_V6A", "R_V7", "R_V8", "R_VMV1", "R_VMV2", "R_VMV3", "R_VVC", "R_FFC", "R_FST", "R_IPS1", "R_LO1", "R_LO2", "R_LO3", "R_MST", "R_MT", "R_PH", "R_PIT"
+       |     **Valid values:** "L_V1", "R_V1", "L_V2", "L_V3", "L_V4", "R_V2", "R_V3", "R_V4", "L_V6", "L_V3A", "L_V7", "L_IPS1", "L_V3B", "L_V6A", "R_V6", "R_V3A", "R_V7", "R_IPS1", "R_V3B", "R_V6A", "L_V8", "L_FFC", "L_PIT", "L_VMV1", "L_VMV3", "L_VMV2", "L_VVC", "R_V8", "R_FFC", "R_PIT", "R_VMV1", "R_VMV3", "R_VMV2", "R_VVC", "L_MST", "L_LO1", "L_LO2", "L_MT", "L_PH", "L_V4t", "L_FST", "L_V3CD", "L_LO3", "R_MST", "R_LO1", "R_LO2", "R_MT", "R_PH", "R_V4t", "R_FST", "R_V3CD", "R_LO3"
        |     **Example:** ['L_V1', 'R_V1', 'L_V4', 'R_V4']
        | 
        | **voxel_index**
