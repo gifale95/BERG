@@ -17,6 +17,7 @@ from berg.core.parameter_validator import (
 try:
     import mosaic
     from mosaic.utils.inference import MosaicInference
+    from mosaic.models.transforms import SelectROIs
     from PIL import Image
 except ImportError:
     raise ImportError(
@@ -130,10 +131,9 @@ class FMRIEncodingModel(BaseModelInterface):
             
             if "voxel_index" in self.selection:
                 vertex_index = self.selection["voxel_index"]
-                # Validate as binary array in full 91k space
                 validated_array = validate_binary_array(
                     vertex_index,
-                    expected_length=self.N_VERTICES_FULL,
+                    expected_length=self.N_VERTICES_MODEL,
                     parameter_name="voxel_index"
                 )
                 self.vertex_index = validated_array.astype(bool)
@@ -180,8 +180,23 @@ class FMRIEncodingModel(BaseModelInterface):
         Prepare vertex selection from ROI and/or vertex indices in full 91k space.
         Stores indices that will be used to slice predictions after expanding to 91k.
         Uses the first subject in the list for loading ROI metadata.
+
+        Mapping workflow:
+        1. Get vertex mapping (57k → 91k): Load GlasserGroups 1-22 to obtain the 57,051 
+        vertex indices that define which positions in the full 91k HCP space the model 
+        predicts. This creates the coordinate system bridge.
+
+        2. Load ROI indices from metadata: ROI indices are stored in full 91k HCP space 
+        (e.g., L_V1 = [3319, 3320, ...]). These define which brain locations belong 
+        to each region.
+
+        3. Collect all selected vertices: Combine ROI indices and/or user-specified voxel 
+        indices into a single set. These are all in 91k space.
+
+        4. Validate indices are predictable: Check that selected vertices don't exceed 
+        max_model_vertex (the highest index in vertex_mapping), ensuring we only 
+        request predictions the model can actually generate.
         """
-        from mosaic.models.transforms import SelectROIs
         
         # Get the vertex mapping (57k model space → 91k full space)
         all_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 23)])

@@ -184,6 +184,11 @@ parameters:
           Binary one-hot encoded vector indicating which vertices to include.
           Must have exactly the same length as the number of available vertices (7,831).
           Each position set to 1 indicates that vertex should be included.
+          WARNING: This operates in the model's ~7k prediction space, which does NOT
+          directly correspond to positions in the full fsLR32k/HCP grayordinate space
+          (91,282 vertices) where ROIs and noise ceilings are defined. If you need to
+          select specific brain regions, use the 'roi' parameter instead, which handles
+          the coordinate mapping automatically.
         example: [0, 0, ..., 1, 1, 0]
 
   stimulus:
