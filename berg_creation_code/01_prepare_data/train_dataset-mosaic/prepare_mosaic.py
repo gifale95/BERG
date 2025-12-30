@@ -62,8 +62,8 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 # Create output directories
-metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri', 'train_dataset-mosaic', 'metadata')
-nc_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri', 'train_dataset-mosaic', 'noise_ceilings')
+metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri', 'train_dataset-mosaic', 'model-mosaic', 'metadata')
+nc_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri', 'train_dataset-mosaic', 'model-mosaic', 'noise_ceilings')
 os.makedirs(metadata_dir, exist_ok=True)
 os.makedirs(nc_dir, exist_ok=True)
 
