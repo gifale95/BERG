@@ -22,7 +22,7 @@ try:
     from PIL import Image
 except ImportError:
     raise ImportError(
-        "MOSAIC is required for this model. Please install it with: pip install mosaic"
+        "MOSAIC is required for this model. Please install it with: pip install mosaic-dataset"
     )
 
 # Mapping from subject prefix to MOSAIC dataset name

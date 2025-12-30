@@ -21,7 +21,7 @@ try:
     from PIL import Image
 except ImportError:
     raise ImportError(
-        "MOSAIC is required for this model. Please install it with: pip install mosaic"
+        "MOSAIC is required for this model. Please install it with: pip install mosaic-dataset"
     )
 
 
@@ -282,7 +282,6 @@ class FMRIEncodingModel(BaseModelInterface):
                 f"Stimulus must have 3 color channels, got {stimulus.shape[1]}"
             )
         
-        # Convert numpy array to PIL Images for MOSAIC
         # MOSAIC expects list of PIL Images
         images = []
         for i in range(stimulus.shape[0]):

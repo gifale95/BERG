@@ -16,6 +16,7 @@ from mosaic.stiminfo import get_stiminfo
 from mosaic.participantinfo import get_participantinfo
 from mosaic.models.transforms import SelectROIs
 from mosaic.constants import region_of_interest_labels
+from mosaic.constants import subject_id_to_file_mapping
 
 
 # Dataset configuration
@@ -148,7 +149,7 @@ def download_noise_ceilings(output_dir):
     for short_id, info in DATASETS.items():
         dataset_name = info["long_name"]
         n_subjects = info["n_subjects"]
-        print(f"\n{short_id}:")
+        print(f"{short_id}:")
 
         for subj in range(1, n_subjects + 1):
             try:
@@ -160,7 +161,6 @@ def download_noise_ceilings(output_dir):
                 )
 
                 # Get HDF5 file path
-                from mosaic.constants import subject_id_to_file_mapping
                 hdf5_filename = subject_id_to_file_mapping[dataset_name][subj]
                 hdf5_path = f"./MOSAIC/{hdf5_filename}"
 
@@ -195,14 +195,14 @@ def download_noise_ceilings(output_dir):
             except Exception as e:
                 print(f"  sub-{subj:02d}: Failed ({type(e).__name__}: {str(e)})")
 
-    print(f"\nAll files saved to: {output_dir}/")
+    print(f"All files saved to: {output_dir}/")
 
 
 def add_noise_ceilings_to_metadata(metadata_dir, noise_ceiling_dir):
     """
     Add noise ceiling values to metadata in their original space.
     
-    Stores all available noise ceiling variants for each subject without transformation.
+    Stores all available noise ceiling variants for each subject.
     Users can map to model prediction spaces (visual/all) when needed using vertex mappings.
     
     Available noise ceiling variants:
