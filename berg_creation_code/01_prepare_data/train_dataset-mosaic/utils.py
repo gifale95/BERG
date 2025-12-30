@@ -25,7 +25,7 @@ DATASETS = {
     "deeprecon": {"long_name": "deeprecon", "n_subjects": 3},
     "GOD": {"long_name": "GenericObjectDecoding", "n_subjects": 5},
     "NSD": {"long_name": "NaturalScenesDataset", "n_subjects": 8},
-    "THINGS": {"long_name": "THINGS_fmri", "n_subjects": 3},
+    "THINGS": {"long_name": "THINGS", "n_subjects": 3},
     "BMD": {"long_name": "BOLDMomentsDataset", "n_subjects": 10},
     "NOD": {"long_name": "NaturalObjectDataset", "n_subjects": 30},
     "HAD": {"long_name": "HumanActionsDataset", "n_subjects": 30},
