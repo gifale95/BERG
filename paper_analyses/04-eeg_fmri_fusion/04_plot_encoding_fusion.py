@@ -74,7 +74,7 @@ for s, sub in enumerate(args.fmri_subjects):
         encoding = metadata[s]['encoding_models']\
             [hemi+'_explained_variance_nsdcore']
         idx_encoding = encoding > args.encoding_threshold
-        idx_nan = ~np.logical_and(idx_ncsnr, idx_ncsnr)
+        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
         corr_tfmri_fmri[s,h,idx_nan] = np.nan
 
 # Threshold the vertices by significance

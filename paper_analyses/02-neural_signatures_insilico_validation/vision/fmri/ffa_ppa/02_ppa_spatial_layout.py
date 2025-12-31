@@ -83,7 +83,7 @@ for hem in hemispheres:
         encoding = metadata[s]['encoding_models']\
             [hem+'_explained_variance_nsdcore'][roi_idx]
         idx_encoding = encoding > args.encoding_threshold
-        idx_nan = ~np.logical_and(idx_ncsnr, idx_ncsnr)
+        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
 
         # Loop across image types and threshold vertices
         for key in insilico_fmri['PPA'][hem].keys():

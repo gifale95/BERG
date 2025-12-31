@@ -27,7 +27,7 @@ args, unknown = parser.parse_known_args()
 # =============================================================================
 # Create the plots save directory
 # =============================================================================
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'hvc_selectivity',
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'hvc_selectivity_single_eeg_trials',
     'plots')
 os.makedirs(save_dir, exist_ok=True)
 
@@ -35,7 +35,7 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 # Load the results
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'hvc_selectivity',
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'hvc_selectivity_single_eeg_trials',
     'stats', 'stats.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()

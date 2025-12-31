@@ -1,16 +1,16 @@
-"""Use BERG to generate the in silico fMRI responses to the retinotopic mapping
-stimuli. Then, for each vertex estimate the retinotopic maps (polar angle and
-eccentricity) from the in silico fMRI responses.
+"""Generate the t-fMRI responses to the retinotopic mapping stimuli. Then, for
+each vertex and time point estimate the retinotopic maps (polar angle and
+eccentricity) from the t-fMRI responses.
 
 Parameters
 ----------
-encoding_model : str
-    The name of BERG's encoding model used for generating the in silico fMRI
-    responses in surface space.
-subject : int
-    The subject identifier for the fMRI encoding models. Since the used
+fmri_subject : int
+    The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
-    integers from 1 to 8.
+    integers from 1 8.
+hemisphere : str
+    String containing the hemisphere used for the analyses. Possible values 
+    are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
 FIELD_SIZE : float
     The total width and height of the simulated visual field in degrees of
     visual angle. The coordinate system spans from -FIELD_SIZE/2 to
@@ -31,15 +31,14 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-from berg import BERG
-from PIL import Image
-import gc
-import torch
 from tqdm import tqdm
+import h5py
+from berg import BERG
+from sklearn.linear_model import LinearRegression
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
-parser.add_argument('--subject', type=int, default=1)
+parser.add_argument('--fmri_subject', default=1, type=int)
+parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--FIELD_SIZE', type=float, default=16.8)
 parser.add_argument('--GRID_RES', type=int, default=40)
 parser.add_argument('--PROBE_SIGMA', type=float, default=0.5)
@@ -47,112 +46,129 @@ parser.add_argument('--BG_VALUE', type=float, default=0.5)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Estimate retinotopic maps <<<')
+print('>>> Generate t-fMRI <<<')
 print('\nInput parameters:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 
 # =============================================================================
-# Load BERG's encoding model
+# Define grid of probe centers (x,y) in degrees
 # =============================================================================
-# Initialize BERG
-berg = BERG(berg_dir=args.berg_dir)
-
-# Load the encoding model
-model = berg.get_encoding_model(args.encoding_model, subject=args.subject)
+coords = np.linspace(-args.FIELD_SIZE/2, args.FIELD_SIZE/2, args.GRID_RES)
+xx, yy = np.meshgrid(coords, coords, indexing="xy")
+centers = np.stack([xx.ravel(), yy.ravel()], axis=1)
 
 
 # =============================================================================
-# Generate the in silico fMRI responses using BERG
+# Create the saving directory
 # =============================================================================
-# Get the test image condition numbers
-test_img_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri', 'retinotopy',
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'retinotopy',
     'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
-    '_BG_VALUE-'+str(args.BG_VALUE), 'stimuli')
-test_img_list = os.listdir(test_img_dir)
-test_img_list.sort()
+    '_BG_VALUE-'+str(args.BG_VALUE), 'retinotopic_maps')
+os.makedirs(save_dir, exist_ok=True)
 
-# Loop across test images
-for i, test_img in enumerate(tqdm(test_img_list)):
 
-    # Get the probe image condition numbers
-    probe_img_list = os.listdir(os.path.join(test_img_dir, test_img))
-    probe_img_list.sort()
+# =============================================================================
+# List the in silico EEG responses for each test image category
+# =============================================================================
+eeg_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'retinotopy',
+    'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
+    '_BG_VALUE-'+str(args.BG_VALUE), 'insilico_eeg')
 
-    # Load the probe images into a numpy array using PIL
-    probe_imgs = []
-    for probe_img in probe_img_list:
-        img = Image.open(os.path.join(test_img_dir, test_img, probe_img))
-        img = np.array(img)
-        probe_imgs.append(img)
-    probe_imgs = np.array(probe_imgs)
-    probe_imgs = np.swapaxes(probe_imgs, 1, 3)  # BHWC to BCHW
+eeg_files = os.listdir(eeg_dir)
+eeg_files.sort()
 
-    # Generate the in silico fMRI responses using BERG
-    in_silico_fmri = berg.encode(model, probe_imgs)
-    if i == 0:
-        lh_response = in_silico_fmri[0]
-        rh_response = in_silico_fmri[1]
-    else:
-        lh_response += in_silico_fmri[0]
-        rh_response += in_silico_fmri[1]
-    del in_silico_fmri, probe_imgs
-    torch.cuda.empty_cache()
-    gc.collect()
+
+# =============================================================================
+# Generate the t-fMRI responses
+# =============================================================================
+# Only use vertices falling within the NSD visual streams
+berg = BERG(berg_dir=args.berg_dir)
+metadata = berg.get_model_metadata(
+    'fmri-nsd_fsaverage-huze',
+    subject=args.fmri_subject
+    )
+n_vertex = 163842
+idx_v = np.zeros(n_vertex, dtype=int)
+streams = ['early', 'midventral', 'midlateral', 'midparietal', 'ventral',
+    'lateral', 'parietal']
+for stream in streams:
+    idx_v[metadata['fmri'][f'{args.hemisphere}_fsaverage_rois'][stream]] = 1
+idx_v = np.where(idx_v == 1)[0]
+
+# Loop across EEG time points
+eeg_shape = h5py.File(os.path.join(eeg_dir, eeg_files[0]), 'r')['eeg']
+for t in tqdm(range(eeg_shape.shape[2])):
+
+    # Load the EEG-fMRI encoding fusion model weights
+    model_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+        'encoding_fusion_weights')
+    file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
+            f'hemi-{args.hemisphere}_eeg_time-{t:03d}.npy')
+    reg_param = np.load(os.path.join(model_dir, file_name),
+        allow_pickle=True).item()
+
+    # Instantiate the fusion regression model
+    reg = LinearRegression()
+    reg.coef_ = reg_param['coef_'][idx_v]
+    reg.intercept_ = reg_param['intercept_'][idx_v]
+    reg.n_features_in_ = reg_param['n_features_in_']
+    del reg_param
+
+    # Empty t-fMRI response array of shape:
+    # (1600 Probe images, N Vertices)
+    tfmri = np.zeros((eeg_shape.shape[0], len(idx_v)), dtype=np.float32)
+
+    # Loop across EEG responses for the test image categories
+    for i, eeg_file in enumerate(eeg_files):
+
+        # Load the in silico EEG responses
+        eeg = h5py.File(os.path.join(eeg_dir, eeg_file), 'r')['eeg']
+
+        # Generate and store the t-fMRI responses
+        tfmri += reg.predict(eeg[:,:,t])
+
+        # Delete unused variables
+        del eeg
+    del reg
 
 
 # =============================================================================
 # Define the probe location that elicits the maximum in silico fMRI response
 # =============================================================================
-# Define grid of probe centers (x,y) in degrees
-coords = np.linspace(-args.FIELD_SIZE/2, args.FIELD_SIZE/2, args.GRID_RES)
-xx, yy = np.meshgrid(coords, coords, indexing="xy")
-centers = np.stack([xx.ravel(), yy.ravel()], axis=1)
-
-# Define the probe location that elicits the maximum in silico fMRI responses
-max_idx_lh = np.argmax(lh_response, axis=0) # type: ignore
-max_idx_rh = np.argmax(rh_response, axis=0) # type: ignore
-x0s_lh = centers[max_idx_lh, 0]
-y0s_lh = centers[max_idx_lh, 1]
-x0s_rh = centers[max_idx_rh, 0]
-y0s_rh = centers[max_idx_rh, 1]
+    max_idx = np.argmax(tfmri, axis=0)
+    x0s = centers[max_idx, 0]
+    y0s = centers[max_idx, 1]
+    del tfmri
 
 
 # =============================================================================
 # Estimate the retinotopic maps (polar angle and eccentricity)
 # =============================================================================
-# arctan2 outputs values in the range [−π +π], but here polar angles set to the
-# range [0 2π] to facilitate later color-coded visualization.
+    # arctan2 outputs values in the range [−π +π], but here polar angles set to
+    # the range [0 2π] to facilitate later color-coded visualization.
+    polar_angle = np.mod(np.arctan2(y0s, x0s), 2 * np.pi)
+    eccentricity = np.sqrt(x0s**2 + y0s**2)
 
-# LH
-polar_angle_lh = np.mod(np.arctan2(y0s_lh, x0s_lh), 2 * np.pi)
-eccentricity_lh = np.sqrt(x0s_lh**2 + y0s_lh**2)
-
-# RH
-polar_angle_rh = np.mod(np.arctan2(y0s_rh, x0s_rh), 2 * np.pi)
-eccentricity_rh = np.sqrt(x0s_rh**2 + y0s_rh**2)
+    # Set values of vertices outside the visual streams to NaN
+    polar_angle_all_vertices = np.empty(n_vertex, dtype=np.float32)
+    eccentricity_all_vertices = np.empty(n_vertex, dtype=np.float32)
+    polar_angle_all_vertices[:] = np.nan
+    eccentricity_all_vertices[:] = np.nan
+    polar_angle_all_vertices[idx_v] = polar_angle
+    eccentricity_all_vertices[idx_v] = eccentricity
 
 
 # =============================================================================
 # Save the retinotopic maps
 # =============================================================================
-results = {
-    'polar_angle_lh': polar_angle_lh,
-    'eccentricity_lh': eccentricity_lh,
-    'polar_angle_rh': polar_angle_rh,
-    'eccentricity_rh': eccentricity_rh
-    }
+    results = {
+        'polar_angle': polar_angle_all_vertices,
+        'eccentricity': eccentricity_all_vertices,
+        }
 
-# Create the saving directory
-save_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri', 'retinotopy',
-    'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
-    '_BG_VALUE-'+str(args.BG_VALUE), 'retinotopic_maps',
-    'encoding_model-'+args.encoding_model+'_subject-'+str(args.subject))
-os.makedirs(save_dir, exist_ok=True)
+    file_name = (f'retinotopy_sub-{args.fmri_subject:02d}_'
+        f'hemi-{args.hemisphere}_eeg_time-{t:03d}.h5')
 
-# Save the results
-np.savez_compressed(os.path.join(save_dir, 'retinotopic_maps.npz'),
-    data=results) # type: ignore
+    np.save(os.path.join(save_dir, file_name), results)

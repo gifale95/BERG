@@ -1,4 +1,4 @@
-"""Perform searchlight RSA between t-fMRI responses and DNN layerwise features.
+"""Perform searchlight RSA between t-fMRI responses and LLM embeddings.
 
 Parameters
 ----------
@@ -17,21 +17,26 @@ radius_mm : float
 k : int
     Number of nearest geodesic neighbors (default = 10), if criterion is
     'nearest'.
-model : str
-    Name of deep neural network model used to extract the image features.
-    Available options are 'alexnet' and 'resnet50'.
 berg_dir : str
     Directory of the BERG.
-
+nsd_dir : str
+    Directory of the Natural Scenes Dataset.
+    https://naturalscenesdataset.org/
+coco_dir : str
+    Directory of the COCO dataset.
+    https://cocodataset.org/
 """
 
 import argparse
 import os
 import numpy as np
 from tqdm import tqdm
+from berg import BERG
+import pandas as pd
+from pycocotools.coco import COCO
+from sentence_transformers import SentenceTransformer
 from scipy.stats import pearsonr
 import h5py
-from berg import BERG
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subject', default=1, type=int)
@@ -39,8 +44,9 @@ parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--criterion', default='radius', type=str)
 parser.add_argument('--radius_mm', default=10, type=float)
 parser.add_argument('--k', default=10, type=int)
-parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
+parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--coco_dir', default='/scratch/giffordale95/datasets/image_sets/coco', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> RSA <<<')
@@ -73,11 +79,28 @@ def corr_matrix(X):
 
 
 # =============================================================================
+# Load the test image number
+# =============================================================================
+# The test images consist of the 515 images that all NSD subjects saw for three
+# times, and which were used to test BERG's encoding models
+
+# Initialize BERG
+berg = BERG(berg_dir=args.berg_dir)
+
+# Get the test image number
+metadata = berg.get_model_metadata(
+    'fmri-nsd_fsaverage-huze',
+    subject=1
+)
+test_img_num = metadata['encoding_models']['test_img_num']
+
+
+# =============================================================================
 # Load the t-fMRI responses and metadata
 # =============================================================================
-# Access the t-fMRI
+# Load the t-fMRI
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'tfmri_responses',
-    'things_eeg_2_test_images')
+    'nsd_515_test_images_single_eeg_trials')
 file_name = f'tfmri_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}.h5'
 tfmri = h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'][:]
 
@@ -90,29 +113,58 @@ metadata = berg.get_model_metadata(
 
 
 # =============================================================================
-# Load the DNN layerwise RDMs
+# Create the LLM RDM
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'dnn_layerwise_modeling', 'dnn_rdms',
-    'dnn_rdms_'+args.model+'.npy')
+# Load the LLM
+embedding_model = SentenceTransformer('all-mpnet-base-v2')
 
-dnn_rdms = np.load(data_dir, allow_pickle=True).item()
+# Load the NSD image COCO IDs
+info_dir = os.path.join(args.nsd_dir, 'nsddata', 'experiments', 'nsd',
+    'nsd_stim_info_merged.csv') 
+nsd_stim_info = np.array(pd.read_csv(info_dir, sep=',', header=0))
+cocoId = nsd_stim_info[:,1]
+cocoSplit = nsd_stim_info[:,2]
+
+# Loop across test images
+llm_embeddings = []
+cocoSplit_img = ''
+for img in tqdm(test_img_num):
+
+    # Initialize the COCO api
+    if cocoSplit[img] != cocoSplit_img:
+        cocoSplit_img = cocoSplit[img]
+        annFile = os.path.join(args.coco_dir, 'annotations', 'annotations',
+            'captions_'+cocoSplit[img]+'.json')
+        coco = COCO(annFile)
+
+    # Get the 5 captions instances for each images
+    annIds = coco.getAnnIds(imgIds=[cocoId[img]])
+    annotations = coco.loadAnns(annIds)
+    captions = []
+    for ann in annotations:
+        captions.append(ann['caption'])
+
+    # Get the embeddings of the captions, and average them across caption
+    # instances
+    llm_embeddings.append(np.mean(embedding_model.encode(captions), 0))
+
+# Format the embeddings to numpy array
+llm_embeddings = np.array(llm_embeddings).astype(np.float32)
+
+# Create the RDM
+llm_rdm = 1 - corr_matrix(llm_embeddings.T)
 
 
 # =============================================================================
 # Perform searchlight RSA
 # =============================================================================
-# Empty RSA results arrays
-rsa = {}
-for key in dnn_rdms.keys():
-    rsa[key] = np.empty((tfmri.shape[1], tfmri.shape[2]), dtype=np.float32)
-    rsa[key][:] = np.nan
+# Empty RSA results array
+rsa = np.empty((tfmri.shape[1], tfmri.shape[2]), dtype=np.float32)
+rsa[:] = np.nan
 
-# Take the lower triangle of the DNN RDMs
-idx_tril = np.tril_indices(len(tfmri), -1)
-dnn_rdm_tril = {}
-for key, val in dnn_rdms.items():
-    dnn_rdm_tril[key] = val[idx_tril]
+# Take the lower triangle of the behavior RDM
+idx_tril = np.tril_indices(len(llm_rdm), -1)
+llm_rdm_tril = llm_rdm[idx_tril]
 
 # Access the precomputed geodesic distances
 data_dir = os.path.join(args.berg_dir,
@@ -129,7 +181,7 @@ for stream in streams:
     idx_v[metadata['fmri'][f'{args.hemisphere}_fsaverage_rois'][stream]] = 1
 idx_v = np.where(idx_v == 1)[0]
 
-# Loop across fMRI vertices
+# Loop across fMRI vertices and EEG time points
 for v in tqdm(idx_v):
 
     # Select the neighborhood based on the chosen criterion
@@ -147,9 +199,8 @@ for v in tqdm(idx_v):
         # Create the fMRI RDM
         fmri_rdm = 1 - corr_matrix(tfmri[:,neighborhood,t].T)
 
-        # Perform RSA with each DNN layer
-        for key, val in dnn_rdm_tril.items():
-            rsa[key][v,t] = pearsonr(val, fmri_rdm[idx_tril])[0]
+        # Perform RSA
+        rsa[v,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
 
 
 # =============================================================================
@@ -161,9 +212,9 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'rsa')
+    'llm_modeling_nsd_single_eeg_trials', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = f'rsa_sub-{args.fmri_subject:02d}_{args.hemisphere}_model-{args.model}.npy'
+file_name = f'rsa_sub-{args.fmri_subject:02d}_{args.hemisphere}.npy'
 
 np.save(os.path.join(save_dir, file_name), results)

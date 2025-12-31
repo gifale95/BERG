@@ -70,7 +70,7 @@ for s, sub in enumerate(args.fmri_subjects):
     ))
 
     # Loop across hemipsheres
-    for hem in args.hemispheres:
+    for h, hem in enumerate(args.hemispheres):
 
         # Load the t-fMRI responses
         file_name = f'tfmri_sub-{sub:02d}_hemi-{hem}.npy'
@@ -81,7 +81,8 @@ for s, sub in enumerate(args.fmri_subjects):
         # Empty t-fMRI response arrays
         if s == 0:
             for key in tfmri_sub.keys():
-                tfmri[key] = {}
+                if h == 0:
+                    tfmri[key] = {}
                 # Empty t-fMRI response array of shape:
                 # (8 Subjects, 163,842 Vertices, 140 Time points)
                 tfmri[key][hem] = np.zeros(
@@ -115,10 +116,10 @@ for s in range(len(metadata)):
         idx_ncsnr = ncsnr > args.ncsnr_threshold
         encoding = metadata[s]['encoding_models'][hem+'_explained_variance_nsdcore']
         idx_encoding = encoding > args.encoding_threshold
-        idx_nan = ~np.logical_and(idx_ncsnr, idx_ncsnr)
+        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
 
-        for key in tfmri[hem].keys():
-            tfmri[hem][key][s,idx_nan] = np.nan
+        for key in tfmri.keys():
+            tfmri[key][hem][s,idx_nan] = np.nan
 
 
 # =============================================================================
@@ -159,7 +160,7 @@ for c, cat in enumerate(categories):
                     idx = metadata[s]['fmri'][hem+'_fsaverage_rois'][roi]
 
                 # Store the responses across selected vertices
-                vertex_mean_resp_sub.append(tfmri[hem][cat][s,idx])
+                vertex_mean_resp_sub.append(tfmri[cat][hem][s,idx])
 
             # Compute the mean ROI response across vertices
             tfmri_roi_avg[roi+'_'+cat][s] = np.nanmean(np.concatenate(

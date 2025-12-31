@@ -1,8 +1,15 @@
 """Test the categorical selectivity of high-level visual cortex ROIs on in
-silico fMRI responses.
+t-fMRI responses.
 
 Parameters
 ----------
+fmri_subjects : list
+    List containing the subject identifiers for the fMRI encoding models. Since
+    the used encoding models are trained on NSD data, valid subject identifiers
+    are integers from 1 8.
+hemisphere : list
+    List containing the hemispheres used for the analyses. Possible values 
+    are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
@@ -20,12 +27,16 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
+from berg import BERG
 from tqdm import tqdm
 import random
 from sklearn.utils import resample
 from scipy.stats import ttest_rel
+from statsmodels.stats.multitest import multipletests
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
+parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
@@ -44,19 +55,51 @@ np.random.seed(seed)
 
 
 # =============================================================================
-# Load the in silico fMRI responses
+# Load the t-fMRI responses
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'insilico_fmri_responses',
-    'insilico_fmri_responses.npy')
+# Loop across subjects
+tfmri = {}
+metadata = []
+for s, sub in enumerate(args.fmri_subjects):
 
-data = np.load(data_dir, allow_pickle=True).item()
+    # Get the subject's metadata
+    berg = BERG(berg_dir=args.berg_dir)
+    metadata.append(berg.get_model_metadata(
+        'fmri-nsd_fsaverage-huze',
+        subject=sub
+    ))
 
-insilico_fmri = {}
-insilico_fmri['lh'] = data['lh_insilico_fmri']
-insilico_fmri['rh'] = data['rh_insilico_fmri']
-metadata = data['metadata']
-del data
+    # Loop across hemipsheres
+    for h, hem in enumerate(args.hemispheres):
+
+        # Load the t-fMRI responses
+        file_name = f'tfmri_sub-{sub:02d}_hemi-{hem}.npy'
+        tfmri_path = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+            'hvc_selectivity_single_eeg_trials', 'tfmri_responses', file_name)
+        tfmri_sub = np.load(tfmri_path, allow_pickle=True).item()
+
+        # Empty t-fMRI response arrays
+        if s == 0:
+            for key in tfmri_sub.keys():
+                if h == 0:
+                    tfmri[key] = {}
+                # Empty t-fMRI response array of shape:
+                # (8 Subjects, 163,842 Vertices, 140 Time points)
+                tfmri[key][hem] = np.zeros(
+                    (len(args.fmri_subjects), tfmri_sub[key].shape[0],
+                    tfmri_sub[key].shape[1]), dtype=np.float32)
+
+        # Store the t-fMRI responses
+        for key in tfmri.keys():
+            tfmri[key][hem][s,:,:] = tfmri_sub[key]
+        del tfmri_sub
+
+# Load the EEG times
+metadata_eeg = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    subject=1
+)
+times = metadata_eeg['eeg']['times']
 
 
 # =============================================================================
@@ -65,27 +108,25 @@ del data
 # Only retain vertices that have above threshold (i) NCSNR AND (ii) encoding
 # prediction accuracy.
 
-# Loop across hemispheres
-hemispheres = ['lh', 'rh']
-for hem in hemispheres:
-
-    # Loop across subjects
-    for s in range(len(metadata)):
+# Loop across subjects and hemispheres
+for s in range(len(metadata)):
+    for hem in args.hemispheres:
 
         ncsnr = metadata[s]['fmri'][hem+'_ncsnr']
         idx_ncsnr = ncsnr > args.ncsnr_threshold
         encoding = metadata[s]['encoding_models'][hem+'_explained_variance_nsdcore']
         idx_encoding = encoding > args.encoding_threshold
         idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
-        for key in insilico_fmri[hem].keys():
-            insilico_fmri[hem][key][s,idx_nan] = np.nan
+
+        for key in tfmri.keys():
+            tfmri[key][hem][s,idx_nan] = np.nan
 
 
 # =============================================================================
 # Get the mean ROI response across vertices for each category
 # =============================================================================
 # Empty results dictionary
-vertex_mean_resp = {}
+tfmri_roi_avg = {}
 
 # Loop across categories and ROIs
 categories = ['Bodies', 'Faces', 'Objects', 'Scenes']
@@ -93,42 +134,44 @@ rois = ['EBA', 'FBA', 'FFA', 'OFA', 'PPA', 'OPA', 'RSC']
 for c, cat in enumerate(categories):
     for roi in rois:
 
-        # Empty arrays of shape (n_subjects,)
-        vertex_mean_resp[roi+'_'+cat] = np.zeros((len(metadata)))
+        # Empty arrays of shape:
+        # (8 Subjects, 163,842 Vertices, 140 Time points)
+        tfmri_roi_avg[roi+'_'+cat] = np.zeros((
+            len(args.fmri_subjects), len(times)), dtype=np.float32)
 
         # Loop across subjects
-        for s in range(len(metadata)):
+        for s in range(len(args.fmri_subjects)):
 
             # Empty subject response list
             vertex_mean_resp_sub = []
 
             # Loop across hemispheres
-            for hem in hemispheres:
+            for hem in args.hemispheres:
 
                 # Get the vertex indices for the ROI
-                if roi == 'FFA' or roi == 'FBA': # type: ignore
+                if roi == 'FFA' or roi == 'FBA':
                     # Get the vertex indices for both parts of the ROI
                     idx = np.append(
-                        metadata[s]['fmri'][hem+'_fsaverage_rois'][f'{roi}-1'], # type: ignore
-                        metadata[s]['fmri'][hem+'_fsaverage_rois'][f'{roi}-2']) # type: ignore
+                        metadata[s]['fmri'][hem+'_fsaverage_rois'][f'{roi}-1'],
+                        metadata[s]['fmri'][hem+'_fsaverage_rois'][f'{roi}-2'])
                     idx.sort()
                 else:
                     # Get the vertex indices for the ROI
-                    idx = metadata[s]['fmri'][hem+'_fsaverage_rois'][roi] # type: ignore
+                    idx = metadata[s]['fmri'][hem+'_fsaverage_rois'][roi]
 
                 # Store the responses across selected vertices
-                vertex_mean_resp_sub.append(insilico_fmri[hem][cat][s,idx])
+                vertex_mean_resp_sub.append(tfmri[cat][hem][s,idx])
 
             # Compute the mean ROI response across vertices
-            vertex_mean_resp[roi+'_'+cat][s] = np.nanmean(np.concatenate(
-                vertex_mean_resp_sub))
+            tfmri_roi_avg[roi+'_'+cat][s] = np.nanmean(np.concatenate(
+                vertex_mean_resp_sub), 0)
 
 
 # =============================================================================
 # Compute significant difference between responses for different categories
 # =============================================================================
-# Empty results dictionary
-pval_cat_diff = {}
+# Empty result dictionary
+sig_cat_diff = {}
 
 # Loop across target categories and ROIs
 rois = [['EBA', 'FBA'], ['FFA', 'OFA'], [], ['PPA', 'OPA', 'RSC']]
@@ -140,53 +183,50 @@ for c, cat in enumerate(categories):
         for oc, ocat in enumerate(other_cat):
 
             # Compute the significance
-            pval_cat_diff[roi+'_'+cat+'_>'+ocat] = \
-                ttest_rel(vertex_mean_resp[roi+'_'+cat],
-                vertex_mean_resp[roi+'_'+ocat], alternative='greater')[1]
+            pval_cat_diff = ttest_rel(tfmri_roi_avg[roi+'_'+cat],
+                tfmri_roi_avg[roi+'_'+ocat], alternative='greater')[1]
+            
+            # Correct for multiple comparisons
+            sig_cat_diff[roi+'_'+cat+'_>'+ocat] = multipletests(pval_cat_diff,
+                0.05, 'fdr_bh')[0]
 
 
 # =============================================================================
 # Bootstrap the confidence intervals (CIs)
 # =============================================================================
 # Empty result variables
-rois = ['EBA', 'FBA', 'FFA', 'OFA', 'PPA', 'OPA', 'RSC']
-ci_vertex_mean_resp = {}
+ci_tfmri_roi_avg = {}
 dist = {}
-for roi in rois:
-    for cat in categories:
-        ci_vertex_mean_resp[roi+'_'+cat] = np.zeros((2))
-        dist[roi+'_'+cat] = np.zeros((args.n_iter))
+for key, val in tfmri_roi_avg.items():
+    ci_tfmri_roi_avg[key] = np.zeros((2, len(times)))
+    dist[key] = np.zeros((args.n_iter, len(times)))
 
 # Create the bootstrap distribution
 for i in tqdm(range(args.n_iter)):
     idx = resample(np.arange(len(metadata)))
-    for roi in rois:
-        for cat in categories:
-            dist[roi+'_'+cat][i] = np.mean(vertex_mean_resp[roi+'_'+cat][idx])
+    for key, val in tfmri_roi_avg.items():
+        dist[key][i] = np.mean(val[idx], 0)
 
 # Compute the CIs from the bootstrap distribution
-for roi in rois:
-    for cat in categories:
-        ci_vertex_mean_resp[roi+'_'+cat][0] = \
-            np.percentile(dist[roi+'_'+cat], 2.5)
-        ci_vertex_mean_resp[roi+'_'+cat][1] = \
-            np.percentile(dist[roi+'_'+cat], 97.5)
+for key in tfmri_roi_avg.keys():
+    ci_tfmri_roi_avg[key][0] = np.percentile(dist[key], 2.5, axis=0)
+    ci_tfmri_roi_avg[key][1] = np.percentile(dist[key], 97.5, axis=0)
 
 
 # =============================================================================
 # Save the results
 # =============================================================================
 results = {
-    'insilico_fmri': insilico_fmri,
-    'vertex_mean_resp': vertex_mean_resp,
-    'pval_cat_diff': pval_cat_diff,
-    'ci_vertex_mean_resp': ci_vertex_mean_resp,
+    'tfmri_roi_avg': tfmri_roi_avg,
+    'sig_cat_diff': sig_cat_diff,
+    'ci_tfmri_roi_avg': ci_tfmri_roi_avg,
+    'times': times
     }
 
-save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'stats')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'hvc_selectivity_single_eeg_trials',
+    'stats')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-retinotopy-01_create_stimuli
+#SBATCH --job-name=eeg_fmri_fusion-retinotopy-01_create_stimuli
 #SBATCH --mail-type=end
 #SBATCH --mem=1000
 #SBATCH --time=03:00:00
@@ -35,7 +35,7 @@ echo BG_VALUE: $BG_VALUE
 sleep 8
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/fmri/retinotopy
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/retinotopy
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh

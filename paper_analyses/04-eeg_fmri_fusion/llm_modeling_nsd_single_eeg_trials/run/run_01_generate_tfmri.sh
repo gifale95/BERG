@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_eeg_fmri_fusion-llm_modeling-01_generate_tfmri
+#SBATCH --job-name=berg_eeg_fmri_fusion-llm_modeling_nsd_single_eeg_trials-01_generate_tfmri
 #SBATCH --mail-type=end
-#SBATCH --mem=80000
-#SBATCH --time=04:00:00
+#SBATCH --mem=100000
+#SBATCH --time=06:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -33,7 +33,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/llm_modeling
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/llm_modeling_nsd_single_eeg_trials
 
 # Run the job
 python 01_generate_tfmri.py --fmri_subject $fmri_subject --hemisphere $hemisphere

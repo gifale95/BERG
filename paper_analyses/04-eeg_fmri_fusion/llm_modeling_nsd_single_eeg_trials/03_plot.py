@@ -41,8 +41,8 @@ args, unknown = parser.parse_known_args()
 # =============================================================================
 # Create the plots save directory
 # =============================================================================
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'llm_modeling',
-    'plots')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'llm_modeling_nsd_single_eeg_trials', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -56,7 +56,8 @@ for sub in args.fmri_subjects:
     for hemi in ['lh', 'rh']:
 
         results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'llm_modeling', 'rsa', f'rsa_sub-{sub:02d}_hemi.npy')
+            'llm_modeling_nsd_single_eeg_trials', 'rsa',
+            f'rsa_sub-{sub:02d}_{hemi}.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         # NCSNR and noise ceiling vertex selection
@@ -65,9 +66,10 @@ for sub in args.fmri_subjects:
         encoding = results['metadata']['encoding_models']\
             [hemi+'_explained_variance_nsdcore']
         idx_encoding = encoding > args.encoding_threshold
-        idx_nan = ~np.logical_and(idx_ncsnr, idx_ncsnr)
+        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
         rsa = results['rsa']
         rsa[idx_nan] = np.nan
+        del results
 
         # Store the RSA results
         if hemi == 'lh':
@@ -87,7 +89,7 @@ berg = BERG(berg_dir=args.berg_dir)
 
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
-    siubject=1
+    subject=1
 )
 
 times = metadata_eeg['eeg']['times']
@@ -122,7 +124,7 @@ for t, time in enumerate(tqdm(times)):
         subject,
         cmap='afmhot',
         vmin=0,
-        vmax=1,
+        vmax=0.3,
         with_colorbar=True)
     
     # Plot the flat brain surface

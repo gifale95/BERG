@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_eeg_fmri_fusion-hvc_selectivity-01_generate_tfmri
+#SBATCH --job-name=berg_eeg_fmri_fusion-hvc_selectivity_single_eeg_trials-01_generate_tfmri
 #SBATCH --mail-type=end
 #SBATCH --mem=18000
 #SBATCH --time=08:00:00
@@ -26,7 +26,7 @@ echo fmri_subject: $fmri_subject
 echo hemisphere: $hemisphere
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/hvc_selectivity
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/hvc_selectivity_single_eeg_trials
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh

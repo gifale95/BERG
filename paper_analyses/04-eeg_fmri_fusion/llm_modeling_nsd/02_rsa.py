@@ -211,7 +211,7 @@ results = {
     'metadata': metadata
 }
 
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'llm_modeling',
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'llm_modeling_nsd',
     'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
