@@ -56,11 +56,6 @@ parser.add_argument('--BG_VALUE', type=float, default=0.5)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Estimate retinotopic maps <<<')
-print('\nInput parameters:')
-for key, val in vars(args).items():
-    print('{:16} {}'.format(key, val))
-
 
 # =============================================================================
 # Create the plots save directory

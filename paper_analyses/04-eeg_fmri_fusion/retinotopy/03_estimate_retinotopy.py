@@ -169,6 +169,6 @@ for t in tqdm(range(eeg_shape.shape[2])):
         }
 
     file_name = (f'retinotopy_sub-{args.fmri_subject:02d}_'
-        f'hemi-{args.hemisphere}_eeg_time-{t:03d}.h5')
+        f'hemi-{args.hemisphere}_eeg_time-{t:03d}.npy')
 
     np.save(os.path.join(save_dir, file_name), results)
