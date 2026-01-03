@@ -230,8 +230,8 @@ This function loads the encoding model.
        | Format is DATASET-## where DATASET is one of the eight constituent datasets 
        | and ## is the zero-padded subject number. When multiple subjects are specified, 
        | the same ROI/vertex selection is applied to all subjects.
-       | **Valid Values:** BOLD5000-01, BOLD5000-02, BOLD5000-03, BOLD5000-04, deeprecon-01, deeprecon-02, deeprecon-03, GOD-01, GOD-02, GOD-03, GOD-04, GOD-05, NSD-01, NSD-02, NSD-03, NSD-04, NSD-05, NSD-06, NSD-07, NSD-08, THINGS-01, THINGS-02, THINGS-03, BMD-01, BMD-02, BMD-03, BMD-04, BMD-05, BMD-06, BMD-07, BMD-08, BMD-09, BMD-10, NOD-01, NOD-02, NOD-03, NOD-04, NOD-05, NOD-06, NOD-07, NOD-08, NOD-09, NOD-10, NOD-11, NOD-12, NOD-13, NOD-14, NOD-15, NOD-16, NOD-17, NOD-18, NOD-19, NOD-20, NOD-21, NOD-22, NOD-23, NOD-24, NOD-25, NOD-26, NOD-27, NOD-28, NOD-29, NOD-30, HAD-01, HAD-02, HAD-03, HAD-04, HAD-05, HAD-06, HAD-07, HAD-08, HAD-09, HAD-10, HAD-11, HAD-12, HAD-13, HAD-14, HAD-15, HAD-16, HAD-17, HAD-18, HAD-19, HAD-20, HAD-21, HAD-22, HAD-23, HAD-24, HAD-25, HAD-26, HAD-27, HAD-28, HAD-29, HAD-30
-       | **Example:** NSD-01
+       | **Valid Values:** "BOLD5000-01", "BOLD5000-02", "BOLD5000-03", "BOLD5000-04", "deeprecon-01", "deeprecon-02", "deeprecon-03", "GOD-01", "GOD-02", "GOD-03", "GOD-04", "GOD-05", "NSD-01", "NSD-02", "NSD-03", "NSD-04", "NSD-05", "NSD-06", "NSD-07", "NSD-08", "THINGS-01", "THINGS-02", "THINGS-03", "BMD-01", "BMD-02", "BMD-03", "BMD-04", "BMD-05", "BMD-06", "BMD-07", "BMD-08", "BMD-09", "BMD-10", "NOD-01", "NOD-02", "NOD-03", "NOD-04", "NOD-05", "NOD-06", "NOD-07", "NOD-08", "NOD-09", "NOD-10", "NOD-11", "NOD-12", "NOD-13", "NOD-14", "NOD-15", "NOD-16", "NOD-17", "NOD-18", "NOD-19", "NOD-20", "NOD-21", "NOD-22", "NOD-23", "NOD-24", "NOD-25", "NOD-26", "NOD-27", "NOD-28", "NOD-29", "NOD-30", "HAD-01", "HAD-02", "HAD-03", "HAD-04", "HAD-05", "HAD-06", "HAD-07", "HAD-08", "HAD-09", "HAD-10", "HAD-11", "HAD-12", "HAD-13", "HAD-14", "HAD-15", "HAD-16", "HAD-17", "HAD-18", "HAD-19", "HAD-20", "HAD-21", "HAD-22", "HAD-23", "HAD-24", "HAD-25", "HAD-26", "HAD-27", "HAD-28", "HAD-29", "HAD-30"
+       | **Example:** "NSD-01"
    * - **selection**
      - | **Type:** dict
        | **Required:** No
@@ -275,13 +275,13 @@ This function generates in silico neural responses using the encoding model prev
      - | **Type:** numpy.ndarray
        | **Required:** Yes
        | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
-       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
+       | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
    * - **device**
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
    * - **show_progress**
      - | **Type:** bool
        | **Required:** No
@@ -309,7 +309,7 @@ Example Usage
     # Load the model
     model = berg.get_encoding_model(
         "fmri-mosaic-CNN8_multihead_subAll_verticesVisual",
-        subject=NSD-01,
+        subject="NSD-01",
         selection={
             "roi": ["L_V1", "R_V1", "L_V4", "R_V4"]
             "voxel_index": [0, 0, '...', 1, 1, 0]

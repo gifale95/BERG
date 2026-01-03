@@ -455,12 +455,24 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                 if "valid_values" in param_data:
                     valid_values = param_data["valid_values"]
                     if isinstance(valid_values, list):
-                        rst_content.append(f"       | **Valid Values:** {', '.join(map(str, valid_values))}")
+                        # Check each value individually to determine if it needs quotes
+                        formatted_values = []
+                        for v in valid_values:
+                            if isinstance(v, str):
+                                formatted_values.append(f'"{v}"')
+                            else:
+                                formatted_values.append(str(v))
+                        rst_content.append(f"       | **Valid Values:** {', '.join(formatted_values)}")
                     else:
                         rst_content.append(f"       | **Valid Values:** {valid_values}")
                 
                 if "example" in param_data:
-                    rst_content.append(f"       | **Example:** {param_data.get('example', '')}")
+                    example = param_data.get('example', '')
+                    # Check the actual type of the example value
+                    if isinstance(example, str):
+                        rst_content.append(f'       | **Example:** "{example}"')
+                    else:
+                        rst_content.append(f"       | **Example:** {example}")
         
         rst_content.append("")
     
@@ -515,17 +527,16 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                 # For required parameters, use an example value if available
                 if "example" in param_data:
                     example_val = param_data["example"]
-                    # Format the value based on its type
-                    if param_data.get("type") == "str":
-                        if isinstance(example_val, str):
-                            get_model_params.append(f"{param_name}={example_val}")
-                        else:
-                            get_model_params.append(f"{param_name}={example_val}")
+                    # Check the actual type of the example value
+                    if isinstance(example_val, str):
+                        # Add quotes for string values
+                        get_model_params.append(f'{param_name}="{example_val}"')
                     else:
                         get_model_params.append(f"{param_name}={example_val}")
                 else:
                     # Use a generic value if no example is provided
-                    if param_data.get("type") == "str":
+                    param_type = param_data.get("type", "").lower()
+                    if "str" in param_type:
                         get_model_params.append(f"{param_name}=\"value\"")
                     elif param_data.get("type") == "int":
                         get_model_params.append(f"{param_name}=1")
@@ -708,5 +719,6 @@ if __name__ == "__main__":
 
 
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/meg-things_meg_1-vit_b_32.yaml docs/models/model_cards/meg-things_meg_1-vit_b_32.rst
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml source/models/model_cards/eeg-things_eeg_2-vit_b_32.rst

@@ -245,7 +245,7 @@ This function loads the encoding model.
        | - Multiple subjects: [1, 2, 3]
        | - All subjects: "all"
        | When multiple subjects are specified, the same ROI/vertex selection is applied to all subjects.
-       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8, all
+       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8, "all"
        | **Example:** 1
    * - **selection**
      - | **Type:** dict
@@ -292,13 +292,13 @@ This function generates in silico neural responses using the encoding model prev
      - | **Type:** numpy.ndarray
        | **Required:** Yes
        | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
-       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
+       | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
    * - **device**
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
    * - **show_progress**
      - | **Type:** bool
        | **Required:** No
