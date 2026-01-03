@@ -503,7 +503,7 @@ class FMRIEncodingModel(BaseModelInterface):
                 'encoding_models',
                 'modality-fmri',
                 'train_dataset-mosaic',
-                'model-mosaic',
+                'model-CNN8_multihead_subAll_verticesVisual',
                 'metadata',
                 dataset_prefix,
                 f'sub-{subject_num:02d}.npy'
