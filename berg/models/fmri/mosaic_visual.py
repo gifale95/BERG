@@ -230,7 +230,7 @@ class FMRIEncodingModel(BaseModelInterface):
                 framework="multihead",
                 subjects="all",
                 vertices="visual",
-                folder="./mosaic_models"
+                folder=self.berg_dir + "/encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subAll_verticesVisual/encoding_models_weights"
             )
             
             # Initialize inference wrapper

@@ -155,9 +155,8 @@ class FMRIEncodingModel(BaseModelInterface):
                 framework="multihead",
                 subjects="NSD",
                 vertices="all",
-                folder="./mosaic_models"
+                folder=self.berg_dir + "/encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subNSD_verticesAll/encoding_models_weights"
             )
-            
             # Initialize inference wrapper
             self.inference = MosaicInference(
                 model=self.model,
