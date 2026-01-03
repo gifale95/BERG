@@ -35,7 +35,7 @@ def _sub_num(sub_str: str) -> int:
     """Extract subject number for sorting."""
     return int(sub_str.split("-")[1])
 
-def download_metadata(save_path):
+def download_metadata(visual_save_path, whole_cortex_save_path):
     """
     Download and structure subject-wise metadata from MOSAIC datasets.
     
@@ -69,8 +69,10 @@ def download_metadata(save_path):
             }
         }
     """
-    out_root = Path(save_path)
-    out_root.mkdir(exist_ok=True)
+    visual_root = Path(visual_save_path)
+    visual_root.mkdir(exist_ok=True)
+    whole_cortex_root = Path(whole_cortex_save_path)
+    whole_cortex_root.mkdir(exist_ok=True)
 
     for short_id, info in DATASETS.items():
         if short_id == "THINGS":
@@ -119,11 +121,20 @@ def download_metadata(save_path):
                 }
             }
 
-            ds_dir = out_root / short_id
-            ds_dir.mkdir(exist_ok=True)
-            np.save(ds_dir / f"{subj}.npy", meta, allow_pickle=True)
+            # Save to visual variant (all datasets)
+            visual_ds_dir = visual_root / short_id
+            visual_ds_dir.mkdir(exist_ok=True)
+            np.save(visual_ds_dir / f"{subj}.npy", meta, allow_pickle=True)
+            
+            # Save to whole_cortex variant (NSD only)
+            if short_id == "NSD":
+                whole_cortex_ds_dir = whole_cortex_root / short_id
+                whole_cortex_ds_dir.mkdir(exist_ok=True)
+                np.save(whole_cortex_ds_dir / f"{subj}.npy", meta, allow_pickle=True)
 
-        print(f"Saved {len(subject_ids)} subjects to {ds_dir}/")
+        print(f"Saved {len(subject_ids)} subjects to visual variant")
+        if short_id == "NSD":
+            print(f"Saved {len(subject_ids)} subjects to whole_cortex variant")
 
 
 def download_noise_ceilings(output_dir):
@@ -201,7 +212,7 @@ def download_noise_ceilings(output_dir):
     print(f"All files saved to: {output_dir}/")
 
 
-def add_noise_ceilings_to_metadata(metadata_dir, noise_ceiling_dir):
+def add_noise_ceilings_to_metadata(visual_metadata_dir, whole_cortex_metadata_dir, noise_ceiling_dir):
     """
     Add noise ceiling values to metadata in their original space.
     
@@ -219,7 +230,8 @@ def add_noise_ceilings_to_metadata(metadata_dir, noise_ceiling_dir):
     Each noise ceiling is stored as a float32 array of shape (91282,) in full fsLR32k space.
     Only variants that exist for a given subject are stored.
     """
-    metadata_dir = Path(metadata_dir)
+    visual_dir = Path(visual_metadata_dir)
+    whole_cortex_dir = Path(whole_cortex_metadata_dir)
     noise_ceiling_dir = Path(noise_ceiling_dir)
     
     # Define all possible noise ceiling variants
@@ -232,8 +244,9 @@ def add_noise_ceilings_to_metadata(metadata_dir, noise_ceiling_dir):
         "artificial_n-1"
     ]
     
-    # Process all subjects
-    for dataset_dir in sorted(metadata_dir.iterdir()):
+    # Process visual variant metadata files
+    print("Adding noise ceilings to visual metadata...")
+    for dataset_dir in sorted(visual_dir.iterdir()):
         if not dataset_dir.is_dir():
             continue
             
@@ -241,18 +254,13 @@ def add_noise_ceilings_to_metadata(metadata_dir, noise_ceiling_dir):
         
         for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
             subject_id = meta_file.stem
-            subj_num = int(subject_id.split('-')[1])
             meta = np.load(meta_file, allow_pickle=True).item()
             
-            # Initialize encoding_models section
             if "encoding_models" not in meta:
                 meta["encoding_models"] = {}
             
-            # Try to load noise ceiling from intermediate files
             nc_found = False
-            
             for variant in nc_variants:
-                # Look for intermediate noise ceiling file (from download step)
                 nc_file = noise_ceiling_dir / f"{dataset_name}_{subject_id}_{variant}_noise_ceiling.npy"
                 
                 if nc_file.exists():
@@ -263,12 +271,41 @@ def add_noise_ceilings_to_metadata(metadata_dir, noise_ceiling_dir):
             if nc_found:
                 print(f"Added noise ceilings: {dataset_name:8s}, {subject_id}")
             else:
-                print(f"No noise ceilings found: {dataset_name:8s}, {subject_id}")
+                print(f"No noise ceiling found for: {dataset_name:8s}, {subject_id}")
+            
+            np.save(meta_file, meta, allow_pickle=True)
+    
+    # Process whole_cortex variant metadata files
+    print("Adding noise ceilings to whole_cortex metadata...")
+    for dataset_dir in sorted(whole_cortex_dir.iterdir()):
+        if not dataset_dir.is_dir():
+            continue
+            
+        dataset_name = dataset_dir.name
+        
+        for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
+            subject_id = meta_file.stem
+            meta = np.load(meta_file, allow_pickle=True).item()
+            
+            if "encoding_models" not in meta:
+                meta["encoding_models"] = {}
+            
+            nc_found = False
+            for variant in nc_variants:
+                nc_file = noise_ceiling_dir / f"{dataset_name}_{subject_id}_{variant}_noise_ceiling.npy"
+                
+                if nc_file.exists():
+                    nc_data = np.load(nc_file).astype(np.float32)
+                    meta["encoding_models"][f"{variant}_noiseceiling"] = nc_data
+                    nc_found = True
+            
+            if nc_found:
+                print(f"Added noise ceilings: {dataset_name:8s}, {subject_id}")
             
             np.save(meta_file, meta, allow_pickle=True)
 
 
-def add_roi_indices_to_metadata(metadata_dir):
+def add_roi_indices_to_metadata(visual_metadata_dir, whole_cortex_metadata_dir):
     """
     Add ROI vertex indices from the Glasser atlas to metadata.
     
@@ -285,45 +322,74 @@ def add_roi_indices_to_metadata(metadata_dir):
     mapping (GlasserGroups 1-22 or 1-5).
     """
     
-    # Get all cortical ROIs
-    all_rois = sorted([roi for roi in region_of_interest_labels.keys() 
-                       if roi and (roi.startswith('L_') or roi.startswith('R_'))])
+    # Get ROI lists for both variants
+    visual_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 6)])
+    visual_rois = visual_selector.selected_rois
     
-    # Build dictionary of ROI indices
-    roi_indices_dict = {}
+    whole_cortex_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 23)])
+    whole_cortex_rois = whole_cortex_selector.selected_rois
     
-    for roi in all_rois:
+    # Build ROI dictionaries for both variants
+    visual_roi_dict = {}
+    whole_cortex_roi_dict = {}
+    
+    # Get indices for visual ROIs
+    for roi in visual_rois:
         try:
             roi_selector = SelectROIs(selected_rois=[roi])
             roi_indices = np.array(roi_selector.selected_roi_indices)
-            roi_indices_dict[roi] = roi_indices
-                    
+            visual_roi_dict[roi] = roi_indices
         except Exception as e:
-            print(f"Error processing {roi}: {e}")
+            print(f"Error processing visual ROI {roi}: {e}")
     
-    print(f"Total ROIs extracted: {len(roi_indices_dict)}")
+    # Get indices for whole_cortex ROIs
+    for roi in whole_cortex_rois:
+        try:
+            roi_selector = SelectROIs(selected_rois=[roi])
+            roi_indices = np.array(roi_selector.selected_roi_indices)
+            whole_cortex_roi_dict[roi] = roi_indices
+        except Exception as e:
+            print(f"Error processing whole_cortex ROI {roi}: {e}")
     
-    # Add to all metadata files
-    metadata_dir = Path(metadata_dir)
-    total_updated = 0
+    print(f"Total ROIs extracted for visual: {len(visual_roi_dict)}")
+    print(f"Total ROIs extracted for whole_cortex: {len(whole_cortex_roi_dict)}")
     
-    print("Updating metadata files...")
-    for dataset_dir in sorted(metadata_dir.iterdir()):
+    # Add to visual metadata files
+    visual_dir = Path(visual_metadata_dir)
+    visual_updated = 0
+    
+    print("Updating visual metadata files...")
+    for dataset_dir in sorted(visual_dir.iterdir()):
         if not dataset_dir.is_dir():
             continue
         
         for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
             meta = np.load(meta_file, allow_pickle=True).item()
-            
-            meta["fmri"]["roi"] = roi_indices_dict
-            
+            meta["fmri"]["roi"] = visual_roi_dict
             np.save(meta_file, meta, allow_pickle=True)
-            total_updated += 1
+            visual_updated += 1
     
-    print(f"Updated {total_updated} metadata files")
+    print(f"Updated {visual_updated} visual metadata files")
+    
+    # Add to whole_cortex metadata files
+    whole_cortex_dir = Path(whole_cortex_metadata_dir)
+    whole_cortex_updated = 0
+    
+    print("Updating whole_cortex metadata files...")
+    for dataset_dir in sorted(whole_cortex_dir.iterdir()):
+        if not dataset_dir.is_dir():
+            continue
+        
+        for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
+            meta = np.load(meta_file, allow_pickle=True).item()
+            meta["fmri"]["roi"] = whole_cortex_roi_dict
+            np.save(meta_file, meta, allow_pickle=True)
+            whole_cortex_updated += 1
+    
+    print(f"Updated {whole_cortex_updated} whole_cortex metadata files")
 
 
-def add_vertex_mappings_to_metadata(metadata_dir):
+def add_vertex_mappings_to_metadata(visual_metadata_dir, whole_cortex_metadata_dir):
     """
     Add vertex mapping arrays to metadata for expanding model predictions to full HCP space.
     
@@ -331,7 +397,7 @@ def add_vertex_mappings_to_metadata(metadata_dir):
     and ROI indices are defined in full HCP grayordinate space (91,282 vertices). These mappings
     allow expansion: predictions_91k[vertex_mapping] = predictions_model.
     
-    Adds two mappings to metadata under 'encoding_models':
+    Adds mappings to metadata under 'encoding_models':
     - vertex_mapping_visual: (7,831,) array mapping visual cortex predictions to 91k space
     - vertex_mapping_all: (57,051,) array mapping full cortex predictions to 91k space
     
@@ -342,34 +408,54 @@ def add_vertex_mappings_to_metadata(metadata_dir):
     
     # Get vertex mappings for both model variants
     visual_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 6)])
-    all_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 23)])
+    whole_cortex_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 23)])
     
     vertex_mapping_visual = np.array(visual_selector.selected_roi_indices, dtype=np.int32)
-    vertex_mapping_all = np.array(all_selector.selected_roi_indices, dtype=np.int32)
+    vertex_mapping_all = np.array(whole_cortex_selector.selected_roi_indices, dtype=np.int32)
     
     print(f"Visual mapping: {len(vertex_mapping_visual)} vertices (range: {vertex_mapping_visual.min()}-{vertex_mapping_visual.max()})")
     print(f"All mapping: {len(vertex_mapping_all)} vertices (range: {vertex_mapping_all.min()}-{vertex_mapping_all.max()})")
     
-    # Add to all metadata files
-    metadata_dir = Path(metadata_dir)
-    total_updated = 0
+    # Add to visual metadata files
+    visual_dir = Path(visual_metadata_dir)
+    visual_updated = 0
     
-    print("Updating metadata files...")
-    for dataset_dir in sorted(metadata_dir.iterdir()):
+    print("Updating visual metadata files...")
+    for dataset_dir in sorted(visual_dir.iterdir()):
         if not dataset_dir.is_dir():
             continue
         
         for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
             meta = np.load(meta_file, allow_pickle=True).item()
             
-            # Initialize encoding_models section if needed
             if "encoding_models" not in meta:
                 meta["encoding_models"] = {}
             
             meta["encoding_models"]["vertex_mapping_visual"] = vertex_mapping_visual
+            
+            np.save(meta_file, meta, allow_pickle=True)
+            visual_updated += 1
+    
+    print(f"Updated {visual_updated} visual metadata files")
+    
+    # Add to whole_cortex metadata files
+    whole_cortex_dir = Path(whole_cortex_metadata_dir)
+    whole_cortex_updated = 0
+    
+    print("Updating whole_cortex metadata files...")
+    for dataset_dir in sorted(whole_cortex_dir.iterdir()):
+        if not dataset_dir.is_dir():
+            continue
+        
+        for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
+            meta = np.load(meta_file, allow_pickle=True).item()
+            
+            if "encoding_models" not in meta:
+                meta["encoding_models"] = {}
+            
             meta["encoding_models"]["vertex_mapping_all"] = vertex_mapping_all
             
             np.save(meta_file, meta, allow_pickle=True)
-            total_updated += 1
+            whole_cortex_updated += 1
     
-    print(f"Updated {total_updated} metadata files")
+    print(f"Updated {whole_cortex_updated} whole_cortex metadata files")
