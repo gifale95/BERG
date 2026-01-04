@@ -330,9 +330,9 @@ Metadata
 Input
 -----
 
+**Description**: The input should be a batch of RGB images.
 **Type**: ``numpy.ndarray``  
 **Shape**: ``['batch_size', 3, 'height', 'width']``  
-**Description**: The input should be a batch of RGB images.
 
 **Constraints:**
 
@@ -343,11 +343,11 @@ Input
 Output
 ------
 
-**Type**: ``tuple of numpy.ndarray``  
-**Shape**: ``([batch_size, lh_vertices], [batch_size, rh_vertices])``  
 **Description**:  
 The output is a tuple containing the left hemisphere (LH) and right hemisphere (RH) in silico fMRI
 responses for the batch images.
+**Type**: ``tuple of numpy.ndarray``  
+**Shape**: ``([batch_size, lh_vertices], [batch_size, rh_vertices])``  
 
 **Dimensions:**
 
@@ -376,16 +376,22 @@ This function loads the encoding model.
    :widths: 20 80
    :header-rows: 0
 
-   * - **subject**
-     - | **Type:** int
+   * - **model_id**
+       | **Description:** Unique identifier of the model to load.
        | **Required:** Yes
+     - | **Type:** str
+       | **Valid Values:** "fmri-nsd_fsaverage-vit_b_32"
+       | **Example:** "fmri-nsd_fsaverage-vit_b_32"
+   * - **subject**
        | **Description:** Subject ID from the NSD dataset (1-8).
+       | **Required:** Yes
+     - | **Type:** int
        | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
        | **Example:** 1
    * - **selection**
-     - | **Type:** dict
-       | **Required:** No
        | **Description:** Specifies which outputs to include in the model responses. If not provided, fMRI responses are generate for all LH and RH fMRI vertices.
+       | **Required:** No
+     - | **Type:** dict
        | 
        | **Properties:**
        | 
@@ -410,12 +416,14 @@ This function loads the encoding model.
        |     have exactly the same length as the number of RH fsaverage vertices (163,842).
        |     The vertices from the one-hot encoded vector are only selected if the "roi" key
        |     is not provided, or has value None.
+
    * - **device**
-     - | **Type:** str
-       | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
+       | **Required:** No
+     - | **Type:** str
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
+       | **Default:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -427,14 +435,49 @@ This function generates in silico neural responses using the encoding model prev
    :header-rows: 0
 
    * - **model**
-     - | **Type:** BaseModelInterface
-       | **Required:** Yes
        | **Description:** An instantiated and loaded encoding model.
-   * - **stimulus**
-     - | **Type:** numpy.ndarray
        | **Required:** Yes
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
-       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
+     - | **Type:** BaseModelInterface
+   * - **stimulus**
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
+       | **Required:** Yes
+     - | **Type:** numpy.ndarray
+     - | **Shape:** [batch_size, 3, height, width]
+       | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+   * - **return_metadata**
+       | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
+       | **Required:** No
+     - | **Type:** bool
+       | **Example:** True
+       | **Default:** False
+   * - **show_progress**
+       | **Description:** Whether to show a progress bar during encoding (for large batches).
+       | **Required:** No
+     - | **Type:** bool
+       | **Example:** True
+       | **Default:** False
+
+Parameters used in ``get_model_metadata``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function loads the encoding model's metadata, without having to load the model itself.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 0
+
+   * - **model_id**
+       | **Description:** Unique encoding model identifier.
+       | **Required:** Yes
+     - | **Type:** str
+       | **Valid Values:** "fmri-nsd_fsaverage-huze"
+       | **Example:** "fmri-nsd_fsaverage-huze"
+   * - **subject**
+       | **Description:** Subject ID from the NSD dataset (1-8).
+       | **Required:** Yes
+     - | **Type:** int
+       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
+       | **Example:** 1
 
 Performance
 ----------
@@ -487,6 +530,12 @@ Example Usage
         model,
         images,
         return_metadata=True
+    )
+
+    # Load the encoding model's metadata without having to load the model itself
+    metadata = berg.get_model_metadata(
+        "fmri-nsd_fsaverage-vit_b_32",
+        subject=1
     )
     
 

@@ -61,9 +61,9 @@ metadata: |
 
 # Input stimulus information
 input:
+  description: "The input should be a batch of RGB images."
   type: "numpy.ndarray"
   shape: [batch_size, 3, height, width]
-  description: "The input should be a batch of RGB images."
   constraints:
     - "Image values should be integers in range [0, 255]."
     - "Image dimensions (height, width) should be equal (square)."
@@ -71,9 +71,9 @@ input:
 
 # Output information
 output:
+  description: "The output is a 3D array containing in silico MEG responses."
   type: "numpy.ndarray"
   shape: [batch_size, n_sensors, n_timepoints]
-  description: "The output is a 3D array containing in silico MEG responses."
   dimensions:
     - name: "batch_size"
       description: "Number of stimuli in the batch."
@@ -85,21 +85,30 @@ output:
 
 # Model parameters and their usage
 parameters:
-  subject:
-    type: int
+
+  model_id:
+    description: Unique identifier of the model to load.
     required: true
+    type: "str"
+    valid_values: "meg-things_meg_1-vit_b_32"
+    example: "meg-things_meg_1-vit_b_32"
+    function: "get_encoding_model"
+
+  subject:
+    description: "Subject ID from the THINGS MEG1 dataset."
+    required: true
+    type: int
     valid_values: [1, 2, 3, 4]
     example: 1
-    description: "Subject ID from the THINGS MEG1 dataset."
     function: "get_encoding_model"
 
   selection:
-    type: dict
     description: |
       Specifies which outputs to include in the model responses.
       Can include specific senors and/or timepoints. If not provided,
       MEG responses are generated for all MEG sensors and time points.
     required: false
+    type: dict
     function: get_encoding_model
     properties:
       region:
@@ -148,30 +157,60 @@ parameters:
           a selected timepoint.
         example: [0, 0, ..., 1, 1, 0]  
 
-  stimulus:
-    type: numpy.ndarray
+  device:
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    required: false
+    type: str
+    valid_values: ["cpu", "cuda", "auto"]
+    example: "auto"
+    default: "auto"
+    function: "get_encoding_model"
+
+  model:
+    description: An instantiated and loaded encoding model.
     required: true
+    type: BaseModelInterface
+    function: "encode"
+
+  stimulus:
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224)."
+    required: true
+    type: numpy.ndarray
     shape: [batch_size, 3, height, width]
-    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
     example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
     function: "encode"
 
-  device:
-    type: str
-    required: false
-    valid_values: ["cpu", "cuda", "auto"]
-    default: "auto"
-    example: "auto"
-    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
-    function: "encode"
-  
-  show_progress:
+  return_metadata:
+    description: "Whether to return the encoding model's metadata together with the in silico neural resposnes."
+    required: False
     type: bool
+    default: Fale
+    example: True
+    function: "encode"
+
+  show_progress:
+    description: "Whether to show a progress bar during encoding (for large batches)."
     required: false
+    type: bool
     default: True
     example: True
-    description: "Whether to show a progress bar during encoding (for large batches)."
     function: "encode"
+
+  model_id:
+    description: Unique identifier of the model to load.
+    required: true
+    type: "str"
+    valid_values: "meg-things_meg_1-vit_b_32"
+    example: "meg-things_meg_1-vit_b_32"
+    function: "get_model_metadata"
+
+  subject:
+    description: "Subject ID from the THINGS MEG1 dataset."
+    required: true
+    type: int
+    valid_values: [1, 2, 3, 4]
+    example: 1
+    function: "get_model_metadata"
 
 # Performance metrics 
 performance:

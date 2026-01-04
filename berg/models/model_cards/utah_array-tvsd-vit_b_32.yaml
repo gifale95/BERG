@@ -67,9 +67,9 @@ metadata: |
         
 # Input stimulus information
 input:
+  description: "The input should be a batch of RGB images."
   type: "numpy.ndarray"
   shape: [batch_size, 3, height, width]
-  description: "The input should be a batch of RGB images."
   constraints:
     - "Image values should be integers in range [0, 255]."
     - "Image dimensions (height, width) should be equal (square)."
@@ -77,8 +77,6 @@ input:
 
 # Output information
 output:
-  type: "numpy.ndarray"
-  shape: [batch_size, n_electrodes, n_timepoints]
   description: |
     The output is a 3D array containing in silico utah-array responses.
     The second dimension (n_electrodes) corresponds to the number of electrodes in the selected ROI,
@@ -86,14 +84,16 @@ output:
     The third dimension corresponds to the timepoints (300).
 
     Monkey N electrode count:
-      - V1: 512
+      - V1: 448
       - V4: 256
       - IT: 256
 
-    Monkey N electrode count:
+    Monkey F electrode count:
       - V1: 512
       - V4: 192
       - IT: 320
+  type: "numpy.ndarray"
+  shape: [batch_size, n_electrodes, n_timepoints]
 
   dimensions:
     - name: "batch_size"
@@ -106,23 +106,31 @@ output:
 
 # Model parameters and their usage
 parameters:
-  # First parameter
-  subject:
-    type: str
+
+  model_id:
+    description: Unique identifier of the model to load.
     required: true
+    type: "str"
+    valid_values: "utah_array-tvsd-vit_b_32"
+    example: "utah_array-tvsd-vit_b_32"
+    function: "get_encoding_model"
+
+  subject:
+    description: "Monkey ID"
+    required: true
+    type: str
     valid_values: ["N", "F"]
     example: "N"
-    description: "Monkey ID"
     function: "get_encoding_model"
 
   # Selection parameter to define specific outputs (ROI, channels, timepoints, etc.)
   selection:
-    type: dict
     description: |
       Specifies which outputs to include in the model responses.
       Can include specific electrodes and/or timepoints. If not provided,
       utah-array responses are generated for all electrodes and time points.
     required: false
+    type: dict
     function: get_encoding_model
     properties:
       roi:
@@ -145,30 +153,60 @@ parameters:
           Each position set to 1 indicates that timepoint should be included.
         example: [0, 0, ..., 1, 1, 0]
 
-  stimulus:
-    type: numpy.ndarray
+  device:
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    required: false
+    type: str
+    valid_values: ["cpu", "cuda", "auto"]
+    example: "auto"
+    default: "auto"
+    function: "get_encoding_model"
+
+  model:
+    description: An instantiated and loaded encoding model.
     required: true
+    type: BaseModelInterface
+    function: "encode"
+
+  stimulus:
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224)."
+    required: true
+    type: numpy.ndarray
     shape: [batch_size, 3, height, width]
-    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
     example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
     function: "encode"
 
-  device:
-    type: str
-    required: false
-    valid_values: ["cpu", "cuda", "auto"]
-    default: "auto"
-    example: "auto"
-    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+  return_metadata:
+    description: "Whether to return the encoding model's metadata together with the in silico neural resposnes."
+    required: False
+    type: bool
+    default: Fale
+    example: True
     function: "encode"
 
   show_progress:
-    type: bool
+    description: "Whether to show a progress bar during encoding (for large batches)."
     required: false
+    type: bool
     default: True
     example: True
-    description: "Whether to show a progress bar during encoding (for large batches)."
     function: "encode"
+
+  model_id:
+    description: Unique identifier of the model to load.
+    required: true
+    type: "str"
+    valid_values: "utah_array-tvsd-vit_b_32"
+    example: "utah_array-tvsd-vit_b_32"
+    function: "get_model_metadata"
+
+  subject:
+    description: "Monkey ID"
+    required: true
+    type: str
+    valid_values: ["N", "F"]
+    example: "N"
+    function: "get_model_metadata"
 
 # Performance metrics and references
 performance:

@@ -1,6 +1,6 @@
 model_id: fmri-mosaic-CNN8_multihead_subAll_verticesVisual
 modality: fMRI
-training_dataset: MOSAIC (all datasets)
+training_dataset: MOSAIC (8 datasets, visual cortical vertices)
 species: Human
 stimuli: Images
 model_type: CNN8 (8-layer convolutional network)
@@ -9,8 +9,9 @@ creator: MOSAIC Team (Lahner et al., 2025)
 # General description of the model
 description: |
   This encoding model consists of a brain-optimized convolutional neural network (CNN8) trained to predict
-  visual cortex fMRI responses across multiple large-scale datasets. The model uses a shared 8-layer convolutional
-  core with subject-specific linear factorized readout heads, jointly trained across 93 subjects from 8 datasets.
+  visual cortex fMRI responses (GlasserGroups 1-22; 7,831 cortical vertices) across multiple large-scale datasets.
+  The model uses a shared 8-layer convolutional core with subject-specific linear factorized readout heads,
+  jointly trained across 93 subjects from 8 datasets.
 
   **Neural data.** The model was trained on the MOSAIC (Meta-Organized Stimuli And fMRI Imaging data for
   Computational modeling) aggregated dataset, which consists of 430,007 single-trial fMRI–stimulus pairs across
@@ -37,7 +38,7 @@ description: |
   Training was performed jointly across all subjects using a multi-head architecture.
 
   **Model testing partition.** Models are evaluated on held-out naturalistic test images
-  and on artificial test images from the NSD stimulus set. Naturalistic images consist
+  and on artificial test images from the NSD or Deeprecon stimulus set. Naturalistic images consist
   of real-world photographs (objects, scenes, people, animals) drawn from standard
   computer vision datasets. Artificial images consist of controlled, non-naturalistic
   visual stimuli such as gratings, noise patterns, checkerboards, and simple geometric
@@ -46,8 +47,7 @@ description: |
   **Noise ceiling.** Vertex-wise noise ceilings were computed using the MOSAIC
   preprocessing pipeline from GLMsingle beta estimates. Noise ceilings are provided
   separately for naturalistic training stimuli, naturalistic test stimuli, and artificial
-  stimuli. For each stimulus group, reliability was estimated from split-half correlations
-  across repeated stimulus presentations. Noise ceilings are reported for single-trial estimates (n-1) and for
+  stimuli. Noise ceilings are reported for single-trial estimates (n-1) and for
   repeat-averaged responses (n-avg).
 
   **Vertex space mapping.** The model predicts 7,831 vertices, a subset of the full
@@ -100,9 +100,9 @@ metadata: |
 
 # Input stimulus information
 input:
+  description: "The input should be a batch of RGB images."
   type: "numpy.ndarray"
   shape: [batch_size, 3, height, width]
-  description: "The input should be a batch of RGB images."
   constraints:
     - "Image values should be integers in range [0, 255]."
     - "Image dimensions (height, width) should be equal (square)."
@@ -110,13 +110,13 @@ input:
 
 # Output information
 output:
-  type: "dict"
-  shape: "{dataset_name: {subject_id: [batch_size, n_vertices], ...}, ...}"
   description: |
     Nested dictionary with structure organized by dataset and subject:
     {"BOLD5000": {"sub-01": array, "sub-02": array}, 
      "NaturalScenesDataset": {"sub-01": array, "sub-02": array}, ...}
     where each array has shape [batch_size, n_vertices] and dtype float32.
+  type: "dict"
+  shape: "{dataset_name: {subject_id: [batch_size, n_vertices], ...}, ...}"
   dimensions:
     - name: "batch_size"
       description: "Number of stimuli in the batch."
@@ -126,9 +126,26 @@ output:
 
 # Model parameters and their usage
 parameters:
-  subject:
-    type: "str, list[str], or 'all'"
+
+  model_id:
+    description: Unique identifier of the model to load.
     required: true
+    type: "str"
+    valid_values: "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+    example: "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+    function: "get_encoding_model"
+
+  subject:
+    description: |
+      Subject identifier(s). Can be:
+      - Single subject: "NSD-01"
+      - Multiple subjects: ["NSD-01", "BOLD5000-02", "THINGS-01"]
+      - All subjects: "all"
+      Format is DATASET-## where DATASET is one of the eight constituent datasets 
+      and ## is the zero-padded subject number. When multiple subjects are specified, 
+      the same ROI/vertex selection is applied to all subjects.
+    required: true
+    type: "str, list[str], or 'all'"
     valid_values: [
       'BOLD5000-01', 'BOLD5000-02', 'BOLD5000-03', 'BOLD5000-04',
       'deeprecon-01', 'deeprecon-02', 'deeprecon-03',
@@ -144,23 +161,15 @@ parameters:
       'HAD-21', 'HAD-22', 'HAD-23', 'HAD-24', 'HAD-25', 'HAD-26', 'HAD-27', 'HAD-28', 'HAD-29', 'HAD-30'
     ]
     example: "NSD-01"
-    description: |
-      Subject identifier(s). Can be:
-      - Single subject: "NSD-01"
-      - Multiple subjects: ["NSD-01", "BOLD5000-02", "THINGS-01"]
-      - All subjects: "all"
-      Format is DATASET-## where DATASET is one of the eight constituent datasets 
-      and ## is the zero-padded subject number. When multiple subjects are specified, 
-      the same ROI/vertex selection is applied to all subjects.
     function: "get_encoding_model"
 
   selection:
-    type: dict
     description: |
       Specifies which outputs to include in the model responses.
       Can include specific ROIs and/or vertex indices. If not provided,
       fMRI responses are generated for all visual cortex vertices.
     required: false
+    type: dict
     function: get_encoding_model
     properties:
       roi:
@@ -193,35 +202,57 @@ parameters:
           the coordinate mapping automatically.
         example: [0, 0, ..., 1, 1, 0]
 
-  stimulus:
-    type: numpy.ndarray
+  device:
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    required: false
+    type: str
+    valid_values: ["cpu", "cuda", "auto"]
+    example: "auto"
+    default: "auto"
+    function: "get_encoding_model"
+
+  model:
+    description: An instantiated and loaded encoding model.
     required: true
-    shape: [batch_size, 3, height, width]
+    type: BaseModelInterface
+    function: "encode"
+
+  stimulus:
     description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224)."
+    required: true
+    type: numpy.ndarray
+    shape: [batch_size, 3, height, width]
     example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
     function: "encode"
 
-  device:
-    type: str
-    required: false
-    valid_values: ["cpu", "cuda", "auto"]
-    default: "auto"
-    example: "auto"
-    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
-    function: "encode"
-  
-  show_progress:
+  return_metadata:
+    description: "Whether to return the encoding model's metadata together with the in silico neural resposnes."
+    required: False
     type: bool
+    default: Fale
+    example: True
+    function: "encode"
+
+  show_progress:
+    description: "Whether to show a progress bar during encoding (for large batches)."
     required: false
+    type: bool
     default: True
     example: True
-    description: "Whether to show a progress bar during encoding (for large batches)."
     function: "encode"
+
+  model_id:
+    description: Unique identifier of the model to load.
+    required: true
+    type: "str"
+    valid_values: "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+    example: "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+    function: "get_model_metadata"
 
 # Performance metrics
 performance:
   accuracy_plots: 
-    - 'brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-mosaic_all/model-cnn8_visual/encoding_models_accuracy'
+    - 'brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subAll_verticesVisual/encoding_models_accuracy'
   
 references:
     - MOSAIC Paper (Lahner et al., 2025): https://www.biorxiv.org/content/10.64898/2025.11.28.690060v1

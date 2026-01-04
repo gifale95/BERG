@@ -12,7 +12,7 @@ Model Summary
    * - Modality
      - fMRI
    * - Training Dataset
-     - MOSAIC (all datasets)
+     - MOSAIC (8 datasets, visual cortical vertices)
    * - Species
      - Human
    * - Stimuli
@@ -26,8 +26,9 @@ Description
 ----------
 
 This encoding model consists of a brain-optimized convolutional neural network (CNN8) trained to predict
-visual cortex fMRI responses across multiple large-scale datasets. The model uses a shared 8-layer convolutional
-core with subject-specific linear factorized readout heads, jointly trained across 93 subjects from 8 datasets.
+visual cortex fMRI responses (GlasserGroups 1-22; 7,831 cortical vertices) across multiple large-scale datasets.
+The model uses a shared 8-layer convolutional core with subject-specific linear factorized readout heads,
+jointly trained across 93 subjects from 8 datasets.
 
 **Neural data.** The model was trained on the MOSAIC (Meta-Organized Stimuli And fMRI Imaging data for
 Computational modeling) aggregated dataset, which consists of 430,007 single-trial fMRI–stimulus pairs across
@@ -54,7 +55,7 @@ rate 1e-4, weight decay 1e-4), ReduceLROnPlateau scheduling, mean squared error 
 Training was performed jointly across all subjects using a multi-head architecture.
 
 **Model testing partition.** Models are evaluated on held-out naturalistic test images
-and on artificial test images from the NSD stimulus set. Naturalistic images consist
+and on artificial test images from the NSD or Deeprecon stimulus set. Naturalistic images consist
 of real-world photographs (objects, scenes, people, animals) drawn from standard
 computer vision datasets. Artificial images consist of controlled, non-naturalistic
 visual stimuli such as gratings, noise patterns, checkerboards, and simple geometric
@@ -63,8 +64,7 @@ shapes that do not follow natural image statistics.
 **Noise ceiling.** Vertex-wise noise ceilings were computed using the MOSAIC
 preprocessing pipeline from GLMsingle beta estimates. Noise ceilings are provided
 separately for naturalistic training stimuli, naturalistic test stimuli, and artificial
-stimuli. For each stimulus group, reliability was estimated from split-half correlations
-across repeated stimulus presentations. Noise ceilings are reported for single-trial estimates (n-1) and for
+stimuli. Noise ceilings are reported for single-trial estimates (n-1) and for
 repeat-averaged responses (n-avg).
 
 **Vertex space mapping.** The model predicts 7,831 vertices, a subset of the full
@@ -174,9 +174,9 @@ Metadata
 Input
 -----
 
+**Description**: The input should be a batch of RGB images.
 **Type**: ``numpy.ndarray``  
 **Shape**: ``['batch_size', 3, 'height', 'width']``  
-**Description**: The input should be a batch of RGB images.
 
 **Constraints:**
 
@@ -187,13 +187,13 @@ Input
 Output
 ------
 
-**Type**: ``dict``  
-**Shape**: ``{dataset_name: {subject_id: [batch_size, n_vertices], ...}, ...}``  
 **Description**:  
 Nested dictionary with structure organized by dataset and subject:
 {"BOLD5000": {"sub-01": array, "sub-02": array},
 "NaturalScenesDataset": {"sub-01": array, "sub-02": array}, ...}
 where each array has shape [batch_size, n_vertices] and dtype float32.
+**Type**: ``dict``  
+**Shape**: ``{dataset_name: {subject_id: [batch_size, n_vertices], ...}, ...}``  
 
 **Dimensions:**
 
@@ -220,9 +220,13 @@ This function loads the encoding model.
    :widths: 20 80
    :header-rows: 0
 
-   * - **subject**
-     - | **Type:** str, list[str], or 'all'
+   * - **model_id**
+       | **Description:** Unique identifier of the model to load.
        | **Required:** Yes
+     - | **Type:** str
+       | **Valid Values:** "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+       | **Example:** "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+   * - **subject**
        | **Description:** Subject identifier(s). Can be:
        | - Single subject: "NSD-01"
        | - Multiple subjects: ["NSD-01", "BOLD5000-02", "THINGS-01"]
@@ -230,14 +234,16 @@ This function loads the encoding model.
        | Format is DATASET-## where DATASET is one of the eight constituent datasets 
        | and ## is the zero-padded subject number. When multiple subjects are specified, 
        | the same ROI/vertex selection is applied to all subjects.
+       | **Required:** Yes
+     - | **Type:** str, list[str], or 'all'
        | **Valid Values:** "BOLD5000-01", "BOLD5000-02", "BOLD5000-03", "BOLD5000-04", "deeprecon-01", "deeprecon-02", "deeprecon-03", "GOD-01", "GOD-02", "GOD-03", "GOD-04", "GOD-05", "NSD-01", "NSD-02", "NSD-03", "NSD-04", "NSD-05", "NSD-06", "NSD-07", "NSD-08", "THINGS-01", "THINGS-02", "THINGS-03", "BMD-01", "BMD-02", "BMD-03", "BMD-04", "BMD-05", "BMD-06", "BMD-07", "BMD-08", "BMD-09", "BMD-10", "NOD-01", "NOD-02", "NOD-03", "NOD-04", "NOD-05", "NOD-06", "NOD-07", "NOD-08", "NOD-09", "NOD-10", "NOD-11", "NOD-12", "NOD-13", "NOD-14", "NOD-15", "NOD-16", "NOD-17", "NOD-18", "NOD-19", "NOD-20", "NOD-21", "NOD-22", "NOD-23", "NOD-24", "NOD-25", "NOD-26", "NOD-27", "NOD-28", "NOD-29", "NOD-30", "HAD-01", "HAD-02", "HAD-03", "HAD-04", "HAD-05", "HAD-06", "HAD-07", "HAD-08", "HAD-09", "HAD-10", "HAD-11", "HAD-12", "HAD-13", "HAD-14", "HAD-15", "HAD-16", "HAD-17", "HAD-18", "HAD-19", "HAD-20", "HAD-21", "HAD-22", "HAD-23", "HAD-24", "HAD-25", "HAD-26", "HAD-27", "HAD-28", "HAD-29", "HAD-30"
        | **Example:** "NSD-01"
    * - **selection**
-     - | **Type:** dict
-       | **Required:** No
        | **Description:** Specifies which outputs to include in the model responses.
        | Can include specific ROIs and/or vertex indices. If not provided,
        | fMRI responses are generated for all visual cortex vertices.
+       | **Required:** No
+     - | **Type:** dict
        | 
        | **Properties:**
        | 
@@ -262,6 +268,14 @@ This function loads the encoding model.
        |     the coordinate mapping automatically.
        |     **Example:** [0, 0, '...', 1, 1, 0]
 
+   * - **device**
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Required:** No
+     - | **Type:** str
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
+       | **Default:** "auto"
+
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -271,29 +285,51 @@ This function generates in silico neural responses using the encoding model prev
    :widths: 20 80
    :header-rows: 0
 
-   * - **stimulus**
-     - | **Type:** numpy.ndarray
+   * - **model**
+       | **Description:** An instantiated and loaded encoding model.
        | **Required:** Yes
+     - | **Type:** BaseModelInterface
+   * - **stimulus**
        | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
+       | **Required:** Yes
+     - | **Type:** numpy.ndarray
+     - | **Shape:** [batch_size, 3, height, width]
        | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
-   * - **device**
-     - | **Type:** str
+   * - **return_metadata**
+       | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
        | **Required:** No
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** "cpu", "cuda", "auto"
-       | **Example:** "auto"
-   * - **show_progress**
      - | **Type:** bool
-       | **Required:** No
-       | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
+       | **Default:** False
+   * - **show_progress**
+       | **Description:** Whether to show a progress bar during encoding (for large batches).
+       | **Required:** No
+     - | **Type:** bool
+       | **Example:** True
+       | **Default:** False
+
+Parameters used in ``get_model_metadata``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function loads the encoding model's metadata, without having to load the model itself.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 0
+
+   * - **model_id**
+       | **Description:** Unique encoding model identifier.
+       | **Required:** Yes
+     - | **Type:** str
+       | **Valid Values:** "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+       | **Example:** "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
 
 Performance
 ----------
 
 **Accuracy Plots (AWS directory):**
 
-* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-mosaic_all/model-cnn8_visual/encoding_models_accuracy``
+* ``brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subAll_verticesVisual/encoding_models_accuracy``
 
 Example Usage
 ------------
@@ -312,7 +348,6 @@ Example Usage
         subject="NSD-01",
         selection={
             "roi": ["L_V1", "R_V1", "L_V4", "R_V4"]
-            "voxel_index": [0, 0, '...', 1, 1, 0]
         },
         device="auto"
     )
@@ -339,7 +374,12 @@ Example Usage
         images,
         return_metadata=True
     )
-    
+
+    # Load the encoding model's metadata without having to load the model itself
+    metadata = berg.get_model_metadata(
+        "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+    )
+
 
 References
 ---------

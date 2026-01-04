@@ -191,7 +191,7 @@ If you come across problems with this Python package, please submit an issue!
 
 ## 📜 Citation
 
-If you use the Brain Encoding Response Generator, please cite:
+If you use BERG, please cite:
 
 > *Gifford AT, Bersch D, Janini D, Roig G, Cichy RM. 2025. The Brain Encoding Response Generator. In preparation. https://github.com/gifale95/BERG*
 
