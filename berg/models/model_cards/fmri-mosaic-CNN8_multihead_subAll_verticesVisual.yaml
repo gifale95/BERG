@@ -53,12 +53,12 @@ description: |
   **Vertex space mapping.** The model predicts 7,831 vertices, a subset of the full
   HCP grayordinate space (91,282 vertices), because it only covers cortical surface vertices
   within Glasser atlas groups 1-5 (excluding subcortical structures and remaining cortical
-  areas). ROI vertex indices from the Glasser atlas are defined in the full 91k space and
+  areas). ROI vertex indices from the Glasser atlas are defined in the full 91,282 space and
   cannot be directly applied to the 7k model predictions. To align model predictions with
-  noise ceilings or extract ROI-specific responses: (1) expand predictions to full 91k space
+  noise ceilings or extract ROI-specific responses: (1) expand predictions to full 91,282 space
   using the vertex mapping from GlasserGroups 1-5, (2) index using ROI vertex indices or
   noise ceiling values at the expanded positions. All noise ceilings and ROI definitions are
-  provided in the full 91k HCP grayordinate space for direct indexing after expansion.
+  provided in the full 91,282 HCP grayordinate space for direct indexing after expansion.
 
   **Output.** The model predicts fMRI responses for 7,831 vertices in visual cortex, corresponding to MMP 1.0
   parcellation sections 1–5 (early visual cortex through higher-level ventral and dorsal visual streams).
@@ -88,8 +88,7 @@ metadata: |
                                Corresponding R_* entries exist for the right hemisphere.
 
   'encoding_models':
-      vertex_mapping_visual         : (7831,)  - Indices mapping visual cortex model predictions (GlasserGroups 1-5) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_visual] = predictions_7831
-      vertex_mapping_all            : (57051,) - Indices mapping full cortex model predictions (GlasserGroups 1-22) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_all] = predictions_57051
+      vertex_mapping_visual         : (7831,)  - Indices mapping visual cortex model predictions (GlasserGroups 1-5) to full 91,282 HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_visual] = predictions_7831
       test_n-avg_noiseceiling       : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
       test_n-1_noiseceiling         : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
       train_n-avg_noiseceiling      : (91282,) - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
@@ -247,6 +246,34 @@ parameters:
     type: "str"
     valid_values: "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
     example: "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+    function: "get_model_metadata"
+
+  subject:
+    description: |
+      Subject identifier(s). Can be:
+      - Single subject: "NSD-01"
+      - Multiple subjects: ["NSD-01", "BOLD5000-02", "THINGS-01"]
+      - All subjects: "all"
+      Format is DATASET-## where DATASET is one of the eight constituent datasets 
+      and ## is the zero-padded subject number. When multiple subjects are specified, 
+      the same ROI/vertex selection is applied to all subjects.
+    required: true
+    type: "str, list[str], or 'all'"
+    valid_values: [
+      'BOLD5000-01', 'BOLD5000-02', 'BOLD5000-03', 'BOLD5000-04',
+      'deeprecon-01', 'deeprecon-02', 'deeprecon-03',
+      'GOD-01', 'GOD-02', 'GOD-03', 'GOD-04', 'GOD-05',
+      'NSD-01', 'NSD-02', 'NSD-03', 'NSD-04', 'NSD-05', 'NSD-06', 'NSD-07', 'NSD-08',
+      'THINGS-01', 'THINGS-02', 'THINGS-03',
+      'BMD-01', 'BMD-02', 'BMD-03', 'BMD-04', 'BMD-05', 'BMD-06', 'BMD-07', 'BMD-08', 'BMD-09', 'BMD-10',
+      'NOD-01', 'NOD-02', 'NOD-03', 'NOD-04', 'NOD-05', 'NOD-06', 'NOD-07', 'NOD-08', 'NOD-09', 'NOD-10',
+      'NOD-11', 'NOD-12', 'NOD-13', 'NOD-14', 'NOD-15', 'NOD-16', 'NOD-17', 'NOD-18', 'NOD-19', 'NOD-20',
+      'NOD-21', 'NOD-22', 'NOD-23', 'NOD-24', 'NOD-25', 'NOD-26', 'NOD-27', 'NOD-28', 'NOD-29', 'NOD-30',
+      'HAD-01', 'HAD-02', 'HAD-03', 'HAD-04', 'HAD-05', 'HAD-06', 'HAD-07', 'HAD-08', 'HAD-09', 'HAD-10',
+      'HAD-11', 'HAD-12', 'HAD-13', 'HAD-14', 'HAD-15', 'HAD-16', 'HAD-17', 'HAD-18', 'HAD-19', 'HAD-20',
+      'HAD-21', 'HAD-22', 'HAD-23', 'HAD-24', 'HAD-25', 'HAD-26', 'HAD-27', 'HAD-28', 'HAD-29', 'HAD-30'
+    ]
+    example: "NSD-01"
     function: "get_model_metadata"
 
 # Performance metrics

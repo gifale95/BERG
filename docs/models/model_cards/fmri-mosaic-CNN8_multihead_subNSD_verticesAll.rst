@@ -66,12 +66,12 @@ repeat-averaged responses (n-avg).
 **Vertex space mapping.** The model predicts 57,051 vertices, a subset of the full
 HCP grayordinate space (91,282 vertices), because it only covers cortical surface vertices
 within Glasser atlas groups 1-22 (excluding subcortical structures and remaining cortical
-areas). ROI vertex indices from the Glasser atlas are defined in the full 91k space and
+areas). ROI vertex indices from the Glasser atlas are defined in the full 91,282 space and
 cannot be directly applied to the 57k model predictions. To align model predictions with
-noise ceilings or extract ROI-specific responses: (1) expand predictions to full 91k space
+noise ceilings or extract ROI-specific responses: (1) expand predictions to full 91,282 space
 using the vertex mapping from GlasserGroups 1-22, (2) index using ROI vertex indices or
 noise ceiling values at the expanded positions. All noise ceilings and ROI definitions are
-provided in the full 91k HCP grayordinate space for direct indexing after expansion.
+provided in the full 91,282 HCP grayordinate space for direct indexing after expansion.
 
 **Output.** The model predicts fMRI responses for 57,051 vertices spanning most of cortex, corresponding
 to MMP 1.0 parcellation GlasserGroups 1-22 (visual, somatomotor, auditory, and higher-order association
@@ -160,12 +160,9 @@ Metadata
    * - Key
      - Shape/Type
      - Description
-   * - vertex_mapping_visual
-     - ``(7831,)``
-     - Indices mapping visual cortex model predictions (GlasserGroups 1-5) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_visual] = predictions_7831
    * - vertex_mapping_all
      - ``(57051,)``
-     - Indices mapping full cortex model predictions (GlasserGroups 1-22) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_all] = predictions_57051
+     - Indices mapping full cortex model predictions (GlasserGroups 1-22) to full 91,282 HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_all] = predictions_57051
    * - test_n-avg_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
@@ -337,6 +334,15 @@ This function loads the encoding model's metadata, without having to load the mo
      - | **Type:** str
        | **Valid Values:** "fmri-mosaic-CNN8_multihead_subNSD_verticesAll"
        | **Example:** "fmri-mosaic-CNN8_multihead_subNSD_verticesAll"
+   * - **subject**
+       | **Description:** NSD subject ID(s). Can be:
+       | - Single subject: 1
+       | - Multiple subjects: [1, 2, 3]
+       | - All subjects: "all"
+       | **Required:** Yes
+     - | **Type:** int, list[int], or str
+       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8, "all"
+       | **Example:** 1
 
 Performance
 ----------
@@ -391,8 +397,26 @@ Example Usage
 
     # Load the encoding model's metadata without having to load the model itself
     metadata = berg.get_model_metadata(
+        subject=1,
         "fmri-mosaic-CNN8_multihead_subNSD_verticesAll"
     )
+
+    # Generate in silico fMRI responses for all vertices, and expand them to
+    # the 91k HCP grayordinate space
+    model = berg.get_encoding_model(
+        "fmri-mosaic-CNN8_multihead_subNSD_verticesAll",
+        subject=1,
+        device="auto"
+    )
+    responses = berg.encode(
+        model,
+        images,
+        show_progress=True
+    )
+    vertex_mapping = metadata["encoding_models"]["vertex_mapping_all"]
+    responses_91k = np.full((responses.shape[0], 91282), np.nan)
+    responses_91k[:,vertex_mapping] = responses
+
 
 
 References

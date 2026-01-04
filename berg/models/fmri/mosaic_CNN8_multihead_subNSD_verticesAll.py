@@ -38,10 +38,10 @@ model_info = load_model_info()
 # Register this model with the registry using model_info
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.mosaic_nsd",
+    module_path="berg.models.fmri.mosaic_CNN8_multihead_subNSD_verticesAll",
     class_name="FMRIEncodingModel",
     modality=model_info.get("modality", "fmri"),
-    training_dataset=model_info.get("training_dataset", "mosaic_nsd"),
+    training_dataset=model_info.get("training_dataset", "mosaic"),
     yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-mosaic-CNN8_multihead_subNSD_verticesAll.yaml")
 )
 
