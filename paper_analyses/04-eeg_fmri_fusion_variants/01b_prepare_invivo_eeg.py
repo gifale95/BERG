@@ -23,6 +23,7 @@ import argparse
 import numpy as np
 import h5py
 import os
+from berg import BERG
 from tqdm import tqdm
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -49,7 +50,7 @@ os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
-# Load and append EEG responses
+# Load the EEG responses
 # =============================================================================
 # Load the EEG responses
 eeg_dir_train = os.path.join(args.berg_dir, 'model_training_datasets',
@@ -66,6 +67,14 @@ if args.eeg_reps == 'average':
     eeg_train = np.mean(eeg_train, 1)
     eeg_test = np.mean(eeg_test, 1)
 
+# Load the EEG time points
+berg = BERG(berg_dir=args.berg_dir)
+metadata_eeg = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    subject=args.eeg_subject
+)
+times = metadata_eeg['eeg']['times']
+
 
 # =============================================================================
 # Z-score the EEG responses and transform them with PCA
@@ -79,7 +88,7 @@ if args.regression == 'linear':
     eeg_test_pca = np.zeros((eeg_test.shape), dtype=np.float32)
 
     # Loop across EEG time points
-    for t in tqdm(range(eeg_train.shape[2])):
+    for t in tqdm(range(len(times))):
 
         # Trial-average EEG responses
         if args.eeg_reps == 'average':
@@ -111,7 +120,7 @@ if args.regression == 'linear':
                 'mean_': pca.mean_.astype(np.float32),
                 'n_components_': pca.n_components_,
                 'n_samples_': pca.n_samples_,
-                'noise_variance_': pca.noise_variance_ if pca.noise_variance_ is None else np.float32(pca.noise_variance_),
+                'noise_variance_': pca.noise_variance_,
                 'n_features_in_': pca.n_features_in_
             }
             pca_param.append(pca_param_t)
@@ -154,7 +163,7 @@ if args.regression == 'linear':
                     'mean_': pca.mean_.astype(np.float32),
                     'n_components_': pca.n_components_,
                     'n_samples_': pca.n_samples_,
-                    'noise_variance_': pca.noise_variance_ if pca.noise_variance_ is None else np.float32(pca.noise_variance_),
+                    'noise_variance_': pca.noise_variance_,
                     'n_features_in_': pca.n_features_in_
                 }
                 pca_param_rep.append(pca_param_t)

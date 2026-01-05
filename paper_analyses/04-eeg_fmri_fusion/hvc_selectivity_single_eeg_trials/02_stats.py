@@ -113,9 +113,9 @@ for s in range(len(metadata)):
     for hem in args.hemispheres:
 
         ncsnr = metadata[s]['fmri'][hem+'_ncsnr']
-        idx_ncsnr = ncsnr > args.ncsnr_threshold
+        idx_ncsnr = ncsnr >= args.ncsnr_threshold
         encoding = metadata[s]['encoding_models'][hem+'_explained_variance_nsdcore']
-        idx_encoding = encoding > args.encoding_threshold
+        idx_encoding = encoding >= args.encoding_threshold
         idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
 
         for key in tfmri.keys():

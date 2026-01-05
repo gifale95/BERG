@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion_variants-02_train_encoding_fusion_2
+#SBATCH --job-name=eeg_fmri_fusion_variants-02_train_test_encoding_fusion_3
 #SBATCH --mail-type=end
-#SBATCH --mem=50000
-#SBATCH --time=50:00:00
+#SBATCH --mem=20000
+#SBATCH --time=02:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -39,4 +39,4 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Run the job
-python 02_train_encoding_fusion.py --fmri_subject $fmri_subject --hemisphere $hemisphere --eeg_subject $eeg_subject --eeg_reps 'single' --regression 'ridge'
+python 02_train_test_encoding_fusion.py --fmri_subject $fmri_subject --hemisphere $hemisphere --eeg_subject $eeg_subject --eeg_reps 'average' --regression 'linear'

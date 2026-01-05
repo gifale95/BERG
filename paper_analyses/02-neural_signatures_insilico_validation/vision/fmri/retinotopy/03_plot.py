@@ -120,18 +120,18 @@ metadata = berg.get_model_metadata(
 
 # Left hemisphere
 lh_ncsnr = metadata['fmri']['lh_ncsnr']
-idx_ncsnr = lh_ncsnr > args.ncsnr_threshold
+idx_ncsnr = lh_ncsnr >= args.ncsnr_threshold
 lh_encoding = metadata['encoding_models']['lh_explained_variance_nsdcore']
-idx_encoding = lh_encoding > args.encoding_threshold
+idx_encoding = lh_encoding >= args.encoding_threshold
 idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
 polar_angle_lh_norm[idx_nan] = np.nan
 eccentricity_lh_norm[idx_nan] = np.nan
 
 # Right hemisphere
 rh_ncsnr = metadata['fmri']['rh_ncsnr']
-idx_ncsnr = rh_ncsnr > args.ncsnr_threshold
+idx_ncsnr = rh_ncsnr >= args.ncsnr_threshold
 rh_encoding = metadata['encoding_models']['rh_explained_variance_nsdcore']
-idx_encoding = rh_encoding > args.encoding_threshold
+idx_encoding = rh_encoding >= args.encoding_threshold
 idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
 polar_angle_rh_norm[idx_nan] = np.nan
 eccentricity_rh_norm[idx_nan] = np.nan

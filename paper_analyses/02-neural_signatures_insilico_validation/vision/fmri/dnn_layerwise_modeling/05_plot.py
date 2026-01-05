@@ -80,10 +80,10 @@ for s, sub in enumerate(args.subjects):
 
         # NCSNR and noise ceiling vertex selection
         ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
-        idx_ncsnr = ncsnr > args.ncsnr_threshold
+        idx_ncsnr = ncsnr >= args.ncsnr_threshold
         encoding = results['metadata']['encoding_models']\
             [hemi+'_explained_variance_nsdcore']
-        idx_encoding = encoding > args.encoding_threshold
+        idx_encoding = encoding >= args.encoding_threshold
         idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
 
         # Store the layer assignment results

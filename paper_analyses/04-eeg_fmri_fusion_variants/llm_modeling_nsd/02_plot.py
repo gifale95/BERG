@@ -31,7 +31,10 @@ import matplotlib.pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
+parser.add_argument('--fmri_subjects', default=[1, 2], type=int)
+parser.add_argument('--eeg_subjects', default=[1, 2], type=int)
+parser.add_argument('--eeg_reps', default='average', type=str)
+parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -41,13 +44,13 @@ args, unknown = parser.parse_known_args()
 # =============================================================================
 # Create the plots save directory
 # =============================================================================
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'llm_modeling_nsd',
-    'plots')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_variants', 'llm_modeling_nsd',
+    'plots', f'eeg_reps-{args.eeg_reps}_regression-{args.regression}')
 os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
-# Load the RSA results
+# Load the RSA results (and average them across EEG repeats and subjects)
 # =============================================================================
 lh_rsa = []
 rh_rsa = []
@@ -55,27 +58,37 @@ rh_rsa = []
 for sub in args.fmri_subjects:
     for hemi in ['lh', 'rh']:
 
-        results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'llm_modeling_nsd', 'rsa', f'rsa_sub-{sub:02d}_{hemi}.npy')
-        results = np.load(results_dir, allow_pickle=True).item()
+        rsa_eeg_sub = []
 
-        # NCSNR and noise ceiling vertex selection
-        ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
-        idx_ncsnr = ncsnr >= args.ncsnr_threshold
-        encoding = results['metadata']['encoding_models']\
-            [hemi+'_explained_variance_nsdcore']
-        idx_encoding = encoding >= args.encoding_threshold
-        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
-        rsa = results['rsa']
-        rsa[idx_nan] = np.nan
-        del results
+        for es, esub in enumerate(args.eeg_subjects):
 
-        # Store the RSA results
+            results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_variants',
+                'llm_modeling_nsd', 'rsa',
+                f'eeg_reps-{args.eeg_reps}_regression-{args.regression}',
+                f'rsa_sub-{sub:02d}_hemi-{hemi}_eeg_sub-{esub:02d}.npy')
+            results = np.load(results_dir, allow_pickle=True).item()
+
+            # NCSNR and noise ceiling vertex selection
+            ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
+            idx_ncsnr = ncsnr >= args.ncsnr_threshold
+            encoding = results['metadata']['encoding_models']\
+                [hemi+'_explained_variance_nsdcore']
+            idx_encoding = encoding >= args.encoding_threshold
+            idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
+            rsa = results['rsa']
+            rsa[idx_nan] = np.nan
+            del results
+
+            # Store the RSA results averaged across EEG repeats
+            rsa_eeg_sub.append(np.nanmean(rsa, 1))
+            del rsa
+
+        # Average the RSA results across EEG subjects, and store them
         if hemi == 'lh':
-            lh_rsa.append(rsa)
+            lh_rsa.append(np.nanmean(rsa_eeg_sub, 0))
         elif hemi == 'rh':
-            rh_rsa.append(rsa)
-        del rsa
+            rh_rsa.append(np.nanmean(rsa_eeg_sub, 0))
+        del rsa_eeg_sub
 
 lh_rsa = np.array(lh_rsa)
 rh_rsa = np.array(rh_rsa)

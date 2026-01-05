@@ -1,23 +1,29 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion_variants-03_test_encoding_fusion
+#SBATCH --job-name=eeg_fmri_fusion_variants-03_stats
 #SBATCH --mail-type=end
-#SBATCH --mem=20000
-#SBATCH --time=00:30:00
+#SBATCH --mem=5000
+#SBATCH --time=00:10:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
+declare -a eeg_reps_all
 declare -a regression_all
 index=0
-for r in 'linear' 'ridge' ; do
-    regression_all[$index]=$r
-    ((index=index+1))
+for rep in 'single' 'average' ; do
+    for reg in 'linear' 'ridge' ; do
+        eeg_reps_all[$index]=$rep
+        regression_all[$index]=$reg
+        ((index=index+1))
+    done
 done
 
 # Extract the parameters
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
 regression=${regression_all[$SLURM_ARRAY_TASK_ID]}
+eeg_reps=${eeg_reps_all[$SLURM_ARRAY_TASK_ID]}
 echo regression: $regression
+echo eeg_reps: $eeg_reps
 
 # Change to the .py script directory
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion_variants
@@ -27,4 +33,4 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Run the job
-python 03_test_encoding_fusion.py --regression $regression
+python 03_stats.py --eeg_reps 'average' --regression $regression
