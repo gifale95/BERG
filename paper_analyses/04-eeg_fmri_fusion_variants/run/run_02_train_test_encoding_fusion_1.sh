@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=eeg_fmri_fusion_variants-02_train_test_encoding_fusion_1
 #SBATCH --mail-type=end
-#SBATCH --mem=35000
-#SBATCH --time=04:00:00
+#SBATCH --mem=20000
+#SBATCH --time=06:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

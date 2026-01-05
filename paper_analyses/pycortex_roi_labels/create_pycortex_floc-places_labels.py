@@ -1,4 +1,4 @@
-"""Create Pycortex' ROI labels based on NSD's pRF visual ROIs (V1, V2, V3, V4).
+"""Create Pycortex' ROI labels based on NSD's floc-places ROIS (OPA, PPA, RSC).
 
 Parameters
 ----------
@@ -30,7 +30,7 @@ args, unknown = parser.parse_known_args()
 
 
 # =============================================================================
-# Load the EVC ROIs
+# Load the ROIs
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
@@ -44,7 +44,7 @@ metadata = berg.get_model_metadata(
 # Load the ROI indices
 fsaverage_rois = np.empty(163842)
 fsaverage_rois[:] = np.nan
-rois = ['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4']
+rois = ['OPA', 'PPA', 'RSC']
 for r, roi in enumerate(rois):
     idx = metadata['fmri'][args.hemisphere+'_fsaverage_rois'][roi]
     fsaverage_rois[idx] = r + 1
@@ -65,7 +65,7 @@ vertex_data = cortex.Vertex(data, subject, vmin=1, vmax=len(rois), cmap='gist_ra
     with_colorbar=False)
 
 # Create the ROI labels: https://gallantlab.org/pycortex/generated/cortex.utils.add_roi.html
-cortex.utils.add_roi(vertex_data, name='prf-visualrois_'+args.hemisphere,
+cortex.utils.add_roi(vertex_data, name='floc-places_'+args.hemisphere,
     with_colorbar=False)
 
 # Then draw the ROI labels in Inkscape.

@@ -1,4 +1,5 @@
-"""Create Pycortex' ROI labels based on NSD's FFA, EBA, and PPA ROIs.
+"""Create Pycortex' ROI labels based on NSD's floc-bodies ROIs (EBA, FBA-1,
+FBA-2, mTL-bodies).
 
 Parameters
 ----------
@@ -44,14 +45,14 @@ metadata = berg.get_model_metadata(
 # Load the ROI indices
 fsaverage_rois = np.empty(163842)
 fsaverage_rois[:] = np.nan
-rois = ['FFA-1', 'FFA-2', 'EBA', 'PPA']
+rois = ['EBA', 'FBA-1', 'FBA-2', 'mTL-bodies']
 for r, roi in enumerate(rois):
     idx = metadata['fmri'][args.hemisphere+'_fsaverage_rois'][roi]
     fsaverage_rois[idx] = r + 1
 
 
 # =============================================================================
-# Create the stream labels
+# Create the ROI labels
 # =============================================================================
 # Prepare the data in Pycortex format
 data_nan = np.empty(163842)
@@ -61,11 +62,11 @@ if args.hemisphere == 'lh':
 elif args.hemisphere == 'rh':
     data = np.append(data_nan, fsaverage_rois)
 subject = 'fsaverage_nsd_sub-0' + str(args.subject)
-vertex_data = cortex.Vertex(data, subject, vmin=1, vmax=4, cmap='gist_rainbow',
+vertex_data = cortex.Vertex(data, subject, vmin=1, vmax=len(rois), cmap='gist_rainbow',
     with_colorbar=False)
 
 # Create the ROI labels: https://gallantlab.org/pycortex/generated/cortex.utils.add_roi.html
-cortex.utils.add_roi(vertex_data, name='ffa_eba_ppa_'+args.hemisphere,
+cortex.utils.add_roi(vertex_data, name='floc-bodies_'+args.hemisphere,
     with_colorbar=False)
 
-# Then manually draw the ROI labels using Inkscape paths.
+# Then draw the ROI labels in Inkscape.

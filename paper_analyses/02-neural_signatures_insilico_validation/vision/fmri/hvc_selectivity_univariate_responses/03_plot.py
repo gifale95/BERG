@@ -24,7 +24,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'plots')
+    'vision', 'fmri', 'hvc_selectivity_univariate_responses', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -32,7 +32,8 @@ os.makedirs(save_dir, exist_ok=True)
 # Load the results
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'stats', 'stats.npy')
+    'vision', 'fmri', 'hvc_selectivity_univariate_responses', 'stats',
+    'stats.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 

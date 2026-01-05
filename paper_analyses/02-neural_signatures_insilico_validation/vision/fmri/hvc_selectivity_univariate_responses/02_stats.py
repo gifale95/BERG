@@ -47,8 +47,8 @@ np.random.seed(seed)
 # Load the in silico fMRI responses
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'insilico_fmri_responses',
-    'insilico_fmri_responses.npy')
+    'vision', 'fmri', 'hvc_selectivity_univariate_responses',
+    'insilico_fmri_responses', 'insilico_fmri_responses.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 
@@ -184,7 +184,7 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'stats')
+    'vision', 'fmri', 'hvc_selectivity_univariate_responses', 'stats')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'

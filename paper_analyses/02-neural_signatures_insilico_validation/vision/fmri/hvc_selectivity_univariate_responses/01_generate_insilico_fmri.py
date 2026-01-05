@@ -42,7 +42,7 @@ for key, val in vars(args).items():
 # =============================================================================
 # Image directories
 img_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'stimuli')
+    'vision', 'fmri', 'hvc_selectivity_univariate_responses', 'stimuli')
 categories = ['Bodies', 'Faces', 'Objects', 'Scenes']
 img_type = ['Sel', 'Test']
 
@@ -121,7 +121,8 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'insilico_fmri_responses')
+    'vision', 'fmri', 'hvc_selectivity_univariate_responses',
+    'insilico_fmri_responses')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'insilico_fmri_responses.npy'
