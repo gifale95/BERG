@@ -15,6 +15,7 @@ ftfy
 regex 
 tqdm
 clip @ git+https://github.com/openai/CLIP.git
+git+https://github.com/cajal/fnn.git
 
 # memory encoding model
 yacs==0.1.8

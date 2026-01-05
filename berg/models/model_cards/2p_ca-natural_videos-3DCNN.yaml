@@ -1,0 +1,222 @@
+
+# Basic metadata
+model_id: 2p_ca-natural_videos-3DCNN
+modality: 2p_ca
+training_dataset: natural_videos
+species: Mouse
+stimuli: Videos 
+model_type: Spatiotemporal convolutional neural network (3D CNN + ConvLSTM)
+creator: Tolias Lab (Wang et al., Nature 2025)
+
+# General description of the model
+description: |
+  This encoding model is a large-scale foundation model of mouse visual cortex trained to predict
+  dynamic neural responses to natural video stimuli. The model consists of a shared spatiotemporal
+  convolutional neural network core trained across multiple mice, combined with mouse- and
+  neuron-specific linear readout layers. The shared core captures common visual representations
+  across subjects and cortical areas and can be transferred to new mice with minimal additional data.
+
+  **Neural data.** The model was trained on in vivo two-photon calcium imaging data recorded from
+  excitatory neurons in the visual cortex of awake, behaving mice. Training data consist of
+  approximately 900 minutes of natural video stimulation pooled from 8 mice (the foundation cohort),
+  covering multiple visual cortical areas including V1, LM, AL, RL, AM, and PM, and spanning
+  approximately 66,000 neurons. Neural activity was extracted from calcium signals and temporally
+  aligned to stimulus presentation. Additional behavioral signals (locomotion, pupil size, and eye
+  position) were recorded concurrently and used as modulatory inputs.
+
+  **Model architecture.** The model comprises four modules: a perspective module, a modulation
+  module, a shared core, and a readout module. The perspective module uses ray tracing and eye
+  position estimates to map stimulus frames into a retinotopic representation. The modulation
+  module processes behavioral state variables (locomotion and pupil dilation) using a recurrent
+  network to generate dynamic gain signals. The core module consists of a spatiotemporal convolutional
+  neural network with 3D convolutional layers and recurrent ConvLSTM components, producing nonlinear
+  visual feature representations over time. The readout module maps core features to individual
+  neurons using linear weights at neuron-specific spatial locations, corresponding to receptive
+  field positions.
+
+  **Preprocessing.** Visual stimuli consist of grayscale or RGB natural videos presented on a
+  monitor and resampled to approximately 30 Hz. Stimulus frames are transformed by the perspective
+  module to account for eye movements and monitor geometry. Neural and behavioral signals are
+  resampled to match the stimulus frame rate. No task labels or semantic annotations are used.
+
+  **Model training partition.** The shared core was trained exclusively on natural video stimuli
+  pooled across the foundation cohort of mice. All model components (perspective, modulation,
+  core, and readout) were trained end-to-end during foundation training using Poisson
+  negative log-likelihood loss. For transfer to new mice, the core parameters are frozen, and only
+  the perspective, modulation, and readout modules are fitted using limited amounts of natural
+  video data (as little as 16 minutes).
+
+  **Model testing partition.** Model performance is evaluated on held-out natural videos as well as
+  on out-of-distribution stimulus domains not used during training, including static natural images,
+  drifting Gabor filters, flashing Gaussian dots, directional noise patterns, and random dot
+  kinematograms. These stimuli are used solely for evaluation and in silico experimentation.
+
+  **Noise ceiling.** Predictive performance is reported using a normalized correlation coefficient
+  (CC_norm), which normalizes the correlation between predicted and recorded responses by an
+  estimated noise ceiling derived from trial-to-trial variability in the neural data. This metric
+  accounts for measurement noise and provides an upper-bound–normalized estimate of model accuracy.
+
+  **Spatial organization.** The model learns neuron-specific readout positions corresponding to
+  receptive field locations, which recapitulate the retinotopic organization of mouse visual cortex.
+  Readout feature weights form a functional embedding for each neuron that can be used to relate
+  functional responses to anatomical properties.
+
+  **Output.** The model predicts time-resolved neural responses for individual excitatory neurons in
+  mouse visual cortex, producing firing-rate–like activity traces aligned to video frames. Outputs
+  are provided at the native temporal resolution of the stimulus and are compatible with downstream
+  analyses of tuning, generalization, and structure–function relationships.
+
+
+
+
+metadata: |
+    '2p_ca':
+        session              : int      - Session identifier
+        scan                 : int      - Scan index within session
+        animal_id            : int      - Animal identifier (17797)
+        unit_id              : (N,)     - Unit identifiers (N = number of neurons)
+        coordinates          : (N, 3)   - 3D spatial coordinates (x, y, z) for each unit
+        OSI                  : (N,)     - Orientation Selectivity Index
+        DSI                  : (N,)     - Direction Selectivity Index
+        gOSI                 : (N,)     - Global Orientation Selectivity Index
+        gDSI                 : (N,)     - Global Direction Selectivity Index
+        pref_ori             : (N,)     - Preferred orientation (degrees)
+        pref_dir             : (N,)     - Preferred direction (degrees)
+        roi_masks            : dict     - Binary masks for brain regions
+            V1               : (N,)     - Visual area 1 (1 = unit in V1, 0 = not in V1)
+            LM               : (N,)     - Lateral medial area
+            AL               : (N,)     - Anterolateral area
+            RL               : (N,)     - Rostrolateral area
+        field_masks          : dict     - Binary masks for imaging fields
+            field_1          : (N,)     - Imaging field 1 (1 = unit in field, 0 = not)
+            field_2          : (N,)     - Imaging field 2
+            ...              : ...      - Additional fields as present in data
+    'encoding_model':
+        cc_abs               : (N,)     - Absolute correlation coefficient
+        cc_max               : (N,)     - Maximum correlation coefficient (noise ceiling)
+        cc_norm              : (N,)     - Normalized correlation coefficient
+        
+# Input stimulus information
+input:
+  type: "numpy.ndarray"
+  shape: [n_frames, height, width]
+  description: "The input should be a sequence of grayscale video frames."
+  constraints:
+    - "Frame values should be integers in range [0, 255]."
+    - "Frame dimensions: height=144, width=256 pixels."
+
+# Output information
+output:
+  type: "numpy.ndarray"
+  shape: [n_frames, n_neurons]
+  description: |
+    The output is a 2D array containing in silico calcium imaging responses.
+    The second dimension (n_neurons) corresponds to the number of neurons in the selected
+    session/scan and ROI combination.
+    
+    Neuron counts vary by session and scan:
+      - Session 4, Scan 7:  7,493 neurons
+      - Session 5, Scan 6:  8,592 neurons
+      - Session 5, Scan 7:  8,138 neurons
+      - Session 6, Scan 2:  8,158 neurons
+      - Session 6, Scan 4:  8,221 neurons
+      - Session 6, Scan 6:  7,971 neurons
+      - Session 6, Scan 7:  7,887 neurons
+      - Session 7, Scan 3:  8,618 neurons
+      - Session 7, Scan 5:  8,194 neurons
+      - Session 8, Scan 5:  9,941 neurons
+      - Session 9, Scan 3:  7,973 neurons
+      - Session 9, Scan 4:  7,855 neurons
+      - Session 9, Scan 6:  5,130 neurons
+
+  dimensions:
+    - name: "n_frames"
+      description: "Number of video frames in the sequence"
+    - name: "n_neurons"
+      description: "Number of neurons in the selected session/scan and ROI"
+
+
+# Model parameters and their usage
+parameters:
+  # Session and scan selection
+  subject:
+    type: str
+    required: true
+    valid_values: [
+      "session4_scan7",
+      "session5_scan6", 
+      "session5_scan7",
+      "session6_scan2",
+      "session6_scan4",
+      "session6_scan6",
+      "session6_scan7",
+      "session7_scan3",
+      "session7_scan5",
+      "session8_scan5",
+      "session9_scan3",
+      "session9_scan4",
+      "session9_scan6"
+    ]
+    example: "session8_scan5"
+    description: "Recording session and scan identifier in format 'sessionX_scanY'"
+    function: "get_encoding_model"
+
+  # Selection parameter to define specific outputs (ROI, neurons, etc.)
+  selection:
+    type: dict
+    description: |
+      Specifies which outputs to include in the model responses.
+      Can include specific brain areas and/or individual neurons. If not provided,
+      calcium responses are generated for all neurons in the session/scan.
+    required: false
+    function: get_encoding_model
+    properties:
+      roi:
+        type: list[str]
+        description: List of brain areas to include in the output
+        valid_values: ["AL", "LM", "RL", "V1"]
+        example: ["V1", "LM"]
+      neurons:
+        type: numpy.ndarray
+        description: |
+          Binary one-hot encoded vector indicating which neurons to include.
+          Must have exactly the same length as the total number of neurons in the
+          selected session/scan (varies by session, e.g., 9,941 for session 8, scan 5).
+          Each position set to 1 indicates that neuron should be included.
+        example: [0, 0, ..., 1, 1, 0]
+
+  stimulus:
+    type: numpy.ndarray
+    required: true
+    shape: [n_frames, 144, 256]
+    description: "A sequence of grayscale video frames to be encoded. Frames should be in integer format with values in the range [0, 255]."
+    example: "An array of shape [90, 144, 256] representing 90 grayscale frames at 144x256 resolution."
+    function: "predict"
+
+  device:
+    type: str
+    required: false
+    valid_values: ["cpu", "cuda", "auto"]
+    default: "auto"
+    example: "auto"
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "encode"
+
+  show_progress:
+    type: bool
+    required: false
+    default: True
+    example: True
+    description: "Whether to show a progress bar during encoding (for large batches)."
+    function: "encode"
+
+# Performance metrics and references
+# Performance metrics and references
+performance:
+  
+  accuracy_plots: 
+    - "brain-encoding-response-generator/encoding_models/modality-calcium/train_dataset-mouse/model-mouse/encoding_models_accuracy"
+
+
+references:
+    - ???: ???
