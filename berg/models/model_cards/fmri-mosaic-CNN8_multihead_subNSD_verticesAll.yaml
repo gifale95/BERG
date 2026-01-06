@@ -60,10 +60,11 @@ description: |
   to MMP 1.0 parcellation GlasserGroups 1-22 (visual, somatomotor, auditory, and higher-order association
   cortices).
 
+
 metadata: |
-  'vertex_mapping_all'       : (57051,) - [whole_cortex variant only] Indices mapping full cortex model predictions (GlasserGroups 1-22) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_all] = predictions_57051
-  'glasser_group_id'         : (57051,) - Array indicating which GlasserGroup (1-22 for whole_cortex) each prediction vertex belongs to. Allows filtering predictions by group.
-  'roi'                      : dict - ROI name → vertex indices in full HCP grayordinate space
+  vertex_mapping_all            : (57051,) - [whole_cortex variant only] Indices mapping full cortex model predictions (GlasserGroups 1-22) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_all] = predictions_57051
+  glasser_group_id              : (7831,)  - Array indicating which GlasserGroup (1-5 for visual) each prediction vertex belongs to. Allows filtering predictions by group.
+  roi                           : dict - ROI name → vertex indices in full HCP grayordinate space
                                (e.g., 'L_V1' → array([3319, 3320, ...])).
                                Available ROIs:
                                'L_V1','L_V2','L_V3','L_V4','L_V6','L_V3A','L_V7','L_IPS1',
@@ -90,22 +91,20 @@ metadata: |
                                'L_9-46d','L_9a','L_i6-8','L_s6-8'
 
                                Corresponding R_* entries exist for the right hemisphere.
-  'subject_info':
-      participant_id           : str      - Subject identifier
-      age                      : int      - Subject age
-      sex                      : str      - Subject sex
-
-  'stimuli':
-      filenames                : (70850,)   - All stimulus filenames
-      alias                    : (70850,)   - Stimulus aliases
-      source                   : (70850,)   - Stimulus sources
-      train_idx                : (69566,)   - Indices of training trials
-      test_idx                 : (1284,)    - Indices of test trials
-      train_filenames          : (69566,)   - Training stimulus filenames
-      test_filenames           : (1284,)    - Test stimulus filenames
-      reps                     : (70850,)   - Repetition count per stimulus for this subject
-
-  'noise_ceiling':
+  subject_info                  : dict     - Subject-specific information
+      participant_id            : str      - Subject identifier
+      age                       : int      - Subject age
+      sex                       : str      - Subject sex
+  stimuli                       : dict     - Stimulus-related arrays
+      filenames                 : (70850,) - All stimulus filenames
+      alias                     : (70850,) - Stimulus aliases
+      source                    : (70850,) - Stimulus sources
+      train_idx                 : (69566,) - Indices of training trials
+      test_idx                  : (1284,)  - Indices of test trials
+      train_filenames           : (69566,) - Training stimulus filenames
+      test_filenames            : (1284,)  - Test stimulus filenames
+      reps                      : (70850,) - Repetition count per stimulus for this subject
+  noise_ceiling                 : dict     - Noise ceiling metrics
       test_n-avg_noiseceiling       : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
       test_n-1_noiseceiling         : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
       train_n-avg_noiseceiling      : (91282,) - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
@@ -146,7 +145,7 @@ parameters:
     type: "str"
     valid_values: "fmri-mosaic-CNN8_multihead_subNSD_verticesAll"
     example: "fmri-mosaic-CNN8_multihead_subNSD_verticesAll"
-    function: "get_encoding_model"
+    function: "get_encoding_model, get_model_metadata"
 
   subject:
     description: |
@@ -159,7 +158,7 @@ parameters:
     type: "int, list[int], or str"
     valid_values: [1, 2, 3, 4, 5, 6, 7, 8, "all"]
     example: 1
-    function: "get_encoding_model"
+    function: "get_encoding_model, get_model_metadata"
 
   selection:
     description: |
@@ -283,26 +282,6 @@ parameters:
     default: True
     example: True
     function: "encode"
-
-  model_id:
-    description: Unique identifier of the model to load.
-    required: true
-    type: "str"
-    valid_values: "fmri-mosaic-CNN8_multihead_subNSD_verticesAll"
-    example: "fmri-mosaic-CNN8_multihead_subNSD_verticesAll"
-    function: "get_model_metadata"
-
-  subject:
-    description: |
-      NSD subject ID(s). Can be:
-      - Single subject: 1
-      - Multiple subjects: [1, 2, 3]
-      - All subjects: "all"
-    required: true
-    type: "int, list[int], or str"
-    valid_values: [1, 2, 3, 4, 5, 6, 7, 8, "all"]
-    example: 1
-    function: "get_model_metadata"
 
 # Performance metrics
 performance:
