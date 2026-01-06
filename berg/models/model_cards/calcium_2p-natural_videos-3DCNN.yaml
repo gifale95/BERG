@@ -1,7 +1,7 @@
 
 # Basic metadata
-model_id: 2p_ca-natural_videos-3DCNN
-modality: 2p_ca
+model_id: calcium_2p-natural_videos-3DCNN
+modality: calcium_2p
 training_dataset: natural_videos
 species: Mouse
 stimuli: Videos 
@@ -70,7 +70,7 @@ description: |
 
 
 metadata: |
-    '2p_ca':
+    'calcium_2p':
         session              : int      - Session identifier
         scan                 : int      - Scan index within session
         animal_id            : int      - Animal identifier (17797)
@@ -82,7 +82,7 @@ metadata: |
         gDSI                 : (N,)     - Global Direction Selectivity Index
         pref_ori             : (N,)     - Preferred orientation (degrees)
         pref_dir             : (N,)     - Preferred direction (degrees)
-        roi_masks            : dict     - Binary masks for brain regions
+        roi                  : dict     - Binary masks for brain regions
             V1               : (N,)     - Visual area 1 (1 = unit in V1, 0 = not in V1)
             LM               : (N,)     - Lateral medial area
             AL               : (N,)     - Anterolateral area
@@ -176,7 +176,12 @@ parameters:
         description: List of brain areas to include in the output
         valid_values: ["AL", "LM", "RL", "V1"]
         example: ["V1", "LM"]
-      neurons:
+      field:
+        type: list[int]
+        description: Imaging Fields from the recording. Each Scan/Session has a different imaging fields available.
+        valid_values: [1, 2, 3, 4, 5, 6, 7, 8]
+        example: [1, 3]
+      unit_index:
         type: numpy.ndarray
         description: |
           Binary one-hot encoded vector indicating which neurons to include.

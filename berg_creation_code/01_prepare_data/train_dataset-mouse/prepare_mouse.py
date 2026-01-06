@@ -18,7 +18,7 @@ Output Files Created (per session/scan combination):
 ────────────────────────────────────────────────────────────────
 session{session}_scan{scan}_metadata.npy : Metadata for one recording session
 
-    '2p_ca':
+    'calcium_2p':
         session              : int      - Session identifier
         scan                 : int      - Scan index within session
         animal_id            : int      - Animal identifier (17797)
@@ -30,7 +30,7 @@ session{session}_scan{scan}_metadata.npy : Metadata for one recording session
         gDSI                 : (N,)     - Global Direction Selectivity Index
         pref_ori             : (N,)     - Preferred orientation (degrees)
         pref_dir             : (N,)     - Preferred direction (degrees)
-        roi_masks            : dict     - Binary masks for brain regions
+        roi                  : dict     - Binary masks for brain regions
             V1               : (N,)     - Visual area 1 (1 = unit in V1, 0 = not in V1)
             LM               : (N,)     - Lateral medial area
             AL               : (N,)     - Anterolateral area
@@ -84,7 +84,7 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 # Create output directory
-output_path = Path(args.berg_dir) / 'encoding_models' / 'modality-2p_ca' / 'train_dataset-mouse' / 'model-mouse' / 'metadata'
+output_path = Path(args.berg_dir) / 'encoding_models' / 'modality-calcium_2p' / 'train_dataset-natural_videos' / 'model-3DCNN' / 'metadata'
 output_path.mkdir(parents=True, exist_ok=True)
 
 # =============================================================================

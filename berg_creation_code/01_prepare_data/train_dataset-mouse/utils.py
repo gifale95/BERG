@@ -99,13 +99,13 @@ def extract_mouse_metadata(data_path, output_path):
         
         # Build metadata dictionary
         metadata = {
-            '2p_ca': {
+            'calcium_2p': {
                 'session': int(session),
                 'scan': int(scan_idx),
                 'animal_id': int(animal_id),
                 'unit_id': anat_subset['unit_id'].values.astype(np.int32),
                 'coordinates': coordinates,
-                'roi_masks': roi_masks,
+                'roi': roi_masks,
                 'field_masks': field_masks,
                 'OSI': ori_subset['OSI'].values.astype(np.float32),
                 'DSI': ori_subset['DSI'].values.astype(np.float32),
