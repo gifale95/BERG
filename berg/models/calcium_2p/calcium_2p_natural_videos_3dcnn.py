@@ -74,7 +74,7 @@ register_model(
 class CalciumEncodingModel(BaseModelInterface):
     """
     Two-photon calcium imaging encoding model using 3D CNN architecture
-    for mouse visual cortex.
+    for mouse visual cortex. The model code can be found here: https://github.com/cajal/fnn.
     """
     
     MODEL_ID = model_info["model_id"]
