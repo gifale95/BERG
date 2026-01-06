@@ -58,9 +58,12 @@ def download_metadata(visual_save_path, whole_cortex_save_path):
     
     Each file contains:
         {
-            "fmri": {
+            "subject_info": {
                 "participant_id": "sub-01",
                 "age": ...,
+                "sex": ...
+            },
+            "stimuli": {
                 "filenames": array([...]),       # All stimulus filenames
                 "train_idx": array([...]),       # Train trial indices
                 "test_idx": array([...]),        # Test trial indices
@@ -108,8 +111,12 @@ def download_metadata(visual_save_path, whole_cortex_save_path):
             reps = stim[reps_col].to_numpy() if reps_col in stim.columns else None
 
             meta = {
-                "fmri": {
-                    **subj_row,
+                "subject_info": {
+                    "participant_id": subj_row["participant_id"],
+                    "age": subj_row["age"],
+                    "sex": subj_row["sex"],
+                },
+                "stimuli": {
                     "filenames": filenames,
                     "alias": alias,
                     "source": source,
@@ -256,8 +263,8 @@ def add_noise_ceilings_to_metadata(visual_metadata_dir, whole_cortex_metadata_di
             subject_id = meta_file.stem
             meta = np.load(meta_file, allow_pickle=True).item()
             
-            if "encoding_models" not in meta:
-                meta["encoding_models"] = {}
+            if "noise_ceiling" not in meta:
+                meta["noise_ceiling"] = {}
             
             nc_found = False
             for variant in nc_variants:
@@ -265,7 +272,7 @@ def add_noise_ceilings_to_metadata(visual_metadata_dir, whole_cortex_metadata_di
                 
                 if nc_file.exists():
                     nc_data = np.load(nc_file).astype(np.float32)
-                    meta["encoding_models"][f"{variant}_noiseceiling"] = nc_data
+                    meta["noise_ceiling"][f"{variant}_noiseceiling"] = nc_data
                     nc_found = True
             
             if nc_found:
@@ -287,8 +294,8 @@ def add_noise_ceilings_to_metadata(visual_metadata_dir, whole_cortex_metadata_di
             subject_id = meta_file.stem
             meta = np.load(meta_file, allow_pickle=True).item()
             
-            if "encoding_models" not in meta:
-                meta["encoding_models"] = {}
+            if "noise_ceiling" not in meta:
+                meta["noise_ceiling"] = {}
             
             nc_found = False
             for variant in nc_variants:
@@ -296,7 +303,7 @@ def add_noise_ceilings_to_metadata(visual_metadata_dir, whole_cortex_metadata_di
                 
                 if nc_file.exists():
                     nc_data = np.load(nc_file).astype(np.float32)
-                    meta["encoding_models"][f"{variant}_noiseceiling"] = nc_data
+                    meta["noise_ceiling"][f"{variant}_noiseceiling"] = nc_data
                     nc_found = True
             
             if nc_found:
@@ -307,19 +314,20 @@ def add_noise_ceilings_to_metadata(visual_metadata_dir, whole_cortex_metadata_di
 
 def add_roi_indices_to_metadata(visual_metadata_dir, whole_cortex_metadata_dir):
     """
-    Add ROI vertex indices from the Glasser atlas to metadata.
+    Add ROI vertex indices and Glasser group assignments to metadata.
     
-    Stores original vertex indices (in full fsLR32k space) for each ROI,
-    allowing users to slice model predictions after expanding to full brain space.
+    Stores:
+    1. ROI vertex indices (in full fsLR32k space) for each ROI
+    2. Glasser group ID array indicating which GlasserGroup each vertex belongs to
     
     Steps:
     1. Get all cortical ROIs from Glasser atlas (360 regions)
     2. For each ROI, extract vertex indices in full 91k space
-    3. Store indices in metadata under 'fmri'/'roi'
+    3. Create glasser_group_id array mapping each prediction vertex to its group
+    4. Store in metadata under 'roi' and 'glasser_group_id'
     
-    Note: These are the raw indices from MOSAIC's Glasser atlas. To use with
-    model predictions, expand predictions to 91k space first using the vertex
-    mapping (GlasserGroups 1-22 or 1-5).
+    Note: ROI indices are in full 91k space. To use with model predictions,
+    expand predictions to 91k space first using the vertex mapping.
     """
     
     # Get ROI lists for both variants
@@ -354,6 +362,36 @@ def add_roi_indices_to_metadata(visual_metadata_dir, whole_cortex_metadata_dir):
     print(f"Total ROIs extracted for visual: {len(visual_roi_dict)}")
     print(f"Total ROIs extracted for whole_cortex: {len(whole_cortex_roi_dict)}")
     
+    # Create glasser_group_id arrays
+    # Visual: GlasserGroups 1-5
+    visual_glasser_groups = []
+    for i in range(1, 6):
+        group_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}"])
+        visual_glasser_groups.append(np.array(group_selector.selected_roi_indices))
+    
+    visual_vertex_mapping = np.array(visual_selector.selected_roi_indices, dtype=np.int32)
+    visual_glasser_group_id = np.zeros(len(visual_vertex_mapping), dtype=np.int32)
+    
+    for group_id, group_indices in enumerate(visual_glasser_groups, start=1):
+        mask = np.isin(visual_vertex_mapping, group_indices)
+        visual_glasser_group_id[mask] = group_id
+    
+    # Whole cortex: GlasserGroups 1-22
+    whole_cortex_glasser_groups = []
+    for i in range(1, 23):
+        group_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}"])
+        whole_cortex_glasser_groups.append(np.array(group_selector.selected_roi_indices))
+    
+    whole_cortex_vertex_mapping = np.array(whole_cortex_selector.selected_roi_indices, dtype=np.int32)
+    whole_cortex_glasser_group_id = np.zeros(len(whole_cortex_vertex_mapping), dtype=np.int32)
+    
+    for group_id, group_indices in enumerate(whole_cortex_glasser_groups, start=1):
+        mask = np.isin(whole_cortex_vertex_mapping, group_indices)
+        whole_cortex_glasser_group_id[mask] = group_id
+    
+    print(f"Visual glasser_group_id: shape={visual_glasser_group_id.shape}, range={visual_glasser_group_id.min()}-{visual_glasser_group_id.max()}")
+    print(f"Whole cortex glasser_group_id: shape={whole_cortex_glasser_group_id.shape}, range={whole_cortex_glasser_group_id.min()}-{whole_cortex_glasser_group_id.max()}")
+    
     # Add to visual metadata files
     visual_dir = Path(visual_metadata_dir)
     visual_updated = 0
@@ -365,7 +403,8 @@ def add_roi_indices_to_metadata(visual_metadata_dir, whole_cortex_metadata_dir):
         
         for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
             meta = np.load(meta_file, allow_pickle=True).item()
-            meta["fmri"]["roi"] = visual_roi_dict
+            meta["roi"] = visual_roi_dict
+            meta["glasser_group_id"] = visual_glasser_group_id
             np.save(meta_file, meta, allow_pickle=True)
             visual_updated += 1
     
@@ -382,7 +421,8 @@ def add_roi_indices_to_metadata(visual_metadata_dir, whole_cortex_metadata_dir):
         
         for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
             meta = np.load(meta_file, allow_pickle=True).item()
-            meta["fmri"]["roi"] = whole_cortex_roi_dict
+            meta["roi"] = whole_cortex_roi_dict
+            meta["glasser_group_id"] = whole_cortex_glasser_group_id
             np.save(meta_file, meta, allow_pickle=True)
             whole_cortex_updated += 1
     
@@ -397,7 +437,7 @@ def add_vertex_mappings_to_metadata(visual_metadata_dir, whole_cortex_metadata_d
     and ROI indices are defined in full HCP grayordinate space (91,282 vertices). These mappings
     allow expansion: predictions_91k[vertex_mapping] = predictions_model.
     
-    Adds mappings to metadata under 'encoding_models':
+    Adds mappings to metadata:
     - vertex_mapping_visual: (7,831,) array mapping visual cortex predictions to 91k space
     - vertex_mapping_all: (57,051,) array mapping full cortex predictions to 91k space
     
@@ -427,12 +467,7 @@ def add_vertex_mappings_to_metadata(visual_metadata_dir, whole_cortex_metadata_d
         
         for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
             meta = np.load(meta_file, allow_pickle=True).item()
-            
-            if "encoding_models" not in meta:
-                meta["encoding_models"] = {}
-            
-            meta["encoding_models"]["vertex_mapping_visual"] = vertex_mapping_visual
-            
+            meta["vertex_mapping_visual"] = vertex_mapping_visual
             np.save(meta_file, meta, allow_pickle=True)
             visual_updated += 1
     
@@ -449,12 +484,7 @@ def add_vertex_mappings_to_metadata(visual_metadata_dir, whole_cortex_metadata_d
         
         for meta_file in sorted(dataset_dir.glob("sub-*.npy")):
             meta = np.load(meta_file, allow_pickle=True).item()
-            
-            if "encoding_models" not in meta:
-                meta["encoding_models"] = {}
-            
-            meta["encoding_models"]["vertex_mapping_all"] = vertex_mapping_all
-            
+            meta["vertex_mapping_all"] = vertex_mapping_all
             np.save(meta_file, meta, allow_pickle=True)
             whole_cortex_updated += 1
     
