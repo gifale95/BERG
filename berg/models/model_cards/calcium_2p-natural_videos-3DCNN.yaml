@@ -216,7 +216,6 @@ parameters:
     function: "encode"
 
 # Performance metrics and references
-# Performance metrics and references
 performance:
   
   accuracy_plots: 
@@ -224,4 +223,5 @@ performance:
 
 
 references:
-    - ???: ???
+    - Model repository: https://github.com/cajal/fnn
+    - Model paper (Wang et al., Nature 2025): https://www.nature.com/articles/s41586-025-08829-y
