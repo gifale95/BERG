@@ -181,7 +181,7 @@ parameters:
           "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words",
           "OPA","PPA","RSC","EBA","FBA-1","FBA-2","mTL-bodies","early", "midventral",
           "midlateral", "midparietal", "parietal", "lateral", "ventral", "nsdgeneral"]
-        example_roi: "V1v"
+        example:: "V1v"
       lh_vertices:
         type: numpy.ndarray
         description: |
@@ -190,7 +190,7 @@ parameters:
           have exactly the same length as the number of LH fsaverage vertices (163,842).
           The vertices from the one-hot encoded vector are only selected if the "roi" key
           is not provided, or has value None.
-        example_vertices: [0, 0, ..., 1, 1, 0]
+        example:: [0, 0, ..., 1, 1, 0]
       rh_vertices:
         type: numpy.ndarray
         description: |
@@ -199,7 +199,7 @@ parameters:
           have exactly the same length as the number of RH fsaverage vertices (163,842).
           The vertices from the one-hot encoded vector are only selected if the "roi" key
           is not provided, or has value None.
-        example_vertices: [0, 0, ..., 1, 1, 0]
+        example:: [0, 0, ..., 1, 1, 0]
     function: "get_encoding_model"
 
   device:
