@@ -1,6 +1,12 @@
 ================================================
 fmri-mosaic-CNN8_multihead_subAll_verticesVisual
 ================================================
+.. |nbsp| unicode:: 0xA0
+   :trim:
+
+.. |rarr| unicode:: 0x2192
+   :trim:
+
 
 Model Summary
 ------------
@@ -83,8 +89,6 @@ parcellation sections 1–5 (early visual cortex through higher-level ventral an
 Metadata
 --------
 
-**'fmri'**
-
 .. list-table::
    :widths: 30 20 50
    :header-rows: 1
@@ -92,39 +96,12 @@ Metadata
    * - Key
      - Shape/Type
      - Description
-   * - participant_id
-     - ``str``
-     - Subject identifier (e.g., 'sub-01')
-   * - age
-     - ``int``
-     - Subject age
-   * - sex
-     - ``str``
-     - Subject sex
-   * - filenames
-     - ``(70850,)``
-     - Stimulus filenames
-   * - alias
-     - ``(70850,)``
-     - Stimulus aliases
-   * - source
-     - ``(70850,)``
-     - Stimulus source datasets
-   * - train_idx
-     - ``(69566,)``
-     - Training trial indices
-   * - test_idx
-     - ``(1284,)``
-     - Test trial indices
-   * - train_filenames
-     - ``(69566,)``
-     - Training stimulus filenames
-   * - test_filenames
-     - ``(1284,)``
-     - Test stimulus filenames
-   * - reps
-     - ``(1284,)``
-     - Stimulus repetition counts per subject
+   * - vertex_mapping_visual
+     - ``(7831,)``
+     - [visual variant only] Indices mapping visual cortex model predictions (GlasserGroups 1-5) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_visual] = predictions_7831
+   * - glasser_group_id
+     - ``(7831,)``
+     - Array indicating which GlasserGroup (1-5 for visual) each prediction vertex belongs to. Allows filtering predictions by group.
    * - **roi**
      - ``dict``
      - ROI name → vertex indices in full HCP grayordinate space
@@ -135,35 +112,64 @@ Metadata
        'L_VMV2','L_VVC','L_MST','L_LO1','L_LO2','L_MT','L_PH','L_V4t',
        'L_FST','L_V3CD','L_LO3'
        Corresponding R_* entries exist for the right hemisphere.
-
-**'encoding_models'**
-
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Key
-     - Shape/Type
-     - Description
-   * - vertex_mapping_visual
-     - ``(7831,)``
-     - Indices mapping visual cortex model predictions (GlasserGroups 1-5) to full 91,282 HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_visual] = predictions_7831
-   * - test_n-avg_noiseceiling
+   * - **subject_info**
+     - ``dict``
+     - Subject-specific information
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| participant_id
+     - ``str``
+     - Subject identifier
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| age
+     - ``int``
+     - Subject age
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| sex
+     - ``str``
+     - Subject sex
+   * - **stimuli**
+     - ``dict``
+     - Stimulus-related arrays
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| filenames
+     - ``(70850,)``
+     - All stimulus filenames
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| alias
+     - ``(70850,)``
+     - Stimulus aliases
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| source
+     - ``(70850,)``
+     - Stimulus sources
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_idx
+     - ``(69566,)``
+     - Indices of training trials
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_idx
+     - ``(1284,)``
+     - Indices of test trials
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_filenames
+     - ``(69566,)``
+     - Training stimulus filenames
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_filenames
+     - ``(1284,)``
+     - Test stimulus filenames
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| reps
+     - ``(70850,)``
+     - Repetition count per stimulus for this subject
+   * - **noise_ceiling**
+     - ``dict``
+     - Noise ceiling metrics
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_n-avg_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
-   * - test_n-1_noiseceiling
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_n-1_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
-   * - train_n-avg_noiseceiling
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_n-avg_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
-   * - train_n-1_noiseceiling
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_n-1_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using single-trial beta estimates.
-   * - artificial_n-avg_noiseceiling
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| artificial_n-avg_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using repeat-averaged beta estimates.
-   * - artificial_n-1_noiseceiling
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| artificial_n-1_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using single-trial beta estimates.
 
@@ -171,9 +177,9 @@ Metadata
 Input
 -----
 
-**Description**: The input should be a batch of RGB images.
 **Type**: ``numpy.ndarray``  
 **Shape**: ``['batch_size', 3, 'height', 'width']``  
+**Description**: The input should be a batch of RGB images.
 
 **Constraints:**
 
@@ -184,13 +190,13 @@ Input
 Output
 ------
 
+**Type**: ``dict``  
+**Shape**: ``{dataset_name: {subject_id: [batch_size, n_vertices], ...}, ...}``  
 **Description**:  
 Nested dictionary with structure organized by dataset and subject:
 {"BOLD5000": {"sub-01": array, "sub-02": array},
 "NaturalScenesDataset": {"sub-01": array, "sub-02": array}, ...}
 where each array has shape [batch_size, n_vertices] and dtype float32.
-**Type**: ``dict``  
-**Shape**: ``{dataset_name: {subject_id: [batch_size, n_vertices], ...}, ...}``  
 
 **Dimensions:**
 
@@ -218,12 +224,14 @@ This function loads the encoding model.
    :header-rows: 0
 
    * - **model_id**
-       | **Description:** Unique identifier of the model to load.
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-mosaic-CNN8_multihead_subAll_verticesVisual
        | **Example:** "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
    * - **subject**
+     - | **Type:** str, list[str], or 'all'
+       | **Required:** Yes
        | **Description:** Subject identifier(s). Can be:
        | - Single subject: "NSD-01"
        | - Multiple subjects: ["NSD-01", "BOLD5000-02", "THINGS-01"]
@@ -231,16 +239,14 @@ This function loads the encoding model.
        | Format is DATASET-## where DATASET is one of the eight constituent datasets 
        | and ## is the zero-padded subject number. When multiple subjects are specified, 
        | the same ROI/vertex selection is applied to all subjects.
-       | **Required:** Yes
-     - | **Type:** str, list[str], or 'all'
        | **Valid Values:** "BOLD5000-01", "BOLD5000-02", "BOLD5000-03", "BOLD5000-04", "deeprecon-01", "deeprecon-02", "deeprecon-03", "GOD-01", "GOD-02", "GOD-03", "GOD-04", "GOD-05", "NSD-01", "NSD-02", "NSD-03", "NSD-04", "NSD-05", "NSD-06", "NSD-07", "NSD-08", "THINGS-01", "THINGS-02", "THINGS-03", "BMD-01", "BMD-02", "BMD-03", "BMD-04", "BMD-05", "BMD-06", "BMD-07", "BMD-08", "BMD-09", "BMD-10", "NOD-01", "NOD-02", "NOD-03", "NOD-04", "NOD-05", "NOD-06", "NOD-07", "NOD-08", "NOD-09", "NOD-10", "NOD-11", "NOD-12", "NOD-13", "NOD-14", "NOD-15", "NOD-16", "NOD-17", "NOD-18", "NOD-19", "NOD-20", "NOD-21", "NOD-22", "NOD-23", "NOD-24", "NOD-25", "NOD-26", "NOD-27", "NOD-28", "NOD-29", "NOD-30", "HAD-01", "HAD-02", "HAD-03", "HAD-04", "HAD-05", "HAD-06", "HAD-07", "HAD-08", "HAD-09", "HAD-10", "HAD-11", "HAD-12", "HAD-13", "HAD-14", "HAD-15", "HAD-16", "HAD-17", "HAD-18", "HAD-19", "HAD-20", "HAD-21", "HAD-22", "HAD-23", "HAD-24", "HAD-25", "HAD-26", "HAD-27", "HAD-28", "HAD-29", "HAD-30"
        | **Example:** "NSD-01"
    * - **selection**
+     - | **Type:** dict
+       | **Required:** No
        | **Description:** Specifies which outputs to include in the model responses.
        | Can include specific ROIs and/or vertex indices. If not provided,
        | fMRI responses are generated for all visual cortex vertices.
-       | **Required:** No
-     - | **Type:** dict
        | 
        | **Properties:**
        | 
@@ -253,6 +259,19 @@ This function loads the encoding model.
        |     **Valid values:** "L_V1", "R_V1", "L_V2", "L_V3", "L_V4", "R_V2", "R_V3", "R_V4", "L_V6", "L_V3A", "L_V7", "L_IPS1", "L_V3B", "L_V6A", "R_V6", "R_V3A", "R_V7", "R_IPS1", "R_V3B", "R_V6A", "L_V8", "L_FFC", "L_PIT", "L_VMV1", "L_VMV3", "L_VMV2", "L_VVC", "R_V8", "R_FFC", "R_PIT", "R_VMV1", "R_VMV3", "R_VMV2", "R_VVC", "L_MST", "L_LO1", "L_LO2", "L_MT", "L_PH", "L_V4t", "L_FST", "L_V3CD", "L_LO3", "R_MST", "R_LO1", "R_LO2", "R_MT", "R_PH", "R_V4t", "R_FST", "R_V3CD", "R_LO3"
        |     **Example:** ['L_V1', 'R_V1', 'L_V4', 'R_V4']
        | 
+       | **glasser_group**
+       |     **Type:** int, list[int]
+       |     **Description:** Glasser group(s) to include in predictions. Each group represents a functional
+       |     subdivision of cortex based on the Glasser MMP 1.0 parcellation.
+       |     
+       |     For visual cortex model:
+       |       Valid values: 1-5 Visual cortex
+       |     
+       |     Can be a single integer or list of integers. If multiple groups are specified,
+       |     their vertices are concatenated.
+       |     **Valid values:** "1", "2", "3", "4", "5"
+       |     **Example:** [1, 2]
+       | 
        | **voxel_index**
        |     **Type:** numpy.ndarray
        |     **Description:** Binary one-hot encoded vector indicating which vertices to include.
@@ -264,14 +283,12 @@ This function loads the encoding model.
        |     select specific brain regions, use the 'roi' parameter instead, which handles
        |     the coordinate mapping automatically.
        |     **Example:** [0, 0, '...', 1, 1, 0]
-
    * - **device**
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Required:** No
      - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
        | **Valid Values:** "cpu", "cuda", "auto"
        | **Example:** "auto"
-       | **Default:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -283,44 +300,43 @@ This function generates in silico neural responses using the encoding model prev
    :header-rows: 0
 
    * - **model**
-       | **Description:** An instantiated and loaded encoding model.
-       | **Required:** Yes
      - | **Type:** BaseModelInterface
-   * - **stimulus**
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
        | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
+   * - **stimulus**
      - | **Type:** numpy.ndarray
-     - | **Shape:** [batch_size, 3, height, width]
+       | **Required:** Yes
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
        | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
    * - **return_metadata**
+     - | **Type:** bool
+       | **Required:** No
        | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
-       | **Required:** No
-     - | **Type:** bool
        | **Example:** True
-       | **Default:** False
    * - **show_progress**
-       | **Description:** Whether to show a progress bar during encoding (for large batches).
-       | **Required:** No
      - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
-       | **Default:** False
 
 Parameters used in ``get_model_metadata``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This function loads the encoding model's metadata, without having to load the model itself.
+This function loads the encoding model's metadata without having to load the model itself.
 
 .. list-table::
    :widths: 20 80
    :header-rows: 0
 
    * - **model_id**
-       | **Description:** Unique encoding model identifier.
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-mosaic-CNN8_multihead_subAll_verticesVisual
        | **Example:** "fmri-mosaic-CNN8_multihead_subAll_verticesVisual"
    * - **subject**
+     - | **Type:** str, list[str], or 'all'
+       | **Required:** Yes
        | **Description:** Subject identifier(s). Can be:
        | - Single subject: "NSD-01"
        | - Multiple subjects: ["NSD-01", "BOLD5000-02", "THINGS-01"]
@@ -328,8 +344,6 @@ This function loads the encoding model's metadata, without having to load the mo
        | Format is DATASET-## where DATASET is one of the eight constituent datasets 
        | and ## is the zero-padded subject number. When multiple subjects are specified, 
        | the same ROI/vertex selection is applied to all subjects.
-       | **Required:** Yes
-     - | **Type:** str, list[str], or 'all'
        | **Valid Values:** "BOLD5000-01", "BOLD5000-02", "BOLD5000-03", "BOLD5000-04", "deeprecon-01", "deeprecon-02", "deeprecon-03", "GOD-01", "GOD-02", "GOD-03", "GOD-04", "GOD-05", "NSD-01", "NSD-02", "NSD-03", "NSD-04", "NSD-05", "NSD-06", "NSD-07", "NSD-08", "THINGS-01", "THINGS-02", "THINGS-03", "BMD-01", "BMD-02", "BMD-03", "BMD-04", "BMD-05", "BMD-06", "BMD-07", "BMD-08", "BMD-09", "BMD-10", "NOD-01", "NOD-02", "NOD-03", "NOD-04", "NOD-05", "NOD-06", "NOD-07", "NOD-08", "NOD-09", "NOD-10", "NOD-11", "NOD-12", "NOD-13", "NOD-14", "NOD-15", "NOD-16", "NOD-17", "NOD-18", "NOD-19", "NOD-20", "NOD-21", "NOD-22", "NOD-23", "NOD-24", "NOD-25", "NOD-26", "NOD-27", "NOD-28", "NOD-29", "NOD-30", "HAD-01", "HAD-02", "HAD-03", "HAD-04", "HAD-05", "HAD-06", "HAD-07", "HAD-08", "HAD-09", "HAD-10", "HAD-11", "HAD-12", "HAD-13", "HAD-14", "HAD-15", "HAD-16", "HAD-17", "HAD-18", "HAD-19", "HAD-20", "HAD-21", "HAD-22", "HAD-23", "HAD-24", "HAD-25", "HAD-26", "HAD-27", "HAD-28", "HAD-29", "HAD-30"
        | **Example:** "NSD-01"
 
@@ -356,9 +370,10 @@ Example Usage
         "fmri-mosaic-CNN8_multihead_subAll_verticesVisual",
         subject="NSD-01",
         selection={
-            "roi": ["L_V1", "R_V1", "L_V4", "R_V4"]
-        },
-        device="auto"
+            "roi": ["L_V1", "R_V1", "L_V4", "R_V4"],
+            "glasser_group": [1, 2],
+            "voxel_index": [0, 0, '...', 1, 1, 0]
+        }
     )
     
     # Prepare the stimulus images
@@ -383,7 +398,7 @@ Example Usage
         images,
         return_metadata=True
     )
-
+    
     # Load the encoding model's metadata without having to load the model itself
     metadata = berg.get_model_metadata(
         "fmri-mosaic-CNN8_multihead_subAll_verticesVisual",

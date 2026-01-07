@@ -1,6 +1,12 @@
 ===========================
 fmri-nsd_fsaverage-vit_b_32
 ===========================
+.. |nbsp| unicode:: 0xA0
+   :trim:
+
+.. |rarr| unicode:: 0x2192
+   :trim:
+
 
 Model Summary
 ------------
@@ -66,196 +72,196 @@ Metadata
    * - rh_ncsnr
      - ``(163842,)``
      - Right hemisphere noise-ceiling signal-to-noise ratio per vertex
-   * - lh_fsaverage_rois
+   * - **lh_fsaverage_rois**
      - ``dict``
      - Left hemisphere ROI definitions on fsaverage surface
-   * - V1v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1v
      - ``(710,)``
      - Visual area 1 ventral
-   * - V1d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1d
      - ``(828,)``
      - Visual area 1 dorsal
-   * - V2v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2v
      - ``(632,)``
      - Visual area 2 ventral
-   * - V2d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2d
      - ``(692,)``
      - Visual area 2 dorsal
-   * - V3v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3v
      - ``(567,)``
      - Visual area 3 ventral
-   * - V3d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3d
      - ``(669,)``
      - Visual area 3 dorsal
-   * - hV4
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| hV4
      - ``(531,)``
      - Human V4 complex
-   * - EBA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| EBA
      - ``(3231,)``
      - Extrastriate body area
-   * - FBA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-1
      - ``(574,)``
      - Fusiform body area 1
-   * - FBA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-2
      - ``(0,)``
      - Fusiform body area 2
-   * - mTL-bodies
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-bodies
      - ``(0,)``
      - Medial temporal lobe body-selective region
-   * - OFA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OFA
      - ``(432,)``
      - Occipital face area
-   * - FFA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-1
      - ``(552,)``
      - Fusiform face area 1
-   * - FFA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-2
      - ``(0,)``
      - Fusiform face area 2
-   * - mTL-faces
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-faces
      - ``(0,)``
      - Medial temporal lobe face-selective region
-   * - aTL-faces
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| aTL-faces
      - ``(329,)``
      - Anterior temporal lobe face-selective region
-   * - OPA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OPA
      - ``(2021,)``
      - Occipital place area
-   * - PPA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| PPA
      - ``(1859,)``
      - Parahippocampal place area
-   * - RSC
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| RSC
      - ``(1298,)``
      - Retrosplenial complex
-   * - OWFA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OWFA
      - ``(317,)``
      - Occipital word form area
-   * - VWFA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-1
      - ``(1395,)``
      - Visual word form area 1
-   * - VWFA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-2
      - ``(474,)``
      - Visual word form area 2
-   * - mfs-words
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mfs-words
      - ``(490,)``
      - Mid-fusiform sulcus word-selective region
-   * - mTL-words
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-words
      - ``(475,)``
      - Medial temporal lobe word-selective region
-   * - early
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| early
      - ``(5758,)``
      - Early visual cortex (V1-V3)
-   * - midventral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midventral
      - ``(867,)``
      - Mid-level ventral stream
-   * - midlateral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midlateral
      - ``(1091,)``
      - Mid-level lateral stream
-   * - midparietal
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midparietal
      - ``(1079,)``
      - Mid-level parietal regions
-   * - ventral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| ventral
      - ``(9680,)``
      - Ventral visual stream
-   * - lateral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| lateral
      - ``(10253,)``
      - Lateral visual stream
-   * - parietal
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| parietal
      - ``(5176,)``
      - Parietal regions
-   * - rh_fsaverage_rois
+   * - **rh_fsaverage_rois**
      - ``dict``
      - Right hemisphere ROI definitions on fsaverage surface
-   * - V1v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1v
      - ``(444,)``
      - Visual area 1 ventral
-   * - V1d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1d
      - ``(991,)``
      - Visual area 1 dorsal
-   * - V2v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2v
      - ``(887,)``
      - Visual area 2 ventral
-   * - V2d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2d
      - ``(725,)``
      - Visual area 2 dorsal
-   * - V3v
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3v
      - ``(682,)``
      - Visual area 3 ventral
-   * - V3d
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3d
      - ``(535,)``
      - Visual area 3 dorsal
-   * - hV4
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| hV4
      - ``(765,)``
      - Human V4 complex
-   * - EBA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| EBA
      - ``(4421,)``
      - Extrastriate body area
-   * - FBA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-1
      - ``(206,)``
      - Fusiform body area 1
-   * - FBA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-2
      - ``(1234,)``
      - Fusiform body area 2
-   * - mTL-bodies
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-bodies
      - ``(0,)``
      - Medial temporal lobe body-selective region
-   * - OFA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OFA
      - ``(305,)``
      - Occipital face area
-   * - FFA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-1
      - ``(330,)``
      - Fusiform face area 1
-   * - FFA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-2
      - ``(1003,)``
      - Fusiform face area 2
-   * - mTL-faces
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-faces
      - ``(0,)``
      - Medial temporal lobe face-selective region
-   * - aTL-faces
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| aTL-faces
      - ``(283,)``
      - Anterior temporal lobe face-selective region
-   * - OPA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OPA
      - ``(2849,)``
      - Occipital place area
-   * - PPA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| PPA
      - ``(1250,)``
      - Parahippocampal place area
-   * - RSC
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| RSC
      - ``(1136,)``
      - Retrosplenial complex
-   * - OWFA
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OWFA
      - ``(590,)``
      - Occipital word form area
-   * - VWFA-1
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-1
      - ``(397,)``
      - Visual word form area 1
-   * - VWFA-2
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-2
      - ``(649,)``
      - Visual word form area 2
-   * - mfs-words
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mfs-words
      - ``(0,)``
      - Mid-fusiform sulcus word-selective region
-   * - mTL-words
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-words
      - ``(0,)``
      - Medial temporal lobe word-selective region
-   * - early
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| early
      - ``(5634,)``
      - Early visual cortex (V1-V3)
-   * - midventral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midventral
      - ``(1050,)``
      - Mid-level ventral stream
-   * - midlateral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midlateral
      - ``(1191,)``
      - Mid-level lateral stream
-   * - midparietal
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midparietal
      - ``(1181,)``
      - Mid-level parietal regions
-   * - ventral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| ventral
      - ``(9393,)``
      - Ventral visual stream
-   * - lateral
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| lateral
      - ``(10535,)``
      - Lateral visual stream
-   * - parietal
+   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| parietal
      - ``(4818,)``
      - Parietal regions
 
@@ -330,9 +336,9 @@ Metadata
 Input
 -----
 
-**Description**: The input should be a batch of RGB images.
 **Type**: ``numpy.ndarray``  
 **Shape**: ``['batch_size', 3, 'height', 'width']``  
+**Description**: The input should be a batch of RGB images.
 
 **Constraints:**
 
@@ -343,11 +349,11 @@ Input
 Output
 ------
 
+**Type**: ``tuple of numpy.ndarray``  
+**Shape**: ``([batch_size, lh_vertices], [batch_size, rh_vertices])``  
 **Description**:  
 The output is a tuple containing the left hemisphere (LH) and right hemisphere (RH) in silico fMRI
 responses for the batch images.
-**Type**: ``tuple of numpy.ndarray``  
-**Shape**: ``([batch_size, lh_vertices], [batch_size, rh_vertices])``  
 
 **Dimensions:**
 
@@ -377,21 +383,21 @@ This function loads the encoding model.
    :header-rows: 0
 
    * - **model_id**
-       | **Description:** Unique identifier of the model to load.
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** "fmri-nsd_fsaverage-vit_b_32"
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-nsd_fsaverage-vit_b_32
        | **Example:** "fmri-nsd_fsaverage-vit_b_32"
    * - **subject**
-       | **Description:** Subject ID from the NSD dataset (1-8).
-       | **Required:** Yes
      - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the NSD dataset (1-8).
        | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
        | **Example:** 1
    * - **selection**
-       | **Description:** Specifies which outputs to include in the model responses. If not provided, fMRI responses are generate for all LH and RH fMRI vertices.
-       | **Required:** No
      - | **Type:** dict
+       | **Required:** No
+       | **Description:** Specifies which outputs to include in the model responses. If not provided, fMRI responses are generate for all LH and RH fMRI vertices.
        | 
        | **Properties:**
        | 
@@ -416,14 +422,12 @@ This function loads the encoding model.
        |     have exactly the same length as the number of RH fsaverage vertices (163,842).
        |     The vertices from the one-hot encoded vector are only selected if the "roi" key
        |     is not provided, or has value None.
-
    * - **device**
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Required:** No
      - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
        | **Valid Values:** "cpu", "cuda", "auto"
        | **Example:** "auto"
-       | **Default:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -435,47 +439,44 @@ This function generates in silico neural responses using the encoding model prev
    :header-rows: 0
 
    * - **model**
-       | **Description:** An instantiated and loaded encoding model.
-       | **Required:** Yes
      - | **Type:** BaseModelInterface
-   * - **stimulus**
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
        | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
+   * - **stimulus**
      - | **Type:** numpy.ndarray
-     - | **Shape:** [batch_size, 3, height, width]
+       | **Required:** Yes
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
        | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
    * - **return_metadata**
+     - | **Type:** bool
+       | **Required:** No
        | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
-       | **Required:** No
-     - | **Type:** bool
        | **Example:** True
-       | **Default:** False
    * - **show_progress**
-       | **Description:** Whether to show a progress bar during encoding (for large batches).
-       | **Required:** No
      - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
-       | **Default:** False
 
 Parameters used in ``get_model_metadata``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This function loads the encoding model's metadata, without having to load the model itself.
+This function loads the encoding model's metadata without having to load the model itself.
 
 .. list-table::
    :widths: 20 80
    :header-rows: 0
 
    * - **model_id**
-       | **Description:** Unique encoding model identifier.
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** "fmri-nsd_fsaverage-huze"
-       | **Example:** "fmri-nsd_fsaverage-huze"
-   * - **subject**
-       | **Description:** Subject ID from the NSD dataset (1-8).
        | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-nsd_fsaverage-vit_b_32
+       | **Example:** "fmri-nsd_fsaverage-vit_b_32"
+   * - **subject**
      - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the NSD dataset (1-8).
        | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
        | **Example:** 1
 
@@ -501,9 +502,6 @@ Example Usage
     model = berg.get_encoding_model(
         "fmri-nsd_fsaverage-vit_b_32",
         subject=1,
-        selection={
-            "roi": "V1d"
-        },
     )
     
     # Prepare the stimulus images
@@ -531,7 +529,7 @@ Example Usage
         images,
         return_metadata=True
     )
-
+    
     # Load the encoding model's metadata without having to load the model itself
     metadata = berg.get_model_metadata(
         "fmri-nsd_fsaverage-vit_b_32",

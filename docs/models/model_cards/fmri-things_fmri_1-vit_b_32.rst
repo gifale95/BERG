@@ -148,9 +148,9 @@ Metadata
 Input
 -----
 
-**Description**: The input should be a batch of RGB images.
 **Type**: ``numpy.ndarray``  
 **Shape**: ``['batch_size', 3, 'height', 'width']``  
+**Description**: The input should be a batch of RGB images.
 
 **Constraints:**
 
@@ -161,10 +161,10 @@ Input
 Output
 ------
 
-**Description**:  
-The output is a 2D array containing in silico fMRI responses.
 **Type**: ``numpy.ndarray``  
 **Shape**: ``['batch_size', 'n_voxels']``  
+**Description**:  
+The output is a 2D array containing in silico fMRI responses.
 
 **Dimensions:**
 
@@ -192,23 +192,23 @@ This function loads the encoding model.
    :header-rows: 0
 
    * - **model_id**
-       | **Description:** Unique identifier of the model to load.
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** "fmri-things_fmri_1-vit_b_32"
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-things_fmri_1-vit_b_32
        | **Example:** "fmri-things_fmri_1-vit_b_32"
    * - **subject**
-       | **Description:** Subject ID from the THINGS fMRI dataset.
-       | **Required:** Yes
      - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the THINGS fMRI dataset.
        | **Valid Values:** 1, 2, 3
        | **Example:** 1
    * - **selection**
+     - | **Type:** dict
+       | **Required:** No
        | **Description:** Specifies which outputs to include in the model responses.
        | Can include specific ROIs and/or voxel indices. If not provided,
        | fMRI responses are generated for all voxels.
-       | **Required:** No
-     - | **Type:** dict
        | 
        | **Properties:**
        | 
@@ -233,14 +233,12 @@ This function loads the encoding model.
        |     Must have exactly the same length as the number of available voxels (211,339).
        |     Each position set to 1 indicates that voxel should be included.
        |     **Example:** [0, 0, '...', 1, 1, 0]
-
    * - **device**
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Required:** No
      - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
        | **Valid Values:** "cpu", "cuda", "auto"
        | **Example:** "auto"
-       | **Default:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,47 +250,44 @@ This function generates in silico neural responses using the encoding model prev
    :header-rows: 0
 
    * - **model**
-       | **Description:** An instantiated and loaded encoding model.
-       | **Required:** Yes
      - | **Type:** BaseModelInterface
-   * - **stimulus**
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
        | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
+   * - **stimulus**
      - | **Type:** numpy.ndarray
-     - | **Shape:** [batch_size, 3, height, width]
+       | **Required:** Yes
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
        | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
    * - **return_metadata**
+     - | **Type:** bool
+       | **Required:** No
        | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
-       | **Required:** No
-     - | **Type:** bool
        | **Example:** True
-       | **Default:** False
    * - **show_progress**
-       | **Description:** Whether to show a progress bar during encoding (for large batches).
-       | **Required:** No
      - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
-       | **Default:** False
 
 Parameters used in ``get_model_metadata``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This function loads the encoding model's metadata, without having to load the model itself.
+This function loads the encoding model's metadata without having to load the model itself.
 
 .. list-table::
    :widths: 20 80
    :header-rows: 0
 
    * - **model_id**
-       | **Description:** Unique encoding model identifier.
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** "fmri-things_fmri_1-vit_b_32"
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-things_fmri_1-vit_b_32
        | **Example:** "fmri-things_fmri_1-vit_b_32"
    * - **subject**
-       | **Description:** Subject ID from the THINGS fMRI dataset.
-       | **Required:** Yes
      - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the THINGS fMRI dataset.
        | **Valid Values:** 1, 2, 3
        | **Example:** 1
 
@@ -319,10 +314,9 @@ Example Usage
         "fmri-things_fmri_1-vit_b_32",
         subject=1,
         selection={
-            "roi": ["V1", "V2", "IT"]
+            "roi": ["V1", "V2", "IT"],
             "voxel_index": [0, 0, '...', 1, 1, 0]
-        },
-        device="auto"
+        }
     )
     
     # Prepare the stimulus images
@@ -347,13 +341,13 @@ Example Usage
         images,
         return_metadata=True
     )
-
+    
     # Load the encoding model's metadata without having to load the model itself
     metadata = berg.get_model_metadata(
         "fmri-things_fmri_1-vit_b_32",
         subject=1
     )
-
+    
 
 References
 ---------

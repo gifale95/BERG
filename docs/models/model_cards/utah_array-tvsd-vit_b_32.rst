@@ -55,7 +55,7 @@ subsets) across 300 time points for each input image.
 Metadata
 --------
 
-**'utah-array'**
+**'utah_array'**
 
 .. list-table::
    :widths: 30 20 50
@@ -152,9 +152,9 @@ Metadata
 Input
 -----
 
-**Description**: The input should be a batch of RGB images.
 **Type**: ``numpy.ndarray``  
 **Shape**: ``['batch_size', 3, 'height', 'width']``  
+**Description**: The input should be a batch of RGB images.
 
 **Constraints:**
 
@@ -165,6 +165,8 @@ Input
 Output
 ------
 
+**Type**: ``numpy.ndarray``  
+**Shape**: ``['batch_size', 'n_electrodes', 'n_timepoints']``  
 **Description**:  
 The output is a 3D array containing in silico utah-array responses.
 The second dimension (n_electrodes) corresponds to the number of electrodes in the selected ROI,
@@ -180,9 +182,6 @@ Monkey F electrode count:
 * V1: 512
 * V4: 192
 * IT: 320
-
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 'n_electrodes', 'n_timepoints']``  
 
 **Dimensions:**
 
@@ -212,23 +211,23 @@ This function loads the encoding model.
    :header-rows: 0
 
    * - **model_id**
-       | **Description:** Unique identifier of the model to load.
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** "utah_array-tvsd-vit_b_32"
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** utah_array-tvsd-vit_b_32
        | **Example:** "utah_array-tvsd-vit_b_32"
    * - **subject**
-       | **Description:** Monkey ID
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** 'N', 'F'
-       | **Example:** 'N'
+       | **Required:** Yes
+       | **Description:** Monkey ID
+       | **Valid Values:** "N", "F"
+       | **Example:** "N"
    * - **selection**
+     - | **Type:** dict
+       | **Required:** No
        | **Description:** Specifies which outputs to include in the model responses.
        | Can include specific electrodes and/or timepoints. If not provided,
        | utah-array responses are generated for all electrodes and time points.
-       | **Required:** No
-     - | **Type:** dict
        | 
        | **Properties:**
        | 
@@ -251,14 +250,12 @@ This function loads the encoding model.
        |     Must have exactly the same length as the number of available timepoints (300).
        |     Each position set to 1 indicates that timepoint should be included.
        |     **Example:** [0, 0, '...', 1, 1, 0]
-
    * - **device**
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Required:** No
      - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
        | **Valid Values:** "cpu", "cuda", "auto"
        | **Example:** "auto"
-       | **Default:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -270,49 +267,46 @@ This function generates in silico neural responses using the encoding model prev
    :header-rows: 0
 
    * - **model**
-       | **Description:** An instantiated and loaded encoding model.
-       | **Required:** Yes
      - | **Type:** BaseModelInterface
-   * - **stimulus**
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
        | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
+   * - **stimulus**
      - | **Type:** numpy.ndarray
-     - | **Shape:** [batch_size, 3, height, width]
+       | **Required:** Yes
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
        | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
    * - **return_metadata**
+     - | **Type:** bool
+       | **Required:** No
        | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
-       | **Required:** No
-     - | **Type:** bool
        | **Example:** True
-       | **Default:** False
    * - **show_progress**
-       | **Description:** Whether to show a progress bar during encoding (for large batches).
-       | **Required:** No
      - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
-       | **Default:** False
 
 Parameters used in ``get_model_metadata``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This function loads the encoding model's metadata, without having to load the model itself.
+This function loads the encoding model's metadata without having to load the model itself.
 
 .. list-table::
    :widths: 20 80
    :header-rows: 0
 
    * - **model_id**
-       | **Description:** Unique encoding model identifier.
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** "utah_array-tvsd-vit_b_32"
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** utah_array-tvsd-vit_b_32
        | **Example:** "utah_array-tvsd-vit_b_32"
    * - **subject**
-       | **Description:** Monkey ID
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** 'N', 'F'
-       | **Example:** 'N'
+       | **Required:** Yes
+       | **Description:** Monkey ID
+       | **Valid Values:** "N", "F"
+       | **Example:** "N"
 
 Performance
 ----------
@@ -335,13 +329,12 @@ Example Usage
     # Load the model
     model = berg.get_encoding_model(
         "utah_array-tvsd-vit_b_32",
-        subject='N',
+        subject="N",
         selection={
-            "roi": ["V1", "IT"]
-            "electrodes": [0, 0, '...', 1, 1, 0]
+            "roi": ["V1", "IT"],
+            "electrodes": [0, 0, '...', 1, 1, 0],
             "timepoints": [0, 0, '...', 1, 1, 0]
-        },
-        device="auto"
+        }
     )
     
     # Prepare the stimulus images
@@ -367,13 +360,13 @@ Example Usage
         images,
         return_metadata=True
     )
-
+    
     # Load the encoding model's metadata without having to load the model itself
     metadata = berg.get_model_metadata(
         "utah_array-tvsd-vit_b_32",
-        subject=1
+        subject="N"
     )
-
+    
 
 References
 ---------

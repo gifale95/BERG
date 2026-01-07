@@ -49,7 +49,16 @@ exactly three times during the NSD experiment).
 Metadata
 --------
 
-NOTE: Metadata files are generated separately for each ROI, containing only voxels within that region.
+.. list-table::
+   :widths: 30 20 50
+   :header-rows: 1
+
+   * - Key
+     - Shape/Type
+     - Description
+   * - NOTE
+     - ``Metadata files are generated separately for each ROI, containing only voxels within that region.``
+     - 
 
 **'fmri'**
 
@@ -102,9 +111,9 @@ NOTE: Metadata files are generated separately for each ROI, containing only voxe
 Input
 -----
 
-**Description**: The input should be a batch of RGB images.
 **Type**: ``numpy.ndarray``  
 **Shape**: ``['batch_size', 3, 'height', 'width']``  
+**Description**: The input should be a batch of RGB images.
 
 **Constraints:**
 
@@ -115,6 +124,8 @@ Input
 Output
 ------
 
+**Type**: ``numpy.ndarray``  
+**Shape**: ``['batch_size', 'n_voxels']``  
 **Description**:  
 The output is a 2D array containing in silico fMRI responses.
 The second dimension (n_voxels) corresponds to the number of voxels in the selected ROI,
@@ -143,8 +154,6 @@ which varies by ROI and subject. For subject 1, the number of voxels per ROI is 
 * parietal: 3,548
 * lateral: 7,799
 * ventral: 7,604
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 'n_voxels']``  
 
 **Dimensions:**
 
@@ -172,21 +181,21 @@ This function loads the encoding model.
    :header-rows: 0
 
    * - **model_id**
-       | **Description:** Unique identifier of the model to load.
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** "fmri-nsd-fwrf"
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-nsd-fwrf
        | **Example:** "fmri-nsd-fwrf"
    * - **subject**
-       | **Description:** Subject ID from the NSD dataset (1-8).
-       | **Required:** Yes
      - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the NSD dataset (1-8).
        | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
        | **Example:** 1
    * - **selection**
-       | **Description:** Specifies which outputs to include in the model responses.
-       | **Required:** Yes
      - | **Type:** dict
+       | **Required:** Yes
+       | **Description:** Specifies which outputs to include in the model responses.
        | 
        | **Properties:**
        | 
@@ -197,14 +206,12 @@ This function loads the encoding model.
        |     or composite regions (lateral, ventral).
        |     **Valid values:** "V1", "V2", "V3", "hV4", "EBA", "FBA-2", "OFA", "FFA-1", "FFA-2", "PPA", "RSC", "OPA", "OWFA", "VWFA-1", "VWFA-2", "mfs-words", "early", "midventral", "midlateral", "midparietal", "parietal", "lateral", "ventral"
        |     **Example:** V1
-
    * - **device**
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Required:** No
      - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
        | **Valid Values:** "cpu", "cuda", "auto"
        | **Example:** "auto"
-       | **Default:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -216,47 +223,44 @@ This function generates in silico neural responses using the encoding model prev
    :header-rows: 0
 
    * - **model**
-       | **Description:** An instantiated and loaded encoding model.
-       | **Required:** Yes
      - | **Type:** BaseModelInterface
-   * - **stimulus**
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
        | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
+   * - **stimulus**
      - | **Type:** numpy.ndarray
-     - | **Shape:** [batch_size, 3, height, width]
+       | **Required:** Yes
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
        | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
    * - **return_metadata**
+     - | **Type:** bool
+       | **Required:** No
        | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
-       | **Required:** No
-     - | **Type:** bool
        | **Example:** True
-       | **Default:** False
    * - **show_progress**
-       | **Description:** Whether to show a progress bar during encoding (for large batches).
-       | **Required:** No
      - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
-       | **Default:** False
 
 Parameters used in ``get_model_metadata``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-This function loads the encoding model's metadata, without having to load the model itself.
+This function loads the encoding model's metadata without having to load the model itself.
 
 .. list-table::
    :widths: 20 80
    :header-rows: 0
 
    * - **model_id**
-       | **Description:** Unique encoding model identifier.
-       | **Required:** Yes
      - | **Type:** str
-       | **Valid Values:** "fmri-nsd_fsaverage-huze"
-       | **Example:** "fmri-nsd_fsaverage-huze"
-   * - **subject**
-       | **Description:** Subject ID from the NSD dataset (1-8).
        | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-nsd-fwrf
+       | **Example:** "fmri-nsd-fwrf"
+   * - **subject**
      - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the NSD dataset (1-8).
        | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
        | **Example:** 1
 
@@ -284,7 +288,7 @@ Example Usage
         subject=1,
         selection={
             "roi": "V1"
-        },
+        }
     )
     
     # Prepare the stimulus images
@@ -309,13 +313,13 @@ Example Usage
         images,
         return_metadata=True
     )
-
+    
     # Load the encoding model's metadata without having to load the model itself
     metadata = berg.get_model_metadata(
         "fmri-nsd-fwrf",
         subject=1
     )
-
+    
 
 References
 ---------
