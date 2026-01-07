@@ -11,6 +11,19 @@
 # CUDA module
 module add CUDA/12.4.0
 
+# Create the parameters combinations
+declare -a encoding_model_all
+index=0
+for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' ; do
+    encoding_model_all[$index]=$em
+    ((index=index+1))
+done
+
+# Extract the parameters
+echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
+encoding_model=${encoding_model_all[$SLURM_ARRAY_TASK_ID]}
+echo encoding_model: $encoding_model
+
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
@@ -19,4 +32,4 @@ conda activate general
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/behavioral_modeling
 
 # Run the job
-python 01_generate_insilico_fmri.py
+python 01_generate_insilico_fmri.py --encoding_model $encoding_model

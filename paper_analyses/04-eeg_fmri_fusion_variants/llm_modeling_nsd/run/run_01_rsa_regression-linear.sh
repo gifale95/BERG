@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-eeg_fmri_fusion_variants-llm_modeling_nsd-01_rsa
+#SBATCH --job-name=berg-eeg_fmri_fusion_variants-llm_modeling_nsd-01_rsa_regression-linear
 #SBATCH --mail-type=end
-#SBATCH --mem=80000
+#SBATCH --mem=50000
 #SBATCH --time=12:00:00
 #SBATCH --qos=extended
 
@@ -17,7 +17,7 @@ for s in `seq 1 2` ; do
     for h in 'lh' 'rh' ; do
         for es in `seq 1 2` ; do
             for rep in 'average' ; do
-                for reg in 'linear' 'ridge' ; do
+                for reg in 'linear' ; do
                     fmri_subject_all[$index]=$s
                     hemisphere_all[$index]=$h
                     eeg_subject_all[$index]=$es

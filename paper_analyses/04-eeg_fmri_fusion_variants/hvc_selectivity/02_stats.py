@@ -118,17 +118,17 @@ for fs, fsub in enumerate(args.fmri_subjects):
 # prediction accuracy.
 
 # Loop across subjects and hemispheres
-for s in range(len(metadata)):
+for fs in range(len(metadata)):
     for hem in args.hemispheres:
 
-        ncsnr = metadata[s]['fmri'][hem+'_ncsnr']
+        ncsnr = metadata[fs]['fmri'][hem+'_ncsnr']
         idx_ncsnr = ncsnr >= args.ncsnr_threshold
-        encoding = metadata[s]['encoding_models'][hem+'_explained_variance_nsdcore']
+        encoding = metadata[fs]['encoding_models'][hem+'_explained_variance_nsdcore']
         idx_encoding = encoding >= args.encoding_threshold
         idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
 
         for key in tfmri.keys():
-            tfmri[key][hem][s,idx_nan] = np.nan
+            tfmri[key][hem][fs,idx_nan] = np.nan
 
 
 # =============================================================================
@@ -144,7 +144,7 @@ for c, cat in enumerate(categories):
     for roi in rois:
 
         # Empty arrays of shape:
-        # (8 fMRI Subjects, 140 Time points)
+        # (N fMRI Subjects, 140 Time points)
         tfmri_roi_avg[roi+'_'+cat] = np.zeros((
             len(args.fmri_subjects), len(times)), dtype=np.float32)
 

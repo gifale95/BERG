@@ -3,6 +3,9 @@ behavioral embeddings.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 subjects : list
     The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
@@ -31,6 +34,7 @@ import matplotlib.pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
@@ -42,7 +46,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'behavioral_modeling', 'plots')
+    'vision', 'fmri', 'behavioral_modeling', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -57,8 +61,8 @@ for sub in args.subjects:
 
         results_dir = os.path.join(args.berg_dir,
             'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'behavioral_modeling', 'rsa', 'rsa_sub-'+format(sub, '02')+'_'+
-            hemi+'.npy')
+            'behavioral_modeling', 'rsa', args.encoding_model, 'rsa_sub-'+
+            format(sub, '02')+'_'+hemi+'.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         # NCSNR and noise ceiling vertex selection
@@ -88,7 +92,7 @@ rh_rsa = np.array(rh_rsa)
 # Load the significance
 stats_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'behavioral_modeling', 'stats', 'stats.npy')
+    'behavioral_modeling', 'stats', args.encoding_model, 'stats.npy')
 stats = np.load(stats_dir, allow_pickle=True).item()
 
 # Set non significant vertices to NaN

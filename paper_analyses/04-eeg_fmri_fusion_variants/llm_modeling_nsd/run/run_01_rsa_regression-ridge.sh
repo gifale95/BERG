@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-eeg_fmri_fusion-eeg_fmri_fusion_variants-01_generate_tfmri
+#SBATCH --job-name=berg-eeg_fmri_fusion_variants-llm_modeling_nsd-01_rsa_regression-ridge
 #SBATCH --mail-type=end
-#SBATCH --mem=18000
-#SBATCH --time=08:00:00
+#SBATCH --mem=50000
+#SBATCH --time=12:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -16,8 +16,8 @@ index=0
 for s in `seq 1 2` ; do
     for h in 'lh' 'rh' ; do
         for es in `seq 1 2` ; do
-            for rep in 'average' ; do
-                for reg in 'linear' 'ridge' ; do
+            for rep in 'average' 'single' ; do
+                for reg in 'ridge' ; do
                     fmri_subject_all[$index]=$s
                     hemisphere_all[$index]=$h
                     eeg_subject_all[$index]=$es
@@ -43,12 +43,12 @@ echo eeg_subject: $eeg_subject
 echo eeg_reps: $eeg_reps
 echo regression: $regression
 
-# Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion_variants/hvc_selectivity
-
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
+# Change to the .py script directory
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion_variants/llm_modeling_nsd
+
 # Run the job
-python 01_generate_tfmri.py --fmri_subject $fmri_subject --hemisphere $hemisphere --eeg_subject $eeg_subject --eeg_reps $eeg_reps --regression $regression
+python 01_rsa.py --fmri_subject $fmri_subject --hemisphere $hemisphere --eeg_subject $eeg_subject --fmri_subject $fmri_subject --hemisphere $hemisphere

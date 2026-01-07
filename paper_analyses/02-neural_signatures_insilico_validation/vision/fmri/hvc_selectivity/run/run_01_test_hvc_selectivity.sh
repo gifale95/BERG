@@ -12,17 +12,23 @@
 module add CUDA/12.4.0
 
 # Create the parameters combinations
+declare -a encoding_model_all
 declare -a subject_all
 index=0
-for s in `seq 1 8` ; do
-    subject_all[$index]=$s
-    ((index=index+1))
+for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' ; do
+    for s in `seq 1 8` ; do
+        encoding_model_all[$index]=$em
+        subject_all[$index]=$s
+        ((index=index+1))
+    done
 done
 
 # Extract the parameters
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
+encoding_model=${encoding_model_all[$SLURM_ARRAY_TASK_ID]}
 subject=${subject_all[$SLURM_ARRAY_TASK_ID]}
 echo subject: $subject
+echo encoding_model: $encoding_model
 
 # Wait a bit so it doesn't crash
 sleep 8
@@ -35,4 +41,4 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Run the job
-python 01_test_hvc_selectivity.py --subject $subject
+python 01_test_hvc_selectivity.py --subject $subject --encoding_model $encoding_model

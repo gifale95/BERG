@@ -15,13 +15,9 @@ berg_dir : str
 """
 
 import argparse
-import os
 import numpy as np
-import nibabel as nib
 from berg import BERG
 import cortex
-import cortex.polyutils
-from matplotlib import pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
@@ -63,10 +59,10 @@ elif args.hemisphere == 'rh':
     data = np.append(data_nan, fsaverage_rois)
 subject = 'fsaverage_nsd_sub-0' + str(args.subject)
 vertex_data = cortex.Vertex(data, subject, vmin=1, vmax=len(rois), cmap='gist_rainbow',
-    with_colorbar=False)
+    with_colorbar=True)
 
 # Create the ROI labels: https://gallantlab.org/pycortex/generated/cortex.utils.add_roi.html
 cortex.utils.add_roi(vertex_data, name='floc-words_'+args.hemisphere,
-    with_colorbar=False)
+    with_colorbar=FalTruese)
 
 # Then draw the ROI labels in Inkscape.

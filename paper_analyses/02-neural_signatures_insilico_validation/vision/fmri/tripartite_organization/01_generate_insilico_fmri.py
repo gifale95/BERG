@@ -4,8 +4,8 @@ tripartite organization effect (Konkle & Caramazza, 2013).
 Parameters
 ----------
 encoding_model : str
-    The name of the fMRI encoding model in BERG to use for generating the
-    in silico fMRI responses in surface space.
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 subjects : list
     List of the subject identifiers for the fMRI encoding models. Since the
     used encoding models are trained on NSD data, valid subject identifiers are
@@ -160,7 +160,8 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'tripartite_organization', 'insilico_fmri_responses')
+    'vision', 'fmri', 'tripartite_organization', 'insilico_fmri_responses',
+    args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'insilico_fmri_responses_images-' + args.images + '.npy'

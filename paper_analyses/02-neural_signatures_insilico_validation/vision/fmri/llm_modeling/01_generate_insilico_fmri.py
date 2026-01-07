@@ -5,7 +5,7 @@ Parameters
 ----------
 encoding_model : str
     The name of BERG's encoding model used for generating the in silico fMRI
-    responses.
+    responses in fsavarage space.
 subjects : list
     The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
@@ -45,7 +45,8 @@ for key, val in vars(args).items():
 # Create the save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'llm_modeling', 'insilico_fmri_responses')
+    'vision', 'fmri', 'llm_modeling', 'insilico_fmri_responses',
+    args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 

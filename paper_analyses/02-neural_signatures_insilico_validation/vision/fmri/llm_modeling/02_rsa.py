@@ -2,6 +2,9 @@
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 subject : int
     The subject identifier for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers
@@ -39,6 +42,7 @@ from scipy.stats import pearsonr
 import h5py
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subject', default=1, type=int)
 parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--criterion', default='radius', type=str)
@@ -100,8 +104,8 @@ test_img_num = metadata['encoding_models']['test_img_num']
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'fmri', 'llm_modeling', 'insilico_fmri_responses',
-    'insilico_fmri_responses_sub-'+format(args.subject, '02')+'_'+
-    args.hemisphere+'.npy')
+    args.encoding_model, 'insilico_fmri_responses_sub-'+
+    format(args.subject, '02')+'_'+args.hemisphere+'.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 fmri = data['fmri'].astype(np.float32)
@@ -162,10 +166,8 @@ idx_tril = np.tril_indices(len(llm_rdm), -1)
 llm_rdm_tril = llm_rdm[idx_tril]
 
 # Access the precomputed geodesic distances
-data_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'behavioral_modeling', 'vertex_geodesic_distances',
-    'vertex_geodesic_distances_'+args.hemisphere+'.h5')
+data_dir = os.path.join(args.berg_dir, 'geodesic_vertex_distances',
+    'geodesic_vertex_distances_'+args.hemisphere+'.h5')
 geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
 
 # Loop across fMRI vertices
@@ -199,7 +201,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'llm_modeling', 'rsa')
+    'vision', 'fmri', 'llm_modeling', 'rsa', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'rsa_sub-' + format(args.subject, '02') + '_' + args.hemisphere + \

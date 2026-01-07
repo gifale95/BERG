@@ -6,7 +6,7 @@ Parameters
 ----------
 encoding_model : str
     The name of BERG's encoding model used for generating the in silico fMRI
-    responses in surface space.
+    responses in fsavarage space.
 subject : int
     The subject identifier for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are

@@ -5,6 +5,9 @@ Parameters
 ----------
 encoding_model : str
     The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico fMRI
     responses in surface space.
 subject : int
     The subject identifier for the fMRI encoding models. Since the used
@@ -63,7 +66,7 @@ args, unknown = parser.parse_known_args()
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'fmri', 'retinotopy', 'GRID_RES-'+str(args.GRID_RES)+
     '_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+'_BG_VALUE-'+str(args.BG_VALUE),
-    'plots')
+    'plots', args.encoding_model)
 
 os.makedirs(save_dir, exist_ok=True)
 

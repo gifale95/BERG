@@ -4,6 +4,9 @@ irrespective of visual size.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
@@ -27,6 +30,7 @@ from sklearn.utils import resample
 from scipy.stats import ttest_rel
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
@@ -48,8 +52,8 @@ np.random.seed(seed)
 # Load the in silico fMRI responses
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'ffa_ppa', 'insilico_fmri_responses',
-    'insilico_fmri_responses.npy')
+    'vision', 'fmri', 'ffa_ppa_effects', 'insilico_fmri_responses',
+    args.encoding_model, 'insilico_fmri_responses.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 
@@ -233,7 +237,7 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'ffa_ppa', 'stats')
+    'vision', 'fmri', 'ffa_ppa_effects', 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'visual_size.npy'

@@ -55,7 +55,7 @@ os.makedirs(save_dir, exist_ok=True)
 lh_rsa = []
 rh_rsa = []
 
-for sub in args.fmri_subjects:
+for fsub in args.fmri_subjects:
     for hemi in ['lh', 'rh']:
 
         rsa_eeg_sub = []
@@ -65,7 +65,7 @@ for sub in args.fmri_subjects:
             results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_variants',
                 'llm_modeling_nsd', 'rsa',
                 f'eeg_reps-{args.eeg_reps}_regression-{args.regression}',
-                f'rsa_sub-{sub:02d}_hemi-{hemi}_eeg_sub-{esub:02d}.npy')
+                f'rsa_sub-{fsub:02d}_hemi-{hemi}_eeg_sub-{esub:02d}.npy')
             results = np.load(results_dir, allow_pickle=True).item()
 
             # NCSNR and noise ceiling vertex selection

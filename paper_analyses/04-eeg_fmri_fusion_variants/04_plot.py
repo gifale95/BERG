@@ -52,8 +52,7 @@ for rep in args.eeg_reps:
     for reg in args.regression:
 
         results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_variants',
-            'encoding_fusion_accuracy', f'eeg_reps-{rep}_regression-{reg}',
-            'encoding_fusion_accuracy.npy')
+            'stats', f'eeg_reps-{rep}_regression-{reg}', 'stats.npy')
 
         results = np.load(results_dir, allow_pickle=True).item()
 
@@ -153,7 +152,7 @@ for key in corr_tfmri_fmri.keys():
 # =============================================================================
 # Plot parameters
 # =============================================================================
-fontsize = 25
+fontsize = 10
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams["font.weight"] = "normal"
 matplotlib.rcParams["axes.labelweight"] = "normal"
@@ -217,10 +216,10 @@ plt.ylabel("Pearson's $r$", fontsize=fontsize)
 yticks = [0, 0.2, 0.4, 0.6, 0.8]
 ylabels = [0, 0.2, 0.4, 0.6, 0.8]
 plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylim(bottom=-.1, top=.8)
+plt.ylim(bottom=-.025, top=.4)
 
 # Legend
-plt.legend(ncol=4, fontsize=20, loc=4, ncols=2, frameon=False)
+plt.legend(ncol=1, fontsize=10, loc=0, frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'correlation_vertexAvg.svg')
@@ -231,7 +230,7 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 # Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
 # =============================================================================
 # Create the figure
-fig, axs = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(2, 2))
+fig, axs = plt.subplots(2, 2, sharex=True, sharey=True)
 axs = np.reshape(axs, (-1))
 
 # Loop across modeling types
@@ -279,11 +278,14 @@ for i, key in enumerate(corr_tfmri_fmri_roi.keys()):
         yticks = [0, 0.2, 0.4, 0.6, 0.8]
         ylabels = [0, 0.2, 0.4, 0.6, 0.8]
         axs[i].set_yticks(ticks=yticks, labels=ylabels)
-        axs[i].set_ylim(bottom=-.1, top=.8)
+        axs[i].set_ylim(bottom=-.025, top=.5)
+
+    # Title
+    axs[i].set_title(key, fontsize=10)
 
     # Legend
     if i in [0]:
-        plt.legend(ncol=4, fontsize=20, loc=4, ncols=2, frameon=False)
+        plt.legend(ncol=4, fontsize=10, loc=4, ncols=2, frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'roi_correlation_streams.svg')

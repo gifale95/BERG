@@ -3,6 +3,9 @@ silico fMRI responses.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 images : str
     Whether to use 'naturalistic' or 'texforms' images.
 ncsnr_threshold : float
@@ -28,6 +31,7 @@ from sklearn.utils import resample
 from scipy.stats import ttest_rel
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--images', type=str, default='naturalistic')
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
@@ -51,7 +55,7 @@ np.random.seed(seed)
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'fmri', 'tripartite_organization', 'insilico_fmri_responses',
-    'insilico_fmri_responses_images-'+args.images+'.npy')
+    args.encoding_model, 'insilico_fmri_responses_images-'+args.images+'.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 
@@ -257,7 +261,7 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'tripartite_organization', 'stats')
+    'vision', 'fmri', 'tripartite_organization', 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats_images-' + args.images + '.npy'

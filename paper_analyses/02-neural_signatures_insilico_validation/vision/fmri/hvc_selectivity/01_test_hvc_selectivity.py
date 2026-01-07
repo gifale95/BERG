@@ -4,8 +4,8 @@ the contrasts for face, body, food, word, and place selective areas.
 Parameters
 ----------
 encoding_model : str
-    The name of the fMRI encoding model in BERG to use for generating the
-    in silico fMRI responses in surface space.
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 subject : int
     Subject identifier for the fMRI encoding model. Since the used encoding
     models are trained on NSD data, valid subject identifiers are integers from
@@ -236,7 +236,7 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 't_values')
+    'vision', 'fmri', 'hvc_selectivity', 't_values', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'results_sub-' + format(args.subject, '02') + '.npy'

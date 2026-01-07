@@ -1,5 +1,4 @@
-"""Generate the t-fMRI responses for the 515 images that all NSD subjects saw
-for three times.
+"""Perform searchlight RSA between t-fMRI responses and LLM embeddings.
 
 Parameters
 ----------
@@ -10,11 +9,22 @@ fmri_subject : int
 hemisphere : str
     String containing the hemisphere used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+criterion : str
+    Criterion to define the searchlight neighborhood: 'radius' for all vertices
+    within a geodesic radius, 'nearest' for k-nearest neighbors.
+radius_mm : float
+    Geodesic radius in millimeters (default = 10 mm), if criterion is 'radius'.
+k : int
+    Number of nearest geodesic neighbors (default = 10), if criterion is
+    'nearest'.
 berg_dir : str
     Directory of the BERG.
 nsd_dir : str
     Directory of the Natural Scenes Dataset.
     https://naturalscenesdataset.org/
+coco_dir : str
+    Directory of the COCO dataset.
+    https://cocodataset.org/
 
 """
 
@@ -24,8 +34,6 @@ import numpy as np
 from tqdm import tqdm
 from berg import BERG
 import h5py
-import gc
-import torch
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
@@ -42,14 +50,19 @@ parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--eeg_subject', default=1, type=int)
 parser.add_argument('--eeg_reps', default='average', type=str)
 parser.add_argument('--regression', default='linear', type=str)
+parser.add_argument('--criterion', default='radius', type=str)
+parser.add_argument('--radius_mm', default=10, type=float)
+parser.add_argument('--k', default=10, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--coco_dir', default='/scratch/giffordale95/datasets/image_sets/coco', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Generate t-fMRI <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
+
 
 # =============================================================================
 # Define the vectorized correlation function
@@ -153,15 +166,11 @@ model = berg.get_encoding_model(
 # Generate and store the in silico EEG responses
 eeg = berg.encode(model, images, return_metadata=False)
 
-# Delete unused variables
-torch.cuda.empty_cache()
-gc.collect()
-
 
 # =============================================================================
 # Z-score the in silico EEG responses and transform them with PCA
 # =============================================================================
-if args.regression == 'linear':
+if args.regression == 'linear' and args.eeg_reps == 'average':
 
     # Load the z-score and PCA parameters
     param_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_variants',
@@ -190,7 +199,7 @@ if args.regression == 'linear':
             eeg[:,r,:,t] = scaler.transform(eeg[:,r,:,t])
 
         # Transform the EEG responses with PCA
-        pca = PCA(n_components=eeg.shape[1], random_state=20200220)
+        pca = PCA(n_components=eeg.shape[2], random_state=20200220)
         pca.components_ = pca_param[t]['components_']
         pca.explained_variance_ = pca_param[t]['explained_variance_']
         pca.explained_variance_ratio_ = pca_param[t]['explained_variance_ratio_']
@@ -226,32 +235,59 @@ for stream in streams:
 idx_v = np.where(idx_v == 1)[0]
 
 # Empty t-fMRI response array of shape:
-# (515 Images, 163842 Vertices, 4 EEG repeats, 140 Time points)
+# (515 Images, 163842 Vertices, 4 EEG repeats, 30 Time points)
 n_rep = eeg.shape[1]
-tfmri = np.zeros((len(eeg), n_vertex, n_rep, eeg.shape[3]), dtype=np.float32)
+time_range = np.arange(20, 50) # !!! CHANGE
+tfmri = np.zeros((len(eeg), n_vertex, n_rep, len(time_range)), dtype=np.float32)
 
 # Loop across EEG time points
-for t in range(eeg.shape[3]):
+for t, t_idx in enumerate(time_range):
 
-    # Load the EEG-fMRI encoding fusion models weights
-    file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
-                f'hemi-{args.hemisphere}_eeg_sub-{args.eeg_subject:02d}'
-                f'_eeg_time-{t:03d}.npy')
-    reg_param = np.load(os.path.join(model_dir, file_name),
-        allow_pickle=True).item()
+    if args.eeg_reps == 'average':
 
-    # Instantiate the fusion regression model
-    if args.regression == 'linear':
-        reg = LinearRegression()
-    if args.regression == 'ridge':
-        reg = Ridge()
-    reg.coef_ = reg_param['coef_']
-    reg.intercept_ = reg_param['intercept_']
-    reg.n_features_in_ = reg_param['n_features_in_']
+        # Load the EEG-fMRI encoding fusion models weights
+        file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
+                    f'hemi-{args.hemisphere}_eeg_sub-{args.eeg_subject:02d}'
+                    f'_eeg_time-{t_idx:03d}.npy')
+        reg_param = np.load(os.path.join(model_dir, file_name),
+            allow_pickle=True).item()
 
-    # Generate the t-fMRI responses
-    for r in range(eeg.shape[1]):
-        tfmri[:,idx_v,r,t] = reg.predict(eeg[:,r,:,t])
+        # Instantiate the fusion regression model
+        if args.regression == 'linear':
+            reg = LinearRegression()
+        if args.regression == 'ridge':
+            reg = Ridge()
+        reg.coef_ = reg_param['coef_']
+        reg.intercept_ = reg_param['intercept_']
+        reg.n_features_in_ = reg_param['n_features_in_']
+
+        # Generate the t-fMRI responses
+        for r in range(eeg.shape[1]):
+            tfmri[:,idx_v,r,t] = reg.predict(eeg[:,r,:,t_idx])
+
+    elif args.eeg_reps == 'single':
+
+        # Load the EEG-fMRI encoding fusion models weights
+        file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
+                    f'hemi-{args.hemisphere}_eeg_sub-{args.eeg_subject:02d}'
+                    f'_eeg_time-{t_idx:03d}.npy')
+        reg_param = np.load(os.path.join(model_dir, file_name),
+            allow_pickle=True)
+
+        # Loop across EEG repeats
+        for r in range(len(reg_param)):
+
+            # Instantiate the fusion regression model
+            if args.regression == 'linear':
+                reg = LinearRegression()
+            if args.regression == 'ridge':
+                reg = Ridge()
+            reg.coef_ = reg_param[r]['coef_']
+            reg.intercept_ = reg_param[r]['intercept_']
+            reg.n_features_in_ = reg_param[r]['n_features_in_']
+
+            # Generate the t-fMRI responses
+            tfmri[:,idx_v,r,t] = reg.predict(eeg[:,r,:,t_idx])
 
 
 # =============================================================================
@@ -262,15 +298,13 @@ for t in range(eeg.shape[3]):
 rsa = np.empty((tfmri.shape[1], tfmri.shape[2], tfmri.shape[3]), dtype=np.float32)
 rsa[:] = np.nan
 
-# Take the lower triangle of the behavior RDM
+# Take the lower triangle of the LLM RDM
 idx_tril = np.tril_indices(len(llm_rdm), -1)
 llm_rdm_tril = llm_rdm[idx_tril]
 
 # Access the precomputed geodesic distances
-data_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'behavioral_modeling', 'vertex_geodesic_distances',
-    'vertex_geodesic_distances_'+args.hemisphere+'.h5')
+data_dir = os.path.join(args.berg_dir, 'geodesic_vertex_distances',
+    'geodesic_vertex_distances_'+args.hemisphere+'.h5')
 geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
 
 # Loop across fMRI vertices and EEG time points
@@ -293,7 +327,7 @@ for v in tqdm(idx_v):
             fmri_rdm = 1 - corr_matrix(tfmri[:,neighborhood,r,t].T)
 
             # Perform RSA
-            rsa[v,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
+            rsa[v,r,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
 
 
 # =============================================================================

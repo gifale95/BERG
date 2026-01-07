@@ -11,19 +11,6 @@
 # CUDA module
 module add CUDA/12.4.0
 
-# Create the parameters combinations
-declare -a model_all
-index=0
-for m in 'alexnet' 'resnet50' ; do
-    model_all[$index]=$m
-    ((index=index+1))
-done
-
-# Extract the parameters
-echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
-model=${model_all[$SLURM_ARRAY_TASK_ID]}
-echo model: $model
-
 # Wait a bit so it doesn't crash
 sleep 8
 
@@ -35,4 +22,4 @@ conda activate general
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/dnn_layerwise_modeling
 
 # Run the job
-python 02_dnn_rdms.py --model $model
+python 02_dnn_rdms.py

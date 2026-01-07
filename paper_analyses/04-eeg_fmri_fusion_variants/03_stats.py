@@ -49,8 +49,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--eeg_subject', default=[1, 2], type=list)
-parser.add_argument('--eeg_reps', default='average', type=str)
-parser.add_argument('--regression', default='linear', type=str)
+parser.add_argument('--eeg_reps', default='single', type=str)
+parser.add_argument('--regression', default='ridge', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
@@ -98,7 +98,7 @@ corr_tfmri_fmri[:] = np.nan
 # Load the correlation results
 # =============================================================================
 # Loop across fMRI subjects
-for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
+for fs, fsub in enumerate(args.fmri_subjects):
 
     # Load the subject's metadata
     metadata.append(berg.get_model_metadata(
@@ -122,16 +122,16 @@ for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
         for es, esub in enumerate(args.eeg_subject):
 
             # Load the correlation scores
-            data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+            data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_variants',
                 'encoding_fusion_accuracy',
                 f'eeg_reps-{args.eeg_reps}_regression-{args.regression}')
             file_name = (f'corr_fmri_sub-{fsub:02d}_hemi-{hemi}'
-                f'_eeg_sub-{esub}.npy')
+                f'_eeg_sub-{esub:02d}.npy')
             corr.append(np.load(os.path.join(data_dir, file_name)))
 
         # Average the correlation scores across EEG subjects and EEG repeats
         corr = np.mean(corr, 0)
-        if args.eeg_reps == 'average':
+        if args.eeg_reps == 'single':
             corr = np.mean(corr, 1)
 
         # Store the correlation scores
@@ -154,7 +154,7 @@ for r, roi in enumerate(rois):
         dtype=np.float32)
 
     # Loop across subjects and hemispheres
-    for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
+    for fs, fsub in enumerate(args.fmri_subjects):
         for h, hemi in enumerate(args.hemispheres):
 
             # Get the indices of the ROI vertices

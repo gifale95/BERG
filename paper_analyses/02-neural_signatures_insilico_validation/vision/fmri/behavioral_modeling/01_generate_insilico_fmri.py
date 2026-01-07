@@ -4,7 +4,7 @@ Parameters
 ----------
 encoding_model : str
     The name of BERG's encoding model used for generating the in silico fMRI
-    responses.
+    responses in fsavarage space.
 subjects : list
     The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
@@ -23,7 +23,6 @@ import numpy as np
 from PIL import Image
 from tqdm import tqdm
 from berg import BERG
-import h5py
 import gc
 import torch
 
@@ -44,7 +43,8 @@ for key, val in vars(args).items():
 # Create the save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'behavioral_modeling', 'insilico_fmri_responses')
+    'vision', 'fmri', 'behavioral_modeling',
+    'insilico_fmri_responses', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 

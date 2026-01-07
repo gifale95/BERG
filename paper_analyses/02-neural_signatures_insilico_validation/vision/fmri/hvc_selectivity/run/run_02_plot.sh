@@ -6,6 +6,19 @@
 #SBATCH --time=01:00:00
 #SBATCH --qos=extended
 
+# Create the parameters combinations
+declare -a encoding_model_all
+index=0
+for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' ; do
+    encoding_model_all[$index]=$em
+    ((index=index+1))
+done
+
+# Extract the parameters
+echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
+encoding_model=${encoding_model_all[$SLURM_ARRAY_TASK_ID]}
+echo encoding_model: $encoding_model
+
 # Change to the .py script directory
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/hvc_selectivity
 
@@ -14,4 +27,4 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Run the job
-python 02_plot.py
+python 02_plot.py --encoding_model $encoding_model

@@ -3,6 +3,9 @@ of different categories.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 subjects : list
     List of subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
@@ -27,6 +30,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
 parser.add_argument('--encoding_threshold', default=20, type=float) # 20
@@ -38,7 +42,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'plots')
+    'vision', 'fmri', 'hvc_selectivity', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -53,7 +57,8 @@ for sub in args.subjects:
     # Load the results
     data_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'fmri',
-        'hvc_selectivity', 't_values', f'results_sub-{sub:02d}.npy')
+        'hvc_selectivity', 't_values', args.encoding_model,
+        f'results_sub-{sub:02d}.npy')
     data = np.load(data_dir, allow_pickle=True).item()
     lh_tval_sub = data['lh_tval']
     rh_tval_sub = data['rh_tval']

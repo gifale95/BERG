@@ -94,17 +94,14 @@ for cat in tqdm(categories):
 # =============================================================================
 # Generate the in silico EEG image responses
 # =============================================================================
-# Initialize BERG
-berg = BERG(berg_dir=args.berg_dir)
-
 # Loop across EEG subjects
 eeg = {}
-for s, sub in enumerate(tqdm(args.eeg_subjects)):
+for s, esub in enumerate(tqdm(args.eeg_subjects)):
 
     # Load the encoding model
     model = berg.get_encoding_model(
         'eeg-things_eeg_2-vit_b_32',
-        subject=sub
+        subject=esub
     )
 
     # Loop across image categories
@@ -124,14 +121,14 @@ for s, sub in enumerate(tqdm(args.eeg_subjects)):
 # =============================================================================
 # Z-score the in silico EEG responses and transform them with PCA
 # =============================================================================
-    if args.regression == 'linear':
+    if args.regression == 'linear' and args.eeg_reps == 'average':
 
         # Load the z-score and PCA parameters
         param_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_variants',
         'invivo_eeg_responses')
-        file_name_scaler = (f'scaler_param_sub-{sub:02d}_'
+        file_name_scaler = (f'scaler_param_sub-{esub:02d}_'
             f'eeg_reps-{args.eeg_reps}.npy')
-        file_name_pca = (f'pca_param_sub-{sub:02d}_'
+        file_name_pca = (f'pca_param_sub-{esub:02d}_'
             f'eeg_reps-{args.eeg_reps}.npy')
         scaler_param = np.load(os.path.join(param_dir, file_name_scaler),
             allow_pickle=True)
@@ -156,7 +153,7 @@ for s, sub in enumerate(tqdm(args.eeg_subjects)):
                     eeg[key][:,r,:,t] = scaler.transform(eeg[key][:,r,:,t])
 
                 # Transform the EEG responses with PCA
-                pca = PCA(n_components=eeg[key].shape[1], random_state=20200220)
+                pca = PCA(n_components=eeg[key].shape[2], random_state=20200220)
                 pca.components_ = pca_param[t]['components_']
                 pca.explained_variance_ = pca_param[t]['explained_variance_']
                 pca.explained_variance_ratio_ = pca_param[t]['explained_variance_ratio_']
@@ -186,38 +183,74 @@ for s, sub in enumerate(tqdm(args.eeg_subjects)):
     tfmri = {}
 
     # Loop across EEG time points
-    for t in tqdm(range(eeg[categories[0]].shape[2])):
+    for t in tqdm(range(eeg[categories[0]].shape[3])):
 
-        # Load the EEG-fMRI encoding fusion models weights
-        file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
-                    f'hemi-{args.hemisphere}_eeg_sub-{sub:02d}'
-                    f'_eeg_time-{t:03d}.npy')
-        reg_param = np.load(os.path.join(model_dir, file_name),
-            allow_pickle=True).item()
+        if args.eeg_reps == 'average':
 
-        # Instantiate the fusion regression model
-        if args.regression == 'linear':
-            reg = LinearRegression()
-        if args.regression == 'ridge':
-            reg = Ridge()
-        reg.coef_ = reg_param['coef_']
-        reg.intercept_ = reg_param['intercept_']
-        reg.n_features_in_ = reg_param['n_features_in_']
+            # Load the EEG-fMRI encoding fusion models weights
+            file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
+                        f'hemi-{args.hemisphere}_eeg_sub-{esub:02d}'
+                        f'_eeg_time-{t:03d}.npy')
+            reg_param = np.load(os.path.join(model_dir, file_name),
+                allow_pickle=True).item()
 
-        # Loop across image categories
-        for key, val in eeg.items():
+            # Instantiate the fusion regression model
+            if args.regression == 'linear':
+                reg = LinearRegression()
+            if args.regression == 'ridge':
+                reg = Ridge()
+            reg.coef_ = reg_param['coef_']
+            reg.intercept_ = reg_param['intercept_']
+            reg.n_features_in_ = reg_param['n_features_in_']
 
-            # Empty t-fMRI response array of shape:
-            # (163,842 Vertices, 4 EEG repeats, 140 Time points)
-            if t == 0:
-                tfmri[key] = np.zeros((n_vertex, eeg[key].shape[1],
-                    val.shape[2]), dtype=np.float32)
+            # Loop across image categories
+            for key, val in eeg.items():
 
-            # Generate the t-fMRI responses, and average them across images of the
-            # same category
-            for r in range(eeg[key].shape[1]):
-                tfmri[key][idx_v,r,t] = np.mean(reg.predict(eeg[key][:,r,:,t]), 0)
+                # Empty t-fMRI response array of shape:
+                # (163,842 Vertices, 4 EEG repeats, 140 Time points)
+                if t == 0:
+                    tfmri[key] = np.zeros((n_vertex, eeg[key].shape[1],
+                        val.shape[3]), dtype=np.float32)
+
+                # Generate the t-fMRI responses, and average them across images of the
+                # same category
+                for r in range(eeg[key].shape[1]):
+                    tfmri[key][idx_v,r,t] = np.mean(reg.predict(eeg[key][:,r,:,t]), 0)
+
+        elif args.eeg_reps == 'single':
+
+            # Load the EEG-fMRI encoding fusion models weights
+            file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
+                        f'hemi-{args.hemisphere}_eeg_sub-{esub:02d}'
+                        f'_eeg_time-{t:03d}.npy')
+            reg_param = np.load(os.path.join(model_dir, file_name),
+                allow_pickle=True)
+
+            # Loop across EEG repeats
+            for r in range(len(reg_param)):
+
+                # Instantiate the fusion regression model
+                if args.regression == 'linear':
+                    reg = LinearRegression()
+                if args.regression == 'ridge':
+                    reg = Ridge()
+                reg.coef_ = reg_param[r]['coef_']
+                reg.intercept_ = reg_param[r]['intercept_']
+                reg.n_features_in_ = reg_param[r]['n_features_in_']
+
+                # Loop across image categories
+                for key, val in eeg.items():
+
+                    # Empty t-fMRI response array of shape:
+                    # (163,842 Vertices, 4 EEG repeats, 140 Time points)
+                    if t == 0 and r == 0:
+                        tfmri[key] = np.zeros((n_vertex, val.shape[1],
+                            val.shape[3]), dtype=np.float32)
+
+                    # Generate the t-fMRI responses, and average them across images of the
+                    # same category
+                    tfmri[key][idx_v,r,t] = np.mean(reg.predict(val[:,r,:,t]), 0)
 
     # Save the in t-fMRI responses
-    file_name = f'tfmri_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}_eeg_sub-{sub:02d}.npy'
+    file_name = f'tfmri_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}_eeg_sub-{esub:02d}.npy'
     np.save(os.path.join(save_dir, file_name), tfmri)

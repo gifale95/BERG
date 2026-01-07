@@ -4,8 +4,8 @@ PPA-specific effects.
 Parameters
 ----------
 encoding_model : str
-    The name of the fMRI encoding model in BERG to use for generating the
-    in silico fMRI responses in surface space.
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 subjects : list
     List of the subject identifiers for the fMRI encoding models. Since the
     used encoding models are trained on NSD data, valid subject identifiers are
@@ -41,7 +41,7 @@ for key, val in vars(args).items():
 # =============================================================================
 # Image directories
 img_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'ffa_ppa', 'stimuli')
+    'vision', 'fmri', 'ffa_ppa_effects', 'stimuli')
 
 # Loop across image effects
 images = {}
@@ -182,7 +182,8 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'ffa_ppa', 'insilico_fmri_responses')
+    'vision', 'fmri', 'ffa_ppa_effects', 'insilico_fmri_responses',
+    args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'insilico_fmri_responses.npy'

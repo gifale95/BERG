@@ -67,12 +67,13 @@ if args.eeg_reps == 'average':
     eeg_train = np.mean(eeg_train, 1)
     eeg_test = np.mean(eeg_test, 1)
 
-# Load the EEG time points
+# Load the EEG channels and time points
 berg = BERG(berg_dir=args.berg_dir)
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
     subject=args.eeg_subject
 )
+ch_names = metadata_eeg['eeg']['ch_names']
 times = metadata_eeg['eeg']['times']
 
 
@@ -108,7 +109,7 @@ if args.regression == 'linear':
             scaler_param.append(scaler_param_t)
 
             # Transform the EEG responses with PCA, and store the parameters
-            pca = PCA(n_components=eeg_train_zscore.shape[1], random_state=20200220) 
+            pca = PCA(n_components=len(ch_names), random_state=20200220) 
             pca.fit(eeg_train_zscore)
             eeg_train_pca[:,:,t] = pca.transform(eeg_train_zscore)
             eeg_test_pca[:,:,t] = pca.transform(eeg_test_zscore)
@@ -151,7 +152,7 @@ if args.regression == 'linear':
                 scaler_param_rep.append(scaler_param_t)
 
                 # Transform the EEG responses with PCA, and store the parameters
-                pca = PCA(n_components=eeg_train_zscore.shape[1], random_state=20200220) 
+                pca = PCA(n_components=len(ch_names), random_state=20200220) 
                 pca.fit(eeg_train_zscore)
                 eeg_train_pca[:,r,:,t] = pca.transform(eeg_train_zscore)
                 eeg_test_pca[:,r,:,t] = pca.transform(eeg_test_zscore)

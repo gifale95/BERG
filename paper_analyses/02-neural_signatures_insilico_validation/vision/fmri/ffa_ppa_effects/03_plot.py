@@ -3,6 +3,9 @@ of different categories.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 berg_dir : str
     Directory of the BERG.
 
@@ -16,6 +19,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -24,7 +28,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'ffa_ppa', 'plots')
+    'vision', 'fmri', 'ffa_ppa_effects', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -57,7 +61,8 @@ plt.rcParams['svg.fonttype'] = 'none'
 # =============================================================================
 # Load the results
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'ffa_ppa', 'stats', 'ffa_face_texture.npy')
+    'vision', 'fmri', 'ffa_ppa_effects', 'stats', args.encoding_model,
+    'ffa_face_texture.npy')
 data = np.load(data_dir, allow_pickle=True).item()
 vertex_mean_resp = data['vertex_mean_resp']
 pval_diff = data['pval_diff']
@@ -122,7 +127,8 @@ fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: i
 # =============================================================================
 # Load the results
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'ffa_ppa', 'stats', 'ppa_spatial_layout.npy')
+    'vision', 'fmri', 'ffa_ppa_effects', 'stats', args.encoding_model,
+    'ppa_spatial_layout.npy')
 data = np.load(data_dir, allow_pickle=True).item()
 vertex_mean_resp = data['vertex_mean_resp']
 pval_diff = data['pval_diff']
@@ -185,7 +191,8 @@ fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: i
 # =============================================================================
 # Load the results
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'ffa_ppa', 'stats', 'curvature.npy')
+    'vision', 'fmri', 'ffa_ppa_effects', 'stats', args.encoding_model,
+    'curvature.npy')
 data = np.load(data_dir, allow_pickle=True).item()
 vertex_mean_resp = data['vertex_mean_resp']
 pval_diff = data['pval_diff']
@@ -247,7 +254,8 @@ for roi in ['FFA', 'PPA']:
 # =============================================================================
 # Load the results
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'ffa_ppa', 'stats', 'visual_size.npy')
+    'vision', 'fmri', 'ffa_ppa_effects', 'stats', args.encoding_model,
+    'visual_size.npy')
 data = np.load(data_dir, allow_pickle=True).item()
 vertex_mean_resp = data['vertex_mean_resp']
 pval_diff = data['pval_diff']

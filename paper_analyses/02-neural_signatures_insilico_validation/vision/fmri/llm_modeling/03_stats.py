@@ -3,6 +3,9 @@ responses and LLM embeddings.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 subjects : list
     The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
@@ -24,6 +27,7 @@ from statsmodels.stats.multitest import multipletests
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -45,7 +49,8 @@ for sub in args.subjects:
 
         results_dir = os.path.join(args.berg_dir,
             'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'llm_modeling', 'rsa', 'rsa_sub-'+format(sub, '02')+'_'+hemi+'.npy')
+            'llm_modeling', 'rsa', args.encoding_model, 'rsa_sub-'+
+            format(sub, '02')+'_'+hemi+'.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         if hemi == 'lh':
@@ -90,7 +95,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'llm_modeling', 'stats')
+    'vision', 'fmri', 'llm_modeling', 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'

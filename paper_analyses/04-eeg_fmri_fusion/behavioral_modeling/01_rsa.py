@@ -136,10 +136,8 @@ idx_tril = np.tril_indices(len(beh_rdm), -1)
 beh_rdm_tril = beh_rdm[idx_tril]
 
 # Access the precomputed geodesic distances
-data_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'behavioral_modeling', 'vertex_geodesic_distances',
-    'vertex_geodesic_distances_'+args.hemisphere+'.h5')
+data_dir = os.path.join(args.berg_dir, 'geodesic_vertex_distances',
+    'geodesic_vertex_distances_'+args.hemisphere+'.h5')
 geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
 
 # Only use vertices falling within the NSD visual streams

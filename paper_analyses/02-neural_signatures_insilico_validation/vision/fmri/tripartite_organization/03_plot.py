@@ -2,6 +2,9 @@
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 images : str
     Whether to use 'naturalistic' or 'texforms' images.
 berg_dir : str
@@ -19,6 +22,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--images', type=str, default='naturalistic')
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -28,7 +32,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'tripartite_organization', 'plots')
+    'vision', 'fmri', 'tripartite_organization', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -36,8 +40,8 @@ os.makedirs(save_dir, exist_ok=True)
 # Load the results
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'tripartite_organization', 'stats', 'stats_images-'+
-    args.images+'.npy')
+    'vision', 'fmri', 'tripartite_organization', 'stats', args.encoding_model,
+    'stats_images-'+args.images+'.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 

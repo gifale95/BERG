@@ -4,6 +4,9 @@ leading to highest RSA scores
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico fMRI
+    responses in fsavarage space.
 subjects : list
     The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
@@ -28,6 +31,7 @@ from statsmodels.stats.multitest import multipletests
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -50,8 +54,8 @@ for s, sub in enumerate(args.subjects):
 
         results_dir = os.path.join(args.berg_dir,
             'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'dnn_layerwise_modeling', 'rsa', 'rsa_sub-'+format(sub, '02')+
-            '_'+hemi+'_model-'+args.model+'.npy')
+            'dnn_layerwise_modeling', 'rsa', args.encoding_model, 'rsa_sub-'+
+            format(sub, '02')+'_'+hemi+'_model-'+args.model+'.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         for key, val in results['rsa'].items():
@@ -174,7 +178,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'dnn_layerwise_modeling', 'stats')
+    'vision', 'fmri', 'dnn_layerwise_modeling', 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats_model-' + args.model + '.npy'

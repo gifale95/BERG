@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-fmri-behavioral_modeling-00b_merge_geodesic_vertex_distances
+#SBATCH --job-name=berg_insilico_validation-fmri-behavioral_modeling-02_merge_geodesic_vertex_distances
 #SBATCH --mail-type=end
 #SBATCH --mem=250000
 #SBATCH --time=01:00:00
@@ -27,7 +27,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/behavioral_modeling
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses
 
 # Run the job
-python 00b_merge_geodesic_vertex_distances.py --hemisphere $hemisphere
+python 02_merge_geodesic_vertex_distances.py --hemisphere $hemisphere
