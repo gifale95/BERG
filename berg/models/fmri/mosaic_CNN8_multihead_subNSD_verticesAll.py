@@ -11,6 +11,7 @@ from berg.core.parameter_validator import (
     validate_selection_keys,
     validate_roi,
     validate_binary_array,
+    validate_integer_list,
 )
 
 # Import MOSAIC
@@ -56,6 +57,7 @@ class FMRIEncodingModel(BaseModelInterface):
     VALID_SUBJECTS = [s for s in model_info["parameters"]["subject"]["valid_values"] if isinstance(s, int)]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
+    VALID_GLASSER_GROUPS = model_info["parameters"]["selection"]["properties"]["glasser_group"]["valid_values"]
     N_VERTICES_MODEL = 57051  # Model output size
     N_VERTICES_FULL = 91282   # Full fsLR32k brain space
     
@@ -77,6 +79,7 @@ class FMRIEncodingModel(BaseModelInterface):
             Specifies which outputs to include in the model responses.
             Applied equally to all subjects when multiple subjects are specified.
             - roi: List of region labels (e.g., ['L_V1', 'R_V1'])
+            - glasser_group: Single int or list of ints specifying Glasser groups (e.g., [1, 2])
             - voxel_index: Binary one-hot encoded vector (57051,) indicating vertices to include
         device : str, default="auto"
             Target device for computation. Options are "cpu", "cuda", or "auto".
@@ -92,6 +95,7 @@ class FMRIEncodingModel(BaseModelInterface):
         # Parameters from selection
         self.selection = selection
         self.roi_list = None
+        self.glasser_group_list = None
         self.vertex_index = None
         self.vertex_mask = None  # Combined mask for output selection
         
@@ -128,6 +132,15 @@ class FMRIEncodingModel(BaseModelInterface):
                 for roi in roi_list:
                     validate_roi(roi, self.VALID_ROIS)
                 self.roi_list = roi_list
+            
+            if "glasser_group" in self.selection:
+                glasser_group = self.selection["glasser_group"]
+                # Validate using the generic integer list validator
+                self.glasser_group_list = validate_integer_list(
+                    glasser_group,
+                    self.VALID_GLASSER_GROUPS,
+                    parameter_name="glasser_group"
+                )
             
             if "voxel_index" in self.selection:
                 vertex_index = self.selection["voxel_index"]
@@ -176,38 +189,34 @@ class FMRIEncodingModel(BaseModelInterface):
     
     def _prepare_vertex_mask(self):
         """
-        Prepare vertex selection from ROI and/or vertex indices in full 91k space.
+        Prepare vertex selection from ROI, glasser_group, and/or vertex indices in full 91k space.
         Stores indices that will be used to slice predictions after expanding to 91k.
-        Uses the first subject in the list for loading ROI metadata.
+        Uses the first subject in the list for loading metadata.
 
         Mapping workflow:
-        1. Get vertex mapping (57k → 91k): Load GlasserGroups 1-22 to obtain the 57,051 
+        1. Get vertex mapping (57051 → 91k): Load GlasserGroups 1-22 to obtain the 57,051 
         vertex indices that define which positions in the full 91k HCP space the model 
         predicts. This creates the coordinate system bridge.
 
-        2. Load ROI indices from metadata: ROI indices are stored in full 91k HCP space 
-        (e.g., L_V1 = [3319, 3320, ...]). These define which brain locations belong 
-        to each region.
+        2. Load glasser_group_id if needed: Array of shape (57051,) indicating which 
+        GlasserGroup (1-22) each prediction vertex belongs to.
 
-        3. Collect all selected vertices: Combine ROI indices and/or user-specified voxel 
-        indices into a single set. These are all in 91k space.
+        3. Convert all selections to 91k space:
+           - ROI: Already in 91k space
+           - glasser_group: Expand using vertex_mapping[glasser_group_id == group]
+           - voxel_index: Expand using vertex_mapping[voxel_index]
 
-        4. Validate indices are predictable: Check that selected vertices don't exceed 
-        max_model_vertex (the highest index in vertex_mapping), ensuring we only 
-        request predictions the model can actually generate.
+        4. Combine selections with OR operation: Union of all selected vertices.
         """
         
-        # Get the vertex mapping (57k model space → 91k full space)
+        # Get the vertex mapping (57051 whole cortex space → 91k full space)
         all_selector = SelectROIs(selected_rois=[f"GlasserGroup_{i}" for i in range(1, 23)])
         self.vertex_mapping = np.array(all_selector.selected_roi_indices)
         
-        # Validate that vertex indices don't exceed model prediction range
-        max_model_vertex = self.vertex_mapping.max()
+        # Initialize combined indices set in 91k space
+        selected_indices_91k = set()
         
-        # Initialize combined indices set
-        selected_indices = set()
-        
-        # Add ROI-based selection
+        # Add ROI-based selection (already in 91k space)
         if self.roi_list is not None:
             # Load metadata to get ROI indices
             metadata = self.get_metadata(
@@ -217,34 +226,46 @@ class FMRIEncodingModel(BaseModelInterface):
             
             # Combine all selected ROIs
             for roi in self.roi_list:
-                if roi not in metadata["fmri"]["roi"]:
+                if roi not in metadata["roi"]:
                     raise InvalidParameterError(
-                        f"ROI '{roi}' not found in metadata. Available ROIs: {list(metadata['fmri']['roi'].keys())}"
+                        f"ROI '{roi}' not found in metadata. Available ROIs: {list(metadata['roi'].keys())}"
                     )
-                roi_indices = metadata["fmri"]["roi"][roi]
-                selected_indices.update(roi_indices)
+                roi_indices = metadata["roi"][roi]
+                selected_indices_91k.update(roi_indices)
         
-        # Add direct vertex index selection
+        # Add glasser_group selection (expand from 57051 to 91k space)
+        if self.glasser_group_list is not None:
+            # Load glasser_group_id from metadata
+            metadata = self.get_metadata(
+                berg_dir=self.berg_dir,
+                subject=self.subjects[0]
+            )
+            
+            # Get glasser_group_id from metadata
+            glasser_group_id = metadata["glasser_group_id"]
+            
+            # For each selected group, find vertices in 57051 space and map to 91k
+            for group in self.glasser_group_list:
+                # Get vertices in 57051 space that belong to this group
+                vertices_in_group_57k = np.where(glasser_group_id == group)[0]
+                # Map to 91k space using vertex_mapping
+                vertices_in_group_91k = self.vertex_mapping[vertices_in_group_57k]
+                selected_indices_91k.update(vertices_in_group_91k)
+        
+        # Add direct vertex index selection (expand from 57051 to 91k space)
         if self.vertex_index is not None:
-            vertex_indices = np.where(self.vertex_index)[0]
-            
-            # Validate indices are within model prediction range
-            if np.any(vertex_indices > max_model_vertex):
-                invalid_indices = vertex_indices[vertex_indices > max_model_vertex]
-                raise InvalidParameterError(
-                    f"voxel_index contains indices beyond model prediction range. "
-                    f"Max allowed: {max_model_vertex}, found: {invalid_indices[:5].tolist()}..."
-                )
-            
-            selected_indices.update(vertex_indices)
+            # voxel_index is in 57051 space, expand to 91k using vertex_mapping
+            vertex_indices_57k = np.where(self.vertex_index)[0]
+            vertex_indices_91k = self.vertex_mapping[vertex_indices_57k]
+            selected_indices_91k.update(vertex_indices_91k)
         
         # Convert to sorted array and store
-        self.vertex_mask = np.array(sorted(selected_indices))
+        self.vertex_mask = np.array(sorted(selected_indices_91k))
         
         # Check if any vertices are selected
         if len(self.vertex_mask) == 0:
             raise InvalidParameterError(
-                "No vertices selected. Please check your ROI and vertex index specifications."
+                "No vertices selected. Please check your selection specifications."
             )
     
     def generate_response(
