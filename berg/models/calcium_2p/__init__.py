@@ -1,2 +1,2 @@
 # Import models to register them
-import berg.models.calcium_2p.calcium_2p_natural_videos_3dcnn
+import berg.models.calcium_2p.calcium_2p_wang_2025_3dcnn

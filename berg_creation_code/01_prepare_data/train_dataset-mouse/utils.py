@@ -122,7 +122,7 @@ def extract_mouse_metadata(data_path, output_path):
         }
         
         # Save metadata
-        output_file = output_path / f'session{session}_scan{scan_idx}_metadata.npy'
+        output_file = output_path / f'session-{session}_scan-{scan_idx}_metadata.npy'
         np.save(output_file, metadata, allow_pickle=True)
     
     print(f"Saved {len(combinations)} metadata files to {output_path}")

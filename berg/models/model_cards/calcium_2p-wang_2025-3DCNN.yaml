@@ -1,8 +1,8 @@
 
 # Basic metadata
-model_id: calcium_2p-natural_videos-3DCNN
+model_id: calcium_2p-wang_2025-3DCNN
 modality: calcium_2p
-training_dataset: natural_videos
+training_dataset: wang_2025
 species: Mouse
 stimuli: Videos 
 model_type: Spatiotemporal convolutional neural network (3D CNN + ConvLSTM)
@@ -12,59 +12,66 @@ creator: Tolias Lab (Wang et al., Nature 2025)
 description: |
   This encoding model is a large-scale foundation model of mouse visual cortex trained to predict
   dynamic neural responses to natural video stimuli. The model consists of a shared spatiotemporal
-  convolutional neural network core trained across multiple mice, combined with mouse- and
-  neuron-specific linear readout layers. The shared core captures common visual representations
-  across subjects and cortical areas and can be transferred to new mice with minimal additional data.
+  neural network core combined with session-specific linear readout layers. The shared core captures
+  common visual computations across mice and cortical areas, while readout layers map these shared
+  representations to neurons recorded in individual imaging sessions.
 
-  **Neural data.** The model was trained on in vivo two-photon calcium imaging data recorded from
-  excitatory neurons in the visual cortex of awake, behaving mice. Training data consist of
-  approximately 900 minutes of natural video stimulation pooled from 8 mice (the foundation cohort),
-  covering multiple visual cortical areas including V1, LM, AL, RL, AM, and PM, and spanning
-  approximately 66,000 neurons. Neural activity was extracted from calcium signals and temporally
-  aligned to stimulus presentation. Additional behavioral signals (locomotion, pupil size, and eye
-  position) were recorded concurrently and used as modulatory inputs.
+  **Neural data.** The model is based on in vivo two-photon (2P) calcium imaging recordings of
+  excitatory neurons in the visual cortex of awake, behaving mice. Two-photon imaging measures
+  fluorescence signals that increase when neurons are active due to calcium influx, allowing
+  large populations of neurons to be recorded simultaneously with cellular resolution. Importantly,
+  each imaging session samples a different population of neurons, as neuron identities cannot be
+  reliably tracked across sessions due to changes in imaging depth, field of view, and optical
+  conditions.
+
+  Training data for the shared foundation core consist of approximately 900 minutes of natural video
+  stimulation pooled from 8 mice (the foundation cohort), covering multiple visual cortical areas
+  including V1, LM, AL, RL, AM, and PM, and spanning approximately 66,000 neurons. Behavioral signals
+  (locomotion, pupil size, and eye position) were recorded concurrently and used as modulatory inputs.
 
   **Model architecture.** The model comprises four modules: a perspective module, a modulation
   module, a shared core, and a readout module. The perspective module uses ray tracing and eye
-  position estimates to map stimulus frames into a retinotopic representation. The modulation
-  module processes behavioral state variables (locomotion and pupil dilation) using a recurrent
-  network to generate dynamic gain signals. The core module consists of a spatiotemporal convolutional
-  neural network with 3D convolutional layers and recurrent ConvLSTM components, producing nonlinear
-  visual feature representations over time. The readout module maps core features to individual
-  neurons using linear weights at neuron-specific spatial locations, corresponding to receptive
-  field positions.
+  position estimates to transform stimulus frames into a retinotopic representation. The modulation
+  module processes behavioral state variables (locomotion and pupil dilation) to generate dynamic
+  gain signals. The shared core consists of spatiotemporal convolutional layers and recurrent
+  components that produce nonlinear visual feature representations over time. The readout module
+  maps core features to neural responses using linear weights at neuron-specific spatial locations
+  corresponding to receptive field positions.
 
-  **Preprocessing.** Visual stimuli consist of grayscale or RGB natural videos presented on a
-  monitor and resampled to approximately 30 Hz. Stimulus frames are transformed by the perspective
-  module to account for eye movements and monitor geometry. Neural and behavioral signals are
-  resampled to match the stimulus frame rate. No task labels or semantic annotations are used.
+  **Session-specific readouts.** Because two-photon imaging does not provide stable neuron identities
+  across recording sessions, each session and scan is associated with a distinct readout layer.
+  Different sessions therefore have different numbers of neurons and independent readout weights,
+  even when recorded from the same animal. The released model includes a single shared foundation
+  core together with multiple readout heads corresponding to different sessions and scans from one
+  mouse, rather than a single readout spanning multiple sessions or animals.
 
-  **Model training partition.** The shared core was trained exclusively on natural video stimuli
-  pooled across the foundation cohort of mice. All model components (perspective, modulation,
-  core, and readout) were trained end-to-end during foundation training using Poisson
-  negative log-likelihood loss. For transfer to new mice, the core parameters are frozen, and only
-  the perspective, modulation, and readout modules are fitted using limited amounts of natural
-  video data (as little as 16 minutes).
+  **Stimuli.** Visual stimuli consist primarily of natural videos presented during each session.
+  Although the exact video clips and temporal segments differ across sessions, all training stimuli
+  are drawn from the same class of high-entropy natural videos and share similar statistical
+  properties. No task labels or semantic annotations are used.
 
-  **Model testing partition.** Model performance is evaluated on held-out natural videos as well as
-  on out-of-distribution stimulus domains not used during training, including static natural images,
+  **Model training.** During foundation training, all model components (perspective, modulation,
+  core, and readout) were trained end-to-end on natural video data pooled across the 8 foundation
+  mice. For transfer to new mice or sessions, the shared core is frozen and only the perspective,
+  modulation, and readout modules are trained using limited amounts of natural video data.
+
+  **Model testing.** Model performance is evaluated on held-out natural videos as well as on
+  out-of-distribution stimulus domains not used for training, including static natural images,
   drifting Gabor filters, flashing Gaussian dots, directional noise patterns, and random dot
   kinematograms. These stimuli are used solely for evaluation and in silico experimentation.
 
   **Noise ceiling.** Predictive performance is reported using a normalized correlation coefficient
   (CC_norm), which normalizes the correlation between predicted and recorded responses by an
-  estimated noise ceiling derived from trial-to-trial variability in the neural data. This metric
-  accounts for measurement noise and provides an upper-bound–normalized estimate of model accuracy.
+  estimated noise ceiling derived from trial-to-trial variability in the neural data.
 
-  **Spatial organization.** The model learns neuron-specific readout positions corresponding to
-  receptive field locations, which recapitulate the retinotopic organization of mouse visual cortex.
-  Readout feature weights form a functional embedding for each neuron that can be used to relate
-  functional responses to anatomical properties.
+  **Spatial organization.** The model learns neuron-specific readout positions that recapitulate the
+  retinotopic organization of mouse visual cortex. Readout feature weights form a functional
+  embedding for each neuron that can be related to anatomical and physiological properties.
 
-  **Output.** The model predicts time-resolved neural responses for individual excitatory neurons in
-  mouse visual cortex, producing firing-rate–like activity traces aligned to video frames. Outputs
-  are provided at the native temporal resolution of the stimulus and are compatible with downstream
-  analyses of tuning, generalization, and structure–function relationships.
+  **Output.** The model predicts time-resolved neural activity traces for excitatory neurons in
+  mouse visual cortex, aligned to video frames and suitable for analyses of tuning, generalization,
+  and structure–function relationships.
+
 
 
 
@@ -99,19 +106,24 @@ metadata: |
 # Input stimulus information
 input:
   type: "numpy.ndarray"
-  shape: [n_frames, height, width]
-  description: "The input should be a sequence of grayscale video frames."
+  shape: "[n_frames, height, width] or [n_batches, n_frames, height, width]"
+  description: |
+    The input should be a sequence of grayscale video frames, or a batch of video sequences.
+    - Single video: shape [n_frames, height, width]
+    - Batch of videos: shape [n_batches, n_frames, height, width]
   constraints:
     - "Frame values should be integers in range [0, 255]."
-    - "Frame dimensions: height=144, width=256 pixels."
 
 # Output information
 output:
   type: "numpy.ndarray"
-  shape: [n_frames, n_neurons]
+  shape: "[n_frames, n_neurons] or [n_batches, n_frames, n_neurons]"
   description: |
-    The output is a 2D array containing in silico calcium imaging responses.
-    The second dimension (n_neurons) corresponds to the number of neurons in the selected
+    The output is a 2D or 3D array containing in silico calcium imaging responses.
+    - Single video: shape [n_frames, n_neurons]
+    - Batch of videos: shape [n_batches, n_frames, n_neurons]
+    
+    The last dimension (n_neurons) corresponds to the number of neurons in the selected
     session/scan and ROI combination.
     
     Neuron counts vary by session and scan:
@@ -130,6 +142,8 @@ output:
       - Session 9, Scan 6:  5,130 neurons
 
   dimensions:
+    - name: "n_batches"
+      description: "Number of batches chosen for inference"
     - name: "n_frames"
       description: "Number of video frames in the sequence"
     - name: "n_neurons"
@@ -139,23 +153,23 @@ output:
 # Model parameters and their usage
 parameters:
   # Session and scan selection
-  subject:
+  train_session:
     type: str
     required: true
     valid_values: [
-      "session4_scan7",
-      "session5_scan6", 
-      "session5_scan7",
-      "session6_scan2",
-      "session6_scan4",
-      "session6_scan6",
-      "session6_scan7",
-      "session7_scan3",
-      "session7_scan5",
-      "session8_scan5",
-      "session9_scan3",
-      "session9_scan4",
-      "session9_scan6"
+      "session-4_scan-7",
+      "session-5_scan-6", 
+      "session-5_scan-7",
+      "session-6_scan-2",
+      "session-6_scan-4",
+      "session-6_scan-6",
+      "session-6_scan-7",
+      "session-7_scan-3",
+      "session-7_scan-5",
+      "session-8_scan-5",
+      "session-9_scan-3",
+      "session-9_scan-4",
+      "session-9_scan-6"
     ]
     example: "session8_scan5"
     description: "Recording session and scan identifier in format 'sessionX_scanY'"

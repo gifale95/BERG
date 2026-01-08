@@ -84,7 +84,7 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 # Create output directory
-output_path = Path(args.berg_dir) / 'encoding_models' / 'modality-calcium_2p' / 'train_dataset-natural_videos' / 'model-3DCNN' / 'metadata'
+output_path = Path(args.berg_dir) / 'encoding_models' / 'modality-calcium_2p' / 'train_dataset-wang_2025' / 'model-3DCNN' / 'metadata'
 output_path.mkdir(parents=True, exist_ok=True)
 
 # =============================================================================

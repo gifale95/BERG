@@ -13,7 +13,7 @@ from berg.core.parameter_validator import (
     validate_roi,
     validate_binary_array,
 )
-
+from tqdm import tqdm
 # Import fnn library
 try:
     from fnn import microns
@@ -48,7 +48,7 @@ def load_model_info():
         os.path.dirname(__file__),
         "..",
         "model_cards",
-        "calcium_2p-natural_videos-3DCNN.yaml"
+        "calcium_2p-wang_2025-3DCNN.yaml"
     )
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
@@ -58,15 +58,15 @@ model_info = load_model_info()
 
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.calcium_2p.calcium_2p_natural_videos_3dcnn",
+    module_path="berg.models.calcium_2p.calcium_2p_wang_2025_3dcnn",
     class_name="CalciumEncodingModel",
     modality=model_info.get("modality", "calcium_2p"),
-    training_dataset=model_info.get("training_dataset", "natural_videos"),
+    training_dataset=model_info.get("training_dataset", "wang_2025"),
     yaml_path=os.path.join(
         os.path.dirname(__file__),
         "..",
         "model_cards",
-        "calcium_2p-natural_videos-3DCNN.yaml"
+        "calcium_2p-wang_2025-3DCNN.yaml"
     )
 )
 
@@ -78,14 +78,14 @@ class CalciumEncodingModel(BaseModelInterface):
     """
     
     MODEL_ID = model_info["model_id"]
-    VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
+    VALID_TRAIN_SESSIONS = model_info["parameters"]["train_session"]["valid_values"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     VALID_FIELDS = model_info["parameters"]["selection"]["properties"]["field"]["valid_values"]
     
     def __init__(
         self,
-        subject: str,
+        train_session: str,
         selection: Optional[Dict] = None,
         device: str = "auto",
         berg_dir: Optional[str] = None
@@ -95,7 +95,7 @@ class CalciumEncodingModel(BaseModelInterface):
         
         Parameters
         ----------
-        subject : str
+        train_session : str
             Session and scan identifier in format "sessionX_scanY" (e.g., "session8_scan5").
         selection : dict, optional
             Specifies which outputs to include in the model responses.
@@ -107,7 +107,7 @@ class CalciumEncodingModel(BaseModelInterface):
         berg_dir : str, optional
             Path to the BERG directory containing model weights and metadata files.
         """
-        self.subject_input = subject
+        self.train_session_input = train_session
         self.berg_dir = berg_dir
         self.model = None
         self.unit_ids = None
@@ -129,9 +129,9 @@ class CalciumEncodingModel(BaseModelInterface):
         self.device = device
         
     def _validate_parameters(self):
-        """Validate the subject and selection parameters."""
-        # Validate subject
-        self.subjects = validate_subjects(self.subject_input, self.VALID_SUBJECTS)
+        """Validate the train_session and selection parameters."""
+        # Validate train_session
+        self.subjects = validate_subjects(self.train_session_input, self.VALID_TRAIN_SESSIONS)
         if len(self.subjects) != 1:
             raise InvalidParameterError(
                 f"Only single subject supported, got {len(self.subjects)} subjects"
@@ -183,27 +183,27 @@ class CalciumEncodingModel(BaseModelInterface):
     
     def _parse_subject_string(self, subject_str: str) -> tuple:
         """
-        Parse a subject string like "session8_scan5" into session and scan numbers.
+        Parse a subject string like "session-8_scan-5" into session and scan numbers.
         
         Parameters
         ----------
         subject_str : str
-            Subject identifier in format "sessionX_scanY"
-            
+            Subject identifier in format "session-X_scan-Y"
+        
         Returns
         -------
         tuple
             (session, scan) as integers
         """
         parts = subject_str.split('_')
-        if len(parts) != 2 or not parts[0].startswith('session') or not parts[1].startswith('scan'):
+        if len(parts) != 2 or not parts[0].startswith('session-') or not parts[1].startswith('scan-'):
             raise InvalidParameterError(
-                f"Subject string must be in format 'sessionX_scanY', got '{subject_str}'"
+                f"Subject string must be in format 'session-X_scan-Y', got '{subject_str}'"
             )
         
         try:
-            session = int(parts[0].replace('session', ''))
-            scan = int(parts[1].replace('scan', ''))
+            session = int(parts[0].replace('session-', ''))
+            scan = int(parts[1].replace('scan-', ''))
         except ValueError:
             raise InvalidParameterError(
                 f"Could not parse session/scan numbers from '{subject_str}'"
@@ -226,7 +226,7 @@ class CalciumEncodingModel(BaseModelInterface):
             self.berg_dir,
             'encoding_models',
             'modality-calcium_2p',
-            'train_dataset-natural_videos',
+            'train_dataset-wang_2025',
             'model-3DCNN',
             'encoding_models_weights'
         )
@@ -266,10 +266,10 @@ class CalciumEncodingModel(BaseModelInterface):
             self.berg_dir,
             'encoding_models',
             'modality-calcium_2p',
-            'train_dataset-natural_videos',
+            'train_dataset-wang_2025',
             'model-3DCNN',
             'metadata',
-            f'session{self.session}_scan{self.scan}_metadata.npy'
+            f'session-{self.session}_scan-{self.scan}_metadata.npy'
         )
         
         if not os.path.exists(metadata_path):
@@ -324,8 +324,9 @@ class CalciumEncodingModel(BaseModelInterface):
         Parameters
         ----------
         stimulus : np.ndarray
-            Grayscale video frames. Shape: (n_frames, 144, 256) with integer
-            values in range [0, 255].
+            Grayscale video frames. Shape: (n_frames, 144, 256) for single video
+            or (n_batches, n_frames, 144, 256) for batch of videos.
+            Integer values in range [0, 255].
         show_progress : bool, default=True
             Whether to show a progress bar during encoding.
         
@@ -333,40 +334,66 @@ class CalciumEncodingModel(BaseModelInterface):
         -------
         np.ndarray
             Predicted neural responses with shape (n_frames, n_selected_neurons)
-            and dtype float32.
+            for single video or (n_batches, n_frames, n_selected_neurons) for batch.
+            Dtype: float32.
         """
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray):
             raise StimulusError("Stimulus must be a numpy array")
         
-        if len(stimulus.shape) != 3:
+        if stimulus.ndim not in [3, 4]:
             raise StimulusError(
-                f"Stimulus must be 3D (n_frames, height, width), got shape {stimulus.shape}"
+                f"Stimulus must be 3D (n_frames, height, width) or "
+                f"4D (n_batches, n_frames, height, width), got shape {stimulus.shape}"
             )
         
-        if stimulus.shape[1] != 144 or stimulus.shape[2] != 256:
+        # Check dimensions
+        height_idx = -2
+        width_idx = -1
+        if stimulus.shape[height_idx] != 144 or stimulus.shape[width_idx] != 256:
             raise StimulusError(
-                f"Stimulus frames must be 144x256 pixels, got {stimulus.shape[1]}x{stimulus.shape[2]}"
+                f"Stimulus frames must be 144x256 pixels, got {stimulus.shape[height_idx]}x{stimulus.shape[width_idx]}"
             )
         
         # Ensure uint8 dtype
         if stimulus.dtype != np.uint8:
             stimulus = stimulus.astype(np.uint8)
         
-        # Run inference
+        # Handle batched input
+        is_batched = stimulus.ndim == 4
+        if is_batched:
+            all_responses = []
+            batch_iterator = tqdm(stimulus, desc="Processing batch") if show_progress else stimulus
+            
+            for single_video in batch_iterator:
+                try:
+                    responses = self.model.predict(stimuli=single_video)
+                except Exception as e:
+                    raise ModelLoadError(f"Model prediction failed: {str(e)}")
+                
+                if isinstance(responses, torch.Tensor):
+                    responses = responses.cpu().numpy()
+                
+                responses = responses.astype(np.float32)
+                
+                if self.selected_indices is not None:
+                    responses = responses[:, self.selected_indices]
+                
+                all_responses.append(responses)
+            
+            return np.stack(all_responses, axis=0)
+        
+        # Single video
         try:
             responses = self.model.predict(stimuli=stimulus)
         except Exception as e:
             raise ModelLoadError(f"Model prediction failed: {str(e)}")
         
-        # Convert to numpy if needed
         if isinstance(responses, torch.Tensor):
             responses = responses.cpu().numpy()
         
-        # Convert to float32
         responses = responses.astype(np.float32)
         
-        # Apply neuron selection
         if self.selected_indices is not None:
             responses = responses[:, self.selected_indices]
         
@@ -419,7 +446,7 @@ class CalciumEncodingModel(BaseModelInterface):
         
         # Validate subject
         if isinstance(subject, str):
-            subjects = validate_subjects(subject, cls.VALID_SUBJECTS)
+            subjects = validate_subjects(subject, cls.VALID_TRAIN_SESSIONS)
             if len(subjects) != 1:
                 raise InvalidParameterError(
                     f"Only single subject supported for get_metadata, got {len(subjects)}"
@@ -428,18 +455,18 @@ class CalciumEncodingModel(BaseModelInterface):
         
         # Parse session and scan
         parts = subject.split('_')
-        session = int(parts[0].replace('session', ''))
-        scan = int(parts[1].replace('scan', ''))
+        session = int(parts[0].replace('session-', ''))
+        scan = int(parts[1].replace('scan-', ''))
         
         # Build metadata path
         metadata_path = os.path.join(
             berg_dir,
             'encoding_models',
             'modality-calcium_2p',
-            'train_dataset-natural_videos',
+            'train_dataset-wang_2025',
             'model-3DCNN',
             'metadata',
-            f'session{session}_scan{scan}_metadata.npy'
+            f'session-{session}_scan-{scan}_metadata.npy'
         )
         
         # Load metadata
