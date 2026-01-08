@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg-eeg_fmri_fusion_variants-llm_modeling_nsd-01_rsa_regression-linear
 #SBATCH --mail-type=end
 #SBATCH --mem=50000
-#SBATCH --time=12:00:00
+#SBATCH --time=20:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

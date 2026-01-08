@@ -190,6 +190,10 @@ colors = [
 # Plot the vertex-average correlations between t-fMRI and in silico fMRI test
 # responses
 # =============================================================================
+# Create the plots save directory
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_variants', 'plots')
+os.makedirs(save_dir, exist_ok=True)
+
 # Create the figure
 fig= plt.figure(figsize=(10, 5))
 

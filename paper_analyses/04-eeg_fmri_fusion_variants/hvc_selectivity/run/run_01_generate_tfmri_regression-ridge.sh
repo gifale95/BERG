@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg-eeg_fmri_fusion_variants-hvc_selectivity-01_generate_tfmri_regression-ridge
 #SBATCH --mail-type=end
 #SBATCH --mem=7000
-#SBATCH --time=02:00:00
+#SBATCH --time=04:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

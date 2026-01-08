@@ -20,8 +20,8 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2], type=int)
-parser.add_argument('--eeg_reps', default='average', type=str)
-parser.add_argument('--regression', default='linear', type=str)
+parser.add_argument('--eeg_reps', default='single', type=str)
+parser.add_argument('--regression', default='ridge', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 

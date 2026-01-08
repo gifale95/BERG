@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-eeg_fmri_fusion_variants-hvc_selectivity-02_stats_regression-linear
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
-#SBATCH --time=00:05:00
+#SBATCH --mem=20000
+#SBATCH --time=00:30:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
