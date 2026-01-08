@@ -1,12 +1,6 @@
 ===========================
 fmri-nsd_fsaverage-vit_b_32
 ===========================
-.. |nbsp| unicode:: 0xA0
-   :trim:
-
-.. |rarr| unicode:: 0x2192
-   :trim:
-
 
 Model Summary
 ------------
@@ -57,8 +51,6 @@ images.
 Metadata
 --------
 
-**'fmri'**
-
 .. list-table::
    :widths: 30 20 50
    :header-rows: 1
@@ -66,269 +58,265 @@ Metadata
    * - Key
      - Shape/Type
      - Description
-   * - lh_ncsnr
+   * - **fmri**
+     - 
+     - 
+   * - \ \ \ \ lh_ncsnr
      - ``(163842,)``
      - Left hemisphere noise-ceiling signal-to-noise ratio per vertex
-   * - rh_ncsnr
+   * - \ \ \ \ rh_ncsnr
      - ``(163842,)``
      - Right hemisphere noise-ceiling signal-to-noise ratio per vertex
-   * - **lh_fsaverage_rois**
+   * - \ \ \ \ **lh_fsaverage_rois**
      - ``dict``
      - Left hemisphere ROI definitions on fsaverage surface
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1v
+   * - \ \ \ \ \ \ \ \ V1v
      - ``(710,)``
      - Visual area 1 ventral
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1d
+   * - \ \ \ \ \ \ \ \ V1d
      - ``(828,)``
      - Visual area 1 dorsal
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2v
+   * - \ \ \ \ \ \ \ \ V2v
      - ``(632,)``
      - Visual area 2 ventral
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2d
+   * - \ \ \ \ \ \ \ \ V2d
      - ``(692,)``
      - Visual area 2 dorsal
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3v
+   * - \ \ \ \ \ \ \ \ V3v
      - ``(567,)``
      - Visual area 3 ventral
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3d
+   * - \ \ \ \ \ \ \ \ V3d
      - ``(669,)``
      - Visual area 3 dorsal
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| hV4
+   * - \ \ \ \ \ \ \ \ hV4
      - ``(531,)``
      - Human V4 complex
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| EBA
+   * - \ \ \ \ \ \ \ \ EBA
      - ``(3231,)``
      - Extrastriate body area
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-1
+   * - \ \ \ \ \ \ \ \ FBA-1
      - ``(574,)``
      - Fusiform body area 1
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-2
+   * - \ \ \ \ \ \ \ \ FBA-2
      - ``(0,)``
      - Fusiform body area 2
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-bodies
+   * - \ \ \ \ \ \ \ \ mTL-bodies
      - ``(0,)``
      - Medial temporal lobe body-selective region
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OFA
+   * - \ \ \ \ \ \ \ \ OFA
      - ``(432,)``
      - Occipital face area
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-1
+   * - \ \ \ \ \ \ \ \ FFA-1
      - ``(552,)``
      - Fusiform face area 1
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-2
+   * - \ \ \ \ \ \ \ \ FFA-2
      - ``(0,)``
      - Fusiform face area 2
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-faces
+   * - \ \ \ \ \ \ \ \ mTL-faces
      - ``(0,)``
      - Medial temporal lobe face-selective region
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| aTL-faces
+   * - \ \ \ \ \ \ \ \ aTL-faces
      - ``(329,)``
      - Anterior temporal lobe face-selective region
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OPA
+   * - \ \ \ \ \ \ \ \ OPA
      - ``(2021,)``
      - Occipital place area
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| PPA
+   * - \ \ \ \ \ \ \ \ PPA
      - ``(1859,)``
      - Parahippocampal place area
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| RSC
+   * - \ \ \ \ \ \ \ \ RSC
      - ``(1298,)``
      - Retrosplenial complex
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OWFA
+   * - \ \ \ \ \ \ \ \ OWFA
      - ``(317,)``
      - Occipital word form area
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-1
+   * - \ \ \ \ \ \ \ \ VWFA-1
      - ``(1395,)``
      - Visual word form area 1
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-2
+   * - \ \ \ \ \ \ \ \ VWFA-2
      - ``(474,)``
      - Visual word form area 2
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mfs-words
+   * - \ \ \ \ \ \ \ \ mfs-words
      - ``(490,)``
      - Mid-fusiform sulcus word-selective region
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-words
+   * - \ \ \ \ \ \ \ \ mTL-words
      - ``(475,)``
      - Medial temporal lobe word-selective region
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| early
+   * - \ \ \ \ \ \ \ \ early
      - ``(5758,)``
      - Early visual cortex (V1-V3)
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midventral
+   * - \ \ \ \ \ \ \ \ midventral
      - ``(867,)``
      - Mid-level ventral stream
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midlateral
+   * - \ \ \ \ \ \ \ \ midlateral
      - ``(1091,)``
      - Mid-level lateral stream
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midparietal
+   * - \ \ \ \ \ \ \ \ midparietal
      - ``(1079,)``
      - Mid-level parietal regions
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| ventral
+   * - \ \ \ \ \ \ \ \ ventral
      - ``(9680,)``
      - Ventral visual stream
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| lateral
+   * - \ \ \ \ \ \ \ \ lateral
      - ``(10253,)``
      - Lateral visual stream
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| parietal
+   * - \ \ \ \ \ \ \ \ parietal
      - ``(5176,)``
      - Parietal regions
-   * - **rh_fsaverage_rois**
+   * - \ \ \ \ **rh_fsaverage_rois**
      - ``dict``
      - Right hemisphere ROI definitions on fsaverage surface
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1v
+   * - \ \ \ \ \ \ \ \ V1v
      - ``(444,)``
      - Visual area 1 ventral
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V1d
+   * - \ \ \ \ \ \ \ \ V1d
      - ``(991,)``
      - Visual area 1 dorsal
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2v
+   * - \ \ \ \ \ \ \ \ V2v
      - ``(887,)``
      - Visual area 2 ventral
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V2d
+   * - \ \ \ \ \ \ \ \ V2d
      - ``(725,)``
      - Visual area 2 dorsal
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3v
+   * - \ \ \ \ \ \ \ \ V3v
      - ``(682,)``
      - Visual area 3 ventral
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| V3d
+   * - \ \ \ \ \ \ \ \ V3d
      - ``(535,)``
      - Visual area 3 dorsal
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| hV4
+   * - \ \ \ \ \ \ \ \ hV4
      - ``(765,)``
      - Human V4 complex
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| EBA
+   * - \ \ \ \ \ \ \ \ EBA
      - ``(4421,)``
      - Extrastriate body area
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-1
+   * - \ \ \ \ \ \ \ \ FBA-1
      - ``(206,)``
      - Fusiform body area 1
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FBA-2
+   * - \ \ \ \ \ \ \ \ FBA-2
      - ``(1234,)``
      - Fusiform body area 2
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-bodies
+   * - \ \ \ \ \ \ \ \ mTL-bodies
      - ``(0,)``
      - Medial temporal lobe body-selective region
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OFA
+   * - \ \ \ \ \ \ \ \ OFA
      - ``(305,)``
      - Occipital face area
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-1
+   * - \ \ \ \ \ \ \ \ FFA-1
      - ``(330,)``
      - Fusiform face area 1
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| FFA-2
+   * - \ \ \ \ \ \ \ \ FFA-2
      - ``(1003,)``
      - Fusiform face area 2
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-faces
+   * - \ \ \ \ \ \ \ \ mTL-faces
      - ``(0,)``
      - Medial temporal lobe face-selective region
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| aTL-faces
+   * - \ \ \ \ \ \ \ \ aTL-faces
      - ``(283,)``
      - Anterior temporal lobe face-selective region
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OPA
+   * - \ \ \ \ \ \ \ \ OPA
      - ``(2849,)``
      - Occipital place area
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| PPA
+   * - \ \ \ \ \ \ \ \ PPA
      - ``(1250,)``
      - Parahippocampal place area
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| RSC
+   * - \ \ \ \ \ \ \ \ RSC
      - ``(1136,)``
      - Retrosplenial complex
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| OWFA
+   * - \ \ \ \ \ \ \ \ OWFA
      - ``(590,)``
      - Occipital word form area
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-1
+   * - \ \ \ \ \ \ \ \ VWFA-1
      - ``(397,)``
      - Visual word form area 1
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| VWFA-2
+   * - \ \ \ \ \ \ \ \ VWFA-2
      - ``(649,)``
      - Visual word form area 2
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mfs-words
+   * - \ \ \ \ \ \ \ \ mfs-words
      - ``(0,)``
      - Mid-fusiform sulcus word-selective region
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| mTL-words
+   * - \ \ \ \ \ \ \ \ mTL-words
      - ``(0,)``
      - Medial temporal lobe word-selective region
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| early
+   * - \ \ \ \ \ \ \ \ early
      - ``(5634,)``
      - Early visual cortex (V1-V3)
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midventral
+   * - \ \ \ \ \ \ \ \ midventral
      - ``(1050,)``
      - Mid-level ventral stream
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midlateral
+   * - \ \ \ \ \ \ \ \ midlateral
      - ``(1191,)``
      - Mid-level lateral stream
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| midparietal
+   * - \ \ \ \ \ \ \ \ midparietal
      - ``(1181,)``
      - Mid-level parietal regions
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| ventral
+   * - \ \ \ \ \ \ \ \ ventral
      - ``(9393,)``
      - Ventral visual stream
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| lateral
+   * - \ \ \ \ \ \ \ \ lateral
      - ``(10535,)``
      - Lateral visual stream
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| parietal
+   * - \ \ \ \ \ \ \ \ parietal
      - ``(4818,)``
      - Parietal regions
-
-**'encoding_models'**
-
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Key
-     - Shape/Type
-     - Description
-   * - train_img_num
+   * - **encoding_models**
+     - 
+     - 
+   * - \ \ \ \ train_img_num
      - ``(9000,)``
      - Image indices used for training
-   * - val_img_num
+   * - \ \ \ \ val_img_num
      - ``(485,)``
      - Image indices used for validation
-   * - test_img_num
+   * - \ \ \ \ test_img_num
      - ``(515,)``
      - Image indices used for testing
-   * - lh_correlation_nsdcore
+   * - \ \ \ \ lh_correlation_nsdcore
      - ``(163842,)``
      - Left hemisphere correlation on NSD core dataset
-   * - rh_correlation_nsdcore
+   * - \ \ \ \ rh_correlation_nsdcore
      - ``(163842,)``
      - Right hemisphere correlation on NSD core dataset
-   * - lh_r2_nsdcore
+   * - \ \ \ \ lh_r2_nsdcore
      - ``(163842,)``
      - Left hemisphere R² on NSD core dataset
-   * - rh_r2_nsdcore
+   * - \ \ \ \ rh_r2_nsdcore
      - ``(163842,)``
      - Right hemisphere R² on NSD core dataset
-   * - lh_noise_ceiling_nsdcore
+   * - \ \ \ \ lh_noise_ceiling_nsdcore
      - ``(163842,)``
      - Left hemisphere noise ceiling on NSD core dataset
-   * - rh_noise_ceiling_nsdcore
+   * - \ \ \ \ rh_noise_ceiling_nsdcore
      - ``(163842,)``
      - Right hemisphere noise ceiling on NSD core dataset
-   * - lh_explained_variance_nsdcore
+   * - \ \ \ \ lh_explained_variance_nsdcore
      - ``(163842,)``
      - Left hemisphere % explained variance on NSD core dataset
-   * - rh_explained_variance_nsdcore
+   * - \ \ \ \ rh_explained_variance_nsdcore
      - ``(163842,)``
      - Right hemisphere % explained variance on NSD core dataset
-   * - lh_correlation_nsdsynthetic
+   * - \ \ \ \ lh_correlation_nsdsynthetic
      - ``(163842,)``
      - Left hemisphere correlation on NSD synthetic dataset
-   * - rh_correlation_nsdsynthetic
+   * - \ \ \ \ rh_correlation_nsdsynthetic
      - ``(163842,)``
      - Right hemisphere correlation on NSD synthetic dataset
-   * - lh_r2_nsdsynthetic
+   * - \ \ \ \ lh_r2_nsdsynthetic
      - ``(163842,)``
      - Left hemisphere R² on NSD synthetic dataset
-   * - rh_r2_nsdsynthetic
+   * - \ \ \ \ rh_r2_nsdsynthetic
      - ``(163842,)``
      - Right hemisphere R² on NSD synthetic dataset
-   * - lh_noise_ceiling_nsdsynthetic
+   * - \ \ \ \ lh_noise_ceiling_nsdsynthetic
      - ``(163842,)``
      - Left hemisphere noise ceiling on NSD synthetic dataset
-   * - rh_noise_ceiling_nsdsynthetic
+   * - \ \ \ \ rh_noise_ceiling_nsdsynthetic
      - ``(163842,)``
      - Right hemisphere noise ceiling on NSD synthetic dataset
-   * - lh_explained_variance_nsdsynthetic
+   * - \ \ \ \ lh_explained_variance_nsdsynthetic
      - ``(163842,)``
      - Left hemisphere % explained variance on NSD synthetic dataset
-   * - rh_explained_variance_nsdsynthetic
+   * - \ \ \ \ rh_explained_variance_nsdsynthetic
      - ``(163842,)``
      - Right hemisphere % explained variance on NSD synthetic dataset
 

@@ -55,8 +55,6 @@ subsets) across 300 time points for each input image.
 Metadata
 --------
 
-**'utah_array'**
-
 .. list-table::
    :widths: 30 20 50
    :header-rows: 1
@@ -64,87 +62,76 @@ Metadata
    * - Key
      - Shape/Type
      - Description
-   * - times
+   * - **utah_array**
+     - 
+     - 
+   * - \ \ \ \ times
      - ``(300,)``
      - Time points (-100ms to 199ms)
-   * - electrode_order
+   * - \ \ \ \ electrode_order
      - ``(1024,)``
      - Electrode mapping order (0-based)
-   * - monkey_id
+   * - \ \ \ \ monkey_id
      - ``str``
      - Monkey identifier
-   * - n_electrodes
+   * - \ \ \ \ n_electrodes
      - ``int``
      - Number of electrodes (1024)
-
-**'roi'**
-
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Key
-     - Shape/Type
-     - Description
-   * - roi_assignments
+   * - **roi**
+     - 
+     - 
+   * - \ \ \ \ roi_assignments
      - ``(1024,)``
      - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
-   * - roi_labels
+   * - \ \ \ \ roi_labels
      - ``(3,)``
      - ROI label names ['V1', 'V4', 'IT']
-
-**'encoding_model'**
-
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Key
-     - Shape/Type
-     - Description
-   * - train_img_ids
+   * - **encoding_model**
+     - 
+     - 
+   * - \ \ \ \ train_img_ids
      - ``(22248,)``
      - Training stimulus IDs
-   * - train_stimuli
+   * - \ \ \ \ train_stimuli
      - ``(22248,)``
      - Training image filenames
-   * - train_concepts
+   * - \ \ \ \ train_concepts
      - ``(22248,)``
      - Training object categories
-   * - train_days
+   * - \ \ \ \ train_days
      - ``(22248,)``
      - Recording days for training
-   * - train_sequence_pos
+   * - \ \ \ \ train_sequence_pos
      - ``(22248,)``
      - Position in 4-image sequence
-   * - test_img_ids
+   * - \ \ \ \ test_img_ids
      - ``(3000,)``
      - Test stimulus IDs
-   * - test_stimuli
+   * - \ \ \ \ test_stimuli
      - ``(3000,)``
      - Test image filenames
-   * - test_concepts
+   * - \ \ \ \ test_concepts
      - ``(3000,)``
      - Test object categories
-   * - test_days
+   * - \ \ \ \ test_days
      - ``(3000,)``
      - Recording days for test
-   * - test_sequence_pos
+   * - \ \ \ \ test_sequence_pos
      - ``(3000,)``
      - Position in sequence for test
-   * - SNR
+   * - \ \ \ \ SNR
      - ``(4, 1024)``
      - Signal-to-noise ratio per day per electrode
-   * - SNR_max
+   * - \ \ \ \ SNR_max
      - ``(1024,)``
      - Best SNR across all days per electrode
-   * - ncsnr
+   * - \ \ \ \ ncsnr
      - ``(1024, 300)``
      - Noise ceiling signal-to-noise ratio for each electrode/timepoint (computed on the test data)
-   * - noise_ceiling
+   * - \ \ \ \ noise_ceiling
      - ``(1024, 300)``
      - Noise ceiling for each electrode/timepoint (computed on the test data)
-   * - correlation_results
+   * - \ \ \ \ correlation_results
      - ``(1024, 300)``
      - Encoding model prediction accuracy (Pearson's r) for each electrode/timepoint (computed on the test data)
 

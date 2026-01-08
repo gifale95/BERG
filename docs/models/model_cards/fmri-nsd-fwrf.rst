@@ -49,6 +49,10 @@ exactly three times during the NSD experiment).
 Metadata
 --------
 
+.. note::
+
+   Metadata files are generated separately for each ROI, containing only voxels within that region.
+
 .. list-table::
    :widths: 30 20 50
    :header-rows: 1
@@ -56,54 +60,37 @@ Metadata
    * - Key
      - Shape/Type
      - Description
-   * - NOTE
-     - ``Metadata files are generated separately for each ROI, containing only voxels within that region.``
+   * - **fmri**
      - 
-
-**'fmri'**
-
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Key
-     - Shape/Type
-     - Description
-   * - ncsnr
+     - 
+   * - \ \ \ \ ncsnr
      - ``(n_voxels,)``
      - Noise-ceiling signal-to-noise ratio per voxel (ROI-specific)
-   * - roi_mask_volume
+   * - \ \ \ \ roi_mask_volume
      - ``(81, 104, 83)``
      - Binary mask defining voxel locations in volume space for this ROI
-   * - fmri_affine
+   * - \ \ \ \ fmri_affine
      - ``(4, 4)``
      - Affine transformation matrix for volume-to-world coordinate mapping
-
-**'encoding_models'**
-
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Key
-     - Shape/Type
-     - Description
-   * - r2
+   * - **encoding_models**
+     - 
+     - 
+   * - \ \ \ \ r2
      - ``(n_voxels,)``
      - R² scores per voxel
-   * - noise_ceiling
+   * - \ \ \ \ noise_ceiling
      - ``(n_voxels,)``
      - Noise ceiling per voxel (max explainable variance)
-   * - explained_variance
+   * - \ \ \ \ explained_variance
      - ``(n_voxels,)``
      - Percentage of noise ceiling explained by model
-   * - train_img_num
+   * - \ \ \ \ train_img_num
      - ``(9000,)``
      - Image indices used for training
-   * - val_img_num
+   * - \ \ \ \ val_img_num
      - ``(485,)``
      - Image indices used for validation
-   * - test_img_num
+   * - \ \ \ \ test_img_num
      - ``(515,)``
      - Image indices used for testing
 

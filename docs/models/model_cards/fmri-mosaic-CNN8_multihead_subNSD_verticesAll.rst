@@ -1,12 +1,6 @@
 =============================================
 fmri-mosaic-CNN8_multihead_subNSD_verticesAll
 =============================================
-.. |nbsp| unicode:: 0xA0
-   :trim:
-
-.. |rarr| unicode:: 0x2192
-   :trim:
-
 
 Model Summary
 ------------
@@ -130,61 +124,61 @@ Metadata
    * - **subject_info**
      - ``dict``
      - Subject-specific information
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| participant_id
+   * - \ \ \ \ participant_id
      - ``str``
      - Subject identifier
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| age
+   * - \ \ \ \ age
      - ``int``
      - Subject age
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| sex
+   * - \ \ \ \ sex
      - ``str``
      - Subject sex
    * - **stimuli**
      - ``dict``
      - Stimulus-related arrays
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| filenames
+   * - \ \ \ \ filenames
      - ``(70850,)``
      - All stimulus filenames
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| alias
+   * - \ \ \ \ alias
      - ``(70850,)``
      - Stimulus aliases
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| source
+   * - \ \ \ \ source
      - ``(70850,)``
      - Stimulus sources
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_idx
+   * - \ \ \ \ train_idx
      - ``(69566,)``
      - Indices of training trials
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_idx
+   * - \ \ \ \ test_idx
      - ``(1284,)``
      - Indices of test trials
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_filenames
+   * - \ \ \ \ train_filenames
      - ``(69566,)``
      - Training stimulus filenames
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_filenames
+   * - \ \ \ \ test_filenames
      - ``(1284,)``
      - Test stimulus filenames
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| reps
+   * - \ \ \ \ reps
      - ``(70850,)``
      - Repetition count per stimulus for this subject
    * - **noise_ceiling**
      - ``dict``
      - Noise ceiling metrics
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_n-avg_noiseceiling
+   * - \ \ \ \ test_n-avg_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_n-1_noiseceiling
+   * - \ \ \ \ test_n-1_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_n-avg_noiseceiling
+   * - \ \ \ \ train_n-avg_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_n-1_noiseceiling
+   * - \ \ \ \ train_n-1_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using single-trial beta estimates.
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| artificial_n-avg_noiseceiling
+   * - \ \ \ \ artificial_n-avg_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using repeat-averaged beta estimates.
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| artificial_n-1_noiseceiling
+   * - \ \ \ \ artificial_n-1_noiseceiling
      - ``(91282,)``
      - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using single-trial beta estimates.
 

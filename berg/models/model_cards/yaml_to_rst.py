@@ -71,14 +71,14 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         rst_content.extend(["Metadata", "--------", ""])
         metadata = data.get("metadata", "").strip()
         
-        # Parse metadata into sections OR flat structure with dict children
+        # Parse metadata into a hierarchical structure
         lines = metadata.split("\n")
-        sections = {}  # section_name -> list of (key, shape, desc, is_dict_child)
-        current_section = None
-        top_level_entries = []
-        current_parent_indent = -1  # Track indent of last dict entry
+        entries = []  # List of (key, shape, desc, nesting_level)
+        note_lines = []  # Collect NOTE lines to display above table
         
         i = 0
+        indent_stack = []  # Track indent levels to determine nesting
+        
         while i < len(lines):
             line = lines[i]
             line_stripped = line.strip()
@@ -89,42 +89,54 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
             
             indent_level = len(line) - len(line.lstrip())
             
-            # Check if this is a section header (quoted string ending with :, low indent)
-            if (line_stripped.startswith("'") and line_stripped.endswith("':") and indent_level <= 2):
-                # This is a section header
-                current_section = line_stripped.rstrip(":")
-                sections[current_section] = []
-                current_parent_indent = -1  # Reset parent tracking in new section
+            # Check if this is a NOTE entry (special case)
+            if line_stripped.upper().startswith("NOTE"):
+                # This is a note - extract and save for later
+                if ":" in line_stripped:
+                    note_text = line_stripped.split(":", 1)[1].strip()
+                    note_lines.append(note_text)
                 i += 1
                 continue
             
-            # Parse entry: key : shape - description
+            # Check if this is a section header (quoted string ending with :)
+            if line_stripped.startswith("'") and line_stripped.endswith("':"):
+                # Section headers are treated as level 0 entries with type "section"
+                section_name = line_stripped.rstrip(":").strip("'")
+                entries.append((section_name, "section", "", 0))
+                indent_stack = [(indent_level, 0)]  # Reset stack for new section
+                i += 1
+                continue
+            
+            # Parse entry: key : shape - description or key : shape
             if ":" in line_stripped:
-                # Check if it's "key : dict" or "key : shape" format (no description)
+                # Determine nesting level based on indent
+                # Clear stack of items with equal or greater indent
+                while indent_stack and indent_stack[-1][0] >= indent_level:
+                    indent_stack.pop()
+                
+                # Current nesting level is the stack depth
+                nesting_level = len(indent_stack)
+                
+                # Parse the entry
                 if " - " not in line_stripped:
+                    # Format: key : shape (no description)
+                    # But first check if this is actually a valid key or just text with a colon
                     key_part, shape_part = line_stripped.split(":", 1)
                     key = key_part.strip().strip("'")
                     shape = shape_part.strip()
+                    
+                    # Validate that this looks like a proper key:value entry
+                    # Keys should be simple identifiers, not sentences
+                    # Skip if key contains spaces and looks like a phrase or sentence
+                    if " " in key and (
+                        len(key) > 30 or  # Long keys with spaces are likely descriptive text
+                        key.endswith(("ROIs", "info", "data", "values", "items"))  # Descriptive headers
+                    ):
+                        # This is likely descriptive text, not a key - skip it
+                        i += 1
+                        continue
+                    
                     desc = ""
-                    
-                    # Determine if this belongs to current section or top-level
-                    if current_section is None and indent_level <= 2:
-                        is_dict_child = False
-                        top_level_entries.append((key, shape, desc, is_dict_child))
-                        # Track if this is a dict for subsequent children
-                        if shape.lower() == "dict":
-                            current_parent_indent = indent_level
-                        else:
-                            current_parent_indent = -1
-                    elif current_section is not None:
-                        # Is this a dict child? Section items are indent 4, dict children are indent 8+
-                        is_dict_child = indent_level >= 8
-                        sections[current_section].append((key, shape, desc, is_dict_child))
-                        if not is_dict_child and shape.lower() == "dict":
-                            current_parent_indent = indent_level
-                        elif not is_dict_child:
-                            current_parent_indent = -1
-                    
                     i += 1
                 else:
                     # Format: key : shape - description
@@ -149,13 +161,23 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                         next_indent = len(next_line) - len(next_line.lstrip())
                         
                         # Check if this is a continuation line
-                        is_new_key = (
-                            next_indent <= indent_level + 5 or
-                            ((":" in next_line_stripped) and 
-                             next_indent < indent_level + 15)
-                        )
+                        # It's a continuation if indent is higher AND it doesn't match key:shape format
+                        is_continuation = next_indent > indent_level
                         
-                        if not is_new_key and next_indent > indent_level:
+                        if is_continuation and ":" in next_line_stripped:
+                            # Only break if this looks like a proper "key : shape - desc" entry
+                            # Check for the pattern: word/phrase : something
+                            if " - " in next_line_stripped:
+                                # Has the full pattern, likely a new entry
+                                parts = next_line_stripped.split(":", 1)
+                                if len(parts) == 2:
+                                    potential_key = parts[0].strip()
+                                    # Simple key without spaces, or known valid keys
+                                    if (not " " in potential_key or 
+                                        potential_key.replace("_", "").replace("-", "").isalnum()):
+                                        is_continuation = False
+                        
+                        if is_continuation:
                             continuation_lines.append(next_line_stripped)
                             j += 1
                         else:
@@ -167,37 +189,25 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                         i = j
                     else:
                         i += 1
-                    
-                    # Determine if this belongs to current section or top-level
-                    if current_section is None and indent_level <= 2:
-                        # Top-level flat structure
-                        is_dict_child = False
-                        top_level_entries.append((key, shape, desc, is_dict_child))
-                        # Track if this is a dict for subsequent children
-                        if shape.lower() == "dict":
-                            current_parent_indent = indent_level
-                        else:
-                            current_parent_indent = -1
-                    elif current_section is None and indent_level > 2 and current_parent_indent >= 0 and indent_level > current_parent_indent:
-                        # This is a child of the previous dict in flat structure
-                        is_dict_child = True
-                        top_level_entries.append((key, shape, desc, is_dict_child))
-                    elif current_section is not None:
-                        # Is this a dict child? Section items are indent 4, dict children are indent 8+
-                        is_dict_child = indent_level >= 8
-                        sections[current_section].append((key, shape, desc, is_dict_child))
-                        if not is_dict_child and shape.lower() == "dict":
-                            current_parent_indent = indent_level
-                        elif not is_dict_child:
-                            current_parent_indent = -1
+                
+                entries.append((key, shape, desc, nesting_level))
+                
+                # If this is a dict, add to stack for tracking children
+                if shape.lower() == "dict":
+                    indent_stack.append((indent_level, nesting_level))
             else:
                 i += 1
         
-        # Generate RST output
-        has_nested = False
+        # Display NOTE if present
+        if note_lines:
+            rst_content.append(".. note::")
+            rst_content.append("")
+            for note_line in note_lines:
+                rst_content.append(f"   {note_line}")
+            rst_content.append("")
         
-        # Create table for top-level entries if they exist
-        if top_level_entries:
+        # Generate single table with all entries
+        if entries:
             rst_content.append(".. list-table::")
             rst_content.append("   :widths: 30 20 50")
             rst_content.append("   :header-rows: 1")
@@ -206,18 +216,28 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
             rst_content.append("     - Shape/Type")
             rst_content.append("     - Description")
             
-            for key, shape, desc, is_dict_child in top_level_entries:
-                if is_dict_child:
-                    # Dict child - add arrow indentation
-                    has_nested = True
-                    rst_content.append(f"   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| {key}")
-                elif shape.lower() == "dict":
+            for key, shape, desc, nesting_level in entries:
+                # Handle section headers specially
+                if shape == "section":
                     rst_content.append(f"   * - **{key}**")
-                else:
-                    rst_content.append(f"   * - {key}")
+                    rst_content.append("     - ")
+                    rst_content.append("     - ")
+                    continue
                 
+                # Create indentation using non-breaking spaces
+                # Each level gets 4 spaces of indentation
+                indent = "\\ " * (nesting_level * 4) if nesting_level > 0 else ""
+                
+                # Format key with bold for dicts
+                if shape.lower() == "dict":
+                    formatted_key = f"**{key}**"
+                else:
+                    formatted_key = key
+                
+                rst_content.append(f"   * - {indent}{formatted_key}")
                 rst_content.append(f"     - ``{shape}``")
                 
+                # Handle multi-line descriptions
                 if "\n" in desc:
                     desc_lines = desc.split("\n")
                     rst_content.append(f"     - {desc_lines[0]}")
@@ -227,51 +247,6 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     rst_content.append(f"     - {desc}")
             
             rst_content.append("")
-        
-        # Create separate tables for each section
-        for section_name, entries in sections.items():
-            rst_content.append(f"**{section_name}**")
-            rst_content.append("")
-            rst_content.append(".. list-table::")
-            rst_content.append("   :widths: 30 20 50")
-            rst_content.append("   :header-rows: 1")
-            rst_content.append("")
-            rst_content.append("   * - Key")
-            rst_content.append("     - Shape/Type")
-            rst_content.append("     - Description")
-            
-            for key, shape, desc, is_dict_child in entries:
-                if is_dict_child:
-                    # Dict child - add arrow indentation
-                    has_nested = True
-                    rst_content.append(f"   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| {key}")
-                else:
-                    # Regular entry or dict parent
-                    if shape.lower() == "dict":
-                        rst_content.append(f"   * - **{key}**")
-                    else:
-                        rst_content.append(f"   * - {key}")
-                
-                rst_content.append(f"     - ``{shape}``")
-                
-                if "\n" in desc:
-                    desc_lines = desc.split("\n")
-                    rst_content.append(f"     - {desc_lines[0]}")
-                    for desc_line in desc_lines[1:]:
-                        rst_content.append(f"       {desc_line}")
-                else:
-                    rst_content.append(f"     - {desc}")
-            
-            rst_content.append("")
-        
-        # Add unicode definitions if we have nested items
-        if has_nested:
-            rst_content.insert(3, ".. |nbsp| unicode:: 0xA0")
-            rst_content.insert(4, "   :trim:")
-            rst_content.insert(5, "")
-            rst_content.insert(6, ".. |rarr| unicode:: 0x2192")
-            rst_content.insert(7, "   :trim:")
-            rst_content.insert(8, "")
         
         rst_content.append("")
     

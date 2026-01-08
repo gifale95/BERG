@@ -53,8 +53,6 @@ subsets) across 281 time points (−100 to +1300 ms) for each input image.
 Metadata
 --------
 
-**'meg'**
-
 .. list-table::
    :widths: 30 20 50
    :header-rows: 1
@@ -62,87 +60,76 @@ Metadata
    * - Key
      - Shape/Type
      - Description
-   * - times
+   * - **meg**
+     - 
+     - 
+   * - \ \ \ \ times
      - ``(281,)``
      - Time points (e.g., -0.1s to 1.3s relative to stimulus onset)
-   * - subject_id
+   * - \ \ \ \ subject_id
      - ``int``
      - Subject identifier
-
-**'sensors'**
-
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Key
-     - Shape/Type
-     - Description
-   * - sensor_names
+   * - **sensors**
+     - 
+     - 
+   * - \ \ \ \ sensor_names
      - ``(271,)``
      - MEG sensor name strings
-   * - sensor_prefixes
+   * - \ \ \ \ sensor_prefixes
      - ``(271,)``
      - Sensor prefixes (e.g., 'MLF', 'MRC', 'MZO')
-   * - sensor_hemispheres
+   * - \ \ \ \ sensor_hemispheres
      - ``(271,)``
      - Hemisphere labels ('Left', 'Right', 'Midline')
-   * - sensor_regions
+   * - \ \ \ \ sensor_regions
      - ``(271,)``
      - Region labels ('Frontal', 'Central', 'Parietal', 'Temporal', 'Occipital')
-   * - n_sensors
+   * - \ \ \ \ n_sensors
      - ``int``
      - Number of MEG sensors (271)
-
-**'encoding_model'**
-
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
-
-   * - Key
-     - Shape/Type
-     - Description
-   * - train_img_ids
+   * - **encoding_model**
+     - 
+     - 
+   * - \ \ \ \ train_img_ids
      - ``(22248,)``
      - THINGS image IDs for training trials
-   * - train_concepts
+   * - \ \ \ \ train_concepts
      - ``(22248,)``
      - Object category IDs (1–1854) for training trials
-   * - train_sessions
+   * - \ \ \ \ train_sessions
      - ``(22248,)``
      - Session numbers for training trials
-   * - train_runs
+   * - \ \ \ \ train_runs
      - ``(22248,)``
      - Run numbers within each training session
-   * - train_img_files
+   * - \ \ \ \ train_img_files
      - ``(22248,)``
      - Full image paths on disk for training trials
-   * - test_things_img_ids
+   * - \ \ \ \ test_things_img_ids
      - ``(2400,)``
      - THINGS image IDs for test trials
-   * - test_image_nr
+   * - \ \ \ \ test_image_nr
      - ``(2400,)``
      - Test image numbers (1–200) for test trials
-   * - test_concepts
+   * - \ \ \ \ test_concepts
      - ``(2400,)``
      - Object category IDs for test trials
-   * - test_sessions
+   * - \ \ \ \ test_sessions
      - ``(2400,)``
      - Session numbers for test trials
-   * - test_runs
+   * - \ \ \ \ test_runs
      - ``(2400,)``
      - Run numbers within each test session
-   * - test_img_files
+   * - \ \ \ \ test_img_files
      - ``(2400,)``
      - Full image paths on disk for test images
-   * - ncsnr
+   * - \ \ \ \ ncsnr
      - ``(281, 271)``
      - Noise ceiling signal-to-noise ratio for each sensor/timepoint (computed on the test data)
-   * - noise_ceiling
+   * - \ \ \ \ noise_ceiling
      - ``(281, 271)``
      - Noise ceiling for each sensor/timepoint (computed on the test data)
-   * - correlation_results
+   * - \ \ \ \ correlation_results
      - ``(281, 271)``
      - Encoding model prediction accuracy (Pearson's r) for each sensor/timepoint (computed on the test data)
 
