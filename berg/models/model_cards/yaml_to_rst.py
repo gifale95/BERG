@@ -206,47 +206,51 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                 rst_content.append(f"   {note_line}")
             rst_content.append("")
         
-        # Generate single table with all entries
+        # Generate definition lists with proper hierarchy
         if entries:
-            rst_content.append(".. list-table::")
-            rst_content.append("   :widths: 30 20 50")
-            rst_content.append("   :header-rows: 1")
-            rst_content.append("")
-            rst_content.append("   * - Key")
-            rst_content.append("     - Shape/Type")
-            rst_content.append("     - Description")
-            
+            prev_level = -1
             for key, shape, desc, nesting_level in entries:
-                # Handle section headers specially
+                # Handle section headers specially - use bold header
                 if shape == "section":
-                    rst_content.append(f"   * - **{key}**")
-                    rst_content.append("     - ")
-                    rst_content.append("     - ")
+                    rst_content.append(f"**{key}**")
+                    rst_content.append("")
+                    prev_level = -1
                     continue
                 
-                # Create indentation using non-breaking spaces
-                # Each level gets 4 spaces of indentation
-                indent = "\\ " * (nesting_level * 4) if nesting_level > 0 else ""
+                # Add blank line when returning to same or lower nesting level
+                # This separates definition list items properly
+                if prev_level >= 0 and nesting_level <= prev_level:
+                    rst_content.append("")
                 
-                # Format key with bold for dicts
-                if shape.lower() == "dict":
-                    formatted_key = f"**{key}**"
+                # Calculate indentation (4 spaces per level)
+                indent = "    " * nesting_level
+                
+                # Format key with bold
+                key_formatted = f"**{key}**"
+                
+                # Format the definition line: key : shape - description (all on one line)
+                if desc:
+                    # Single line format with description
+                    if "\n" in desc:
+                        # Multi-line description - first line inline, rest indented below
+                        desc_lines = desc.split("\n")
+                        rst_content.append(f"{indent}{key_formatted} : ``{shape}`` - {desc_lines[0]}")
+                        # Add remaining lines indented one level deeper
+                        desc_indent = "    " * (nesting_level + 1)
+                        for desc_line in desc_lines[1:]:
+                            rst_content.append(f"{desc_indent}{desc_line}")
+                    else:
+                        # Single line description
+                        rst_content.append(f"{indent}{key_formatted} : ``{shape}`` - {desc}")
                 else:
-                    formatted_key = key
+                    # No description, just key and shape
+                    rst_content.append(f"{indent}{key_formatted} : ``{shape}``")
                 
-                rst_content.append(f"   * - {indent}{formatted_key}")
-                rst_content.append(f"     - ``{shape}``")
-                
-                # Handle multi-line descriptions
-                if "\n" in desc:
-                    desc_lines = desc.split("\n")
-                    rst_content.append(f"     - {desc_lines[0]}")
-                    for desc_line in desc_lines[1:]:
-                        rst_content.append(f"       {desc_line}")
-                else:
-                    rst_content.append(f"     - {desc}")
-            
-            rst_content.append("")
+                prev_level = nesting_level
+        
+        # Remove trailing blank lines
+        while rst_content and rst_content[-1] == "":
+            rst_content.pop()
         
         rst_content.append("")
     

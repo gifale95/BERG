@@ -53,77 +53,44 @@ subsets via ROI selection) for each input image.
 Metadata
 --------
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+**fmri**
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - **fmri**
-     - 
-     - 
-   * - \ \ \ \ voxel_coords
-     - ``(211339, 3)``
-     - Voxel coordinates in volume space (x, y, z indices)
-   * - \ \ \ \ n_voxels
-     - ``int``
-     - Total number of voxels (211339)
-   * - \ \ \ \ subject_id
-     - ``int``
-     - Subject identifier (e.g., '1')
-   * - **encoding_model**
-     - 
-     - 
-   * - \ \ \ \ train_stimuli
-     - ``(8640,)``
-     - Stimulus filenames for training trials
-   * - \ \ \ \ train_concepts
-     - ``(8640,)``
-     - Concept labels for training trials
-   * - \ \ \ \ test_stimuli
-     - ``(1200,)``
-     - Stimulus filenames for test trials
-   * - \ \ \ \ test_concepts
-     - ``(1200,)``
-     - Concept labels for test trials
-   * - \ \ \ \ noise_ceiling_singletrial
-     - ``(211339,)``
-     - Max explainable variance per voxel based on single-trial repeat reliability
-   * - \ \ \ \ noise_ceiling_testset
-     - ``(211339,)``
-     - Max explainable variance per voxel based on averaged test-set repeats
-   * - \ \ \ \ splithalf_corrected
-     - ``(211339,)``
-     - Raw split-half voxel reliability without correction
-   * - \ \ \ \ splithalf_uncorrected
-     - ``(211339,)``
-     - Split-half reliability corrected to estimate full-data consistency
-   * - \ \ \ \ correlation_results
-     - ``(211339,)``
-     - Encoding model prediction accuracy (Pearson's r) for each voxel (computed on the test data)
-   * - **prf**
-     - 
-     - 
-   * - \ \ \ \ prf_eccentricity
-     - ``(211339,)``
-     - Distance of receptive field center from fixation (deg)
-   * - \ \ \ \ prf_polarangle
-     - ``(211339,)``
-     - Angular position of receptive field center (0–360°)
-   * - \ \ \ \ prf_rsquared
-     - ``(211339,)``
-     - Variance explained by pRF model (fit quality)
-   * - \ \ \ \ prf_size
-     - ``(211339,)``
-     - Estimated receptive field size (deg)
-   * - **roi**
-     - 
-     - 
-   * - \ \ \ \ V1, V2, V3, hV4, VO1, VO2, LO1_prf, LO2_prf, TO1, TO2, V3b, V3a, lFFA, rFFA, lOFA, rOFA, lEBA, rEBA, lPPA, rPPA, lRSC, rRSC, lTOS, rTOS, lLOC, rLOC, IT, lSTS, rSTS
-     - ``variable length``
-     - Each ROI entry contains voxel indices (variable length) for that functional region
+    **voxel_coords** : ``(211339, 3)`` - Voxel coordinates in volume space (x, y, z indices)
 
+    **n_voxels** : ``int`` - Total number of voxels (211339)
+
+    **subject_id** : ``int`` - Subject identifier (e.g., '1')
+**encoding_model**
+
+    **train_stimuli** : ``(8640,)`` - Stimulus filenames for training trials
+
+    **train_concepts** : ``(8640,)`` - Concept labels for training trials
+
+    **test_stimuli** : ``(1200,)`` - Stimulus filenames for test trials
+
+    **test_concepts** : ``(1200,)`` - Concept labels for test trials
+
+    **noise_ceiling_singletrial** : ``(211339,)`` - Max explainable variance per voxel based on single-trial repeat reliability
+
+    **noise_ceiling_testset** : ``(211339,)`` - Max explainable variance per voxel based on averaged test-set repeats
+
+    **splithalf_corrected** : ``(211339,)`` - Raw split-half voxel reliability without correction
+
+    **splithalf_uncorrected** : ``(211339,)`` - Split-half reliability corrected to estimate full-data consistency
+
+    **correlation_results** : ``(211339,)`` - Encoding model prediction accuracy (Pearson's r) for each voxel (computed on the test data)
+**prf**
+
+    **prf_eccentricity** : ``(211339,)`` - Distance of receptive field center from fixation (deg)
+
+    **prf_polarangle** : ``(211339,)`` - Angular position of receptive field center (0–360°)
+
+    **prf_rsquared** : ``(211339,)`` - Variance explained by pRF model (fit quality)
+
+    **prf_size** : ``(211339,)`` - Estimated receptive field size (deg)
+**roi**
+
+    **V1, V2, V3, hV4, VO1, VO2, LO1_prf, LO2_prf, TO1, TO2, V3b, V3a, lFFA, rFFA, lOFA, rOFA, lEBA, rEBA, lPPA, rPPA, lRSC, rRSC, lTOS, rTOS, lLOC, rLOC, IT, lSTS, rSTS** : ``variable length`` - Each ROI entry contains voxel indices (variable length) for that functional region
 
 Input
 -----

@@ -83,90 +83,55 @@ parcellation sections 1–5 (early visual cortex through higher-level ventral an
 Metadata
 --------
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+**vertex_mapping_visual** : ``(7831,)`` - [visual variant only] Indices mapping visual cortex model predictions (GlasserGroups 1-5) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_visual] = predictions_7831
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - vertex_mapping_visual
-     - ``(7831,)``
-     - [visual variant only] Indices mapping visual cortex model predictions (GlasserGroups 1-5) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_visual] = predictions_7831
-   * - glasser_group_id
-     - ``(7831,)``
-     - Array indicating which GlasserGroup (1-5 for visual) each prediction vertex belongs to. Allows filtering predictions by group.
-   * - **roi**
-     - ``dict``
-     - ROI name → vertex indices in full HCP grayordinate space
-       (e.g., 'L_V1' → array([3319, 3320, ...])).
-       Available ROIs:
-       'L_V1','L_V2','L_V3','L_V4','L_V6','L_V3A','L_V7','L_IPS1',
-       'L_V3B','L_V6A','L_V8','L_FFC','L_PIT','L_VMV1','L_VMV3',
-       'L_VMV2','L_VVC','L_MST','L_LO1','L_LO2','L_MT','L_PH','L_V4t',
-       'L_FST','L_V3CD','L_LO3'
-       Corresponding R_* entries exist for the right hemisphere.
-   * - **subject_info**
-     - ``dict``
-     - Subject-specific information
-   * - \ \ \ \ participant_id
-     - ``str``
-     - Subject identifier
-   * - \ \ \ \ age
-     - ``int``
-     - Subject age
-   * - \ \ \ \ sex
-     - ``str``
-     - Subject sex
-   * - **stimuli**
-     - ``dict``
-     - Stimulus-related arrays
-   * - \ \ \ \ filenames
-     - ``(70850,)``
-     - All stimulus filenames
-   * - \ \ \ \ alias
-     - ``(70850,)``
-     - Stimulus aliases
-   * - \ \ \ \ source
-     - ``(70850,)``
-     - Stimulus sources
-   * - \ \ \ \ train_idx
-     - ``(69566,)``
-     - Indices of training trials
-   * - \ \ \ \ test_idx
-     - ``(1284,)``
-     - Indices of test trials
-   * - \ \ \ \ train_filenames
-     - ``(69566,)``
-     - Training stimulus filenames
-   * - \ \ \ \ test_filenames
-     - ``(1284,)``
-     - Test stimulus filenames
-   * - \ \ \ \ reps
-     - ``(70850,)``
-     - Repetition count per stimulus for this subject
-   * - **noise_ceiling**
-     - ``dict``
-     - Noise ceiling metrics
-   * - \ \ \ \ test_n-avg_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
-   * - \ \ \ \ test_n-1_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
-   * - \ \ \ \ train_n-avg_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
-   * - \ \ \ \ train_n-1_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using single-trial beta estimates.
-   * - \ \ \ \ artificial_n-avg_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using repeat-averaged beta estimates.
-   * - \ \ \ \ artificial_n-1_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using single-trial beta estimates.
+**glasser_group_id** : ``(7831,)`` - Array indicating which GlasserGroup (1-5 for visual) each prediction vertex belongs to. Allows filtering predictions by group.
 
+**roi** : ``dict`` - ROI name → vertex indices in full HCP grayordinate space
+    (e.g., 'L_V1' → array([3319, 3320, ...])).
+    Available ROIs:
+    'L_V1','L_V2','L_V3','L_V4','L_V6','L_V3A','L_V7','L_IPS1',
+    'L_V3B','L_V6A','L_V8','L_FFC','L_PIT','L_VMV1','L_VMV3',
+    'L_VMV2','L_VVC','L_MST','L_LO1','L_LO2','L_MT','L_PH','L_V4t',
+    'L_FST','L_V3CD','L_LO3'
+    Corresponding R_* entries exist for the right hemisphere.
+
+**subject_info** : ``dict`` - Subject-specific information
+    **participant_id** : ``str`` - Subject identifier
+
+    **age** : ``int`` - Subject age
+
+    **sex** : ``str`` - Subject sex
+
+**stimuli** : ``dict`` - Stimulus-related arrays
+    **filenames** : ``(70850,)`` - All stimulus filenames
+
+    **alias** : ``(70850,)`` - Stimulus aliases
+
+    **source** : ``(70850,)`` - Stimulus sources
+
+    **train_idx** : ``(69566,)`` - Indices of training trials
+
+    **test_idx** : ``(1284,)`` - Indices of test trials
+
+    **train_filenames** : ``(69566,)`` - Training stimulus filenames
+
+    **test_filenames** : ``(1284,)`` - Test stimulus filenames
+
+    **reps** : ``(70850,)`` - Repetition count per stimulus for this subject
+
+**noise_ceiling** : ``dict`` - Noise ceiling metrics
+    **test_n-avg_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
+
+    **test_n-1_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
+
+    **train_n-avg_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
+
+    **train_n-1_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using single-trial beta estimates.
+
+    **artificial_n-avg_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using repeat-averaged beta estimates.
+
+    **artificial_n-1_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using single-trial beta estimates.
 
 Input
 -----

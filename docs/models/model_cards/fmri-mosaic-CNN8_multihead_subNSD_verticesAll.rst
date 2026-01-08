@@ -80,108 +80,73 @@ cortices).
 Metadata
 --------
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+**vertex_mapping_all** : ``(57051,)`` - [whole_cortex variant only] Indices mapping full cortex model predictions (GlasserGroups 1-22) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_all] = predictions_57051
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - vertex_mapping_all
-     - ``(57051,)``
-     - [whole_cortex variant only] Indices mapping full cortex model predictions (GlasserGroups 1-22) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_all] = predictions_57051
-   * - glasser_group_id
-     - ``(7831,)``
-     - Array indicating which GlasserGroup (1-5 for visual) each prediction vertex belongs to. Allows filtering predictions by group.
-   * - **roi**
-     - ``dict``
-     - ROI name → vertex indices in full HCP grayordinate space
-       (e.g., 'L_V1' → array([3319, 3320, ...])).
-       Available ROIs:
-       'L_V1','L_V2','L_V3','L_V4','L_V6','L_V3A','L_V7','L_IPS1',
-       'L_V3B','L_V6A','L_V8','L_FFC','L_PIT','L_VMV1','L_VMV3',
-       'L_VMV2','L_VVC','L_MST','L_LO1','L_LO2','L_MT','L_PH',
-       'L_V4t','L_FST','L_V3CD','L_LO3','L_4','L_3b','L_1',
-       'L_2','L_3a','L_5m','L_5mv','L_5L','L_24dd','L_24dv',
-       'L_SCEF','L_6ma','L_6mp','L_FEF','L_PEF','L_55b','L_6d','L_6v',
-       'L_6r','L_6a','L_43','L_OP4','L_OP1','L_OP2-3','L_PFcm','L_FOP1',
-       'L_A1','L_RI','L_PBelt','L_MBelt','L_LBelt','L_TA2','L_STGa',
-       'L_A5','L_STSda','L_STSdp','L_STSvp','L_A4','L_STSva','L_52','L_PoI2',
-       'L_FOP4','L_MI','L_Pir','L_AVI','L_AAIC','L_FOP3','L_FOP2','L_PoI1',
-       'L_Ig','L_FOP5','L_PI','L_EC','L_PreS','L_H','L_PeEc','L_PHA1','L_PHA3',
-       'L_PHA2','L_TGd','L_TE1a','L_TE1p','L_TE2a','L_TF','L_TE2p','L_PHT','L_TGv',
-       'L_TE1m','L_PSL','L_STV','L_TPOJ1','L_TPOJ2','L_TPOJ3','L_7Pm','L_7AL','L_7Am',
-       'L_7PL','L_7PC','L_LIPv','L_VIP','L_MIP','L_LIPd','L_AIP','L_PFt','L_PGp',
-       'L_IP2','L_IP1','L_IP0','L_PFop','L_PF','L_PFm','L_PGi','L_PGs','L_RSC','L_POS2',
-       'L_PCV','L_7m','L_POS1','L_23d','L_v23ab','L_d23ab','L_31pv','L_23c','L_ProS',
-       'L_DVT','L_31pd','L_31a','L_p24pr','L_33pr','L_a24pr','L_p32pr','L_a24','L_d32',
-       'L_8BM','L_p32','L_10r','L_9m','L_10v','L_25','L_s32','L_a32pr','L_p24','L_47m',
-       'L_10d','L_a47r','L_a10p','L_10pp','L_11l','L_13l','L_OFC','L_47s','L_pOFC',
-       'L_p10p','L_44','L_45','L_47l','L_IFJa','L_IFJp','L_IFSp','L_IFSa','L_p47r',
-       'L_SFL','L_8Av','L_8Ad','L_8BL','L_9p','L_8C','L_p9-46v','L_46','L_a9-46v',
-       'L_9-46d','L_9a','L_i6-8','L_s6-8'
-       Corresponding R_* entries exist for the right hemisphere.
-   * - **subject_info**
-     - ``dict``
-     - Subject-specific information
-   * - \ \ \ \ participant_id
-     - ``str``
-     - Subject identifier
-   * - \ \ \ \ age
-     - ``int``
-     - Subject age
-   * - \ \ \ \ sex
-     - ``str``
-     - Subject sex
-   * - **stimuli**
-     - ``dict``
-     - Stimulus-related arrays
-   * - \ \ \ \ filenames
-     - ``(70850,)``
-     - All stimulus filenames
-   * - \ \ \ \ alias
-     - ``(70850,)``
-     - Stimulus aliases
-   * - \ \ \ \ source
-     - ``(70850,)``
-     - Stimulus sources
-   * - \ \ \ \ train_idx
-     - ``(69566,)``
-     - Indices of training trials
-   * - \ \ \ \ test_idx
-     - ``(1284,)``
-     - Indices of test trials
-   * - \ \ \ \ train_filenames
-     - ``(69566,)``
-     - Training stimulus filenames
-   * - \ \ \ \ test_filenames
-     - ``(1284,)``
-     - Test stimulus filenames
-   * - \ \ \ \ reps
-     - ``(70850,)``
-     - Repetition count per stimulus for this subject
-   * - **noise_ceiling**
-     - ``dict``
-     - Noise ceiling metrics
-   * - \ \ \ \ test_n-avg_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
-   * - \ \ \ \ test_n-1_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
-   * - \ \ \ \ train_n-avg_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
-   * - \ \ \ \ train_n-1_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using single-trial beta estimates.
-   * - \ \ \ \ artificial_n-avg_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using repeat-averaged beta estimates.
-   * - \ \ \ \ artificial_n-1_noiseceiling
-     - ``(91282,)``
-     - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using single-trial beta estimates.
+**glasser_group_id** : ``(7831,)`` - Array indicating which GlasserGroup (1-5 for visual) each prediction vertex belongs to. Allows filtering predictions by group.
 
+**roi** : ``dict`` - ROI name → vertex indices in full HCP grayordinate space
+    (e.g., 'L_V1' → array([3319, 3320, ...])).
+    Available ROIs:
+    'L_V1','L_V2','L_V3','L_V4','L_V6','L_V3A','L_V7','L_IPS1',
+    'L_V3B','L_V6A','L_V8','L_FFC','L_PIT','L_VMV1','L_VMV3',
+    'L_VMV2','L_VVC','L_MST','L_LO1','L_LO2','L_MT','L_PH',
+    'L_V4t','L_FST','L_V3CD','L_LO3','L_4','L_3b','L_1',
+    'L_2','L_3a','L_5m','L_5mv','L_5L','L_24dd','L_24dv',
+    'L_SCEF','L_6ma','L_6mp','L_FEF','L_PEF','L_55b','L_6d','L_6v',
+    'L_6r','L_6a','L_43','L_OP4','L_OP1','L_OP2-3','L_PFcm','L_FOP1',
+    'L_A1','L_RI','L_PBelt','L_MBelt','L_LBelt','L_TA2','L_STGa',
+    'L_A5','L_STSda','L_STSdp','L_STSvp','L_A4','L_STSva','L_52','L_PoI2',
+    'L_FOP4','L_MI','L_Pir','L_AVI','L_AAIC','L_FOP3','L_FOP2','L_PoI1',
+    'L_Ig','L_FOP5','L_PI','L_EC','L_PreS','L_H','L_PeEc','L_PHA1','L_PHA3',
+    'L_PHA2','L_TGd','L_TE1a','L_TE1p','L_TE2a','L_TF','L_TE2p','L_PHT','L_TGv',
+    'L_TE1m','L_PSL','L_STV','L_TPOJ1','L_TPOJ2','L_TPOJ3','L_7Pm','L_7AL','L_7Am',
+    'L_7PL','L_7PC','L_LIPv','L_VIP','L_MIP','L_LIPd','L_AIP','L_PFt','L_PGp',
+    'L_IP2','L_IP1','L_IP0','L_PFop','L_PF','L_PFm','L_PGi','L_PGs','L_RSC','L_POS2',
+    'L_PCV','L_7m','L_POS1','L_23d','L_v23ab','L_d23ab','L_31pv','L_23c','L_ProS',
+    'L_DVT','L_31pd','L_31a','L_p24pr','L_33pr','L_a24pr','L_p32pr','L_a24','L_d32',
+    'L_8BM','L_p32','L_10r','L_9m','L_10v','L_25','L_s32','L_a32pr','L_p24','L_47m',
+    'L_10d','L_a47r','L_a10p','L_10pp','L_11l','L_13l','L_OFC','L_47s','L_pOFC',
+    'L_p10p','L_44','L_45','L_47l','L_IFJa','L_IFJp','L_IFSp','L_IFSa','L_p47r',
+    'L_SFL','L_8Av','L_8Ad','L_8BL','L_9p','L_8C','L_p9-46v','L_46','L_a9-46v',
+    'L_9-46d','L_9a','L_i6-8','L_s6-8'
+    Corresponding R_* entries exist for the right hemisphere.
+
+**subject_info** : ``dict`` - Subject-specific information
+    **participant_id** : ``str`` - Subject identifier
+
+    **age** : ``int`` - Subject age
+
+    **sex** : ``str`` - Subject sex
+
+**stimuli** : ``dict`` - Stimulus-related arrays
+    **filenames** : ``(70850,)`` - All stimulus filenames
+
+    **alias** : ``(70850,)`` - Stimulus aliases
+
+    **source** : ``(70850,)`` - Stimulus sources
+
+    **train_idx** : ``(69566,)`` - Indices of training trials
+
+    **test_idx** : ``(1284,)`` - Indices of test trials
+
+    **train_filenames** : ``(69566,)`` - Training stimulus filenames
+
+    **test_filenames** : ``(1284,)`` - Test stimulus filenames
+
+    **reps** : ``(70850,)`` - Repetition count per stimulus for this subject
+
+**noise_ceiling** : ``dict`` - Noise ceiling metrics
+    **test_n-avg_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
+
+    **test_n-1_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
+
+    **train_n-avg_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
+
+    **train_n-1_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using single-trial beta estimates.
+
+    **artificial_n-avg_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using repeat-averaged beta estimates.
+
+    **artificial_n-1_noiseceiling** : ``(91282,)`` - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using single-trial beta estimates.
 
 Input
 -----

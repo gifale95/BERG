@@ -59,251 +59,160 @@ images.
 Metadata
 --------
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+**fmri**
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - **fmri**
-     - 
-     - 
-   * - \ \ \ \ lh_ncsnr
-     - ``(163842,)``
-     - Left hemisphere noise-ceiling signal-to-noise ratio per vertex
-   * - \ \ \ \ rh_ncsnr
-     - ``(163842,)``
-     - Right hemisphere noise-ceiling signal-to-noise ratio per vertex
-   * - \ \ \ \ **lh_fsaverage_rois**
-     - ``dict``
-     - Left hemisphere ROI definitions on fsaverage surface
-   * - \ \ \ \ \ \ \ \ V1v
-     - ``(710,)``
-     - Visual area 1 ventral
-   * - \ \ \ \ \ \ \ \ V1d
-     - ``(828,)``
-     - Visual area 1 dorsal
-   * - \ \ \ \ \ \ \ \ V2v
-     - ``(632,)``
-     - Visual area 2 ventral
-   * - \ \ \ \ \ \ \ \ V2d
-     - ``(692,)``
-     - Visual area 2 dorsal
-   * - \ \ \ \ \ \ \ \ V3v
-     - ``(567,)``
-     - Visual area 3 ventral
-   * - \ \ \ \ \ \ \ \ V3d
-     - ``(669,)``
-     - Visual area 3 dorsal
-   * - \ \ \ \ \ \ \ \ hV4
-     - ``(531,)``
-     - Human V4 complex
-   * - \ \ \ \ \ \ \ \ EBA
-     - ``(3231,)``
-     - Extrastriate body area
-   * - \ \ \ \ \ \ \ \ FBA-1
-     - ``(574,)``
-     - Fusiform body area 1
-   * - \ \ \ \ \ \ \ \ FBA-2
-     - ``(0,)``
-     - Fusiform body area 2
-   * - \ \ \ \ \ \ \ \ mTL-bodies
-     - ``(0,)``
-     - Medial temporal lobe body-selective region
-   * - \ \ \ \ \ \ \ \ OFA
-     - ``(432,)``
-     - Occipital face area
-   * - \ \ \ \ \ \ \ \ FFA-1
-     - ``(552,)``
-     - Fusiform face area 1
-   * - \ \ \ \ \ \ \ \ FFA-2
-     - ``(0,)``
-     - Fusiform face area 2
-   * - \ \ \ \ \ \ \ \ mTL-faces
-     - ``(0,)``
-     - Medial temporal lobe face-selective region
-   * - \ \ \ \ \ \ \ \ aTL-faces
-     - ``(329,)``
-     - Anterior temporal lobe face-selective region
-   * - \ \ \ \ \ \ \ \ OPA
-     - ``(2021,)``
-     - Occipital place area
-   * - \ \ \ \ \ \ \ \ PPA
-     - ``(1859,)``
-     - Parahippocampal place area
-   * - \ \ \ \ \ \ \ \ RSC
-     - ``(1298,)``
-     - Retrosplenial complex
-   * - \ \ \ \ \ \ \ \ OWFA
-     - ``(317,)``
-     - Occipital word form area
-   * - \ \ \ \ \ \ \ \ VWFA-1
-     - ``(1395,)``
-     - Visual word form area 1
-   * - \ \ \ \ \ \ \ \ VWFA-2
-     - ``(474,)``
-     - Visual word form area 2
-   * - \ \ \ \ \ \ \ \ mfs-words
-     - ``(490,)``
-     - Mid-fusiform sulcus word-selective region
-   * - \ \ \ \ \ \ \ \ mTL-words
-     - ``(475,)``
-     - Medial temporal lobe word-selective region
-   * - \ \ \ \ \ \ \ \ early
-     - ``(5758,)``
-     - Early visual cortex (V1-V3)
-   * - \ \ \ \ \ \ \ \ midventral
-     - ``(867,)``
-     - Mid-level ventral stream
-   * - \ \ \ \ \ \ \ \ midlateral
-     - ``(1091,)``
-     - Mid-level lateral stream
-   * - \ \ \ \ \ \ \ \ midparietal
-     - ``(1079,)``
-     - Mid-level parietal regions
-   * - \ \ \ \ \ \ \ \ ventral
-     - ``(9680,)``
-     - Ventral visual stream
-   * - \ \ \ \ \ \ \ \ lateral
-     - ``(10253,)``
-     - Lateral visual stream
-   * - \ \ \ \ \ \ \ \ parietal
-     - ``(5176,)``
-     - Parietal regions
-   * - \ \ \ \ **rh_fsaverage_rois**
-     - ``dict``
-     - Right hemisphere ROI definitions on fsaverage surface
-   * - \ \ \ \ \ \ \ \ V1v
-     - ``(444,)``
-     - Visual area 1 ventral
-   * - \ \ \ \ \ \ \ \ V1d
-     - ``(991,)``
-     - Visual area 1 dorsal
-   * - \ \ \ \ \ \ \ \ V2v
-     - ``(887,)``
-     - Visual area 2 ventral
-   * - \ \ \ \ \ \ \ \ V2d
-     - ``(725,)``
-     - Visual area 2 dorsal
-   * - \ \ \ \ \ \ \ \ V3v
-     - ``(682,)``
-     - Visual area 3 ventral
-   * - \ \ \ \ \ \ \ \ V3d
-     - ``(535,)``
-     - Visual area 3 dorsal
-   * - \ \ \ \ \ \ \ \ hV4
-     - ``(765,)``
-     - Human V4 complex
-   * - \ \ \ \ \ \ \ \ EBA
-     - ``(4421,)``
-     - Extrastriate body area
-   * - \ \ \ \ \ \ \ \ FBA-1
-     - ``(206,)``
-     - Fusiform body area 1
-   * - \ \ \ \ \ \ \ \ FBA-2
-     - ``(1234,)``
-     - Fusiform body area 2
-   * - \ \ \ \ \ \ \ \ mTL-bodies
-     - ``(0,)``
-     - Medial temporal lobe body-selective region
-   * - \ \ \ \ \ \ \ \ OFA
-     - ``(305,)``
-     - Occipital face area
-   * - \ \ \ \ \ \ \ \ FFA-1
-     - ``(330,)``
-     - Fusiform face area 1
-   * - \ \ \ \ \ \ \ \ FFA-2
-     - ``(1003,)``
-     - Fusiform face area 2
-   * - \ \ \ \ \ \ \ \ mTL-faces
-     - ``(0,)``
-     - Medial temporal lobe face-selective region
-   * - \ \ \ \ \ \ \ \ aTL-faces
-     - ``(283,)``
-     - Anterior temporal lobe face-selective region
-   * - \ \ \ \ \ \ \ \ OPA
-     - ``(2849,)``
-     - Occipital place area
-   * - \ \ \ \ \ \ \ \ PPA
-     - ``(1250,)``
-     - Parahippocampal place area
-   * - \ \ \ \ \ \ \ \ RSC
-     - ``(1136,)``
-     - Retrosplenial complex
-   * - \ \ \ \ \ \ \ \ OWFA
-     - ``(590,)``
-     - Occipital word form area
-   * - \ \ \ \ \ \ \ \ VWFA-1
-     - ``(397,)``
-     - Visual word form area 1
-   * - \ \ \ \ \ \ \ \ VWFA-2
-     - ``(649,)``
-     - Visual word form area 2
-   * - \ \ \ \ \ \ \ \ mfs-words
-     - ``(0,)``
-     - Mid-fusiform sulcus word-selective region
-   * - \ \ \ \ \ \ \ \ mTL-words
-     - ``(0,)``
-     - Medial temporal lobe word-selective region
-   * - \ \ \ \ \ \ \ \ early
-     - ``(5634,)``
-     - Early visual cortex (V1-V3)
-   * - \ \ \ \ \ \ \ \ midventral
-     - ``(1050,)``
-     - Mid-level ventral stream
-   * - \ \ \ \ \ \ \ \ midlateral
-     - ``(1191,)``
-     - Mid-level lateral stream
-   * - \ \ \ \ \ \ \ \ midparietal
-     - ``(1181,)``
-     - Mid-level parietal regions
-   * - \ \ \ \ \ \ \ \ ventral
-     - ``(9393,)``
-     - Ventral visual stream
-   * - \ \ \ \ \ \ \ \ lateral
-     - ``(10535,)``
-     - Lateral visual stream
-   * - \ \ \ \ \ \ \ \ parietal
-     - ``(4818,)``
-     - Parietal regions
-   * - **encoding_models**
-     - 
-     - 
-   * - \ \ \ \ train_img_num
-     - ``(9000,)``
-     - Image indices used for training
-   * - \ \ \ \ val_img_num
-     - ``(485,)``
-     - Image indices used for validation
-   * - \ \ \ \ test_img_num
-     - ``(515,)``
-     - Image indices used for testing
-   * - \ \ \ \ lh_correlation
-     - ``(163842,)``
-     - Left hemisphere correlation scores
-   * - \ \ \ \ rh_correlation
-     - ``(163842,)``
-     - Right hemisphere correlation scores
-   * - \ \ \ \ lh_r2
-     - ``(163842,)``
-     - Left hemisphere R² scores
-   * - \ \ \ \ rh_r2
-     - ``(163842,)``
-     - Right hemisphere R² scores
-   * - \ \ \ \ lh_noise_ceiling
-     - ``(163842,)``
-     - Left hemisphere noise ceiling
-   * - \ \ \ \ rh_noise_ceiling
-     - ``(163842,)``
-     - Right hemisphere noise ceiling
-   * - \ \ \ \ lh_explained_variance
-     - ``(163842,)``
-     - Left hemisphere % explained variance
-   * - \ \ \ \ rh_explained_variance
-     - ``(163842,)``
-     - Right hemisphere % explained variance
+    **lh_ncsnr** : ``(163842,)`` - Left hemisphere noise-ceiling signal-to-noise ratio per vertex
 
+    **rh_ncsnr** : ``(163842,)`` - Right hemisphere noise-ceiling signal-to-noise ratio per vertex
+
+    **lh_fsaverage_rois** : ``dict`` - Left hemisphere ROI definitions on fsaverage surface
+        **V1v** : ``(710,)`` - Visual area 1 ventral
+
+        **V1d** : ``(828,)`` - Visual area 1 dorsal
+
+        **V2v** : ``(632,)`` - Visual area 2 ventral
+
+        **V2d** : ``(692,)`` - Visual area 2 dorsal
+
+        **V3v** : ``(567,)`` - Visual area 3 ventral
+
+        **V3d** : ``(669,)`` - Visual area 3 dorsal
+
+        **hV4** : ``(531,)`` - Human V4 complex
+
+        **EBA** : ``(3231,)`` - Extrastriate body area
+
+        **FBA-1** : ``(574,)`` - Fusiform body area 1
+
+        **FBA-2** : ``(0,)`` - Fusiform body area 2
+
+        **mTL-bodies** : ``(0,)`` - Medial temporal lobe body-selective region
+
+        **OFA** : ``(432,)`` - Occipital face area
+
+        **FFA-1** : ``(552,)`` - Fusiform face area 1
+
+        **FFA-2** : ``(0,)`` - Fusiform face area 2
+
+        **mTL-faces** : ``(0,)`` - Medial temporal lobe face-selective region
+
+        **aTL-faces** : ``(329,)`` - Anterior temporal lobe face-selective region
+
+        **OPA** : ``(2021,)`` - Occipital place area
+
+        **PPA** : ``(1859,)`` - Parahippocampal place area
+
+        **RSC** : ``(1298,)`` - Retrosplenial complex
+
+        **OWFA** : ``(317,)`` - Occipital word form area
+
+        **VWFA-1** : ``(1395,)`` - Visual word form area 1
+
+        **VWFA-2** : ``(474,)`` - Visual word form area 2
+
+        **mfs-words** : ``(490,)`` - Mid-fusiform sulcus word-selective region
+
+        **mTL-words** : ``(475,)`` - Medial temporal lobe word-selective region
+
+        **early** : ``(5758,)`` - Early visual cortex (V1-V3)
+
+        **midventral** : ``(867,)`` - Mid-level ventral stream
+
+        **midlateral** : ``(1091,)`` - Mid-level lateral stream
+
+        **midparietal** : ``(1079,)`` - Mid-level parietal regions
+
+        **ventral** : ``(9680,)`` - Ventral visual stream
+
+        **lateral** : ``(10253,)`` - Lateral visual stream
+
+        **parietal** : ``(5176,)`` - Parietal regions
+
+    **rh_fsaverage_rois** : ``dict`` - Right hemisphere ROI definitions on fsaverage surface
+        **V1v** : ``(444,)`` - Visual area 1 ventral
+
+        **V1d** : ``(991,)`` - Visual area 1 dorsal
+
+        **V2v** : ``(887,)`` - Visual area 2 ventral
+
+        **V2d** : ``(725,)`` - Visual area 2 dorsal
+
+        **V3v** : ``(682,)`` - Visual area 3 ventral
+
+        **V3d** : ``(535,)`` - Visual area 3 dorsal
+
+        **hV4** : ``(765,)`` - Human V4 complex
+
+        **EBA** : ``(4421,)`` - Extrastriate body area
+
+        **FBA-1** : ``(206,)`` - Fusiform body area 1
+
+        **FBA-2** : ``(1234,)`` - Fusiform body area 2
+
+        **mTL-bodies** : ``(0,)`` - Medial temporal lobe body-selective region
+
+        **OFA** : ``(305,)`` - Occipital face area
+
+        **FFA-1** : ``(330,)`` - Fusiform face area 1
+
+        **FFA-2** : ``(1003,)`` - Fusiform face area 2
+
+        **mTL-faces** : ``(0,)`` - Medial temporal lobe face-selective region
+
+        **aTL-faces** : ``(283,)`` - Anterior temporal lobe face-selective region
+
+        **OPA** : ``(2849,)`` - Occipital place area
+
+        **PPA** : ``(1250,)`` - Parahippocampal place area
+
+        **RSC** : ``(1136,)`` - Retrosplenial complex
+
+        **OWFA** : ``(590,)`` - Occipital word form area
+
+        **VWFA-1** : ``(397,)`` - Visual word form area 1
+
+        **VWFA-2** : ``(649,)`` - Visual word form area 2
+
+        **mfs-words** : ``(0,)`` - Mid-fusiform sulcus word-selective region
+
+        **mTL-words** : ``(0,)`` - Medial temporal lobe word-selective region
+
+        **early** : ``(5634,)`` - Early visual cortex (V1-V3)
+
+        **midventral** : ``(1050,)`` - Mid-level ventral stream
+
+        **midlateral** : ``(1191,)`` - Mid-level lateral stream
+
+        **midparietal** : ``(1181,)`` - Mid-level parietal regions
+
+        **ventral** : ``(9393,)`` - Ventral visual stream
+
+        **lateral** : ``(10535,)`` - Lateral visual stream
+
+        **parietal** : ``(4818,)`` - Parietal regions
+**encoding_models**
+
+    **train_img_num** : ``(9000,)`` - Image indices used for training
+
+    **val_img_num** : ``(485,)`` - Image indices used for validation
+
+    **test_img_num** : ``(515,)`` - Image indices used for testing
+
+    **lh_correlation** : ``(163842,)`` - Left hemisphere correlation scores
+
+    **rh_correlation** : ``(163842,)`` - Right hemisphere correlation scores
+
+    **lh_r2** : ``(163842,)`` - Left hemisphere R² scores
+
+    **rh_r2** : ``(163842,)`` - Right hemisphere R² scores
+
+    **lh_noise_ceiling** : ``(163842,)`` - Left hemisphere noise ceiling
+
+    **rh_noise_ceiling** : ``(163842,)`` - Right hemisphere noise ceiling
+
+    **lh_explained_variance** : ``(163842,)`` - Left hemisphere % explained variance
+
+    **rh_explained_variance** : ``(163842,)`` - Right hemisphere % explained variance
 
 Input
 -----
