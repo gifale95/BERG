@@ -88,12 +88,10 @@ Metadata
 **glasser_group_id** : ``(7831,)`` - Array indicating which GlasserGroup (1-5 for visual) each prediction vertex belongs to. Allows filtering predictions by group.
 
 **roi** : ``dict`` - ROI name → vertex indices in full HCP grayordinate space
-    (e.g., 'L_V1' → array([3319, 3320, ...])).
     Available ROIs:
-    'L_V1','L_V2','L_V3','L_V4','L_V6','L_V3A','L_V7','L_IPS1',
-    'L_V3B','L_V6A','L_V8','L_FFC','L_PIT','L_VMV1','L_VMV3',
-    'L_VMV2','L_VVC','L_MST','L_LO1','L_LO2','L_MT','L_PH','L_V4t',
-    'L_FST','L_V3CD','L_LO3'
+    L_V1, L_V2, L_V3, L_V4, L_V6, L_V3A, L_V7, L_IPS1, L_V3B,
+    L_V6A, L_V8, L_FFC, L_PIT, L_VMV1, L_VMV3, L_VMV2, L_VVC,
+    L_MST, L_LO1, L_LO2, L_MT, L_PH, L_V4t, L_FST, L_V3CD, L_LO3.
     Corresponding R_* entries exist for the right hemisphere.
 
 **subject_info** : ``dict`` - Subject-specific information
@@ -363,23 +361,7 @@ Example Usage
         "fmri-mosaic-CNN8_multihead_subAll_verticesVisual",
         subject="NSD-01"
     )
-
-    # Generate in silico fMRI responses for all vertices, and expand them to
-    # the 91k HCP grayordinate space
-    model = berg.get_encoding_model(
-        "fmri-mosaic-CNN8_multihead_subAll_verticesVisual",
-        subject="NSD-01",
-        device="auto"
-    )
-    responses = berg.encode(
-        model,
-        images,
-        show_progress=True
-    )
-    vertex_mapping = metadata["encoding_models"]["vertex_mapping_visual"]
-    responses_91k = np.full((responses.shape[0], 91282), np.nan)
-    responses_91k[:,vertex_mapping] = responses
-
+    
 
 References
 ---------
