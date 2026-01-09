@@ -63,7 +63,7 @@ description: |
 
 metadata: |
   vertex_mapping_all            : (57051,) - [whole_cortex variant only] Indices mapping full cortex model predictions (GlasserGroups 1-22) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_all] = predictions_57051
-  glasser_group_id              : (7831,)  - Array indicating which GlasserGroup (1-5 for visual) each prediction vertex belongs to. Allows filtering predictions by group.
+  glasser_group_id              : (57051,)  - Array indicating which GlasserGroup (among Galsser groups 1-22) each prediction vertex belongs to. Allows filtering predictions by group.
   roi                           : dict - ROI name → vertex indices in full HCP grayordinate space
   
                                  Available ROIs:
