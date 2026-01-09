@@ -68,7 +68,7 @@ for fsub in args.fmri_subjects:
                 f'rsa_sub-{fsub:02d}_hemi-{hemi}_eeg_sub-{esub:02d}.npy')
             results = np.load(results_dir, allow_pickle=True).item()
 
-            # NCSNR and noise ceiling vertex selection
+            # NCSNR and encoding accuracy vertex selection
             ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
             idx_ncsnr = ncsnr >= args.ncsnr_threshold
             encoding = results['metadata']['encoding_models']\

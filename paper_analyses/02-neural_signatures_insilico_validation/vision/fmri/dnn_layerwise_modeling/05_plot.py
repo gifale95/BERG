@@ -28,7 +28,6 @@ import argparse
 import os
 import numpy as np
 import cortex
-import cortex.polyutils
 import matplotlib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -83,7 +82,7 @@ for s, sub in enumerate(args.subjects):
             format(sub, '02')+'_'+hemi+'_model-'+args.model+'.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
-        # NCSNR and noise ceiling vertex selection
+        # NCSNR and encoding accuracy vertex selection
         ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
         idx_ncsnr = ncsnr >= args.ncsnr_threshold
         encoding = results['metadata']['encoding_models']\
@@ -127,9 +126,9 @@ rh_best_layer = np.array(rh_best_layer)
 # =============================================================================
 # Threshold the vertices by significance
 # =============================================================================
-for key in lh_rsa.keys():
-    lh_rsa[key][:,~stats['sig_lh_rsa'][key]] = np.nan
-    rh_rsa[key][:,~stats['sig_rh_rsa'][key]] = np.nan
+# for key in lh_rsa.keys():
+#     lh_rsa[key][:,~stats['sig_lh_rsa'][key]] = np.nan
+#     rh_rsa[key][:,~stats['sig_rh_rsa'][key]] = np.nan
 
 
 # =============================================================================
@@ -160,7 +159,7 @@ for key in tqdm(lh_rsa.keys()):
         subject=subject,
         cmap='afmhot',
         vmin=0,
-        vmax=0.4,
+        vmax=0.5,
         with_colorbar=True
         )
 
@@ -171,11 +170,11 @@ for key in tqdm(lh_rsa.keys()):
         with_curvature=True,
         with_rois=True,
         roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-        linewidth=2,
+        linewidth=3,
         linecolor=(1, 1, 1),
         with_labels=True,
-        labelsize=15,
-        curvature_brightness=0.5,
+        labelsize=25,
+        curvature_brightness=0.4,
         with_colorbar=True
         )
 
@@ -183,6 +182,7 @@ for key in tqdm(lh_rsa.keys()):
     file_name = os.path.join(save_dir, 'rsa_model-'+args.model+'_layer-'+key+
         '.svg')
     fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+    plt.close()
 
 
 # =============================================================================
@@ -197,7 +197,7 @@ data = np.append(np.nanmean(lh_best_layer, 0),
 vertex_data = cortex.Vertex(
     data,
     subject=subject,
-    cmap='gist_rainbow',
+    cmap='turbo_r',
     vmin=1,
     vmax=len(lh_rsa.keys()),
     with_colorbar=True
@@ -210,11 +210,11 @@ fig = cortex.quickshow(
     with_curvature=True,
     with_rois=True,
     roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-    linewidth=2,
+    linewidth=3,
     linecolor=(1, 1, 1),
     with_labels=True,
-    labelsize=15,
-    curvature_brightness=0.5,
+    labelsize=25,
+    curvature_brightness=0.4,
     with_colorbar=True
     )
 
@@ -222,6 +222,7 @@ fig = cortex.quickshow(
 file_name = os.path.join(save_dir, 'rsa_layer_assigment_model-'+args.model+
     '.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close()
 
 
 # =============================================================================

@@ -194,8 +194,8 @@ ci_vertex_overlap = {}
 dist = {}
 for roi in rois:
     for cat in categories:
-        ci_vertex_overlap[roi+'_'+cat] = np.zeros((2)) # type: ignore
-        dist[roi+'_'+cat] = np.zeros((args.n_iter)) # type: ignore
+        ci_vertex_overlap[roi+'_'+cat] = np.zeros((2))
+        dist[roi+'_'+cat] = np.zeros((args.n_iter))
 
 # Create the bootstrap distribution
 for i in tqdm(range(args.n_iter)):
@@ -266,4 +266,4 @@ os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats_images-' + args.images + '.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

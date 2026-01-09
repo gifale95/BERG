@@ -63,18 +63,18 @@ for sub in args.subjects:
     lh_tval_sub = data['lh_tval']
     rh_tval_sub = data['rh_tval']
 
-    # NCSNR and noise ceiling vertex selection
-    # idx_ncsnr_lh = data['metadata']['fmri']['lh_ncsnr'] >= args.ncsnr_threshold
-    # idx_ncsnr_rh = data['metadata']['fmri']['rh_ncsnr'] >= args.ncsnr_threshold
-    # idx_encoding_lh = data['metadata']['encoding_models']\
-    #     ['lh_explained_variance_nsdcore'] >= args.encoding_threshold
-    # idx_encoding_rh = data['metadata']['encoding_models']\
-    #     ['rh_explained_variance_nsdcore'] >= args.encoding_threshold
-    # idx_nan_lh = ~np.logical_and(idx_ncsnr_lh, idx_encoding_lh)
-    # idx_nan_rh = ~np.logical_and(idx_ncsnr_rh, idx_encoding_rh)
-    # for key in lh_tval_sub.keys():
-    #     lh_tval_sub[key][idx_nan_lh] = np.nan
-    #     rh_tval_sub[key][idx_nan_rh] = np.nan
+    # NCSNR and encoding accuracy vertex selection
+    idx_ncsnr_lh = data['metadata']['fmri']['lh_ncsnr'] >= args.ncsnr_threshold
+    idx_ncsnr_rh = data['metadata']['fmri']['rh_ncsnr'] >= args.ncsnr_threshold
+    idx_encoding_lh = data['metadata']['encoding_models']\
+        ['lh_explained_variance_nsdcore'] >= args.encoding_threshold
+    idx_encoding_rh = data['metadata']['encoding_models']\
+        ['rh_explained_variance_nsdcore'] >= args.encoding_threshold
+    idx_nan_lh = ~np.logical_and(idx_ncsnr_lh, idx_encoding_lh)
+    idx_nan_rh = ~np.logical_and(idx_ncsnr_rh, idx_encoding_rh)
+    for key in lh_tval_sub.keys():
+        lh_tval_sub[key][idx_nan_lh] = np.nan
+        rh_tval_sub[key][idx_nan_rh] = np.nan
 
     # Threshold based on significance and store the results
     # for key in lh_tval_sub.keys():
@@ -106,15 +106,12 @@ for s, sub in enumerate(tqdm(args.subjects)):
     for cat in lh_tval[s].keys():
 
         # Select the ROI list
-        if cat == 'face':
+        if cat == 'body':
+            roi_list = ['Early', 'OFA', 'mTL-faces', 'aTL-faces', 'EBA',
+                'FBA-1', 'FBA-2', 'mTL-bodies', 'OPA', 'PPA', 'RSC']
+        else:
             roi_list = ['Early', 'OFA', 'FFA-1', 'FFA-2', 'mTL-faces',
-                'aTL-faces']
-        elif cat == 'body':
-            roi_list = ['Early', 'EBA', 'FBA-1', 'FBA-2', 'mTL-bodies']
-        elif cat == 'house':
-            roi_list = ['Early', 'OPA', 'PPA', 'RSC']
-        elif cat == 'food':
-            roi_list = ['Early', 'FFA-1', 'FFA-2', 'EBA', 'PPA']
+                'aTL-faces', 'EBA', 'mTL-bodies', 'OPA', 'PPA', 'RSC']
 
         # Append the results across left and right hemishperes
         data = np.append(lh_tval[s][cat], rh_tval[s][cat])
@@ -140,8 +137,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
             linewidth=3,
             linecolor=(1, 1, 1),
             with_labels=True,
-            labelsize=20,
-            curvature_brightness=0.5,
+            labelsize=25,
+            curvature_brightness=0.4,
             with_colorbar=True
             )
 

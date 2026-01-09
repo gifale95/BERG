@@ -16,7 +16,6 @@ import argparse
 import os
 import numpy as np
 import cortex
-import cortex.polyutils
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
@@ -80,9 +79,9 @@ matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
 matplotlib.rcParams['axes.linewidth'] = 1
-matplotlib.rcParams['xtick.major.width'] = 1
+matplotlib.rcParams['xtick.major.width'] = 0
 matplotlib.rcParams['xtick.major.size'] = 5
-matplotlib.rcParams['ytick.major.width'] = 1
+matplotlib.rcParams['ytick.major.width'] = 0
 matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
@@ -161,7 +160,7 @@ plt.xlim(left=-0.5, right=6.5)
 # y-axis parameters
 yticks = [0, 20, 40, 60, 80, 100]
 ylabels = [0, 20, 40, 60, 80, 100]
-plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
+plt.yticks(ticks=yticks, labels=ylabels)
 ylabel = 'Vertex overlap (%)'
 plt.ylabel(ylabel, fontsize=fontsize)
 plt.ylim(bottom=0, top=100)
@@ -171,7 +170,7 @@ plt.legend(loc=2, ncol=2, fontsize=fontsize, frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'vertex_overlap_images-'+args.images+'.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')
 
 
@@ -200,20 +199,21 @@ fig = cortex.quickshow(vertex_data,
     height=2000, # Increase resolution of map and ROI contours
     with_curvature=True,
     with_rois=True,
-    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-    linewidth=5,
+    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'], # !!! PLOT ROIS
+    linewidth=3,
     linecolor=(1, 1, 1),
     with_labels=True,
     labelsize=25,
-    curvature_brightness=0.5,
+    curvature_brightness=0.4,
     with_colorbar=False
     )
 
 # Save the figure
 file_name = os.path.join(save_dir, 'tripartite_organization_flat_images-'+
     args.images+'.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')
+plt.close()
 
 # Plot results on inflated surfaces # !!! DELETE?
 #import nilearn

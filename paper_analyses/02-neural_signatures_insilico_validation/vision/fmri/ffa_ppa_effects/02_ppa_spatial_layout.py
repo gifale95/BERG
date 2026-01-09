@@ -81,7 +81,7 @@ for hem in hemispheres:
         # Get the vertex indices of the ROI of interest
         roi_idx = metadata[s]['fmri'][hem+'_fsaverage_rois']['PPA']
 
-        # NCSNR and noise ceiling vertex selection
+        # NCSNR and encoding accuracy vertex selection
         ncsnr = metadata[s]['fmri'][hem+'_ncsnr'][roi_idx]
         idx_ncsnr = ncsnr >= args.ncsnr_threshold
         encoding = metadata[s]['encoding_models']\

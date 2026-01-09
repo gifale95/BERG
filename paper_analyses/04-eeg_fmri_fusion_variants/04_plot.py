@@ -70,7 +70,7 @@ for rep in args.eeg_reps:
 for s, sub in enumerate(args.fmri_subjects):
     for h, hemi in enumerate(args.hemispheres):
 
-        # NCSNR and noise ceiling vertex selection
+        # NCSNR and encoding accuracy vertex selection
         ncsnr = metadata[s]['fmri'][hemi+'_ncsnr']
         idx_ncsnr = ncsnr >= args.ncsnr_threshold
         encoding = metadata[s]['encoding_models']\

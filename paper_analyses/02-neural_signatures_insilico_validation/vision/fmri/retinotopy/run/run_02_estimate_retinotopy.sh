@@ -19,7 +19,7 @@ declare -a PROBE_SIGMA_all
 declare -a BG_VALUE_all
 index=0
 for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' ; do
-    for sub in `seq 1 1` ; do
+    for sub in `seq 1 8` ; do
         for g in '40' ; do
             for s in '0.5' ; do
                 for b in '0.5' ; do

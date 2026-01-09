@@ -25,7 +25,6 @@ import argparse
 import os
 import numpy as np
 import cortex
-import cortex.polyutils
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -65,7 +64,7 @@ for sub in args.subjects:
             format(sub, '02')+'_'+hemi+'.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
-        # NCSNR and noise ceiling vertex selection
+        # NCSNR and encoding accuracy vertex selection
         ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
         idx_ncsnr = ncsnr >= args.ncsnr_threshold
         encoding = results['metadata']['encoding_models']\
@@ -90,14 +89,14 @@ rh_rsa = np.array(rh_rsa)
 # Threshold the vertices by significance
 # =============================================================================
 # Load the significance
-stats_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri', 'llm_modeling',
-    'stats', args.encoding_model, 'stats.npy')
-stats = np.load(stats_dir, allow_pickle=True).item()
+# stats_dir = os.path.join(args.berg_dir,
+#     'neural_signatures_insilico_validation', 'vision', 'fmri', 'llm_modeling',
+#     'stats', args.encoding_model, 'stats.npy')
+# stats = np.load(stats_dir, allow_pickle=True).item()
 
-# Set non significant vertices to NaN
-lh_rsa[:,~stats['sig_lh_rsa']] = np.nan
-rh_rsa[:,~stats['sig_rh_rsa']] = np.nan
+# # Set non significant vertices to NaN
+# lh_rsa[:,~stats['sig_lh_rsa']] = np.nan
+# rh_rsa[:,~stats['sig_rh_rsa']] = np.nan
 
 
 # =============================================================================
@@ -136,14 +135,15 @@ fig = cortex.quickshow(
     with_curvature=True,
     with_rois=True,
     roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-    linewidth=2,
+    linewidth=3,
     linecolor=(1, 1, 1),
     with_labels=True,
-    labelsize=15,
-    curvature_brightness=0.5,
+    labelsize=25,
+    curvature_brightness=0.4,
     with_colorbar=True
     )
 
 # Save the figure
 file_name = os.path.join(save_dir, 'rsa.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close()
