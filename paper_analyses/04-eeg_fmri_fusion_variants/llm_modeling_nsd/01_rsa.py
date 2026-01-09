@@ -99,7 +99,7 @@ berg = BERG(berg_dir=args.berg_dir)
 # Get the test image number
 metadata = berg.get_model_metadata(
     'fmri-nsd_fsaverage-huze',
-    subject=1
+    subject=args.fmri_subject
 )
 test_img_num = metadata['encoding_models']['test_img_num']
 

@@ -71,7 +71,7 @@ berg = BERG(berg_dir=args.berg_dir)
 # Load the metadata
 metadata = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
-    subject=1
+    subject=args.fmri_subject
     )
 
 

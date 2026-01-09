@@ -34,7 +34,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2], type=int)
 parser.add_argument('--eeg_subjects', default=[1, 2], type=int)
 parser.add_argument('--eeg_reps', default='average', type=str)
-parser.add_argument('--regression', default='linear', type=str)
+parser.add_argument('--regression', default='ridge', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -105,6 +105,7 @@ metadata_eeg = berg.get_model_metadata(
 )
 
 times = metadata_eeg['eeg']['times']
+times = times[np.arange(20, 50)] # !!! CHANGE
 
 
 # =============================================================================
