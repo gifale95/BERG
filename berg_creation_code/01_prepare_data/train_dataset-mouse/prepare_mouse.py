@@ -60,8 +60,6 @@ Per-session neuron counts:
     Session 9, Scan 4:  7,855 neurons
     Session 9, Scan 6:  5,130 neurons 
     
-python berg_creation_code/01_prepare_data/train_dataset-mouse/prepare_mouse.py --data_path '/Volumes/Extreme SSD/Datasets/MOUSE'
-    
 """
 
 import argparse

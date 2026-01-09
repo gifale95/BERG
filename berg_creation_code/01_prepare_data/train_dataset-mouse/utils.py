@@ -28,12 +28,6 @@ def extract_mouse_metadata(data_path, output_path):
         - ori_dir_tuning/units.csv : Orientation/direction tuning properties
     output_path : Path
         Path to output metadata directory.
-        
-    Output Files
-    ------------
-    session{session}_scan{scan}_metadata.npy : Metadata for one recording session
-        Contains 'calcium' and 'encoding_model' dictionaries with all unit
-        properties for that session.
     """
     data_path = Path(data_path)
     output_path = Path(output_path)
