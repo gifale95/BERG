@@ -157,6 +157,30 @@ Encoding models trained on neural responses recorded with Utah arrays (intracort
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-utah_array/train_dataset-tvsd/model-vit_b_32/encoding_models_accuracy/>`_
 
+modality-calcium_2p
+~~~~~~~~~~~~~~~~~~~
+Encoding models trained on neural responses recorded with two-photon calcium imaging.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 3 60 40 20 10 10 10
+   :class: wrap-table
+
+   * - Best model
+     - Model ID
+     - Description
+     - Training dataset
+     - Species
+     - Stimuli
+     - Encoding accuracy
+   * - ✅
+     - :doc:`model_cards/calcium_2p-wang_2025-3DCNN`
+     - Foundation model of mouse visual cortex.
+     - `Wang et al., 2025 <https://doi.org/10.1038/s41586-025-08829-y>`_
+     - Mouse
+     - Videos
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-calcium_2p/train_dataset-wang_2025/model-3DCNN/encoding_models_accuracy/>`_
+
 .. raw:: html
 
    <style>
