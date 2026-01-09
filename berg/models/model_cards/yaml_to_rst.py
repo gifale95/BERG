@@ -682,7 +682,7 @@ if __name__ == "__main__":
     yaml_to_rst(args.yaml_file, output_file)
     print(f"Converted {args.yaml_file} to {output_file}")
     
-    
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/calcium_2p-wang_2025-3DCNN.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll.yaml
