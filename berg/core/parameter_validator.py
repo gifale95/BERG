@@ -36,6 +36,71 @@ def validate_subject(subject: int, valid_subjects: List[int]) -> None:
         raise InvalidParameterError(
             f"Subject must be one of {valid_subjects}, got {subject}"
         )
+        
+
+def validate_subjects(
+    subjects: Union[int, List[int], str, List[str]],
+    valid_subjects: List[Union[int, str]]
+) -> List[Union[int, str]]:
+    """
+    Validate subject parameter that can be a single subject, list of subjects, or "all".
+    Works with both integer subjects (e.g., 1, 2, 3) and string subjects (e.g., "NSD-01").
+    
+    Parameters
+    ----------
+    subjects : int, list of int, str, or list of str
+        The subject(s) to validate
+    valid_subjects : list
+        List of valid subject IDs (either integers or strings)
+        
+    Returns
+    -------
+    list
+        Normalized list of subject IDs
+        
+    Raises
+    ------
+    InvalidParameterError
+        If the subject parameter is invalid
+    """
+    # Handle single integer
+    if isinstance(subjects, int):
+        if subjects not in valid_subjects:
+            raise InvalidParameterError(
+                f"Subject must be one of {valid_subjects}, got {subjects}"
+            )
+        return [subjects]
+    
+    # Handle string cases
+    if isinstance(subjects, str):
+        # Check for "all" first
+        if subjects.lower() == "all":
+            return valid_subjects
+        # Check if it's a valid single subject string
+        if subjects in valid_subjects:
+            return [subjects]
+        # Invalid subject string
+        raise InvalidParameterError(
+            f"Subject must be one of {valid_subjects} or 'all', got '{subjects}'"
+        )
+    
+    # Handle list
+    if isinstance(subjects, list):
+        if len(subjects) == 0:
+            raise InvalidParameterError("Subject list cannot be empty")
+        
+        invalid_subjects = [s for s in subjects if s not in valid_subjects]
+        if invalid_subjects:
+            raise InvalidParameterError(
+                f"Invalid subject(s): {invalid_subjects}. Valid subjects are: {valid_subjects}"
+            )
+        
+        return subjects
+    
+    # Invalid type
+    raise InvalidParameterError(
+        f"subjects must be an int, string, list, or 'all', got {type(subjects)}"
+    )
 
 
 def validate_selection_keys(selection: Dict[str, Any], valid_keys: List[str]) -> None:

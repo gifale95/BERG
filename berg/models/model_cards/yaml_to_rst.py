@@ -71,121 +71,186 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         rst_content.extend(["Metadata", "--------", ""])
         metadata = data.get("metadata", "").strip()
         
-        # Parse metadata structure with support for nested dictionaries
+        # Parse metadata into a hierarchical structure
         lines = metadata.split("\n")
-        current_section = None
-        section_data = {}
+        entries = []  # List of (key, shape, desc, nesting_level)
+        note_lines = []  # Collect NOTE lines to display above table
         
-        for line in lines:
+        i = 0
+        indent_stack = []  # Track indent levels to determine nesting
+        
+        while i < len(lines):
+            line = lines[i]
             line_stripped = line.strip()
+            
             if not line_stripped:
+                i += 1
                 continue
             
-            # Get original indentation level
             indent_level = len(line) - len(line.lstrip())
             
-            # Check if this is a top-level section key (very low indent + ends with : and no -)
-            if line_stripped.endswith(":") and " - " not in line_stripped and indent_level <= 2:
-                # Save previous section if exists
-                if current_section and current_section in section_data:
-                    # Create table for previous section
-                    rst_content.append(f"**{current_section}**")
-                    rst_content.append("")
-                    rst_content.append(".. list-table::")
-                    rst_content.append("   :widths: 30 20 50")
-                    rst_content.append("   :header-rows: 1")
-                    rst_content.append("")
-                    rst_content.append("   * - Key")
-                    rst_content.append("     - Shape/Type")
-                    rst_content.append("     - Description")
-                    
-                    for key, shape, desc, nest_level in section_data[current_section]:
-                        if nest_level > 0:
-                            indent_str = "|nbsp| |nbsp| |nbsp| |nbsp| " * nest_level
-                            rst_content.append(f"   * - {indent_str}|rarr| {key}")
-                        else:
-                            if shape.lower() == "dict":
-                                rst_content.append(f"   * - **{key}**")
-                            else:
-                                rst_content.append(f"   * - {key}")
-                        rst_content.append(f"     - ``{shape}``")
-                        rst_content.append(f"     - {desc}")
-                    
-                    rst_content.append("")
+            # Check if this is a NOTE entry (special case)
+            if line_stripped.upper().startswith("NOTE"):
+                # This is a note - extract and save for later
+                if ":" in line_stripped:
+                    note_text = line_stripped.split(":", 1)[1].strip()
+                    note_lines.append(note_text)
+                i += 1
+                continue
+            
+            # Check if this is a section header (quoted string ending with :)
+            if line_stripped.startswith("'") and line_stripped.endswith("':"):
+                # Section headers are treated as level 0 entries with type "section"
+                section_name = line_stripped.rstrip(":").strip("'")
+                entries.append((section_name, "section", "", 0))
+                indent_stack = [(indent_level, 0)]  # Reset stack for new section
+                i += 1
+                continue
+            
+            # Parse entry: key : shape - description or key : shape
+            if ":" in line_stripped:
+                # Determine nesting level based on indent
+                # Clear stack of items with equal or greater indent
+                while indent_stack and indent_stack[-1][0] >= indent_level:
+                    indent_stack.pop()
                 
-                # Start new section
-                current_section = line_stripped.rstrip(":")
-                section_data[current_section] = []
-            elif ":" in line_stripped and " - " not in line_stripped and "dict" in line_stripped.lower():
-                key_part, rest = line_stripped.split(":", 1)
-                key = key_part.strip()
-                shape = rest.strip()
-                if current_section:
-                    section_data[current_section].append((key, shape, "", 0))
-            elif line_stripped.endswith(":") and " - " not in line_stripped and indent_level > 2:
-                key = line_stripped.rstrip(":")
-                if current_section:
-                    section_data[current_section].append((key, "dict", "", 0))
-            else:
-                # Parse the line: key : shape - description
-                if ":" in line_stripped and " - " in line_stripped:
-                    # Split on first : to get key
-                    key_part, rest = line_stripped.split(":", 1)
-                    key = key_part.strip()
+                # Current nesting level is the stack depth
+                nesting_level = len(indent_stack)
+                
+                # Parse the entry
+                if " - " not in line_stripped:
+                    # Format: key : shape (no description)
+                    # But first check if this is actually a valid key or just text with a colon
+                    key_part, shape_part = line_stripped.split(":", 1)
+                    key = key_part.strip().strip("'")
+                    shape = shape_part.strip()
                     
-                    # Split on - to get shape and description
+                    # Validate that this looks like a proper key:value entry
+                    # Keys should be simple identifiers, not sentences
+                    # Skip if key contains spaces and looks like a phrase or sentence
+                    if " " in key and (
+                        len(key) > 30 or  # Long keys with spaces are likely descriptive text
+                        key.endswith(("ROIs", "info", "data", "values", "items"))  # Descriptive headers
+                    ):
+                        # This is likely descriptive text, not a key - skip it
+                        i += 1
+                        continue
+                    
+                    desc = ""
+                    i += 1
+                else:
+                    # Format: key : shape - description
+                    key_part, rest = line_stripped.split(":", 1)
+                    key = key_part.strip().strip("'")
+                    
                     shape_part, desc_part = rest.split(" - ", 1)
                     shape = shape_part.strip()
                     desc = desc_part.strip()
                     
-                    # Determine nesting level based on indentation
-                    nest_level = 0
-                    if indent_level > 10:
-                        nest_level = 2
-                    elif indent_level > 6:
-                        nest_level = 1
+                    # Check for continuation lines (multi-line descriptions)
+                    continuation_lines = [desc]
+                    j = i + 1
+                    while j < len(lines):
+                        next_line = lines[j]
+                        next_line_stripped = next_line.strip()
+                        
+                        if not next_line_stripped:
+                            j += 1
+                            continue
+                        
+                        next_indent = len(next_line) - len(next_line.lstrip())
+                        
+                        # Check if this is a continuation line
+                        # It's a continuation if indent is higher AND it doesn't match key:shape format
+                        is_continuation = next_indent > indent_level
+                        
+                        if is_continuation and ":" in next_line_stripped:
+                            # Only break if this looks like a proper "key : shape - desc" entry
+                            # Check for the pattern: word/phrase : something
+                            if " - " in next_line_stripped:
+                                # Has the full pattern, likely a new entry
+                                parts = next_line_stripped.split(":", 1)
+                                if len(parts) == 2:
+                                    potential_key = parts[0].strip()
+                                    # Simple key without spaces, or known valid keys
+                                    if (not " " in potential_key or 
+                                        potential_key.replace("_", "").replace("-", "").isalnum()):
+                                        is_continuation = False
+                        
+                        if is_continuation:
+                            continuation_lines.append(next_line_stripped)
+                            j += 1
+                        else:
+                            break
                     
-                    if current_section:
-                        section_data[current_section].append((key, shape, desc, nest_level))
-        
-        # Handle the last section
-        if current_section and current_section in section_data:
-            rst_content.append(f"**{current_section}**")
-            rst_content.append("")
-            rst_content.append(".. list-table::")
-            rst_content.append("   :widths: 30 20 50")
-            rst_content.append("   :header-rows: 1")
-            rst_content.append("")
-            rst_content.append("   * - Key")
-            rst_content.append("     - Shape/Type")
-            rst_content.append("     - Description")
-            
-            for key, shape, desc, nest_level in section_data[current_section]:
-                if nest_level > 0:
-                    indent_str = "|nbsp| |nbsp| |nbsp| |nbsp| " * nest_level
-                    rst_content.append(f"   * - {indent_str}|rarr| {key}")
-                else:
-                    if shape.lower() == "dict":
-                        rst_content.append(f"   * - **{key}**")
+                    # Join continuation lines with newlines
+                    if len(continuation_lines) > 1:
+                        desc = "\n".join(continuation_lines)
+                        i = j
                     else:
-                        rst_content.append(f"   * - {key}")
-                rst_content.append(f"     - ``{shape}``")
-                rst_content.append(f"     - {desc}")
-            
+                        i += 1
+                
+                entries.append((key, shape, desc, nesting_level))
+                
+                # If this is a dict, add to stack for tracking children
+                if shape.lower() == "dict":
+                    indent_stack.append((indent_level, nesting_level))
+            else:
+                i += 1
+        
+        # Display NOTE if present
+        if note_lines:
+            rst_content.append(".. note::")
+            rst_content.append("")
+            for note_line in note_lines:
+                rst_content.append(f"   {note_line}")
             rst_content.append("")
         
-        # Add unicode definitions if needed
-        has_nested = any(
-            any(item[3] > 0 for item in items) 
-            for items in section_data.values()
-        )
-        if has_nested:
-            rst_content.insert(3, ".. |nbsp| unicode:: 0xA0")
-            rst_content.insert(4, "   :trim:")
-            rst_content.insert(5, "")
-            rst_content.insert(6, ".. |rarr| unicode:: 0x2192")
-            rst_content.insert(7, "   :trim:")
-            rst_content.insert(8, "")
+        # Generate definition lists with proper hierarchy
+        if entries:
+            prev_level = -1
+            for key, shape, desc, nesting_level in entries:
+                # Handle section headers specially - use bold header
+                if shape == "section":
+                    rst_content.append(f"**{key}**")
+                    rst_content.append("")
+                    prev_level = -1
+                    continue
+                
+                # Add blank line when returning to same or lower nesting level
+                # This separates definition list items properly
+                if prev_level >= 0 and nesting_level <= prev_level:
+                    rst_content.append("")
+                
+                # Calculate indentation (4 spaces per level)
+                indent = "    " * nesting_level
+                
+                # Format key with bold
+                key_formatted = f"**{key}**"
+                
+                # Format the definition line: key : shape - description (all on one line)
+                if desc:
+                    # Single line format with description
+                    if "\n" in desc:
+                        # Multi-line description - first line inline, rest indented below
+                        desc_lines = desc.split("\n")
+                        rst_content.append(f"{indent}{key_formatted} : ``{shape}`` - {desc_lines[0]}")
+                        # Add remaining lines indented one level deeper
+                        desc_indent = "    " * (nesting_level + 1)
+                        for desc_line in desc_lines[1:]:
+                            rst_content.append(f"{desc_indent}{desc_line}")
+                    else:
+                        # Single line description
+                        rst_content.append(f"{indent}{key_formatted} : ``{shape}`` - {desc}")
+                else:
+                    # No description, just key and shape
+                    rst_content.append(f"{indent}{key_formatted} : ``{shape}``")
+                
+                prev_level = nesting_level
+        
+        # Remove trailing blank lines
+        while rst_content and rst_content[-1] == "":
+            rst_content.pop()
         
         rst_content.append("")
     
@@ -212,31 +277,24 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     rst_content.append(f"**Shape**: ``{output_data.get('shape', '')}``  ")
     rst_content.append("**Description**:  ")
     
-    # Handle multiline output description, preserving bullet points
+    # Handle multiline output description
     output_description = output_data.get("description", "").strip()
     
     if "\n" in output_description:
         output_lines = output_description.split("\n")
         
-        in_bullet_list = False
-        
         for line in output_lines:
             line = line.strip()
             if not line:
-                # Add empty lines as is
                 rst_content.append("")
                 continue
-                
-            # Check if the line is a bullet point (starts with - or *)
+            
+            # Check if the line is a bullet point
             if line.startswith("-") or line.startswith("*"):
-                # This is a bullet point line
-                in_bullet_list = True
-                # Convert to RST bullet format (*)
                 if line.startswith("-"):
                     line = "* " + line[1:].strip()
                 rst_content.append(line)
             else:
-                in_bullet_list = False
                 rst_content.append(line)
     else:
         rst_content.append(output_description)
@@ -263,24 +321,40 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     # Parameters section
     rst_content.extend(["Parameters", "---------", ""])
     
-    # Group parameters by function
+    # Group parameters by function (handling comma-separated functions)
     param_by_function = {}
     for param_name, param_data in data.get("parameters", {}).items():
-        function = param_data.get("function", "")
-        if function not in param_by_function:
-            param_by_function[function] = []
-        param_by_function[function].append((param_name, param_data))
+        functions = param_data.get("function", "")
+        # Handle comma-separated functions
+        if isinstance(functions, str):
+            function_list = [f.strip() for f in functions.split(",")]
+        else:
+            function_list = [functions]
+        
+        for function in function_list:
+            if function not in param_by_function:
+                param_by_function[function] = []
+            param_by_function[function].append((param_name, param_data))
     
-    # Create subsections for each function
-    for function, params in param_by_function.items():
+    # Define function order
+    function_order = ["get_encoding_model", "encode", "get_model_metadata"]
+    
+    # Create subsections for each function in order
+    for function in function_order:
+        if function not in param_by_function:
+            continue
+            
+        params = param_by_function[function]
+        
         if function == "get_encoding_model":
             display_name = "get_encoding_model"
-            # Add description for get_encoding_model function
             function_description = "This function loads the encoding model."
         elif function == "encode":
             display_name = "encode"
-            # Add description for encode function
             function_description = "This function generates in silico neural responses using the encoding model previously loaded."
+        elif function == "get_model_metadata":
+            display_name = "get_model_metadata"
+            function_description = "This function loads the encoding model's metadata without having to load the model itself."
         else:
             display_name = function
             function_description = ""
@@ -289,7 +363,6 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         rst_content.append("~" * (len(f"Parameters used in ``{display_name}``")))
         rst_content.append("")
         
-        # Add the function description if it exists
         if function_description:
             rst_content.append(f"{function_description}")
             rst_content.append("")
@@ -302,65 +375,51 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         for param_name, param_data in params:
             # Special handling for selection parameter
             if param_name == "selection" and "properties" in param_data:
-                # Add the main selection parameter entry
                 rst_content.append(f"   * - **{param_name}**")
-                
-                # Start the parameter details cell with the vertical bar
                 rst_content.append(f"     - | **Type:** {param_data.get('type', '')}")
                 
-                # Add required field
                 required = param_data.get("required", False)
                 rst_content.append(f"       | **Required:** {'Yes' if required else 'No'}")
                 
-                # Process description with special handling for multiline text
                 if "description" in param_data:
                     desc = param_data.get("description", "").strip()
-                    # Split by newlines and handle each line separately
                     desc_lines = desc.split("\n")
-                    # First description line
                     rst_content.append(f"       | **Description:** {desc_lines[0]}")
-                    # Any additional description lines
                     for line in desc_lines[1:]:
                         rst_content.append(f"       | {line}")
                 
-                # Add properties header with an empty line before it
                 rst_content.append("       | ")
                 rst_content.append("       | **Properties:**")
                 
-                # Process each property
                 for prop_name, prop_data in param_data["properties"].items():
-                    # Add an empty line before each property for better readability
                     rst_content.append("       | ")
                     rst_content.append(f"       | **{prop_name}**")
                     rst_content.append(f"       |     **Type:** {prop_data.get('type', '')}")
                     
-                    # Process property description with careful handling of newlines
                     if "description" in prop_data:
                         prop_desc = prop_data.get("description", "").strip()
-                        # Split and handle each line separately
                         prop_desc_lines = prop_desc.split("\n")
-                        # First description line
                         rst_content.append(f"       |     **Description:** {prop_desc_lines[0]}")
-                        # Any additional description lines
                         for line in prop_desc_lines[1:]:
                             rst_content.append(f"       |     {line}")
                     
-                    # Add valid values if available
                     if "valid_values" in prop_data:
                         valid_values = prop_data["valid_values"]
                         if isinstance(valid_values, list):
-                            # Format as comma-separated string wrapped in quotes
-                            formatted_values = ", ".join([f'"{v}"' for v in valid_values])
-                            rst_content.append(f"       |     **Valid values:** {formatted_values}")
+                            formatted_values = []
+                            for v in valid_values:
+                                if isinstance(v, str):
+                                    formatted_values.append(f'"{v}"')
+                                else:
+                                    formatted_values.append(str(v))
+                            rst_content.append(f"       |     **Valid values:** {', '.join(formatted_values)}")
                         else:
                             rst_content.append(f"       |     **Valid values:** {valid_values}")
                     
-                    # Add example if available
                     if "example" in prop_data:
                         example = prop_data["example"]
                         if isinstance(example, list):
                             if len(example) > 10:
-                                # Truncate long examples
                                 example_str = str(example[:5])[:-1] + ", ... ]"
                             else:
                                 example_str = str(example)
@@ -370,8 +429,6 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
             else:
                 # Regular parameter handling
                 rst_content.append(f"   * - **{param_name}**")
-                
-                # Format parameter details with proper indentation
                 rst_content.append(f"     - | **Type:** {param_data.get('type', '')}")
                 
                 required = param_data.get("required", False)
@@ -379,7 +436,6 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                 
                 if "description" in param_data:
                     desc = param_data.get("description", "").strip()
-                    # Handle multiline descriptions
                     desc_lines = desc.split("\n")
                     rst_content.append(f"       | **Description:** {desc_lines[0]}")
                     for line in desc_lines[1:]:
@@ -388,12 +444,22 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                 if "valid_values" in param_data:
                     valid_values = param_data["valid_values"]
                     if isinstance(valid_values, list):
-                        rst_content.append(f"       | **Valid Values:** {', '.join(map(str, valid_values))}")
+                        formatted_values = []
+                        for v in valid_values:
+                            if isinstance(v, str):
+                                formatted_values.append(f'"{v}"')
+                            else:
+                                formatted_values.append(str(v))
+                        rst_content.append(f"       | **Valid Values:** {', '.join(formatted_values)}")
                     else:
                         rst_content.append(f"       | **Valid Values:** {valid_values}")
                 
                 if "example" in param_data:
-                    rst_content.append(f"       | **Example:** {param_data.get('example', '')}")
+                    example = param_data.get('example', '')
+                    if isinstance(example, str):
+                        rst_content.append(f'       | **Example:** "{example}"')
+                    else:
+                        rst_content.append(f"       | **Example:** {example}")
         
         rst_content.append("")
     
@@ -424,134 +490,119 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         ""
     ]
     
-    # Dynamically create the model loading example based on actual parameters
+    # Collect parameters for each function
     get_model_params = []
     encode_params = []
+    metadata_params = []
     has_selection = False
     selection_example = {}
-    device_param = None
     
-    # Find parameters used in get_encoding_model and encode
     for param_name, param_data in data.get("parameters", {}).items():
-        if param_data.get("function") == "get_encoding_model":
-            if param_name == "selection":
-                has_selection = True
-                # Build selection example from properties
-                if "properties" in param_data:
-                    for prop_name, prop_data in param_data["properties"].items():
-                        if "example" in prop_data:
-                            selection_example[prop_name] = prop_data["example"]
-                        elif prop_name == "roi" and "valid_values" in prop_data:
-                            # Fallback for roi if no example provided
-                            selection_example["roi"] = prop_data["valid_values"][0]
-            elif param_data.get("required", False):
-                # For required parameters, use an example value if available
-                if "example" in param_data:
-                    example_val = param_data["example"]
-                    # Format the value based on its type
-                    if param_data.get("type") == "str":
-                        if isinstance(example_val, str):
-                            get_model_params.append(f"{param_name}={example_val}")
-                        else:
-                            get_model_params.append(f"{param_name}={example_val}")
-                    else:
-                        get_model_params.append(f"{param_name}={example_val}")
-                else:
-                    # Use a generic value if no example is provided
-                    if param_data.get("type") == "str":
-                        get_model_params.append(f"{param_name}=\"value\"")
-                    elif param_data.get("type") == "int":
-                        get_model_params.append(f"{param_name}=1")
-                    else:
-                        get_model_params.append(f"{param_name}=value")
+        functions = param_data.get("function", "")
+        # Handle comma-separated functions
+        if isinstance(functions, str):
+            function_list = [f.strip() for f in functions.split(",")]
+        else:
+            function_list = [functions]
         
-        # Look for device parameter in encode function to add to get_encoding_model
-        elif param_data.get("function") == "encode":
-            if param_name == "device" and "example" in param_data:
-                device_param = f"device=\"{param_data['example']}\""
-            elif param_name != "stimulus":  # We'll handle stimulus separately
-                # Collect other encode parameters for later use
-                if "example" in param_data and param_data.get("example") != param_data.get("default"):
-                    if param_data.get("type") == "str":
-                        encode_params.append(f"{param_name}=\"{param_data['example']}\"")
-                    else:
-                        encode_params.append(f"{param_name}={param_data['example']}")
+        for function in function_list:
+            if function == "get_encoding_model":
+                if param_name == "selection":
+                    has_selection = True
+                    if "properties" in param_data:
+                        for prop_name, prop_data in param_data["properties"].items():
+                            if "example" in prop_data:
+                                selection_example[prop_name] = prop_data["example"]
+                elif param_data.get("required", False) and param_name not in ["model_id", "device"]:
+                    if "example" in param_data:
+                        example_val = param_data["example"]
+                        if isinstance(example_val, str):
+                            param_str = f'{param_name}="{example_val}"'
+                        else:
+                            param_str = f"{param_name}={example_val}"
+                        # Avoid duplicates
+                        if param_str not in get_model_params:
+                            get_model_params.append(param_str)
+            
+            elif function == "encode":
+                if param_name not in ["model", "stimulus", "return_metadata"]:
+                    if "example" in param_data and param_data.get("example") != param_data.get("default"):
+                        if isinstance(param_data["example"], str):
+                            param_str = f'{param_name}="{param_data["example"]}"'
+                        else:
+                            param_str = f"{param_name}={param_data['example']}"
+                        # Avoid duplicates
+                        if param_str not in encode_params:
+                            encode_params.append(param_str)
+            
+            elif function == "get_model_metadata":
+                if param_data.get("required", False) and param_name != "model_id":
+                    if "example" in param_data:
+                        example_val = param_data["example"]
+                        if isinstance(example_val, str):
+                            param_str = f'{param_name}="{example_val}"'
+                        else:
+                            param_str = f"{param_name}={example_val}"
+                        # Avoid duplicates
+                        if param_str not in metadata_params:
+                            metadata_params.append(param_str)
     
-    # Build the model loading section
+    # Build get_encoding_model example
     example_code.append("# Load the model")
-    
-    # Always use multi-line format for better readability
     example_code.append("model = berg.get_encoding_model(")
-    example_code.append(f"    \"{model_id}\",")
+    example_code.append(f'    "{model_id}",')
     
-    # Add required parameters
     for param in get_model_params:
         example_code.append(f"    {param},")
     
-    # Add selection if it exists
     if has_selection and selection_example:
         example_code.append("    selection={")
-        for key, value in selection_example.items():
+        selection_items = list(selection_example.items())
+        for idx, (key, value) in enumerate(selection_items):
             if isinstance(value, str):
-                example_code.append(f"        \"{key}\": \"{value}\"")
+                line = f'        "{key}": "{value}"'
             elif isinstance(value, list):
-                # Handle list values properly
                 if all(isinstance(x, str) for x in value):
-                    # List of strings
                     formatted_list = "[" + ", ".join([f'"{item}"' for item in value]) + "]"
                 else:
-                    # List of other types (like arrays)
                     formatted_list = str(value)
-                example_code.append(f"        \"{key}\": {formatted_list}")
+                line = f'        "{key}": {formatted_list}'
             else:
-                example_code.append(f"        \"{key}\": {value}")
-        example_code.append("    },")
-    
-    # Add device parameter
-    if device_param:
-        example_code.append(f"    {device_param}")
+                line = f'        "{key}": {value}'
+            
+            # Add comma if not the last item
+            if idx < len(selection_items) - 1:
+                line += ","
+            example_code.append(line)
+        example_code.append("    }")
     
     example_code.append(")")
     example_code.append("")
     
-    # Add information about the stimulus based on the input definition
-    input_data = data.get("input", {})
-    input_shape = input_data.get("shape", "")
-    
+    # Add stimulus preparation
     example_code.append("# Prepare the stimulus images")
-    if isinstance(input_shape, list) and len(input_shape) > 0:
-        # Create a more descriptive comment based on shape
-        shape_description = str(input_shape).replace("'", "")
-        if "3" in str(input_shape) and ("height" in str(input_shape) or "width" in str(input_shape)):
-            example_code.append("# Image shape should be [batch_size, 3 RGB channels, height, width]")
-        else:
-            example_code.append(f"# Image shape should be {shape_description}")
-    
-    # Add example stimulus creation
+    example_code.append("# Image shape should be [batch_size, 3 RGB channels, height, width]")
     example_code.append("images = np.random.randint(0, 255, (100, 3, 256, 256))")
     example_code.append("")
     
-    # Add encode call with improved formatting and comments
+    # Build encode example
     example_code.append("# Generates the in silico neural responses to images using the encoding model previously loaded")
     example_code.append("responses = berg.encode(")
     example_code.append("    model,")
     example_code.append("    images,")
     
-    # Add encode parameters if they exist
     if encode_params:
         for param in encode_params:
             example_code.append(f"    {param}")
     else:
-        # Add show_progress as a common parameter
         example_code.append("    show_progress=True")
     
     example_code.append(")")
     example_code.append("")
     
-    # Add output information based on the YAML output definition
+    # Add output information
     output_data = data.get("output", {})
     if output_data:
-        # Add output description with improved formatting
         output_type = output_data.get("type", "")
         output_shape = output_data.get("shape", "")
         
@@ -559,7 +610,6 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
             example_code.append(f"# The in silico fMRI responses will be a {output_type} of shape:")
             example_code.append(f"# {output_shape}")
         
-        # Add dimension explanations (exclude batch_size as it's self-explanatory)
         dimensions = output_data.get("dimensions", [])
         if dimensions:
             example_code.append("# where:")
@@ -567,7 +617,6 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                 name = dim.get("name", "")
                 desc = dim.get("description", "")
                 if name and desc and name != "batch_size":
-                    # Improve the description formatting
                     if "lh_vertices" in name.lower():
                         example_code.append(f"# - {name} is the number of selected left hemisphere (LH) vertices for which the in silico")
                         example_code.append("#   fMRI responses are generated.")
@@ -579,7 +628,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         
         example_code.append("")
     
-    # Add metadata example
+    # Add metadata example with return_metadata
     example_code.append("# Generate in silico neural responses with metadata")
     example_code.append("responses, metadata = berg.encode(")
     example_code.append("    model,")
@@ -588,7 +637,17 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     example_code.append(")")
     example_code.append("")
     
-    # Add the example code
+    # Add get_model_metadata example if that function exists
+    if "get_model_metadata" in param_by_function:
+        example_code.append("# Load the encoding model's metadata without having to load the model itself")
+        example_code.append("metadata = berg.get_model_metadata(")
+        example_code.append(f'    "{model_id}",')
+        for param in metadata_params:
+            example_code.append(f"    {param}")
+        example_code.append(")")
+        example_code.append("")
+    
+    # Add the example code with proper indentation
     for line in example_code:
         rst_content.append(f"    {line}")
     
@@ -618,24 +677,24 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description="Convert YAML model specification to RST format")
     parser.add_argument("yaml_file", help="Input YAML file path")
-    parser.add_argument("output_file", nargs="?", help="Output RST file path (default: input filename with .rst extension)")
     
     args = parser.parse_args()
     
-    output_file = args.output_file
+    output_file = "docs/models/model_cards/" + (args.yaml_file.split("/")[-1]).split(".")[0] + ".rst"
     if not output_file:
         output_file = os.path.splitext(args.yaml_file)[0] + ".rst"
     
     yaml_to_rst(args.yaml_file, output_file)
     print(f"Converted {args.yaml_file} to {output_file}")
-
-# Example usage from console:
-# 
-# 1. Convert a YAML file to RST (output has same name with .rst extension):
-#    python yaml_to_rst.py fmri_nsd_fwrf.yaml
-#
-# 2. Convert a YAML file to RST with specific output path:
-#    python yaml_to_rst.py fmri_nsd_fwrf.yaml docs/model_cards/fmri_nsd_fwrf.rst
     
-# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/meg-things_meg_1-vit_b_32.yaml docs/models/model_cards/meg-things_meg_1-vit_b_32.rst
-# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml source/models/model_cards/eeg-things_eeg_2-vit_b_32.rst
+
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/calcium_2p-wang_2025-3DCNN.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-nsd_fsaverage-huze.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-nsd_fsaverage-vit_b_32.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-nsd-fwrf.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-things_fmri_1-vit_b_32.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/meg-things_meg_1-vit_b_32.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/utah_array-tvsd-vit_b_32.yaml
