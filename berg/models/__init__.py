@@ -3,3 +3,4 @@ import berg.models.fmri
 import berg.models.eeg
 import berg.models.meg
 import berg.models.utah_array
+import berg.models.calcium_2p

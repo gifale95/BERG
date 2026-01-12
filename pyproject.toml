@@ -39,6 +39,7 @@ dependencies = [
     "einops==0.6.0",
     "timm==0.9.2",
     "mosaic-dataset"
+    "fnn @ git+https://github.com/cajal/fnn.git"
 ]
 
 [project.urls]

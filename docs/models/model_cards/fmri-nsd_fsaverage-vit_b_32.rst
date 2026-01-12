@@ -1,6 +1,12 @@
 ===========================
 fmri-nsd_fsaverage-vit_b_32
 ===========================
+.. |nbsp| unicode:: 0xA0
+   :trim:
+
+.. |rarr| unicode:: 0x2192
+   :trim:
+
 
 Model Summary
 ------------
