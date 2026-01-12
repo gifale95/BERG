@@ -124,9 +124,9 @@ metadata: |
 
 # Input stimulus information
 input:
+  description: "The input should be a batch of RGB images."
   type: "numpy.ndarray"
   shape: [batch_size, 3, height, width]
-  description: "The input should be a batch of RGB images."
   constraints:
     - "Image values should be integers in range [0, 255]."
     - "Image dimensions (height, width) should be equal (square)."
@@ -134,11 +134,11 @@ input:
 
 # Output information
 output:
-  type: "tuple of numpy.ndarray"
-  shape: ([batch_size, lh_vertices], [batch_size, rh_vertices])
   description: |
     The output is a tuple containing the left hemisphere (LH) and right hemisphere (RH) in silico fMRI
     responses for the batch images.
+  type: "tuple of numpy.ndarray"
+  shape: ([batch_size, lh_vertices], [batch_size, rh_vertices])
   dimensions:
     - name: "batch_size"
       description: "Number of stimuli in the batch."
@@ -149,19 +149,28 @@ output:
 
 # Model parameters and their usage
 parameters:
-  subject:
-    type: int
+
+  model_id:
+    description: Unique identifier of the model to load.
     required: true
+    type: "str"
+    valid_values: "fmri-nsd_fsaverage-vit_b_32"
+    example: "fmri-nsd_fsaverage-vit_b_32"
+    function: "get_encoding_model, get_model_metadata"
+
+  subject:
+    description: "Subject ID from the NSD dataset (1-8)."
+    required: true
+    type: int
     valid_values: [1, 2, 3, 4, 5, 6, 7, 8]
     example: 1
-    description: "Subject ID from the NSD dataset (1-8)."
-    function: "get_encoding_model"
+    function: "get_encoding_model, get_model_metadata"
 
   selection:
-    type: dict
     description: Specifies which outputs to include in the model responses. If not provided, fMRI responses
       are generate for all LH and RH fMRI vertices.
     required: false
+    type: dict
     function: get_encoding_model
     properties:
       roi:
@@ -174,7 +183,7 @@ parameters:
           "mTL-faces", "aTL-faces", "OVWFA", "VWFA-1", "VWFA-2", "mfs-words", "mTL-words",
           "OPA","PPA","RSC","EBA","FBA-1","FBA-2","mTL-bodies","early", "midventral",
           "midlateral", "midparietal", "parietal", "lateral", "ventral", "nsdgeneral"]
-        example_roi: "V1v"
+        example:: "V1v"
       lh_vertices:
         type: numpy.ndarray
         description: |
@@ -183,7 +192,7 @@ parameters:
           have exactly the same length as the number of LH fsaverage vertices (163,842).
           The vertices from the one-hot encoded vector are only selected if the "roi" key
           is not provided, or has value None.
-        example_vertices: [0, 0, ..., 1, 1, 0]
+        example:: [0, 0, ..., 1, 1, 0]
       rh_vertices:
         type: numpy.ndarray
         description: |
@@ -192,30 +201,46 @@ parameters:
           have exactly the same length as the number of RH fsaverage vertices (163,842).
           The vertices from the one-hot encoded vector are only selected if the "roi" key
           is not provided, or has value None.
-        example_vertices: [0, 0, ..., 1, 1, 0]
+        example:: [0, 0, ..., 1, 1, 0]
+    function: "get_encoding_model"
+
+  device:
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    required: false
+    type: str
+    valid_values: ["cpu", "cuda", "auto"]
+    example: "auto"
+    default: "auto"
     function: "get_encoding_model"
 
   model:
-    type: BaseModelInterface
-    required: true
     description: An instantiated and loaded encoding model.
+    required: true
+    type: BaseModelInterface
     function: "encode"
 
-  device:
-    type: str
-    required: false
-    valid_values: ["cpu", "cuda", "auto"]
-    default: "auto"
-    example: "auto"
-    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
-    function: "get_encoding_model"
-
   stimulus:
-    type: numpy.ndarray
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224)."
     required: true
+    type: numpy.ndarray
     shape: [batch_size, 3, height, width]
-    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
     example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+    function: "encode"
+
+  return_metadata:
+    description: "Whether to return the encoding model's metadata together with the in silico neural resposnes."
+    required: False
+    type: bool
+    default: Fale
+    example: True
+    function: "encode"
+
+  show_progress:
+    description: "Whether to show a progress bar during encoding (for large batches)."
+    required: false
+    type: bool
+    default: True
+    example: True
     function: "encode"
 
 # Performance metrics and references

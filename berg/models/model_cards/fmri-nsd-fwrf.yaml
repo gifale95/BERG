@@ -46,9 +46,9 @@ metadata: |
 
 # Input stimulus information
 input:
+  description: "The input should be a batch of RGB images."
   type: "numpy.ndarray"
   shape: [batch_size, 3, height, width]
-  description: "The input should be a batch of RGB images."
   constraints:
     - "Image values should be integers in range [0, 255]."
     - "Image dimensions (height, width) should be equal (square)."
@@ -56,8 +56,6 @@ input:
 
 # Output information
 output:
-  type: "numpy.ndarray"
-  shape: [batch_size, n_voxels]
   description: |
     The output is a 2D array containing in silico fMRI responses.
     The second dimension (n_voxels) corresponds to the number of voxels in the selected ROI,
@@ -86,6 +84,8 @@ output:
       - parietal: 3,548
       - lateral: 7,799
       - ventral: 7,604
+  type: "numpy.ndarray"
+  shape: [batch_size, n_voxels]
   dimensions:
     - name: "batch_size"
       description: "Number of stimuli in the batch"
@@ -94,18 +94,27 @@ output:
 
 # Model parameters and their usage
 parameters:
-  subject:
-    type: int
+
+  model_id:
+    description: Unique identifier of the model to load.
     required: true
+    type: "str"
+    valid_values: "fmri-nsd-fwrf"
+    example: "fmri-nsd-fwrf"
+    function: "get_encoding_model, get_model_metadata"
+
+  subject:
+    description: "Subject ID from the NSD dataset (1-8)."
+    required: true
+    type: int
     valid_values: [1, 2, 3, 4, 5, 6, 7, 8]
     example: 1
-    description: "Subject ID from the NSD dataset (1-8)."
-    function: "get_encoding_model"
+    function: "get_encoding_model, get_model_metadata"
 
   selection:
-    type: dict
     description: Specifies which outputs to include in the model responses.
     required: true
+    type: dict
     function: get_encoding_model
     properties:
       roi:
@@ -122,26 +131,42 @@ parameters:
     function: "get_encoding_model"
 
   device:
-    type: str
-    required: false
-    valid_values: ["cpu", "cuda", "auto"]
-    default: "auto"
-    example: "auto"
     description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    required: false
+    type: str
+    valid_values: ["cpu", "cuda", "auto"]
+    example: "auto"
+    default: "auto"
     function: "get_encoding_model"
 
   model:
-    type: BaseModelInterface
-    required: true
     description: An instantiated and loaded encoding model.
+    required: true
+    type: BaseModelInterface
     function: "encode"
 
   stimulus:
-    type: numpy.ndarray
+    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224)."
     required: true
+    type: numpy.ndarray
     shape: [batch_size, 3, height, width]
-    description: "A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224)."
     example: "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+    function: "encode"
+
+  return_metadata:
+    description: "Whether to return the encoding model's metadata together with the in silico neural resposnes."
+    required: False
+    type: bool
+    default: Fale
+    example: True
+    function: "encode"
+
+  show_progress:
+    description: "Whether to show a progress bar during encoding (for large batches)."
+    required: false
+    type: bool
+    default: True
+    example: True
     function: "encode"
 
 # Performance metrics and references

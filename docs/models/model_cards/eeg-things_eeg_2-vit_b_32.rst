@@ -1,12 +1,6 @@
 =========================
 eeg-things_eeg_2-vit_b_32
 =========================
-.. |nbsp| unicode:: 0xA0
-   :trim:
-
-.. |rarr| unicode:: 0x2192
-   :trim:
-
 
 Model Summary
 ------------
@@ -56,62 +50,30 @@ channel, and time point.
 Metadata
 --------
 
-**'eeg'**
+**eeg**
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **ch_names** : ``(63,)`` - EEG channel names
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - ch_names
-     - ``(63,)``
-     - EEG channel names
-   * - times
-     - ``(140,)``
-     - Time points relative to stimulus onset
+    **times** : ``(140,)`` - Time points relative to stimulus onset
+**encoding_models**
 
-**'encoding_models'**
+    **correlation_averaged_repetitions** : ``(63, 140)`` - Correlation scores across channels and time (averaged over repetitions)
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **correlation_single_repetitions** : ``(4, 63, 140)`` - Correlation scores for individual repetitions across channels and time
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - correlation_averaged_repetitions
-     - ``(63, 140)``
-     - Correlation scores across channels and time (averaged over repetitions)
-   * - correlation_single_repetitions
-     - ``(4, 63, 140)``
-     - Correlation scores for individual repetitions across channels and time
-   * - **train_img_info**
-     - ``dict``
-     - 
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_img_concepts
-     - ``(16540,)``
-     - list of strings containing the concept names of the 16,540 training images, ordered alphabetically, and additionally sorted through numbers ranging from 1 to 1,654.
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_img_concepts_THINGS
-     - ``(16540,)``
-     - list of strings containing the concept names of the 16,540 training images, ordered alphabetically, and additionally sorted through the original THINGS concept numbers, ranging from 1 to 1,854.
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| train_img_files
-     - ``(16540,)``
-     - list of strings containing the filenames of the 16,540 training images.
-   * - **test_img_info**
-     - ``dict``
-     - 
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_img_concepts
-     - ``(200,)``
-     - list of strings containing the 200 test image concept names, ordered alphabetically, and additionally sorted through numbers ranging from 1 to 200.
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_img_concepts_THINGS
-     - ``(200,)``
-     - list of strings containing the 200 test image concept names, ordered alphabetically, and additionally sorted through the original THINGS concept numbers, ranging from 1 to 1,854.
-   * - |nbsp| |nbsp| |nbsp| |nbsp| |rarr| test_img_files
-     - ``(200,)``
-     - list of strings containing the filenames of the 200 test images.
+    **train_img_info** : ``dict``
+        **train_img_concepts** : ``(16540,)`` - list of strings containing the concept names of the 16,540 training images, ordered alphabetically, and additionally sorted through numbers ranging from 1 to 1,654.
 
+        **train_img_concepts_THINGS** : ``(16540,)`` - list of strings containing the concept names of the 16,540 training images, ordered alphabetically, and additionally sorted through the original THINGS concept numbers, ranging from 1 to 1,854.
+
+        **train_img_files** : ``(16540,)`` - list of strings containing the filenames of the 16,540 training images.
+
+    **test_img_info** : ``dict``
+        **test_img_concepts** : ``(200,)`` - list of strings containing the 200 test image concept names, ordered alphabetically, and additionally sorted through numbers ranging from 1 to 200.
+
+        **test_img_concepts_THINGS** : ``(200,)`` - list of strings containing the 200 test image concept names, ordered alphabetically, and additionally sorted through the original THINGS concept numbers, ranging from 1 to 1,854.
+
+        **test_img_files** : ``(200,)`` - list of strings containing the filenames of the 200 test images.
 
 Input
 -----
@@ -163,6 +125,12 @@ This function loads the encoding model.
    :widths: 20 80
    :header-rows: 0
 
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** eeg-things_eeg_2-vit_b_32
+       | **Example:** "eeg-things_eeg_2-vit_b_32"
    * - **subject**
      - | **Type:** int
        | **Required:** Yes
@@ -194,8 +162,8 @@ This function loads the encoding model.
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -214,12 +182,39 @@ This function generates in silico neural responses using the encoding model prev
      - | **Type:** numpy.ndarray
        | **Required:** Yes
        | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
-       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
+       | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+   * - **return_metadata**
+     - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
+       | **Example:** True
    * - **show_progress**
      - | **Type:** bool
        | **Required:** No
        | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
+
+Parameters used in ``get_model_metadata``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function loads the encoding model's metadata without having to load the model itself.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 0
+
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** eeg-things_eeg_2-vit_b_32
+       | **Example:** "eeg-things_eeg_2-vit_b_32"
+   * - **subject**
+     - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the THINGS EEG2 dataset (1-10).
+       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+       | **Example:** 1
 
 Performance
 ----------
@@ -244,9 +239,9 @@ Example Usage
         "eeg-things_eeg_2-vit_b_32",
         subject=1,
         selection={
-            "channels": ["Oz", "Cz", "Fp1"]
+            "channels": ["Oz", "Cz", "Fp1"],
             "timepoints": [0, 0, '...', 1, 1, 0]
-        },
+        }
     )
     
     # Prepare the stimulus images
@@ -272,6 +267,12 @@ Example Usage
         model,
         images,
         return_metadata=True
+    )
+    
+    # Load the encoding model's metadata without having to load the model itself
+    metadata = berg.get_model_metadata(
+        "eeg-things_eeg_2-vit_b_32",
+        subject=1
     )
     
 

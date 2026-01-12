@@ -245,6 +245,67 @@ def get_selected_indices(binary_array: np.ndarray) -> np.ndarray:
     return np.where(binary_array == 1)[0]
 
 
+def validate_integer_list(
+    values: Union[int, List[int]],
+    valid_values: List[int],
+    parameter_name: str = "parameter"
+) -> List[int]:
+    """
+    Validate a parameter that can be a single integer or list of integers.
+    
+    Parameters
+    ----------
+    values : int or list of int
+        The value(s) to validate
+    valid_values : list of int
+        List of valid integer values
+    parameter_name : str, optional
+        Name of the parameter for error messages
+    
+    Returns
+    -------
+    list of int
+        Normalized list of validated integers
+    
+    Raises
+    ------
+    ValidationError
+        If the values are invalid
+    """
+    # Handle single integer
+    if isinstance(values, int):
+        if values not in valid_values:
+            raise ValidationError(
+                f"{parameter_name} must be one of {valid_values}, got {values}"
+            )
+        return [values]
+    
+    # Handle list
+    if isinstance(values, list):
+        if len(values) == 0:
+            raise ValidationError(f"{parameter_name} list cannot be empty")
+        
+        # Check all elements are integers
+        if not all(isinstance(v, int) for v in values):
+            raise ValidationError(
+                f"All elements in {parameter_name} must be integers"
+            )
+        
+        # Verify all values are valid
+        invalid_values = [v for v in values if v not in valid_values]
+        if invalid_values:
+            raise ValidationError(
+                f"Invalid {parameter_name} value(s): {invalid_values}. Valid values are: {valid_values}"
+            )
+        
+        return values
+    
+    # Invalid type
+    raise ValidationError(
+        f"{parameter_name} must be an int or list of int, got {type(values)}"
+    )
+
+
 def validate_roi(roi: Any, valid_rois: List[str]) -> str:
     """
     Validate a single ROI (Region of Interest) selection.

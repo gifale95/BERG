@@ -1,1 +1,1 @@
-import berg.models.utah_array.tvsd_utah_array
+import berg.models.utah_array.tvsd_vit_b_32
