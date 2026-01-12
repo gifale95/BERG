@@ -5,6 +5,10 @@ Parameters
 encoding_model : str
     The name of BERG's encoding model used for generating the in silico fMRI
     responses in fsavarage space.
+fmri_subjects : list
+    List containing the subject identifiers for the fMRI encoding models. Since
+    the used encoding models are trained on NSD data, valid subject identifiers
+    are integers from 1 to 8.
 images : str
     Whether to use 'naturalistic' or 'texforms' images.
 berg_dir : str
@@ -15,6 +19,7 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
+from tqdm import tqdm
 import cortex
 import matplotlib
 import matplotlib.pyplot as plt
@@ -22,6 +27,7 @@ import matplotlib.colors as mcolors
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--images', type=str, default='naturalistic')
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -47,8 +53,10 @@ data = np.load(data_dir, allow_pickle=True).item()
 vertex_overlap = data['vertex_overlap']
 pval_vertex_overlap = data['pval_vertex_overlap']
 ci_vertex_overlap = data['ci_vertex_overlap']
-lh_tripartite_organization = data['lh_tripartite_organization']
-rh_tripartite_organization = data['rh_tripartite_organization']
+lh_tripartite_organization_sub_avg = data['lh_tripartite_organization_sub_avg']
+rh_tripartite_organization_sub_avg = data['rh_tripartite_organization_sub_avg']
+lh_tripartite_organization_sub_single = data['lh_tripartite_organization_sub_single']
+rh_tripartite_organization_sub_single = data['rh_tripartite_organization_sub_single']
 
 
 # =============================================================================
@@ -175,20 +183,16 @@ fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
 
 
 # =============================================================================
-# Plot the tripartite organization results on a brain surface
+# Plot the tripartite organization results on a brain surface (subject average)
 # =============================================================================
 # Plot parameters
-subject = 'fsaverage'
-plt.rc('xtick', labelsize=30)
-plt.rc('ytick', labelsize=30)
-matplotlib.use("svg")
-plt.rcParams["text.usetex"] = False
-plt.rcParams['svg.fonttype'] = 'none'
-custom_cmap = mcolors.ListedColormap([(143/255, 25/255, 250/255),
-    (43/255, 141/255, 248/255), (243/255, 85/255, 20/255)])
+subject = 'fsaverage_nsd_sub-01'
+custom_cmap = mcolors.ListedColormap([(103/255, 78/255, 167/255),
+    (90/255, 130/255, 200/255), (230/255, 135/255, 60/255)])
 
 # Append the results across left and right hemispheres
-data = np.append(lh_tripartite_organization, rh_tripartite_organization)
+data = np.append(lh_tripartite_organization_sub_avg,
+    rh_tripartite_organization_sub_avg)
 
 # Create the surface maps
 vertex_data = cortex.Vertex(data, subject, cmap=custom_cmap, vmin=0, vmax=2,
@@ -199,7 +203,7 @@ fig = cortex.quickshow(vertex_data,
     height=2000, # Increase resolution of map and ROI contours
     with_curvature=True,
     with_rois=True,
-    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'], # !!! PLOT ROIS
+    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
     linewidth=3,
     linecolor=(1, 1, 1),
     with_labels=True,
@@ -209,8 +213,8 @@ fig = cortex.quickshow(vertex_data,
     )
 
 # Save the figure
-file_name = os.path.join(save_dir, 'tripartite_organization_flat_images-'+
-    args.images+'.svg')
+file_name = os.path.join(save_dir,
+    f'tripartite_organization_sub-avg_flat_images-{args.images}.svg')
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')
 plt.close()
@@ -235,3 +239,44 @@ plt.close()
 #     args.images+'.svg')
 # fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
 #     format='svg')
+
+
+# =============================================================================
+# Plot the tripartite organization results on a brain surface (single subjects)
+# =============================================================================
+# Plot parameters
+custom_cmap = mcolors.ListedColormap([(103/255, 78/255, 167/255),
+    (90/255, 130/255, 200/255), (230/255, 135/255, 60/255)])
+
+# Loop across fMRI subjects
+for s, sub in enumerate(tqdm(args.fmri_subjects)):
+
+    # Append the results across left and right hemispheres
+    data = np.append(lh_tripartite_organization_sub_single[s],
+        rh_tripartite_organization_sub_single[s])
+
+    # Create the surface maps
+    subject = 'fsaverage_nsd_sub-0' + str(sub)
+    vertex_data = cortex.Vertex(data, subject, cmap=custom_cmap, vmin=0,
+        vmax=2, with_colorbar=False)
+
+    # Plot the results on a flat surface
+    fig = cortex.quickshow(vertex_data,
+        height=2000, # Increase resolution of map and ROI contours
+        with_curvature=True,
+        with_rois=True,
+        roi_list=['Early', 'FFA-1', 'FFA-2', 'OFA', 'EBA', 'PPA', 'OPA', 'RSC'],
+        linewidth=3,
+        linecolor=(1, 1, 1),
+        with_labels=True,
+        labelsize=25,
+        curvature_brightness=0.4,
+        with_colorbar=False
+        )
+
+    # Save the figure
+    file_name = os.path.join(save_dir,
+        f'tripartite_organization_sub-0{sub}_flat_images-{args.images}.svg')
+    fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+        format='svg')
+    plt.close()

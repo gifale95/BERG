@@ -6,14 +6,18 @@ Parameters
 encoding_model : str
     The name of BERG's encoding model used for generating the in silico fMRI
     responses in fsavarage space.
-images : str
-    Whether to use 'naturalistic' or 'texforms' images.
+subjects : list
+    List of the subject identifiers for the fMRI encoding models. Since the
+    used encoding models are trained on NSD data, valid subject identifiers are
+    integers from 1 to 8.
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
 encoding_threshold : float
     The threshold on the encoding models explained variance for vertex
     selection (in % units).
+images : str
+    Whether to use 'naturalistic' or 'texforms' images.
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
     distribution.
@@ -32,9 +36,10 @@ from scipy.stats import ttest_rel
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
-parser.add_argument('--images', type=str, default='naturalistic')
+parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
+parser.add_argument('--images', type=str, default='naturalistic')
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -83,7 +88,7 @@ hemispheres = ['lh', 'rh']
 for hem in hemispheres:
 
     # Loop across subjects
-    for s in range(len(metadata)):
+    for s in range(len(args.subjects)):
 
         ncsnr = metadata[s]['fmri'][hem+'_ncsnr']
         idx_ncsnr = ncsnr >= args.ncsnr_threshold
@@ -112,10 +117,10 @@ for roi in rois:
 
     # Empty arrays of shape (n_subjects,) for face/body-selective ROIs
     for cat in categories:
-        vertex_overlap[roi+'_'+cat] = np.zeros((len(metadata)))
+        vertex_overlap[roi+'_'+cat] = np.zeros((len(args.subjects)))
 
     # Loop across subjects
-    for s in range(len(metadata)):
+    for s in range(len(args.subjects)):
 
         # Initialize counters
         tot_vertices = 0
@@ -199,7 +204,7 @@ for roi in rois:
 
 # Create the bootstrap distribution
 for i in tqdm(range(args.n_iter)):
-    idx = resample(np.arange(len(metadata)))
+    idx = resample(np.arange(len(args.subjects)))
     for roi in rois:
         for cat in categories:
             dist[roi+'_'+cat][i] = np.mean(vertex_overlap[roi+'_'+cat][idx])
@@ -214,7 +219,7 @@ for roi in rois:
 
 
 # =============================================================================
-# Tripartite organization analysis (across-subjects)
+# Tripartite organization analysis (subject average)
 # =============================================================================
 # Perform the tripartite organization analysis on the fMRI responses averaged
 # across subjects.
@@ -232,21 +237,61 @@ lh_data = np.array([lh_animals_avg, lh_big_objects_avg, lh_small_objects_avg])
 rh_data = np.array([rh_animals_avg, rh_big_objects_avg, rh_small_objects_avg])
 
 # For each vertex, select the condition leading to highest response
-lh_tripartite_organization = np.argsort(lh_data, axis=0)[-1].astype(np.float32)
-rh_tripartite_organization = np.argsort(rh_data, axis=0)[-1].astype(np.float32)
+lh_tripartite_organization_sub_avg = np.argsort(
+    lh_data, axis=0)[-1].astype(np.float32)
+rh_tripartite_organization_sub_avg = np.argsort(
+    rh_data, axis=0)[-1].astype(np.float32)
 
 # Threshold with univariate response magnitude
-threshold_resp = -.25
-lh_idx_nan = np.where(np.max(lh_data, 0) < threshold_resp)[0]
-rh_idx_nan = np.where(np.max(rh_data, 0) < threshold_resp)[0]
-lh_tripartite_organization[lh_idx_nan] = np.nan
-rh_tripartite_organization[rh_idx_nan] = np.nan
+# threshold_resp = -.25
+# lh_idx_nan = np.where(np.max(lh_data, 0) < threshold_resp)[0]
+# rh_idx_nan = np.where(np.max(rh_data, 0) < threshold_resp)[0]
+# lh_tripartite_organization_sub_avg[lh_idx_nan] = np.nan
+# rh_tripartite_organization_sub_avg[rh_idx_nan] = np.nan
 
 # Threshold with ncsnr
 lh_idx_nan = np.where(np.isnan(lh_animals_avg))[0]
 rh_idx_nan = np.where(np.isnan(rh_animals_avg))[0]
-lh_tripartite_organization[lh_idx_nan] = np.nan
-rh_tripartite_organization[rh_idx_nan] = np.nan
+lh_tripartite_organization_sub_avg[lh_idx_nan] = np.nan
+rh_tripartite_organization_sub_avg[rh_idx_nan] = np.nan
+
+
+# =============================================================================
+# Tripartite organization analysis (single subjects)
+# =============================================================================
+# Perform the tripartite organization analysis on the fMRI responses of single
+# subjects.
+
+# Get the responses of single subjects
+lh_animals = animals['lh']
+rh_animals = animals['rh']
+lh_big_objects = big_objects['lh']
+rh_big_objects = big_objects['rh']
+lh_small_objects = small_objects['lh']
+rh_small_objects = small_objects['rh']
+
+# Append the in silico fMRI responses for the three conditions
+lh_data = np.array([lh_animals, lh_big_objects, lh_small_objects])
+rh_data = np.array([rh_animals, rh_big_objects, rh_small_objects])
+
+# For each vertex, select the condition leading to highest response
+lh_tripartite_organization_sub_single = np.argsort(
+    lh_data, axis=0)[-1].astype(np.float32)
+rh_tripartite_organization_sub_single = np.argsort(
+    rh_data, axis=0)[-1].astype(np.float32)
+
+# Threshold with univariate response magnitude
+# threshold_resp = -.25
+# lh_idx_nan = np.max(lh_data, 0) < threshold_resp
+# rh_idx_nan = np.max(rh_data, 0) < threshold_resp
+# lh_tripartite_organization_sub_single[lh_idx_nan] = np.nan
+# rh_tripartite_organization_sub_single[rh_idx_nan] = np.nan
+
+# Threshold vertices with NCSNR and encoding accuracy
+lh_idx_nan = np.isnan(lh_animals)
+rh_idx_nan = np.isnan(rh_animals)
+lh_tripartite_organization_sub_single[lh_idx_nan] = np.nan
+rh_tripartite_organization_sub_single[rh_idx_nan] = np.nan
 
 
 # =============================================================================
@@ -256,8 +301,10 @@ results = {
     'vertex_overlap': vertex_overlap,
     'pval_vertex_overlap': pval_vertex_overlap,
     'ci_vertex_overlap': ci_vertex_overlap,
-    'lh_tripartite_organization': lh_tripartite_organization,
-    'rh_tripartite_organization': rh_tripartite_organization
+    'lh_tripartite_organization_sub_avg': lh_tripartite_organization_sub_avg,
+    'rh_tripartite_organization_sub_avg': rh_tripartite_organization_sub_avg,
+    'lh_tripartite_organization_sub_single': lh_tripartite_organization_sub_single,
+    'rh_tripartite_organization_sub_single': rh_tripartite_organization_sub_single
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',

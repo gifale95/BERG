@@ -6,13 +6,10 @@ Parameters
 encoding_model : str
     The name of BERG's encoding model used for generating the in silico fMRI
     responses in fsavarage space.
-encoding_model : str
-    The name of BERG's encoding model used for generating the in silico fMRI
-    responses in surface space.
-subject : int
-    The subject identifier for the fMRI encoding models. Since the used
-    encoding models are trained on NSD data, valid subject identifiers are
-    integers from 1 to 8.
+fmri_subjects : list
+    List containing the subject identifiers for the fMRI encoding models. Since
+    the used encoding models are trained on NSD data, valid subject identifiers
+    are integers from 1 to 8.
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
@@ -40,16 +37,14 @@ import argparse
 import os
 import numpy as np
 from berg import BERG
+from tqdm import tqdm
 import cortex
-import cortex.polyutils
-import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 from matplotlib.colors import hsv_to_rgb
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
-parser.add_argument('--subject', type=int, default=1)
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--FIELD_SIZE', type=float, default=16.8)
@@ -74,148 +69,139 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 # Load the retinotopic maps
 # =============================================================================
-data_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri', 'retinotopy',
-    'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
-    '_BG_VALUE-'+str(args.BG_VALUE), 'retinotopic_maps',
-    'encoding_model-'+args.encoding_model+'_subject-'+str(args.subject),
-    'retinotopic_maps.npz')
+# Loop across fMRI subjects
+for s, sub in enumerate(tqdm(args.fmri_subjects)):
 
-data = np.load(data_dir, allow_pickle=True)["data"].item()
+    # Load the metadata
+    berg = BERG(berg_dir=args.berg_dir)
+    metadata = berg.get_model_metadata(
+        args.encoding_model,
+        subject=sub
+        )
 
-# Polar angles
-polar_angle_lh = data['polar_angle_lh']
-polar_angle_rh = data['polar_angle_rh']
-# Rotate the polar angles and wrap into 0–2π
-shift = 5 * np.pi / 6  # 150° rotation
-polar_angle_lh = (polar_angle_lh + shift) % (2 * np.pi)
-polar_angle_rh = (polar_angle_rh + shift) % (2 * np.pi)
-# Normalize the polar angles to [0,1]
-polar_angle_lh_norm = polar_angle_lh / (2 * np.pi)
-polar_angle_rh_norm = polar_angle_rh / (2 * np.pi)
+    # Load the retinotopic maps
+    data_dir = os.path.join(args.berg_dir,
+        'neural_signatures_insilico_validation', 'vision', 'fmri', 'retinotopy',
+        'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
+        '_BG_VALUE-'+str(args.BG_VALUE), 'retinotopic_maps',
+        'encoding_model-'+args.encoding_model+'_subject-'+str(sub),
+        'retinotopic_maps.npz')
+    data = np.load(data_dir, allow_pickle=True)["data"].item()
+    # Polar angles
+    polar_angle_lh = data['polar_angle_lh']
+    polar_angle_rh = data['polar_angle_rh']
+    # Rotate the polar angles and wrap into 0–2π
+    shift = 5 * np.pi / 6  # 150° rotation
+    polar_angle_lh = (polar_angle_lh + shift) % (2 * np.pi)
+    polar_angle_rh = (polar_angle_rh + shift) % (2 * np.pi)
+    # Normalize the polar angles to [0,1]
+    polar_angle_lh_norm = polar_angle_lh / (2 * np.pi)
+    polar_angle_rh_norm = polar_angle_rh / (2 * np.pi)
+    # Eccentricity
+    eccentricity_lh = data['eccentricity_lh']
+    eccentricity_rh = data['eccentricity_rh']
+    # Normalize the eccentricities to [0,1]
+    eccentricity_lh_norm = eccentricity_lh / eccentricity_lh.max()
+    eccentricity_rh_norm = eccentricity_rh / eccentricity_rh.max()
 
-# Eccentricity
-eccentricity_lh = data['eccentricity_lh']
-eccentricity_rh = data['eccentricity_rh']
-# Normalize the eccentricities to [0,1]
-eccentricity_lh_norm = eccentricity_lh / eccentricity_lh.max()
-eccentricity_rh_norm = eccentricity_rh / eccentricity_rh.max()
-
-
-# =============================================================================
-# Load the metadata
-# =============================================================================
-# Initialize BERG
-berg = BERG(berg_dir=args.berg_dir)
-
-# Load the encoding model
-metadata = berg.get_model_metadata(
-    args.encoding_model,
-    subject=args.subject
-    )
-
-
-# =============================================================================
-# NCSNR and prediction accuracy thresholding
-# =============================================================================
-# Only retain vertices that have above threshold (i) NCSNR AND (ii) encoding
-# prediction accuracy.
-
-# Left hemisphere
-lh_ncsnr = metadata['fmri']['lh_ncsnr']
-idx_ncsnr = lh_ncsnr >= args.ncsnr_threshold
-lh_encoding = metadata['encoding_models']['lh_explained_variance_nsdcore']
-idx_encoding = lh_encoding >= args.encoding_threshold
-idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
-polar_angle_lh_norm[idx_nan] = np.nan
-eccentricity_lh_norm[idx_nan] = np.nan
-
-# Right hemisphere
-rh_ncsnr = metadata['fmri']['rh_ncsnr']
-idx_ncsnr = rh_ncsnr >= args.ncsnr_threshold
-rh_encoding = metadata['encoding_models']['rh_explained_variance_nsdcore']
-idx_encoding = rh_encoding >= args.encoding_threshold
-idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
-polar_angle_rh_norm[idx_nan] = np.nan
-eccentricity_rh_norm[idx_nan] = np.nan
+    # Only retain vertices that have above threshold (i) NCSNR AND
+    # (ii) encoding prediction accuracy.
+    # Left hemisphere
+    lh_ncsnr = metadata['fmri']['lh_ncsnr']
+    idx_ncsnr = lh_ncsnr >= args.ncsnr_threshold
+    lh_encoding = metadata['encoding_models']['lh_explained_variance_nsdcore']
+    idx_encoding = lh_encoding >= args.encoding_threshold
+    idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
+    polar_angle_lh_norm[idx_nan] = np.nan
+    eccentricity_lh_norm[idx_nan] = np.nan
+    # Right hemisphere
+    rh_ncsnr = metadata['fmri']['rh_ncsnr']
+    idx_ncsnr = rh_ncsnr >= args.ncsnr_threshold
+    rh_encoding = metadata['encoding_models']['rh_explained_variance_nsdcore']
+    idx_encoding = rh_encoding >= args.encoding_threshold
+    idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
+    polar_angle_rh_norm[idx_nan] = np.nan
+    eccentricity_rh_norm[idx_nan] = np.nan
 
 
 # =============================================================================
 # Plot the polar angle results
 # =============================================================================
-# Append the results across left and right hemishperes
-data = np.append(polar_angle_lh_norm, polar_angle_rh_norm)
+    # Append the results across left and right hemishperes
+    data = np.append(polar_angle_lh_norm, polar_angle_rh_norm)
 
-# Create the flat brain surface
-subject = 'fsaverage_nsd_sub-' + str(args.subject)
-vertex_data = cortex.Vertex(
-    data,
-    subject=subject,
-    cmap='hsv',
-    vmin=0,
-    vmax=1,
-    with_colorbar=True
-    )
+    # Create the flat brain surface
+    subject = 'fsaverage_nsd_sub-0' + str(sub)
+    vertex_data = cortex.Vertex(
+        data,
+        subject=subject,
+        cmap='hsv',
+        vmin=0,
+        vmax=1,
+        with_colorbar=True
+        )
 
-# Plot the flat brain surface
-fig = cortex.quickshow(
-    vertex_data,
-    height=2000, # Increase resolution of map and ROI contours
-    with_curvature=True,
-    with_rois=True,
-    roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4'],
-    linewidth=2,
-    linecolor=(1, 1, 1),
-    with_labels=True,
-    labelsize=15,
-    curvature_brightness=0.5,
-    with_colorbar=False
-    )
+    # Plot the flat brain surface
+    fig = cortex.quickshow(
+        vertex_data,
+        height=2000, # Increase resolution of map and ROI contours
+        with_curvature=True,
+        with_rois=True,
+        roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4'],
+        linewidth=3,
+        linecolor=(1, 1, 1),
+        with_labels=True,
+        labelsize=25,
+        curvature_brightness=0.4,
+        with_colorbar=False
+        )
 
-# Save the figure
-file_name = os.path.join(save_dir, 'polar_angle_encoding_model-'+
-    args.encoding_model+'_subject-'+str(args.subject)+'.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
-    format='svg')
+    # Save the figure
+    file_name = os.path.join(save_dir, 'polar_angle_encoding_model-'+
+        args.encoding_model+'_subject-'+str(sub)+'.svg')
+    fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+        format='svg')
+    plt.close(fig)
 
 
 # =============================================================================
 # Plot the eccentricity results
 # =============================================================================
-# Append the results across left and right hemishperes
-data = np.append(eccentricity_lh_norm, eccentricity_rh_norm)
+    # Append the results across left and right hemishperes
+    data = np.append(eccentricity_lh_norm, eccentricity_rh_norm)
 
-# Create the flat brain surface
-subject = 'fsaverage_nsd_sub-' + str(args.subject)
-vertex_data = cortex.Vertex(
-    data,
-    subject=subject,
-    cmap='gist_rainbow',
-    vmin=0,
-    vmax=1,
-    with_colorbar=True
-    )
+    # Create the flat brain surface
+    subject = 'fsaverage_nsd_sub-0' + str(sub)
+    vertex_data = cortex.Vertex(
+        data,
+        subject=subject,
+        cmap='gist_rainbow',
+        vmin=0,
+        vmax=1,
+        with_colorbar=True
+        )
 
-# Plot the flat brain surface
-fig = cortex.quickshow(
-    vertex_data,
-    height=2000, # Increase resolution of map and ROI contours
-    with_curvature=True,
-    with_rois=True,
-    roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4'],
-    linewidth=2,
-    linecolor=(1, 1, 1),
-    with_labels=True,
-    labelsize=15,
-    curvature_brightness=0.5,
-    with_colorbar=False
-    )
+    # Plot the flat brain surface
+    fig = cortex.quickshow(
+        vertex_data,
+        height=2000, # Increase resolution of map and ROI contours
+        with_curvature=True,
+        with_rois=True,
+        roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4'],
+        linewidth=3,
+        linecolor=(1, 1, 1),
+        with_labels=True,
+        labelsize=25,
+        curvature_brightness=0.4,
+        with_colorbar=False
+        )
 
-# Save the figure
-file_name = os.path.join(save_dir, 'eccentricity_encoding_model-'+
-    args.encoding_model+'_subject-'+str(args.subject)+'.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
-    format='svg')
+    # Save the figure
+    file_name = os.path.join(save_dir, 'eccentricity_encoding_model-'+
+        args.encoding_model+'_subject-'+str(sub)+'.svg')
+    fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
+        format='svg')
+    plt.close(fig)
 
 
 # =============================================================================
@@ -259,6 +245,7 @@ plt.show()
 file_name = os.path.join(save_dir, 'polar_angle_colorwheel.svg')
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')
+plt.close(fig)
 
 
 # =============================================================================
@@ -305,3 +292,4 @@ ax.plot([ s, s], [-s, s], 'k--', linewidth=2)
 file_name = os.path.join(save_dir, 'eccentricity_map.svg')
 fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')
+plt.close(fig)

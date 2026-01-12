@@ -16,7 +16,6 @@ import os
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-import matplotlib.colors as mcolors
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
@@ -35,15 +34,17 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 # Plot parameters
 # =============================================================================
-fontsize = 30
+fontsize = 25
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams["font.weight"] = "normal"
+matplotlib.rcParams["axes.labelweight"] = "normal"
 matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
 matplotlib.rcParams['axes.linewidth'] = 1
-matplotlib.rcParams['xtick.major.width'] = 1
+matplotlib.rcParams['xtick.major.width'] = 0
 matplotlib.rcParams['xtick.major.size'] = 5
-matplotlib.rcParams['ytick.major.width'] = 1
+matplotlib.rcParams['ytick.major.width'] = 0
 matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
@@ -111,15 +112,16 @@ plt.xlim(left=-0.5, right=7.5)
 # y-axis parameters
 yticks = [-1, -0.5, 0, 0.5, 1]
 ylabels = ['-1', '-0.5', '0', '0.5', '1']
-plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
+plt.yticks(ticks=yticks, labels=ylabels)
 ylabel = 'Univariate response ($z$-scored)'
 plt.ylabel(ylabel, fontsize=fontsize)
 plt.ylim(bottom=-.5, top=1)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'ffa_face_texture_variation.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')
+plt.close()
 
 
 # =============================================================================
@@ -170,20 +172,21 @@ for i, itype in enumerate(image_types_sorted):
         ecolor=color, elinewidth=5, capsize=0)
 # x-axis parameters
 xticks = x_coord
-plt.xticks(ticks=xticks, labels=labels_sorted, rotation=-30, ha='center')
+plt.xticks(ticks=xticks, labels=labels_sorted, rotation=0, ha='center')
 plt.xlim(left=-0.5, right=3.5)
 # y-axis parameters
 yticks = [-0.25, 0, 0.25, 0.5, 0.75]
 ylabels = ['-0.25', '0', '0.25', '0.5', '0.75']
-plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
+plt.yticks(ticks=yticks, labels=ylabels)
 ylabel = 'Univariate response ($z$-scored)'
 plt.ylabel(ylabel, fontsize=fontsize)
 plt.ylim(bottom=-.25, top=.75)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'ppa_spatial_layout.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
     format='svg')
+plt.close()
 
 
 # =============================================================================
@@ -238,15 +241,16 @@ for roi in ['FFA', 'PPA']:
     # y-axis parameters
     yticks = [-0.5, -0.25, 0, 0.25]
     ylabels = ['-0.5', '-0.25', '0', '0.25']
-    plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
+    plt.yticks(ticks=yticks, labels=ylabels)
     ylabel = 'Univariate response ($z$-scored)'
     plt.ylabel(ylabel, fontsize=fontsize)
     plt.ylim(bottom=-.5, top=.05)
 
     # Save the figure
     file_name = os.path.join(save_dir, roi+'_curvature.svg')
-    fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+    fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
         format='svg')
+    plt.close()
 
 
 # =============================================================================
@@ -297,17 +301,18 @@ for roi in ['FFA', 'PPA']:
             ecolor=color, elinewidth=5, capsize=0)
     # x-axis parameters
     xticks = x_coord
-    plt.xticks(ticks=xticks, labels=labels[roi], rotation=-30, ha='center')
+    plt.xticks(ticks=xticks, labels=labels[roi], rotation=0, ha='center')
     plt.xlim(left=-0.5, right=3.5)
     # y-axis parameters
     yticks = [-0.5, 0, 0.5, 1]
     ylabels = ['-0.5', '0', '0.5', '1']
-    plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
+    plt.yticks(ticks=yticks, labels=ylabels)
     ylabel = 'Univariate response ($z$-scored)'
     plt.ylabel(ylabel, fontsize=fontsize)
     plt.ylim(bottom=-.5, top=1)
 
     # Save the figure
     file_name = os.path.join(save_dir, roi+'_visual_size.svg')
-    fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True, # type: ignore
+    fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
         format='svg')
+    plt.close()

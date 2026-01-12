@@ -116,7 +116,7 @@ for sub in tqdm(args.subjects):
     gc.collect()
     
     # Generate the in silico fMRI responses for the big object images, and
-    # the responses across images
+    # average the responses across images
     fmri_big_objects = berg.encode(model, big_object_img)
     lh_big_objects.append(np.mean(fmri_big_objects[0], 0).astype(np.float32))
     rh_big_objects.append(np.mean(fmri_big_objects[1], 0).astype(np.float32)) # type: ignore
@@ -125,7 +125,7 @@ for sub in tqdm(args.subjects):
     gc.collect()
     
     # Generate the in silico fMRI responses for the small object images, and
-    # the responses across images
+    # average the responses across images
     fmri_small_objects = berg.encode(model, small_object_img)
     lh_small_objects.append(np.mean(fmri_small_objects[0], 0).astype(np.float32))
     rh_small_objects.append(np.mean(fmri_small_objects[1], 0).astype(np.float32)) # type: ignore
