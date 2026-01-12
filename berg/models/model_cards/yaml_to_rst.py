@@ -406,8 +406,13 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     if "valid_values" in prop_data:
                         valid_values = prop_data["valid_values"]
                         if isinstance(valid_values, list):
-                            formatted_values = ", ".join([f'"{v}"' for v in valid_values])
-                            rst_content.append(f"       |     **Valid values:** {formatted_values}")
+                            formatted_values = []
+                            for v in valid_values:
+                                if isinstance(v, str):
+                                    formatted_values.append(f'"{v}"')
+                                else:
+                                    formatted_values.append(str(v))
+                            rst_content.append(f"       |     **Valid values:** {', '.join(formatted_values)}")
                         else:
                             rst_content.append(f"       |     **Valid values:** {valid_values}")
                     

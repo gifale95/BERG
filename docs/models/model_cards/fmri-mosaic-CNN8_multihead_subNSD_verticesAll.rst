@@ -241,7 +241,7 @@ This function loads the encoding model.
        |     
        |     Can be a single integer or list of integers. If multiple groups are specified,
        |     their vertices are concatenated.
-       |     **Valid values:** "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22"
+       |     **Valid values:** 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22
        |     **Example:** None
        | 
        | **voxel_index**
