@@ -55,99 +55,51 @@ subsets) across 300 time points for each input image.
 Metadata
 --------
 
-**'utah_array'**
+**utah_array**
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **times** : ``(300,)`` - Time points (-100ms to 199ms)
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - times
-     - ``(300,)``
-     - Time points (-100ms to 199ms)
-   * - electrode_order
-     - ``(1024,)``
-     - Electrode mapping order (0-based)
-   * - monkey_id
-     - ``str``
-     - Monkey identifier
-   * - n_electrodes
-     - ``int``
-     - Number of electrodes (1024)
+    **electrode_order** : ``(1024,)`` - Electrode mapping order (0-based)
 
-**'roi'**
+    **monkey_id** : ``str`` - Monkey identifier
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **n_electrodes** : ``int`` - Number of electrodes (1024)
+**roi**
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - roi_assignments
-     - ``(1024,)``
-     - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
-   * - roi_labels
-     - ``(3,)``
-     - ROI label names ['V1', 'V4', 'IT']
+    **roi_assignments** : ``(1024,)`` - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
 
-**'encoding_model'**
+    **roi_labels** : ``(3,)`` - ROI label names ['V1', 'V4', 'IT']
+**encoding_model**
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **train_img_ids** : ``(22248,)`` - Training stimulus IDs
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - train_img_ids
-     - ``(22248,)``
-     - Training stimulus IDs
-   * - train_stimuli
-     - ``(22248,)``
-     - Training image filenames
-   * - train_concepts
-     - ``(22248,)``
-     - Training object categories
-   * - train_days
-     - ``(22248,)``
-     - Recording days for training
-   * - train_sequence_pos
-     - ``(22248,)``
-     - Position in 4-image sequence
-   * - test_img_ids
-     - ``(3000,)``
-     - Test stimulus IDs
-   * - test_stimuli
-     - ``(3000,)``
-     - Test image filenames
-   * - test_concepts
-     - ``(3000,)``
-     - Test object categories
-   * - test_days
-     - ``(3000,)``
-     - Recording days for test
-   * - test_sequence_pos
-     - ``(3000,)``
-     - Position in sequence for test
-   * - SNR
-     - ``(4, 1024)``
-     - Signal-to-noise ratio per day per electrode
-   * - SNR_max
-     - ``(1024,)``
-     - Best SNR across all days per electrode
-   * - ncsnr
-     - ``(1024, 300)``
-     - Noise ceiling signal-to-noise ratio for each electrode/timepoint (computed on the test data)
-   * - noise_ceiling
-     - ``(1024, 300)``
-     - Noise ceiling for each electrode/timepoint (computed on the test data)
-   * - correlation_results
-     - ``(1024, 300)``
-     - Encoding model prediction accuracy (Pearson's r) for each electrode/timepoint (computed on the test data)
+    **train_stimuli** : ``(22248,)`` - Training image filenames
 
+    **train_concepts** : ``(22248,)`` - Training object categories
+
+    **train_days** : ``(22248,)`` - Recording days for training
+
+    **train_sequence_pos** : ``(22248,)`` - Position in 4-image sequence
+
+    **test_img_ids** : ``(3000,)`` - Test stimulus IDs
+
+    **test_stimuli** : ``(3000,)`` - Test image filenames
+
+    **test_concepts** : ``(3000,)`` - Test object categories
+
+    **test_days** : ``(3000,)`` - Recording days for test
+
+    **test_sequence_pos** : ``(3000,)`` - Position in sequence for test
+
+    **SNR** : ``(4, 1024)`` - Signal-to-noise ratio per day per electrode
+
+    **SNR_max** : ``(1024,)`` - Best SNR across all days per electrode
+
+    **ncsnr** : ``(1024, 300)`` - Noise ceiling signal-to-noise ratio for each electrode/timepoint (computed on the test data)
+
+    **noise_ceiling** : ``(1024, 300)`` - Noise ceiling for each electrode/timepoint (computed on the test data)
+
+    **correlation_results** : ``(1024, 300)`` - Encoding model prediction accuracy (Pearson's r) for each electrode/timepoint (computed on the test data)
 
 Input
 -----
@@ -174,11 +126,11 @@ which varies by ROI and monkey.
 The third dimension corresponds to the timepoints (300).
 
 Monkey N electrode count:
-* V1: 512
+* V1: 448
 * V4: 256
 * IT: 256
 
-Monkey N electrode count:
+Monkey F electrode count:
 * V1: 512
 * V4: 192
 * IT: 320
@@ -210,12 +162,18 @@ This function loads the encoding model.
    :widths: 20 80
    :header-rows: 0
 
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** utah_array-tvsd-vit_b_32
+       | **Example:** "utah_array-tvsd-vit_b_32"
    * - **subject**
      - | **Type:** str
        | **Required:** Yes
        | **Description:** Monkey ID
-       | **Valid Values:** N, F
-       | **Example:** N
+       | **Valid Values:** "N", "F"
+       | **Example:** "N"
    * - **selection**
      - | **Type:** dict
        | **Required:** No
@@ -244,6 +202,12 @@ This function loads the encoding model.
        |     Must have exactly the same length as the number of available timepoints (300).
        |     Each position set to 1 indicates that timepoint should be included.
        |     **Example:** [0, 0, '...', 1, 1, 0]
+   * - **device**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -254,22 +218,47 @@ This function generates in silico neural responses using the encoding model prev
    :widths: 20 80
    :header-rows: 0
 
+   * - **model**
+     - | **Type:** BaseModelInterface
+       | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
    * - **stimulus**
      - | **Type:** numpy.ndarray
        | **Required:** Yes
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
-       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
-   * - **device**
-     - | **Type:** str
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
+       | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+   * - **return_metadata**
+     - | **Type:** bool
        | **Required:** No
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
+       | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
+       | **Example:** True
    * - **show_progress**
      - | **Type:** bool
        | **Required:** No
        | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
+
+Parameters used in ``get_model_metadata``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function loads the encoding model's metadata without having to load the model itself.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 0
+
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** utah_array-tvsd-vit_b_32
+       | **Example:** "utah_array-tvsd-vit_b_32"
+   * - **subject**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Monkey ID
+       | **Valid Values:** "N", "F"
+       | **Example:** "N"
 
 Performance
 ----------
@@ -292,13 +281,12 @@ Example Usage
     # Load the model
     model = berg.get_encoding_model(
         "utah_array-tvsd-vit_b_32",
-        subject=N,
+        subject="N",
         selection={
-            "roi": ["V1", "IT"]
-            "electrodes": [0, 0, '...', 1, 1, 0]
+            "roi": ["V1", "IT"],
+            "electrodes": [0, 0, '...', 1, 1, 0],
             "timepoints": [0, 0, '...', 1, 1, 0]
-        },
-        device="auto"
+        }
     )
     
     # Prepare the stimulus images
@@ -323,6 +311,12 @@ Example Usage
         model,
         images,
         return_metadata=True
+    )
+    
+    # Load the encoding model's metadata without having to load the model itself
+    metadata = berg.get_model_metadata(
+        "utah_array-tvsd-vit_b_32",
+        subject="N"
     )
     
 

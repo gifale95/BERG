@@ -36,6 +36,71 @@ def validate_subject(subject: int, valid_subjects: List[int]) -> None:
         raise InvalidParameterError(
             f"Subject must be one of {valid_subjects}, got {subject}"
         )
+        
+
+def validate_subjects(
+    subjects: Union[int, List[int], str, List[str]],
+    valid_subjects: List[Union[int, str]]
+) -> List[Union[int, str]]:
+    """
+    Validate subject parameter that can be a single subject, list of subjects, or "all".
+    Works with both integer subjects (e.g., 1, 2, 3) and string subjects (e.g., "NSD-01").
+    
+    Parameters
+    ----------
+    subjects : int, list of int, str, or list of str
+        The subject(s) to validate
+    valid_subjects : list
+        List of valid subject IDs (either integers or strings)
+        
+    Returns
+    -------
+    list
+        Normalized list of subject IDs
+        
+    Raises
+    ------
+    InvalidParameterError
+        If the subject parameter is invalid
+    """
+    # Handle single integer
+    if isinstance(subjects, int):
+        if subjects not in valid_subjects:
+            raise InvalidParameterError(
+                f"Subject must be one of {valid_subjects}, got {subjects}"
+            )
+        return [subjects]
+    
+    # Handle string cases
+    if isinstance(subjects, str):
+        # Check for "all" first
+        if subjects.lower() == "all":
+            return valid_subjects
+        # Check if it's a valid single subject string
+        if subjects in valid_subjects:
+            return [subjects]
+        # Invalid subject string
+        raise InvalidParameterError(
+            f"Subject must be one of {valid_subjects} or 'all', got '{subjects}'"
+        )
+    
+    # Handle list
+    if isinstance(subjects, list):
+        if len(subjects) == 0:
+            raise InvalidParameterError("Subject list cannot be empty")
+        
+        invalid_subjects = [s for s in subjects if s not in valid_subjects]
+        if invalid_subjects:
+            raise InvalidParameterError(
+                f"Invalid subject(s): {invalid_subjects}. Valid subjects are: {valid_subjects}"
+            )
+        
+        return subjects
+    
+    # Invalid type
+    raise InvalidParameterError(
+        f"subjects must be an int, string, list, or 'all', got {type(subjects)}"
+    )
 
 
 def validate_selection_keys(selection: Dict[str, Any], valid_keys: List[str]) -> None:
@@ -178,6 +243,67 @@ def get_selected_indices(binary_array: np.ndarray) -> np.ndarray:
     """
 
     return np.where(binary_array == 1)[0]
+
+
+def validate_integer_list(
+    values: Union[int, List[int]],
+    valid_values: List[int],
+    parameter_name: str = "parameter"
+) -> List[int]:
+    """
+    Validate a parameter that can be a single integer or list of integers.
+    
+    Parameters
+    ----------
+    values : int or list of int
+        The value(s) to validate
+    valid_values : list of int
+        List of valid integer values
+    parameter_name : str, optional
+        Name of the parameter for error messages
+    
+    Returns
+    -------
+    list of int
+        Normalized list of validated integers
+    
+    Raises
+    ------
+    ValidationError
+        If the values are invalid
+    """
+    # Handle single integer
+    if isinstance(values, int):
+        if values not in valid_values:
+            raise ValidationError(
+                f"{parameter_name} must be one of {valid_values}, got {values}"
+            )
+        return [values]
+    
+    # Handle list
+    if isinstance(values, list):
+        if len(values) == 0:
+            raise ValidationError(f"{parameter_name} list cannot be empty")
+        
+        # Check all elements are integers
+        if not all(isinstance(v, int) for v in values):
+            raise ValidationError(
+                f"All elements in {parameter_name} must be integers"
+            )
+        
+        # Verify all values are valid
+        invalid_values = [v for v in values if v not in valid_values]
+        if invalid_values:
+            raise ValidationError(
+                f"Invalid {parameter_name} value(s): {invalid_values}. Valid values are: {valid_values}"
+            )
+        
+        return values
+    
+    # Invalid type
+    raise ValidationError(
+        f"{parameter_name} must be an int or list of int, got {type(values)}"
+    )
 
 
 def validate_roi(roi: Any, valid_rois: List[str]) -> str:

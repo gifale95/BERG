@@ -1,1 +1,1 @@
-import berg.models.meg.things_meg_1
+import berg.models.meg.things_meg_1_vit_b_32

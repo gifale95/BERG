@@ -7,10 +7,11 @@ import torchextractor as tx
 from tqdm import tqdm
 from torchvision import transforms as trn
 from torchvision.models import vit_b_32, ViT_B_32_Weights
-from sklearn.linear_model import LinearRegression
+
+import torchvision
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-
+from sklearn.linear_model import LinearRegression
 from berg.core.exceptions import (
     InvalidParameterError,
     ModelLoadError,
@@ -20,55 +21,43 @@ from berg.core.parameter_validator import (
     validate_subject,
     validate_selection_keys,
     validate_binary_array,
-    get_selected_indices,
+    get_selected_indices
 )
 from berg.core.model_registry import register_model
 from berg.interfaces.base_model import BaseModelInterface
 
 
 # Load model info from YAML
-def load_model_info():
-    yaml_path = os.path.join(
-        os.path.dirname(__file__), 
-        "..", 
-        "model_cards", 
-        "meg-things_meg_1-vit_b_32.yaml"
-    )
+def load_model_model_info():
+    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "utah_array-tvsd-vit_b_32.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
-
 # Load model_info once at the top
-model_info = load_model_info()
+model_info = load_model_model_info()
 
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.meg.things_meg_1",
-    class_name="MEGEncodingModel",
-    modality=model_info.get("modality", "MEG"),
-    training_dataset=model_info.get("training_dataset", "things_meg_1"),
-    yaml_path=os.path.join(
-        os.path.dirname(__file__), 
-        "..", 
-        "model_cards", 
-        "meg-things_meg_1-vit_b_32.yaml"
-    )
+    module_path="berg.models.utah_array.tvsd_vit_b_32",
+    class_name="UtahArrayEncodingModel",
+    modality=model_info.get("modality", "utah_array"),
+    training_dataset=model_info.get("training_dataset", "tvsd"),
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "utah_array-tvsd-vit_b_32.yaml")
 )
 
 
-class MEGEncodingModel(BaseModelInterface):
+class UtahArrayEncodingModel(BaseModelInterface):
     """
-    MEG encoding model using vision transformer to generate
-    in silico MEG responses for the THINGS meg_1 dataset.
+    Utah Array encoding model using vision transformer to generate
+    in silico spiking responses for the TVSD dataset.
     """
     
     MODEL_ID = model_info["model_id"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
-    VALID_REGIONS = model_info["parameters"]["selection"]["properties"]["region"]["valid_values"]
-    VALID_SENSOR_PREFIXES = model_info["parameters"]["selection"]["properties"]["sensors"]["valid_values"]
-    SENSORS_LENGTH = 271
-    TIMEPOINTS_LENGTH = 281
+    VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
+    ELECTRODES_LENGTH = 1024
+    TIMEPOINTS_LENGTH = 300
     
     def __init__(
         self, 
@@ -78,21 +67,20 @@ class MEGEncodingModel(BaseModelInterface):
         berg_dir: Optional[str] = None
     ):
         """
-        Initialize the MEG encoding model.
+        Initialize the Utah Array encoding model.
         
         Parameters
         ----------
         subject : str
-            Subject ID from the THINGS MEG1 dataset. Must be "P1", "P2", "P3", or "P4".
+            Monkey ID from the TVSD dataset. Must be "N" or "F".
         device : str, default="auto"
             Target device for computation. Options are "cpu", "cuda", or "auto".
             If "auto", will use GPU if available, otherwise CPU.    
         selection : dict, optional
             Specifies which outputs to include in the model responses.
-            Can include specific regions, sensor prefixes, sensor indices, and/or timepoints.
-            - region: List of anatomical regions (Central, Frontal, Occipital, Parietal, Temporal)
-            - sensors: List of sensor prefix codes (MLC, MLF, MLO, etc.)
-            - sensor_index: Binary one-hot encoded vector for sensor selection
+            Can include specific ROIs, electrodes, and/or timepoints.
+            - roi: List of brain areas to include (V1, V4, IT)
+            - electrodes: Binary one-hot encoded vector for electrode selection
             - timepoints: Binary one-hot encoded vector for timepoint selection
         berg_dir : str, optional
             Root path to the BERG directory containing model files and weights.
@@ -104,9 +92,8 @@ class MEGEncodingModel(BaseModelInterface):
         
         # Parameters from selection
         self.selection = selection
-        self.selected_regions = None
-        self.selected_sensor_prefixes = None
-        self.selected_sensors = None
+        self.selected_rois = None
+        self.selected_electrodes = None
         self.selected_timepoints = None
         
         # Validate parameters
@@ -116,7 +103,7 @@ class MEGEncodingModel(BaseModelInterface):
         if device == "auto":
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
-    
+
     def _validate_parameters(self):
         """
         Validate user-provided parameters against supported model yaml.
@@ -131,42 +118,28 @@ class MEGEncodingModel(BaseModelInterface):
             # Validate selection keys
             validate_selection_keys(self.selection, self.SELECTION_KEYS)
             
-            # Validate regions
-            if "region" in self.selection:
-                region_list = self.selection["region"]
-                if not isinstance(region_list, list):
-                    raise InvalidParameterError("Region must be provided as a list")
+            # Validate ROIs
+            if "roi" in self.selection:
+                roi_list = self.selection["roi"]
+                if not isinstance(roi_list, list):
+                    raise InvalidParameterError("ROI must be provided as a list")
                 
-                invalid_regions = [r for r in region_list if r not in self.VALID_REGIONS]
-                if invalid_regions:
+                invalid_rois = [r for r in roi_list if r not in self.VALID_ROIS]
+                if invalid_rois:
                     raise InvalidParameterError(
-                        f"Invalid region(s): {invalid_regions}. "
-                        f"Valid regions are: {self.VALID_REGIONS}"
+                        f"Invalid ROI(s): {invalid_rois}. "
+                        f"Valid ROIs are: {self.VALID_ROIS}"
                     )
-                self.selected_regions = region_list
+                self.selected_rois = roi_list
             
-            # Validate sensor prefixes
-            if "sensors" in self.selection:
-                sensor_prefix_list = self.selection["sensors"]
-                if not isinstance(sensor_prefix_list, list):
-                    raise InvalidParameterError("Sensors must be provided as a list")
-                
-                invalid_prefixes = [s for s in sensor_prefix_list if s not in self.VALID_SENSOR_PREFIXES]
-                if invalid_prefixes:
-                    raise InvalidParameterError(
-                        f"Invalid sensor prefix(es): {invalid_prefixes}. "
-                        f"Valid sensor prefixes are: {self.VALID_SENSOR_PREFIXES}"
-                    )
-                self.selected_sensor_prefixes = sensor_prefix_list
-            
-            # Validate sensor indices
-            if "sensor_index" in self.selection:
-                sensor_array = validate_binary_array(
-                    self.selection["sensor_index"],
-                    self.SENSORS_LENGTH,
-                    "sensor_index"
+            # Validate electrodes
+            if "electrodes" in self.selection:
+                electrodes_array = validate_binary_array(
+                    self.selection["electrodes"],
+                    self.ELECTRODES_LENGTH,
+                    "electrodes"
                 )
-                self.selected_sensors = get_selected_indices(sensor_array)
+                self.selected_electrodes = get_selected_indices(electrodes_array)
             
             # Validate timepoints
             if "timepoints" in self.selection:
@@ -176,74 +149,58 @@ class MEGEncodingModel(BaseModelInterface):
                     "timepoints"
                 )
                 self.selected_timepoints = get_selected_indices(timepoints_array)
-    
+
     def load_model(self) -> None:
         """
         Load model weights, preprocessing pipeline, and regression layers.
-        
+
         Loads the vision transformer backbone, preprocessing components 
-        (scalers, PCA), and trained regression weights for the specified
-        subject. Only loads weights for selected sensors and timepoints
-        to optimize memory usage.
+        (scaler, PCA), and trained regression weights for the specified
+        subject. Sets up all necessary components for generating EEG
+        responses.
         """
+
         try:
-            # Load metadata
+            # Get the EEG channels and time points dimensions
             metadata_dir = os.path.join(
-                self.berg_dir, 
-                'encoding_models',
-                'modality-meg',
-                'train_dataset-things_meg_1',
-                'model-vit_b_32',
-                'metadata',
-                f'metadata_P{self.subject}.npy'
+                self.berg_dir, 'encoding_models', 'modality-utah_array',
+                'train_dataset-tvsd', 'model-vit_b_32',
+                'metadata', f'metadata_monkey{self.subject}.npy'
             )
             self.metadata = np.load(metadata_dir, allow_pickle=True).item()
             
-            # Build sensor selection from multiple sources
-            sensor_indices_set = set()
+            # Get electrode mapping if ROI selection is specified
+            if self.selected_rois is not None:
+                if self.selected_electrodes is None:
+                    self.selected_electrodes = np.array([])
+                electrode_indices = self.metadata['roi']['roi_assignments']
+                for roi in self.selected_rois:
+
+                    roi_index = list(self.metadata['roi']['roi_labels']).index(roi)
+                    roi_electrodes = np.where(electrode_indices==roi_index)[0]
+                    self.selected_electrodes = np.append(self.selected_electrodes,roi_electrodes).astype(int)
+                self.selected_electrodes = sorted(list(set(self.selected_electrodes)))
             
-            # Add sensors from region selection
-            if self.selected_regions is not None:
-                for region in self.selected_regions:
-                    # Find sensors matching this region
-                    region_mask = self.metadata['sensors']['sensor_regions'] == region
-                    region_sensors = np.where(region_mask)[0]
-                    sensor_indices_set.update(region_sensors.tolist())
-            
-            # Add sensors from prefix selection
-            if self.selected_sensor_prefixes is not None:
-                for prefix in self.selected_sensor_prefixes:
-                    # Find sensors matching this prefix
-                    prefix_mask = self.metadata['sensors']['sensor_prefixes'] == prefix
-                    prefix_sensors = np.where(prefix_mask)[0]
-                    sensor_indices_set.update(prefix_sensors.tolist())
-            
-            # Add sensors from direct index selection
-            if self.selected_sensors is not None:
-                sensor_indices_set.update(self.selected_sensors)
-            
-            # If any selection was made, use the combined set
-            if sensor_indices_set:
-                self.selected_sensors = sorted(list(sensor_indices_set))
-            else:
-                # If no selection made, use all sensors
-                self.selected_sensors = list(range(self.SENSORS_LENGTH))
+            # If no electrodes selected, use all
+            if self.selected_electrodes is None:
+                self.selected_electrodes = list(range(self.ELECTRODES_LENGTH))
             
             # If no timepoints selected, use all
             if self.selected_timepoints is None:
                 self.selected_timepoints = list(range(self.TIMEPOINTS_LENGTH))
             
             # Load the vision transformer
-            self.feature_extractor = self._load_feature_extractor(self.device)
+            self.feature_extractor = self._load_feature_extractor(self.device)        
             
-            # Load the scalers, PCA, and trained regression weights (only for selection)
+            # Load the scaler, PCA, and trained regression weights
             self.scaler, self.pca, self.reg = self._load_encoding_weights()
             
-            print(f"Model loaded on {self.device} for subject {self.subject}")
+            print(f"Model loaded on {self.device} for monkey {self.subject}")
             
         except Exception as e:
             raise ModelLoadError(f"Failed to load model: {str(e)}")
-    
+
+
     def _load_feature_extractor(self, device):
         """
         Load the ViT feature extractor for all 12 transformer layers.
@@ -290,17 +247,18 @@ class MEGEncodingModel(BaseModelInterface):
         self.transform = weights.transforms()
         
         return feature_extractor
-    
+
+
     def _load_encoding_weights(self):
         """
         Load pretrained scaler, PCA, and regression weights.
-        Only loads regression weights for selected sensors and timepoints.
+        Applies electrode/timepoint selection to create model.
         
         Returns
         -------
         tuple
             A tuple containing (scaler, pca, reg) where:
-            - scaler : StandardScaler - Pre-PCA feature normalization
+            - scaler : StandardScaler - Fitted feature normalization object
             - pca : PCA - Fitted principal component analysis model
             - reg : LinearRegression - Model with only selected weights
         """
@@ -308,15 +266,15 @@ class MEGEncodingModel(BaseModelInterface):
         weights_dir = os.path.join(
             self.berg_dir, 
             'encoding_models', 
-            'modality-meg',
-            'train_dataset-things_meg_1', 
+            'modality-utah_array',
+            'train_dataset-tvsd', 
             'model-vit_b_32',
             'encoding_models_weights',
-            f'weights_P{self.subject}.npy'
+            f'weights_monkey{self.subject}.npy'
         )
         weights = np.load(weights_dir, allow_pickle=True).item()
         
-        # Reconstruct pre-PCA scaler
+        # Reconstruct scaler
         scaler = StandardScaler()
         scaler.scale_ = weights['scaler_param']['scale_']
         scaler.mean_ = weights['scaler_param']['mean_']
@@ -336,20 +294,19 @@ class MEGEncodingModel(BaseModelInterface):
         pca.noise_variance_ = weights['pca_param']['noise_variance_']
         pca.n_features_in_ = weights['pca_param']['n_features_in_']
         
-        # Load regression weights
-        reg_coef_full = weights['reg_param']['coef_']  # Shape: (n_sensors * n_times, n_features)
-        reg_intercept_full = weights['reg_param']['intercept_']  # Shape: (n_sensors * n_times,)
+        # Create masks for selection
+        electrode_mask = np.zeros(self.ELECTRODES_LENGTH, dtype=bool)
+        electrode_mask[self.selected_electrodes] = True
         
-        # Calculate indices for selected outputs
-        selected_indices = []
-        for sensor_idx in self.selected_sensors:
-            for time_idx in self.selected_timepoints:
-                flat_idx = sensor_idx * self.TIMEPOINTS_LENGTH + time_idx
-                selected_indices.append(flat_idx)
+        time_mask = np.zeros(self.TIMEPOINTS_LENGTH, dtype=bool)
+        time_mask[self.selected_timepoints] = True
         
-        # Extract only the weights for selected outputs
-        coef_subset = reg_coef_full[selected_indices, :]  # Shape: (n_selected_outputs, n_features)
-        intercept_subset = reg_intercept_full[selected_indices]  # Shape: (n_selected_outputs,)
+        # Combined mask for flattened neural space (electrodes x times)
+        combined_mask = (electrode_mask[:, None] & time_mask[None, :]).flatten()
+        
+        # Slice regression weights to selected subset only
+        coef_subset = weights['reg_param']['coef_'][combined_mask, :]
+        intercept_subset = weights['reg_param']['intercept_'][combined_mask]
         
         # Build regression model with only selected weights
         reg = LinearRegression()
@@ -358,14 +315,15 @@ class MEGEncodingModel(BaseModelInterface):
         reg.n_features_in_ = weights['reg_param']['n_features_in_']
         
         return scaler, pca, reg
-    
+
+
     def generate_response(
         self,
         stimulus: np.ndarray,
         show_progress: bool = True
     ) -> np.ndarray:
         """
-        Generate in silico MEG responses for a batch of images.
+        Generate in silico Utah Array spiking responses for a batch of images.
         
         Parameters
         ----------
@@ -380,10 +338,9 @@ class MEGEncodingModel(BaseModelInterface):
         
         Returns
         -------
-        insilico_meg_responses : np.ndarray
-            In silico MEG response array of shape (batch_size, n_sensors, 
-            n_timepoints), where the number of sensors and time points
-            depends on the selection parameter.
+        insilico_spike_responses : np.ndarray
+            In silico spiking response array of shape (batch_size, n_selected_electrodes,
+            n_selected_timepoints).
         """
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -399,11 +356,11 @@ class MEGEncodingModel(BaseModelInterface):
         n_batches = int(np.ceil(len(images) / batch_size))
         
         if show_progress:
-            progress_bar = tqdm(range(n_batches), desc='Encoding MEG responses')
+            progress_bar = tqdm(range(n_batches), desc='Encoding Utah Array responses')
         else:
             progress_bar = range(n_batches)
         
-        insilico_meg_responses = None
+        insilico_spike_responses = None
         
         with torch.no_grad():
             for b in progress_bar:
@@ -423,7 +380,7 @@ class MEGEncodingModel(BaseModelInterface):
                     # Flatten all tokens: (batch_size, n_patches * hidden_dim)
                     layer_flat = layer_features.flatten(1, 2)
                     batch_features.append(layer_flat)
-                
+
                 # Concatenate features from all layers
                 # Shape: (batch_size, 12_layers * 50_patches * 768_dim)
                 ft = torch.cat(batch_features, dim=-1)
@@ -436,22 +393,22 @@ class MEGEncodingModel(BaseModelInterface):
                 
                 # Generate predictions with model
                 batch_pred = self.reg.predict(ft)
-
-                # Reshape to (batch_size, n_sensors, n_timepoints)
+                
+                # Reshape to (batch, n_selected_electrodes, n_selected_timepoints)
+                n_selected_electrodes = len(self.selected_electrodes)
+                n_selected_timepoints = len(self.selected_timepoints)
                 batch_responses = batch_pred.reshape(
                     batch_pred.shape[0],
-                    len(self.selected_sensors),
-                    len(self.selected_timepoints)
-                )
-                
-                batch_responses = batch_responses.astype(np.float32)
+                    n_selected_electrodes,
+                    n_selected_timepoints
+                ).astype(np.float32)
                 
                 # Combine with previous batches
-                if insilico_meg_responses is None:
-                    insilico_meg_responses = batch_responses
+                if insilico_spike_responses is None:
+                    insilico_spike_responses = batch_responses
                 else:
-                    insilico_meg_responses = np.append(
-                        insilico_meg_responses,
+                    insilico_spike_responses = np.append(
+                        insilico_spike_responses,
                         batch_responses,
                         axis=0
                     )
@@ -463,8 +420,9 @@ class MEGEncodingModel(BaseModelInterface):
                         'Total images': len(images)
                     })
         
-        return insilico_meg_responses
-    
+        return insilico_spike_responses
+
+
     @classmethod
     def get_metadata(
         cls, 
@@ -481,7 +439,7 @@ class MEGEncodingModel(BaseModelInterface):
         berg_dir : str
             Path to BERG directory.
         subject : str
-            Subject ID (1,2,3,4).
+            Monkey ID ("N" or "F").
         model_instance : BaseModelInterface
             If provided, extract parameters from this model instance.
         **kwargs
@@ -521,19 +479,20 @@ class MEGEncodingModel(BaseModelInterface):
         file_name = os.path.join(
             berg_dir,
             'encoding_models',
-            'modality-meg',
-            'train_dataset-things_meg_1',
+            'modality-utah_array',
+            'train_dataset-tvsd',
             'model-vit_b_32',
             'metadata',
-            f'metadata_P{subject}.npy'
+            f'metadata_monkey{subject}.npy'
         )
+
         
         # Load metadata if file exists
         if os.path.exists(file_name):
             metadata = np.load(file_name, allow_pickle=True).item()
             return metadata
         else:
-            raise FileNotFoundError(f"Metadata file not found for subject {subject}")
+            raise FileNotFoundError(f"Metadata file not found for monkey {subject}")
     
     @classmethod
     def get_model_id(cls) -> str:

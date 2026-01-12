@@ -1,0 +1,116 @@
+"""Prepare MOSAIC fMRI datasets for encoding model training:
+ - Download noise ceilings from MOSAIC HDF5 files,
+ - Download metadata and create subject-wise metadata with stimulus mappings,
+ - Add ROI binary masks for visual and full cortex spaces,
+ - Add Glasser group assignments for model prediction vertices,
+ - Map noise ceilings to prediction spaces.
+
+After preparation, metadata files contain stimulus information, train/test
+splits, ROI masks, Glasser group assignments, and noise ceiling estimates 
+for each subject.
+
+Datasets processed: BOLD5000, deeprecon, GOD, NSD, THINGS, BMD, NOD, HAD
+
+Parameters
+----------
+berg_dir : str
+    Directory of the BERG framework.
+
+Output Files Created (per subject):
+────────────────────────────────────────────────────────────────
+mosaic_metadata/{dataset}/sub-{id}.npy : Subject metadata
+
+'vertex_mapping_visual'    : (7831,)  - [visual variant only] Indices mapping visual cortex model predictions (GlasserGroups 1-5) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_visual] = predictions_7831
+'vertex_mapping_all'       : (57051,) - [whole_cortex variant only] Indices mapping full cortex model predictions (GlasserGroups 1-22) to full 91k HCP space. Usage: pred_HCP = np.full((batch, 91282), np.nan); pred_HCP[:, vertex_mapping_all] = predictions_57051
+'glasser_group_id'         : (7831,) or (57051,) - Array indicating which GlasserGroup (1-5 for visual, 1-22 for whole_cortex) each prediction vertex belongs to. Allows filtering predictions by group.
+'roi'                      : dict     - ROI name → vertex indices (filtered by model variant: GlasserGroups 1-5 for visual, 1-22 for whole_cortex)
+
+'subject_info':
+    participant_id           : str      - Subject identifier
+    age                      : int      - Subject age
+    sex                      : str      - Subject sex
+
+'stimuli':
+    filenames                : (70850,)   - All stimulus filenames
+    alias                    : (70850,)   - Stimulus aliases
+    source                   : (70850,)   - Stimulus sources
+    train_idx                : (69566,)   - Indices of training trials
+    test_idx                 : (1284,)    - Indices of test trials
+    train_filenames          : (69566,)   - Training stimulus filenames
+    test_filenames           : (1284,)    - Test stimulus filenames
+    reps                     : (70850,)   - Repetition count per stimulus for this subject
+
+'noise_ceiling':
+    test_n-avg_noiseceiling       : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using repeat-averaged beta estimates.
+    test_n-1_noiseceiling         : (91282,) - Vertex-wise noise ceiling computed on naturalistic test stimuli (real-world photographic images) using single-trial beta estimates.
+    train_n-avg_noiseceiling      : (91282,) - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using repeat-averaged beta estimates.
+    train_n-1_noiseceiling        : (91282,) - Vertex-wise noise ceiling computed on naturalistic training stimuli (real-world photographic images used for model fitting) using single-trial beta estimates.
+    artificial_n-avg_noiseceiling : (91282,) - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using repeat-averaged beta estimates.
+    artificial_n-1_noiseceiling   : (91282,) - Vertex-wise noise ceiling computed on artificial test stimuli (controlled non-naturalistic images such as gratings, noise patterns, and simple shapes) using single-trial beta estimates.
+"""
+
+import argparse
+import os
+from pathlib import Path
+from utils import download_noise_ceilings, download_metadata, add_noise_ceilings_to_metadata, add_roi_indices_to_metadata, add_vertex_mappings_to_metadata
+
+# =============================================================================
+# Input arguments
+# =============================================================================
+parser = argparse.ArgumentParser()
+parser.add_argument('--berg_dir', required=True, type=str,
+                    help="Directory of the BERG framework.")
+args = parser.parse_args()
+
+print('>>> MOSAIC Data Preparation <<<')
+print('\nInput arguments:')
+for key, val in vars(args).items():
+    print('{:16} {}'.format(key, val))
+
+# Create output directories
+base_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri', 'train_dataset-mosaic')
+visual_metadata_dir = os.path.join(base_dir, 'model-CNN8_multihead_subAll_verticesVisual', 'metadata')
+whole_cortex_metadata_dir = os.path.join(base_dir, 'model-CNN8_multihead_subNSD_verticesAll', 'metadata')
+nc_dir = os.path.join(base_dir, 'noise_ceilings')
+os.makedirs(visual_metadata_dir, exist_ok=True)
+os.makedirs(whole_cortex_metadata_dir, exist_ok=True)
+os.makedirs(nc_dir, exist_ok=True)
+
+# =============================================================================
+# Download noise ceilings
+# =============================================================================
+# Download HDF5 files and extract noise ceilings
+download_noise_ceilings(nc_dir)
+
+# =============================================================================
+# Create subject metadata
+# =============================================================================
+# Generate metadata linking neural responses to stimulus information for
+# each subject. Includes participant demographics, stimulus filenames,
+# train/test splits, and subject-specific repetition counts.
+print("Creating subject metadata")
+download_metadata(visual_metadata_dir, whole_cortex_metadata_dir)
+
+# =============================================================================
+# Add ROI masks and Glasser group IDs to metadata
+# =============================================================================
+# Download ROI masks from glasser and create glasser_group_id arrays
+print("Adding ROI indices and Glasser group IDs to metadata")
+add_roi_indices_to_metadata(visual_metadata_dir, whole_cortex_metadata_dir)
+
+# =============================================================================
+# Add noise ceilings to metadata
+# =============================================================================
+# Map full cortex noise ceilings (91282 vertices) to prediction spaces:
+# visual cortex (7831 vertices) and full cortex (57051 vertices).
+print("Adding noise ceilings to metadata")
+add_noise_ceilings_to_metadata(visual_metadata_dir, whole_cortex_metadata_dir, nc_dir)
+
+
+# =============================================================================
+# Add vertex mapping to metadata
+# =============================================================================
+# Model predictions are in reduced vertex spaces (visual or all cortex), while noise ceilings
+# and ROI indices are defined in full HCP grayordinate space (91,282 vertices). These mappings
+# allow expansion: predictions_91k[vertex_mapping] = predictions_model.
+add_vertex_mappings_to_metadata(visual_metadata_dir, whole_cortex_metadata_dir)

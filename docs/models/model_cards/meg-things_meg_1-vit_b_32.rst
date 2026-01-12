@@ -53,99 +53,51 @@ subsets) across 281 time points (−100 to +1300 ms) for each input image.
 Metadata
 --------
 
-**'meg'**
+**meg**
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **times** : ``(281,)`` - Time points (e.g., -0.1s to 1.3s relative to stimulus onset)
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - times
-     - ``(281,)``
-     - Time points (e.g., -0.1s to 1.3s relative to stimulus onset)
-   * - subject_id
-     - ``int``
-     - Subject identifier
+    **subject_id** : ``int`` - Subject identifier
+**sensors**
 
-**'sensors'**
+    **sensor_names** : ``(271,)`` - MEG sensor name strings
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **sensor_prefixes** : ``(271,)`` - Sensor prefixes (e.g., 'MLF', 'MRC', 'MZO')
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - sensor_names
-     - ``(271,)``
-     - MEG sensor name strings
-   * - sensor_prefixes
-     - ``(271,)``
-     - Sensor prefixes (e.g., 'MLF', 'MRC', 'MZO')
-   * - sensor_hemispheres
-     - ``(271,)``
-     - Hemisphere labels ('Left', 'Right', 'Midline')
-   * - sensor_regions
-     - ``(271,)``
-     - Region labels ('Frontal', 'Central', 'Parietal', 'Temporal', 'Occipital')
-   * - n_sensors
-     - ``int``
-     - Number of MEG sensors (271)
+    **sensor_hemispheres** : ``(271,)`` - Hemisphere labels ('Left', 'Right', 'Midline')
 
-**'encoding_model'**
+    **sensor_regions** : ``(271,)`` - Region labels ('Frontal', 'Central', 'Parietal', 'Temporal', 'Occipital')
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **n_sensors** : ``int`` - Number of MEG sensors (271)
+**encoding_model**
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - train_img_ids
-     - ``(22248,)``
-     - THINGS image IDs for training trials
-   * - train_concepts
-     - ``(22248,)``
-     - Object category IDs (1–1854) for training trials
-   * - train_sessions
-     - ``(22248,)``
-     - Session numbers for training trials
-   * - train_runs
-     - ``(22248,)``
-     - Run numbers within each training session
-   * - train_img_files
-     - ``(22248,)``
-     - Full image paths on disk for training trials
-   * - test_things_img_ids
-     - ``(2400,)``
-     - THINGS image IDs for test trials
-   * - test_image_nr
-     - ``(2400,)``
-     - Test image numbers (1–200) for test trials
-   * - test_concepts
-     - ``(2400,)``
-     - Object category IDs for test trials
-   * - test_sessions
-     - ``(2400,)``
-     - Session numbers for test trials
-   * - test_runs
-     - ``(2400,)``
-     - Run numbers within each test session
-   * - test_img_files
-     - ``(2400,)``
-     - Full image paths on disk for test images
-   * - ncsnr
-     - ``(281, 271)``
-     - Noise ceiling signal-to-noise ratio for each sensor/timepoint (computed on the test data)
-   * - noise_ceiling
-     - ``(281, 271)``
-     - Noise ceiling for each sensor/timepoint (computed on the test data)
-   * - correlation_results
-     - ``(281, 271)``
-     - Encoding model prediction accuracy (Pearson's r) for each sensor/timepoint (computed on the test data)
+    **train_img_ids** : ``(22248,)`` - THINGS image IDs for training trials
 
+    **train_concepts** : ``(22248,)`` - Object category IDs (1–1854) for training trials
+
+    **train_sessions** : ``(22248,)`` - Session numbers for training trials
+
+    **train_runs** : ``(22248,)`` - Run numbers within each training session
+
+    **train_img_files** : ``(22248,)`` - Full image paths on disk for training trials
+
+    **test_things_img_ids** : ``(2400,)`` - THINGS image IDs for test trials
+
+    **test_image_nr** : ``(2400,)`` - Test image numbers (1–200) for test trials
+
+    **test_concepts** : ``(2400,)`` - Object category IDs for test trials
+
+    **test_sessions** : ``(2400,)`` - Session numbers for test trials
+
+    **test_runs** : ``(2400,)`` - Run numbers within each test session
+
+    **test_img_files** : ``(2400,)`` - Full image paths on disk for test images
+
+    **ncsnr** : ``(281, 271)`` - Noise ceiling signal-to-noise ratio for each sensor/timepoint (computed on the test data)
+
+    **noise_ceiling** : ``(281, 271)`` - Noise ceiling for each sensor/timepoint (computed on the test data)
+
+    **correlation_results** : ``(281, 271)`` - Encoding model prediction accuracy (Pearson's r) for each sensor/timepoint (computed on the test data)
 
 Input
 -----
@@ -195,6 +147,12 @@ This function loads the encoding model.
    :widths: 20 80
    :header-rows: 0
 
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** meg-things_meg_1-vit_b_32
+       | **Example:** "meg-things_meg_1-vit_b_32"
    * - **subject**
      - | **Type:** int
        | **Required:** Yes
@@ -252,6 +210,12 @@ This function loads the encoding model.
        |     Length must equal the number of time samples (281). Each 1 indicates
        |     a selected timepoint.
        |     **Example:** [0, 0, '...', 1, 1, 0]
+   * - **device**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -262,22 +226,47 @@ This function generates in silico neural responses using the encoding model prev
    :widths: 20 80
    :header-rows: 0
 
+   * - **model**
+     - | **Type:** BaseModelInterface
+       | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
    * - **stimulus**
      - | **Type:** numpy.ndarray
        | **Required:** Yes
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
-       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
-   * - **device**
-     - | **Type:** str
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
+       | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+   * - **return_metadata**
+     - | **Type:** bool
        | **Required:** No
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
+       | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
+       | **Example:** True
    * - **show_progress**
      - | **Type:** bool
        | **Required:** No
        | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
+
+Parameters used in ``get_model_metadata``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function loads the encoding model's metadata without having to load the model itself.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 0
+
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** meg-things_meg_1-vit_b_32
+       | **Example:** "meg-things_meg_1-vit_b_32"
+   * - **subject**
+     - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the THINGS MEG1 dataset.
+       | **Valid Values:** 1, 2, 3, 4
+       | **Example:** 1
 
 Performance
 ----------
@@ -302,12 +291,11 @@ Example Usage
         "meg-things_meg_1-vit_b_32",
         subject=1,
         selection={
-            "region": ["Central", "Frontal", "Occipital"]
-            "sensors": ["MLC", "MLF", "MLO"]
-            "sensor_index": [0, 0, '...', 1, 1, 0]
+            "region": ["Central", "Frontal", "Occipital"],
+            "sensors": ["MLC", "MLF", "MLO"],
+            "sensor_index": [0, 0, '...', 1, 1, 0],
             "timepoints": [0, 0, '...', 1, 1, 0]
-        },
-        device="auto"
+        }
     )
     
     # Prepare the stimulus images
@@ -332,6 +320,12 @@ Example Usage
         model,
         images,
         return_metadata=True
+    )
+    
+    # Load the encoding model's metadata without having to load the model itself
+    metadata = berg.get_model_metadata(
+        "meg-things_meg_1-vit_b_32",
+        subject=1
     )
     
 

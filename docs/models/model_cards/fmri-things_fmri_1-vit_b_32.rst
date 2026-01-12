@@ -53,97 +53,44 @@ subsets via ROI selection) for each input image.
 Metadata
 --------
 
-**'fmri'**
+**fmri**
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **voxel_coords** : ``(211339, 3)`` - Voxel coordinates in volume space (x, y, z indices)
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - voxel_coords
-     - ``(211339, 3)``
-     - Voxel coordinates in volume space (x, y, z indices)
-   * - n_voxels
-     - ``int``
-     - Total number of voxels (211339)
-   * - subject_id
-     - ``int``
-     - Subject identifier (e.g., '1')
+    **n_voxels** : ``int`` - Total number of voxels (211339)
 
-**'encoding_model'**
+    **subject_id** : ``int`` - Subject identifier (e.g., '1')
+**encoding_model**
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **train_stimuli** : ``(8640,)`` - Stimulus filenames for training trials
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - train_stimuli
-     - ``(8640,)``
-     - Stimulus filenames for training trials
-   * - train_concepts
-     - ``(8640,)``
-     - Concept labels for training trials
-   * - test_stimuli
-     - ``(1200,)``
-     - Stimulus filenames for test trials
-   * - test_concepts
-     - ``(1200,)``
-     - Concept labels for test trials
-   * - noise_ceiling_singletrial
-     - ``(211339,)``
-     - Max explainable variance per voxel based on single-trial repeat reliability
-   * - noise_ceiling_testset
-     - ``(211339,)``
-     - Max explainable variance per voxel based on averaged test-set repeats
-   * - splithalf_corrected
-     - ``(211339,)``
-     - Raw split-half voxel reliability without correction
-   * - splithalf_uncorrected
-     - ``(211339,)``
-     - Split-half reliability corrected to estimate full-data consistency
-   * - correlation_results
-     - ``(211339,)``
-     - Encoding model prediction accuracy (Pearson's r) for each voxel (computed on the test data)
+    **train_concepts** : ``(8640,)`` - Concept labels for training trials
 
-**'prf'**
+    **test_stimuli** : ``(1200,)`` - Stimulus filenames for test trials
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **test_concepts** : ``(1200,)`` - Concept labels for test trials
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - prf_eccentricity
-     - ``(211339,)``
-     - Distance of receptive field center from fixation (deg)
-   * - prf_polarangle
-     - ``(211339,)``
-     - Angular position of receptive field center (0–360°)
-   * - prf_rsquared
-     - ``(211339,)``
-     - Variance explained by pRF model (fit quality)
-   * - prf_size
-     - ``(211339,)``
-     - Estimated receptive field size (deg)
+    **noise_ceiling_singletrial** : ``(211339,)`` - Max explainable variance per voxel based on single-trial repeat reliability
 
-**'roi'**
+    **noise_ceiling_testset** : ``(211339,)`` - Max explainable variance per voxel based on averaged test-set repeats
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **splithalf_corrected** : ``(211339,)`` - Raw split-half voxel reliability without correction
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - V1, V2, V3, hV4, VO1, VO2, LO1_prf, LO2_prf, TO1, TO2, V3b, V3a, lFFA, rFFA, lOFA, rOFA, lEBA, rEBA, lPPA, rPPA, lRSC, rRSC, lTOS, rTOS, lLOC, rLOC, IT, lSTS, rSTS
-     - ``variable length``
-     - Each ROI entry contains voxel indices (variable length) for that functional region
+    **splithalf_uncorrected** : ``(211339,)`` - Split-half reliability corrected to estimate full-data consistency
 
+    **correlation_results** : ``(211339,)`` - Encoding model prediction accuracy (Pearson's r) for each voxel (computed on the test data)
+**prf**
+
+    **prf_eccentricity** : ``(211339,)`` - Distance of receptive field center from fixation (deg)
+
+    **prf_polarangle** : ``(211339,)`` - Angular position of receptive field center (0–360°)
+
+    **prf_rsquared** : ``(211339,)`` - Variance explained by pRF model (fit quality)
+
+    **prf_size** : ``(211339,)`` - Estimated receptive field size (deg)
+**roi**
+
+    **V1, V2, V3, hV4, VO1, VO2, LO1_prf, LO2_prf, TO1, TO2, V3b, V3a, lFFA, rFFA, lOFA, rOFA, lEBA, rEBA, lPPA, rPPA, lRSC, rRSC, lTOS, rTOS, lLOC, rLOC, IT, lSTS, rSTS** : ``variable length`` - Each ROI entry contains voxel indices (variable length) for that functional region
 
 Input
 -----
@@ -191,6 +138,12 @@ This function loads the encoding model.
    :widths: 20 80
    :header-rows: 0
 
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-things_fmri_1-vit_b_32
+       | **Example:** "fmri-things_fmri_1-vit_b_32"
    * - **subject**
      - | **Type:** int
        | **Required:** Yes
@@ -227,6 +180,12 @@ This function loads the encoding model.
        |     Must have exactly the same length as the number of available voxels (211,339).
        |     Each position set to 1 indicates that voxel should be included.
        |     **Example:** [0, 0, '...', 1, 1, 0]
+   * - **device**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -237,22 +196,47 @@ This function generates in silico neural responses using the encoding model prev
    :widths: 20 80
    :header-rows: 0
 
+   * - **model**
+     - | **Type:** BaseModelInterface
+       | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
    * - **stimulus**
      - | **Type:** numpy.ndarray
        | **Required:** Yes
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
-       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
-   * - **device**
-     - | **Type:** str
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
+       | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+   * - **return_metadata**
+     - | **Type:** bool
        | **Required:** No
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
+       | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
+       | **Example:** True
    * - **show_progress**
      - | **Type:** bool
        | **Required:** No
        | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
+
+Parameters used in ``get_model_metadata``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function loads the encoding model's metadata without having to load the model itself.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 0
+
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-things_fmri_1-vit_b_32
+       | **Example:** "fmri-things_fmri_1-vit_b_32"
+   * - **subject**
+     - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the THINGS fMRI dataset.
+       | **Valid Values:** 1, 2, 3
+       | **Example:** 1
 
 Performance
 ----------
@@ -277,10 +261,9 @@ Example Usage
         "fmri-things_fmri_1-vit_b_32",
         subject=1,
         selection={
-            "roi": ["V1", "V2", "IT"]
+            "roi": ["V1", "V2", "IT"],
             "voxel_index": [0, 0, '...', 1, 1, 0]
-        },
-        device="auto"
+        }
     )
     
     # Prepare the stimulus images
@@ -304,6 +287,12 @@ Example Usage
         model,
         images,
         return_metadata=True
+    )
+    
+    # Load the encoding model's metadata without having to load the model itself
+    metadata = berg.get_model_metadata(
+        "fmri-things_fmri_1-vit_b_32",
+        subject=1
     )
     
 

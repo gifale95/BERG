@@ -49,55 +49,30 @@ exactly three times during the NSD experiment).
 Metadata
 --------
 
-NOTE: Metadata files are generated separately for each ROI, containing only voxels within that region.
+.. note::
 
-**'fmri'**
+   Metadata files are generated separately for each ROI, containing only voxels within that region.
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+**fmri**
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - ncsnr
-     - ``(n_voxels,)``
-     - Noise-ceiling signal-to-noise ratio per voxel (ROI-specific)
-   * - roi_mask_volume
-     - ``(81, 104, 83)``
-     - Binary mask defining voxel locations in volume space for this ROI
-   * - fmri_affine
-     - ``(4, 4)``
-     - Affine transformation matrix for volume-to-world coordinate mapping
+    **ncsnr** : ``(n_voxels,)`` - Noise-ceiling signal-to-noise ratio per voxel (ROI-specific)
 
-**'encoding_models'**
+    **roi_mask_volume** : ``(81, 104, 83)`` - Binary mask defining voxel locations in volume space for this ROI
 
-.. list-table::
-   :widths: 30 20 50
-   :header-rows: 1
+    **fmri_affine** : ``(4, 4)`` - Affine transformation matrix for volume-to-world coordinate mapping
+**encoding_models**
 
-   * - Key
-     - Shape/Type
-     - Description
-   * - r2
-     - ``(n_voxels,)``
-     - R² scores per voxel
-   * - noise_ceiling
-     - ``(n_voxels,)``
-     - Noise ceiling per voxel (max explainable variance)
-   * - explained_variance
-     - ``(n_voxels,)``
-     - Percentage of noise ceiling explained by model
-   * - train_img_num
-     - ``(9000,)``
-     - Image indices used for training
-   * - val_img_num
-     - ``(485,)``
-     - Image indices used for validation
-   * - test_img_num
-     - ``(515,)``
-     - Image indices used for testing
+    **r2** : ``(n_voxels,)`` - R² scores per voxel
 
+    **noise_ceiling** : ``(n_voxels,)`` - Noise ceiling per voxel (max explainable variance)
+
+    **explained_variance** : ``(n_voxels,)`` - Percentage of noise ceiling explained by model
+
+    **train_img_num** : ``(9000,)`` - Image indices used for training
+
+    **val_img_num** : ``(485,)`` - Image indices used for validation
+
+    **test_img_num** : ``(515,)`` - Image indices used for testing
 
 Input
 -----
@@ -171,6 +146,12 @@ This function loads the encoding model.
    :widths: 20 80
    :header-rows: 0
 
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-nsd-fwrf
+       | **Example:** "fmri-nsd-fwrf"
    * - **subject**
      - | **Type:** int
        | **Required:** Yes
@@ -195,8 +176,8 @@ This function loads the encoding model.
      - | **Type:** str
        | **Required:** No
        | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** cpu, cuda, auto
-       | **Example:** auto
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -214,8 +195,40 @@ This function generates in silico neural responses using the encoding model prev
    * - **stimulus**
      - | **Type:** numpy.ndarray
        | **Required:** Yes
-       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224x224).
-       | **Example:** An array of shape [100, 3, 224, 224] representing 100 RGB images.
+       | **Description:** A batch of RGB images to be encoded. Images should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
+       | **Example:** "An array of shape [100, 3, 224, 224] representing 100 RGB images."
+   * - **return_metadata**
+     - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
+       | **Example:** True
+   * - **show_progress**
+     - | **Type:** bool
+       | **Required:** No
+       | **Description:** Whether to show a progress bar during encoding (for large batches).
+       | **Example:** True
+
+Parameters used in ``get_model_metadata``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function loads the encoding model's metadata without having to load the model itself.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 0
+
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** fmri-nsd-fwrf
+       | **Example:** "fmri-nsd-fwrf"
+   * - **subject**
+     - | **Type:** int
+       | **Required:** Yes
+       | **Description:** Subject ID from the NSD dataset (1-8).
+       | **Valid Values:** 1, 2, 3, 4, 5, 6, 7, 8
+       | **Example:** 1
 
 Performance
 ----------
@@ -241,7 +254,7 @@ Example Usage
         subject=1,
         selection={
             "roi": "V1"
-        },
+        }
     )
     
     # Prepare the stimulus images
@@ -265,6 +278,12 @@ Example Usage
         model,
         images,
         return_metadata=True
+    )
+    
+    # Load the encoding model's metadata without having to load the model itself
+    metadata = berg.get_model_metadata(
+        "fmri-nsd-fwrf",
+        subject=1
     )
     
 

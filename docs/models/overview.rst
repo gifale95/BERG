@@ -84,6 +84,20 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32/encoding_models_accuracy/>`_
+   * - 
+     - :doc:`model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual`
+     - CNN predicting visual cortex responses (7,831 vertices) for 93 subjects across 8 datasets.
+     - MOSAIC (all datasets)
+     - Human
+     - Images
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subAll_verticesVisual/encoding_models_accuracy/>`_
+   * - 
+     - :doc:`model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll`
+     - CNN predicting whole-cortex responses (57,051 vertices) for 8 NSD subjects.
+     - MOSAIC (NSD)
+     - Human
+     - Images
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subNSD_verticesAll/encoding_models_accuracy/>`_
 
 modality-eeg
 ~~~~~~~~~~~~
@@ -156,6 +170,30 @@ Encoding models trained on neural responses recorded with Utah arrays (intracort
      - Macaque
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-utah_array/train_dataset-tvsd/model-vit_b_32/encoding_models_accuracy/>`_
+
+modality-calcium_2p
+~~~~~~~~~~~~~~~~~~~
+Encoding models trained on neural responses recorded with two-photon calcium imaging.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 3 60 40 20 10 10 10
+   :class: wrap-table
+
+   * - Best model
+     - Model ID
+     - Description
+     - Training dataset
+     - Species
+     - Stimuli
+     - Encoding accuracy
+   * - ✅
+     - :doc:`model_cards/calcium_2p-wang_2025-3DCNN`
+     - Foundation model of mouse visual cortex, based on a spatiotemporal convolutional neural network (3D CNN + ConvLSTM).
+     - `Wang et al., 2025 <https://doi.org/10.1038/s41586-025-08829-y>`_
+     - Mouse
+     - Videos
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-calcium_2p/train_dataset-wang_2025/model-3DCNN/encoding_models_accuracy/>`_
 
 .. raw:: html
 
