@@ -10,9 +10,9 @@ Model Summary
    :stub-columns: 1
 
    * - Modality
-     - calcium_2p
+     - Two-photon calcium imaging
    * - Training Dataset
-     - wang_2025
+     - Wang et al., 2025
    * - Species
      - Mouse
    * - Stimuli
@@ -51,7 +51,7 @@ module processes behavioral state variables (locomotion and pupil dilation) to g
 gain signals. The shared core consists of spatiotemporal convolutional layers and recurrent
 components that produce nonlinear visual feature representations over time. The readout module
 maps core features to neural responses using linear weights at neuron-specific spatial locations
-corresponding to receptive field positions. For inference, the input remains video input.
+corresponding to receptive field positions. For inference, the model only takes video input.
 
 **Session-specific readouts.** Because two-photon imaging does not provide stable neuron identities
 across recording sessions, each session and scan is associated with a distinct readout layer.
@@ -219,6 +219,12 @@ This function loads the encoding model.
    :widths: 20 80
    :header-rows: 0
 
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** calcium_2p-wang_2025-3DCNN
+       | **Example:** "calcium_2p-wang_2025-3DCNN"
    * - **train_session**
      - | **Type:** str
        | **Required:** Yes
@@ -243,7 +249,7 @@ This function loads the encoding model.
        | **field**
        |     **Type:** list[int]
        |     **Description:** Imaging Fields from the recording. Each Scan/Session has a different imaging fields available.
-       |     **Valid values:** "1", "2", "3", "4", "5", "6", "7", "8"
+       |     **Valid values:** 1, 2, 3, 4, 5, 6, 7, 8
        |     **Example:** [1, 3]
        | 
        | **unit_index**
@@ -253,6 +259,12 @@ This function loads the encoding model.
        |     selected session/scan (varies by session, e.g., 9,941 for session 8, scan 5).
        |     Each position set to 1 indicates that neuron should be included.
        |     **Example:** [0, 0, '...', 1, 1, 0]
+   * - **device**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
+       | **Valid Values:** "cpu", "cuda", "auto"
+       | **Example:** "auto"
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -263,17 +275,49 @@ This function generates in silico neural responses using the encoding model prev
    :widths: 20 80
    :header-rows: 0
 
-   * - **device**
-     - | **Type:** str
+   * - **model**
+     - | **Type:** BaseModelInterface
+       | **Required:** Yes
+       | **Description:** An instantiated and loaded encoding model.
+   * - **stimulus**
+     - | **Type:** numpy.ndarray
+       | **Required:** Yes
+       | **Description:** The input should be a sequence of grayscale video frames, or a batch of video sequences.
+       | - Single video: shape [n_frames, height, width]
+       | - Batch of videos: shape [n_batches, n_frames, height, width]
+       | **Example:** "An array of shape [4, 100, 144, 256] representing 4 grayscale videos with 100 frames each."
+   * - **return_metadata**
+     - | **Type:** bool
        | **Required:** No
-       | **Description:** Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-       | **Valid Values:** "cpu", "cuda", "auto"
-       | **Example:** "auto"
+       | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
+       | **Example:** True
    * - **show_progress**
      - | **Type:** bool
        | **Required:** No
        | **Description:** Whether to show a progress bar during encoding (for large batches).
        | **Example:** True
+
+Parameters used in ``get_model_metadata``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This function loads the encoding model's metadata without having to load the model itself.
+
+.. list-table::
+   :widths: 20 80
+   :header-rows: 0
+
+   * - **model_id**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Unique identifier of the model to load.
+       | **Valid Values:** calcium_2p-wang_2025-3DCNN
+       | **Example:** "calcium_2p-wang_2025-3DCNN"
+   * - **train_session**
+     - | **Type:** str
+       | **Required:** Yes
+       | **Description:** Recording session and scan identifier in format 'session-X_scan-Y'
+       | **Valid Values:** "session-4_scan-7", "session-5_scan-6", "session-5_scan-7", "session-6_scan-2", "session-6_scan-4", "session-6_scan-6", "session-6_scan-7", "session-7_scan-3", "session-7_scan-5", "session-8_scan-5", "session-9_scan-3", "session-9_scan-4", "session-9_scan-6"
+       | **Example:** "session8_scan5"
 
 Performance
 ----------
@@ -327,6 +371,12 @@ Example Usage
         model,
         images,
         return_metadata=True
+    )
+    
+    # Load the encoding model's metadata without having to load the model itself
+    metadata = berg.get_model_metadata(
+        "calcium_2p-wang_2025-3DCNN",
+        train_session="session8_scan5"
     )
     
 

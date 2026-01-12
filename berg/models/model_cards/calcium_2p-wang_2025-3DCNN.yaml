@@ -249,7 +249,9 @@ parameters:
       - Batch of videos: shape [n_batches, n_frames, height, width]
     required: true
     type: numpy.ndarray
-    shape: [n_frames, height, width] or [n_batches, n_frames, height, width]
+    shape: 
+      - [n_frames, height, width]
+      - [n_batches, n_frames, height, width]
     example: "An array of shape [4, 100, 144, 256] representing 4 grayscale videos with 100 frames each."
     function: "encode"
 
