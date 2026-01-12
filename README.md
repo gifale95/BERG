@@ -37,7 +37,7 @@ We warmly welcome contributions to improve and expand BERG, including:
 - Encoding models of neural responses for new stimulus types (e.g., videos, audio, language, multimodal).
 - Suggestions to improve BERG.
 
-For more information on how to contribute, please refer to [our documentation][berg_contribute]. If you have questions or would like to discuss your contribution before submitting, please contact us at brain.berg.info@gmail.com. All feedback and help is strongly appreciated!
+For more information on how to contribute, please refer to [our documentation][berg_contribute]. If you have questions or would like to discuss your contribution before submitting, you can contact us at brain.berg.info@gmail.com. All feedback and help is strongly appreciated!
 
 
 
@@ -85,16 +85,19 @@ For detailed instructions and folder structure, see the [documentation](https://
 
 ### 🧠 Available encoding models
 
-The following table shows BERG's most accurate encoding models for each dataset and modality. For more details on these models, or for the full list of available models, please refer to the [documentation][model_cards].
+The following table shows BERG's most accurate encoding models for each dataset and modality. For more details on these models, or for the full list of available models, refer to the [documentation][model_cards].
 
 | Model ID | Training dataset | Neural recoding modality | Species | Stimuli | Encoding accuracy |
 |----------|------------------|--------------------|---------|---------|-------------------|
 | [fmri-nsd_fsaverage-huze][fmri-nsd_fsaverage-huze] | [NSD (surface space)][allen] | fMRI | Human | Images | [Accuracy plots][acc-fmri-nsd_fsaverage-huze] |
 | [fmri-nsd-fwrf][fmri-nsd-fwrf] | [NSD (volume space)][allen] | fMRI | Human | Images | [Accuracy plots][acc-fmri-nsd-fwrf] |
+| [fmri-mosaic-CNN8_multihead_subAll_verticesVisual][fmri-mosaic-CNN8_multihead_subAll_verticesVisual] | [MOSAIC][MOSAIC] | fMRI | Human | Images | [Accuracy plots][acc-mosaic-CNN8_multihead_subAll_verticesVisual] |
+| [fmri-mosaic-CNN8_multihead_subNSD_verticesAll][fmri-mosaic-CNN8_multihead_subNSD_verticesAll] | [MOSAIC][MOSAIC] | fMRI | Human | Images | [Accuracy plots][acc-mosaic-CNN8_multihead_subNSD_verticesAll] |
 | [fmri-things_fmri_1-vit_b_32][fmri-things_fmri_1-vit_b_32] | [THINGS fMRI1][things_data] | fMRI | Human | Images | [Accuracy plots][acc-fmri-things_fmri_1-vit_b_32] |
 | [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | EEG | Human | Images | [Accuracy plots][acc-eeg-things_eeg_2-vit_b_32] |
 | [meg-things_meg_1-vit_b_32][meg-things_meg_1-vit_b_32] | [THINGS MEG1][things_data] | MEG | Human | Images | [Accuracy plots][acc-meg-things_meg_1-vit_b_32] |
 | [utah_array-tvsd-vit_b_32][utah_array-tvsd-vit_b_32] | [TVSD][tvsd] | Utah arrays | Macaque | Images | [Accuracy plots][acc-utah_array-tvsd-vit_b_32] |
+| [calcium_2p-wang_2025-3DCNN][calcium_2p-wang_2025-3DCNN] | [Wang et al., 2025][wang_2025] | two-photon calcium imaging | Mouse | Videos | [Accuracy plots][acc-calcium_2p-wang_2025-3DCNN] |
 
 
 ### ✨ BERG functions
@@ -115,9 +118,8 @@ Step 1: Load an encoding model of your choice using the `get_encoding_model` fun
 
 ```python
 # Load an example fMRI encoding model
-fmri_model = berg.get_encoding_model("fmri-nsd-fwrf", 
+fmri_model = berg.get_encoding_model("fmri-nsd_fsaverage-huze", 
                                      subject=1,
-                                     selection={"roi": "V1"},
                                      device="cpu")
 
 # Load an example EEG encoding model
@@ -132,15 +134,25 @@ Step 2: Generate in silico neural responses to stimuli using the `encode` functi
 ```python
 # Encode fMRI responses to images with metadata
 insilico_fmri, insilico_fmri_metadata = berg.encode(fmri_model,
-                                                   images,
-                                                   return_metadata=True)  # if needed
+                                                    images,
+                                                    return_metadata=True)  # if needed
 
 # Encode EEG responses to images without metadata
 insilico_eeg = berg.encode(eeg_model,
-                          images)
+                           images)
 ```
 
-For more detailed information on how to use these functions and which parameters are available, please refer to the **Tutorials** below ⬇️.
+#### 🔹 Get the models' metadata
+
+You can also load the encoding models' metadata without having to load the models themselves.
+
+```python
+# Load the encoding models' metadata
+metadata = berg.get_model_metadata("fmri-nsd_fsaverage-huze",
+                                   subject=1)
+```
+
+For more detailed information on how to use these functions, which parameters are available, and the content of the model metadata files, refer to the [model cards in the documentation][model_cards], or to the **Tutorials** below ⬇️.
 
 
 ### 💻 Tutorials
@@ -180,7 +192,7 @@ If you come across problems with this Python package, please submit an issue!
 
 ## 📜 Citation
 
-If you use the Brain Encoding Response Generator, please cite:
+If you use BERG, please cite:
 
 > *Gifford AT, Bersch D, Janini D, Roig G, Cichy RM. 2025. The Brain Encoding Response Generator. In preparation. https://github.com/gifale95/BERG*
 
@@ -198,6 +210,7 @@ If you use the Brain Encoding Response Generator, please cite:
 [THINGS EEG2]: https://doi.org/10.1016/j.neuroimage.2022.119754
 [things_data]: https://doi.org/10.7554/eLife.82580
 [tvsd]: https://doi.org/10.1016/j.neuron.2024.12.003
+[wang_2025]: https://doi.org/10.1038/s41586-025-08829-y
 
 
 [get_encoding_model]: https://github.com/gifale95/BERG/blob/main/berg/berg.py#L207
@@ -212,6 +225,7 @@ If you use the Brain Encoding Response Generator, please cite:
 [utah_array-tvsd-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/utah_array-tvsd-vit_b_32.html
 [fmri-nsd-fwrf]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd-fwrf.html
 [eeg-things_eeg_2-vit_b_32]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-vit_b_32.html
+[calcium_2p-wang_2025-3DCNN]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/calcium_2p-wang_2025-3DCNN.html
 
 
 [fmri_tutorial_colab]: https://colab.research.google.com/drive/1W9Sroz2Y0eTYfyhVrAJwe50GGHHAGBdE?usp=drive_link
@@ -236,3 +250,11 @@ If you use the Brain Encoding Response Generator, please cite:
 [acc-utah_array-tvsd-vit_b_32]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-utah_array/train_dataset-tvsd/model-vit_b_32/encoding_models_accuracy/
 [acc-meg-things_meg_1-vit_b_32]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-meg/train_dataset-things_meg_1/model-vit_b_32/encoding_models_accuracy/
 [acc-fmri-things_fmri_1-vit_b_32]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32/encoding_models_accuracy/
+
+[MOSAIC]: https://www.biorxiv.org/content/10.64898/2025.11.28.690060v1
+[fmri-mosaic-CNN8_multihead_subNSD_verticesAll]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll.html
+[fmri-mosaic-CNN8_multihead_subAll_verticesVisual]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual.html
+[acc-mosaic-CNN8_multihead_subNSD_verticesAll]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subNSD_verticesAll/encoding_models_accuracy/
+[acc-mosaic-CNN8_multihead_subAll_verticesVisual]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subAll_verticesVisual/encoding_models_accuracy/
+
+[acc-calcium_2p-wang_2025-3DCNN]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-calcium_2p/train_dataset-wang_2025/model-3DCNN/encoding_models_accuracy/

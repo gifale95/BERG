@@ -1,8 +1,8 @@
 
 # Basic metadata
 model_id: calcium_2p-wang_2025-3DCNN
-modality: calcium_2p
-training_dataset: wang_2025
+modality: Two-photon calcium imaging
+training_dataset: Wang et al., 2025
 species: Mouse
 stimuli: Videos 
 model_type: Spatiotemporal convolutional neural network (3D CNN + ConvLSTM)
@@ -36,7 +36,7 @@ description: |
   gain signals. The shared core consists of spatiotemporal convolutional layers and recurrent
   components that produce nonlinear visual feature representations over time. The readout module
   maps core features to neural responses using linear weights at neuron-specific spatial locations
-  corresponding to receptive field positions. For inference, the input remains video input.
+  corresponding to receptive field positions. For inference, the model only takes video input.
 
   **Session-specific readouts.** Because two-photon imaging does not provide stable neuron identities
   across recording sessions, each session and scan is associated with a distinct readout layer.
@@ -165,6 +165,16 @@ output:
 
 # Model parameters and their usage
 parameters:
+
+  # Model ID
+  model_id:
+    description: Unique identifier of the model to load.
+    required: true
+    type: "str"
+    valid_values: "calcium_2p-wang_2025-3DCNN"
+    example: "calcium_2p-wang_2025-3DCNN"
+    function: "get_encoding_model, get_model_metadata"
+
   # Session and scan selection
   train_session:
     type: str
@@ -186,7 +196,7 @@ parameters:
     ]
     example: "session8_scan5"
     description: "Recording session and scan identifier in format 'session-X_scan-Y'"
-    function: "get_encoding_model"
+    function: "get_encoding_model, get_model_metadata"
 
   # Selection parameter to define specific outputs (ROI, neurons, etc.)
   selection:
@@ -224,15 +234,41 @@ parameters:
     default: "auto"
     example: "auto"
     description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "get_encoding_model"
+
+  model:
+    description: An instantiated and loaded encoding model.
+    required: true
+    type: BaseModelInterface
+    function: "encode"
+
+  stimulus:
+    description:  |
+      The input should be a sequence of grayscale video frames, or a batch of video sequences.
+      - Single video: shape [n_frames, height, width]
+      - Batch of videos: shape [n_batches, n_frames, height, width]
+    required: true
+    type: numpy.ndarray
+    shape: [n_frames, height, width] or [n_batches, n_frames, height, width]
+    example: "An array of shape [4, 100, 144, 256] representing 4 grayscale videos with 100 frames each."
+    function: "encode"
+
+  return_metadata:
+    description: "Whether to return the encoding model's metadata together with the in silico neural resposnes."
+    required: False
+    type: bool
+    default: Fale
+    example: True
     function: "encode"
 
   show_progress:
-    type: bool
+    description: "Whether to show a progress bar during encoding (for large batches)."
     required: false
+    type: bool
     default: True
     example: True
-    description: "Whether to show a progress bar during encoding (for large batches)."
     function: "encode"
+
 
 # Performance metrics and references
 performance:
