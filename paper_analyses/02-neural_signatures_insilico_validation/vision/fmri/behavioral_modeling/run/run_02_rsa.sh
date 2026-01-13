@@ -13,7 +13,7 @@ declare -a encoding_model_all
 index=0
 for s in `seq 1 8` ; do
     for h in 'lh' 'rh' ; do
-        for em in 'fmri-nsd_fsaverage-huze' ; do # 'fmri-nsd_fsaverage-vit_b_32'
+        for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' ; do
             subject_all[$index]=$s
             hemisphere_all[$index]=$h
             encoding_model_all[$index]=$em

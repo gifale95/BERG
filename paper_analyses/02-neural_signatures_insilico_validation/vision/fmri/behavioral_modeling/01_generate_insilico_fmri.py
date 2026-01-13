@@ -56,7 +56,7 @@ berg = BERG(berg_dir=args.berg_dir)
 
 # Load the metadata
 metadata_eeg = berg.get_model_metadata(
-    'eeg-things_eeg_2-vit_b-32',
+    'eeg-things_eeg_2-vit_b_32',
     subject=1
     )
 
