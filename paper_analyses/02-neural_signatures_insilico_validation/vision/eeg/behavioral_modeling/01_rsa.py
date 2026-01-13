@@ -121,7 +121,7 @@ model = berg.get_encoding_model(
 # =============================================================================
 # Generate the in silico EEG responses
 # =============================================================================
-# Loop across test object concepts
+# Loop across test image files
 images = []
 for file in tqdm(test_img_files):
 

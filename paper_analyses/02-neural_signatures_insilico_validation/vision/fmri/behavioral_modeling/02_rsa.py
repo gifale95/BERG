@@ -34,6 +34,7 @@ import os
 import numpy as np
 from tqdm import tqdm
 import pandas as pd
+from berg import BERG
 from scipy.stats import pearsonr
 import h5py
 
@@ -93,14 +94,14 @@ metadata = data['metadata']
 # =============================================================================
 # Create the behavioral RDM
 # =============================================================================
-# Load the THINGS EEG2 image metadata
-# The THINGS EEG2 image metadata can be downloaded from: https://osf.io/y63gw/files/qkgtf
-metadata_dir = os.path.join(args.berg_dir, args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'behavioral_modeling', 'image_metadata.npy')
-metadata_things = np.load(metadata_dir, allow_pickle=True).item()
-# Get the test image category number based on the original THINGS database
-test_img_concepts_THINGS = metadata_things['test_img_concepts_THINGS']
+# Get the test image concepts from the EEG metadata
+berg = BERG(berg_dir=args.berg_dir)
+metadata_eeg = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    subject=1
+    )
+test_img_concepts_THINGS = metadata_eeg['encoding_models']['test_img_info']\
+    ['test_img_concepts_THINGS']
 
 # Load the behavioral embeddings (the behavioral emebddings can be downloaded
 # from: https://osf.io/f5rn6/overview)

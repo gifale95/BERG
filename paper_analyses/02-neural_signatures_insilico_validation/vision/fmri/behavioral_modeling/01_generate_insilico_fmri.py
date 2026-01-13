@@ -49,24 +49,44 @@ os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
-# Load the THINGS EEG2 image metadata
+# Load the THINGS EEG2 test images
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
 # Load the metadata
-metadata = berg.get_model_metadata(
+metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b-32',
     subject=1
     )
 
-# Get the test image category number based on the original THINGS database
-test_img_concepts_THINGS = metadata['encoding_models']['test_img_info']\
-    ['test_img_concepts_THINGS']
+# Get the test image file names
+test_img_files = metadata_eeg['encoding_models']['test_img_info']\
+    ['test_img_files']
+
+# Loop across test image files
+images = []
+for file in tqdm(test_img_files):
+
+    # Find correct subfolder
+    img_path = None
+    for root, _, files in os.walk(os.path.join(args.things_dir)):
+        if file in files:
+            img_path = os.path.join(root, file)
+            break
+    
+    # Load and transform the image
+    img = Image.open(img_path)
+    img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
+    img = np.array(img).transpose(2, 0, 1)  # Convert to (C, H, W)
+    images.append(img)
+
+# Format the images to a numpy array
+images = np.array(images)
 
 
 # =============================================================================
-# Load BERG's encoding model
+# Generate the in silico fMRI responses
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
@@ -86,50 +106,8 @@ for sub in args.subjects:
         subject=sub
         )
 
-
-# =============================================================================
-# Generate the in silico fMRI responses
-# =============================================================================
-    fmri_lh = []
-    fmri_rh = []
-
-    # Loop across test object concepts
-    for cat in tqdm(test_img_concepts_THINGS):
-
-        # Get the image exemplar file names for each concept
-        image_list = os.listdir(os.path.join(args.things_dir,
-            'image-database_things', cat[6:]))
-        image_list.sort()
-
-        # Loop across image exemplars
-        images = []
-        for ifile in image_list:
-
-            # Load the images
-            img_path = os.path.join(args.things_dir, 'image-database_things',
-                cat[6:], ifile)
-            img = Image.open(img_path)
-            img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
-            img = np.array(img)
-            images.append(img)
-        
-        # Format the images
-        images = np.array(images)
-        images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
-
-        # Generate the in silico fMRI responses
-        fmri_cat = berg.encode(model, images, return_metadata=False)
-
-        # Store the in silico fMRI responses averaged across image exemplars
-        fmri_lh.append(np.mean(fmri_cat[0], 0))
-        fmri_rh.append(np.mean(fmri_cat[1], 0))
-
-        # Delete unused variables
-        del fmri_cat, images
-
-    # Convert the in silico fMRI resposnes to numpy arrays
-    fmri_lh = np.array(fmri_lh).astype(np.float32)
-    fmri_rh = np.array(fmri_rh).astype(np.float32)
+    # Generate the in silico fMRI responses
+    fmri_lh, fmri_rh = berg.encode(model, images)
 
 
 # =============================================================================

@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2], type=int)
-parser.add_argument('--eeg_reps', default='single', type=str)
+parser.add_argument('--eeg_reps', default='average', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -45,11 +45,6 @@ tfmri_roi_avg = data['tfmri_roi_avg']
 sig_cat_diff = data['sig_cat_diff']
 ci_tfmri_roi_avg = data['ci_tfmri_roi_avg']
 times = data['times']
-
-# DELETE # !!!
-time_range = np.arange(20, 50)
-times = times[time_range]
-# DELETE # !!!
 
 
 # =============================================================================
