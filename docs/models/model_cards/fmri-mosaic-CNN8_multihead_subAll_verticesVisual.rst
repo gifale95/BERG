@@ -361,6 +361,22 @@ Example Usage
         "fmri-mosaic-CNN8_multihead_subAll_verticesVisual",
         subject="NSD-01"
     )
+
+    # Generate in silico fMRI responses for all vertices, and expand them to
+    # the 91k HCP grayordinate space
+    model = berg.get_encoding_model(
+        "fmri-mosaic-CNN8_multihead_subAll_verticesVisual",
+        subject="NSD-01",
+        device="auto"
+    )
+    responses = berg.encode(
+        model,
+        images,
+        show_progress=True
+    )
+    vertex_mapping = metadata["encoding_models"]["vertex_mapping_visual"]
+    responses_91k = np.full((responses.shape[0], 91282), np.nan)
+    responses_91k[:,vertex_mapping] = responses
     
 
 References
