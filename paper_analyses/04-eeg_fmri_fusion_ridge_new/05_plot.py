@@ -30,8 +30,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2], type=list)
-parser.add_argument('--hemispheres', default=['lh'], type=list) # !!!['lh', 'rh']
-parser.add_argument('--eeg_reps', default=['single', 'average'], type=list)
+parser.add_argument('--hemispheres', default=['lh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -41,24 +40,39 @@ args, unknown = parser.parse_known_args()
 # =============================================================================
 # Load the results
 # =============================================================================
-corr_tfmri_fmri = {}
-corr_tfmri_fmri_roi = {}
-ci_corr_tfmri_fmri_roi = {}
-ci_corr_tfmri_fmri_roi_peak_lat = {}
+# corr_tfmri_fmri = {}
+# corr_tfmri_fmri_roi = {}
+# ci_corr_tfmri_fmri_roi = {}
+# ci_corr_tfmri_fmri_roi_peak_lat = {}
 
-for rep in args.eeg_reps:
+# for rep in args.eeg_reps:
 
-    results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge',
-        'stats', f'eeg_reps-{rep}', 'stats.npy')
+#     results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new',
+#         'stats', 'stats.npy')
 
-    results = np.load(results_dir, allow_pickle=True).item()
+#     results = np.load(results_dir, allow_pickle=True).item()
 
-    metadata = results['metadata']
-    times = results['times']
-    corr_tfmri_fmri[f'eeg_reps-{rep}'] = results['corr_tfmri_fmri']
-    corr_tfmri_fmri_roi[f'eeg_reps-{rep}'] = results['corr_tfmri_fmri_roi']
-    ci_corr_tfmri_fmri_roi[f'eeg_reps-{rep}'] = results['ci_corr_tfmri_fmri_roi']
-    ci_corr_tfmri_fmri_roi_peak_lat[f'eeg_reps-{rep}'] = results['ci_corr_tfmri_fmri_roi_peak_lat']
+#     metadata = results['metadata']
+#     times = results['times']
+    # corr_tfmri_fmri[f'eeg_reps-{rep}'] = results['corr_tfmri_fmri']
+    # corr_tfmri_fmri_roi[f'eeg_reps-{rep}'] = results['corr_tfmri_fmri_roi']
+    # ci_corr_tfmri_fmri_roi[f'eeg_reps-{rep}'] = results['ci_corr_tfmri_fmri_roi']
+    # ci_corr_tfmri_fmri_roi_peak_lat[f'eeg_reps-{rep}'] = results['ci_corr_tfmri_fmri_roi_peak_lat']
+
+
+results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new',
+    'stats', 'stats.npy')
+results = np.load(results_dir, allow_pickle=True).item()
+metadata = results['metadata']
+times = results['times']
+corr_invivoeeg = results['corr_invivoeeg']
+corr_insilicoeeg_avg_tfmri_avg = results['corr_insilicoeeg_avg_tfmri_avg']
+corr_insilicoeeg_sing_tfmri_avg = results['corr_insilicoeeg_sing_tfmri_avg']
+corr_insilicoeeg_sing_tfmri_sing = results['corr_insilicoeeg_sing_tfmri_sing']
+corr_invivoeeg_roi = results['corr_invivoeeg_roi']
+corr_insilicoeeg_avg_tfmri_avg_roi = results['corr_insilicoeeg_avg_tfmri_avg_roi']
+corr_insilicoeeg_sing_tfmri_avg_roi = results['corr_insilicoeeg_sing_tfmri_avg_roi']
+corr_insilicoeeg_sing_tfmri_sing_roi = results['corr_insilicoeeg_sing_tfmri_sing_roi']
 
 
 # =============================================================================
@@ -78,9 +92,6 @@ for s, sub in enumerate(args.fmri_subjects):
         for key in corr_tfmri_fmri.keys():
 
             corr_tfmri_fmri[key][s,h,idx_nan] = np.nan
-
-# Threshold the vertices by significance
-#corr_tfmri_fmri[:,~sig_corr_tfmri_fmri] = np.nan
 
 
 # =============================================================================
@@ -187,8 +198,119 @@ colors = [
 # Plot the vertex-average correlations between t-fMRI and in silico fMRI test
 # responses
 # =============================================================================
+# # Create the plots save directory
+# save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge', 'plots')
+# os.makedirs(save_dir, exist_ok=True)
+
+# # Create the figure
+# fig= plt.figure(figsize=(10, 5))
+
+# # Plot the stimulus onset and chance dashed line
+# plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
+#     alpha=.5, label='_nolegend_')
+
+# # Loop across modeling types
+# for i, (key, val) in enumerate(corr_tfmri_fmri.items()):
+
+#     # Plot the correlation
+#     plt.plot(times, np.nanmean(val, (0, 1, 2)), color=colors[i], linewidth=2,
+#         label=key)
+
+# # x-axis parameters
+# plt.xlabel('Time (ms)', fontsize=fontsize)
+# xticks = [0, .1, .2, .3, .4, .5]
+# xlabels = [0, 100, 200, 300, 400, 500]
+# plt.xticks(ticks=xticks, labels=xlabels)
+# plt.xlim(left=min(times), right=max(times))
+
+# # y-axis parameters
+# plt.ylabel("Pearson's $r$", fontsize=fontsize)
+# yticks = [0, 0.2, 0.4, 0.6, 0.8]
+# ylabels = [0, 0.2, 0.4, 0.6, 0.8]
+# plt.yticks(ticks=yticks, labels=ylabels)
+# plt.ylim(bottom=-.025, top=.6)
+
+# # Legend
+# plt.legend(ncol=1, fontsize=15, loc=0, frameon=False)
+
+# # Save the figure
+# file_name = os.path.join(save_dir, 'correlation_vertexAvg.svg')
+# fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+
+
+# =============================================================================
+# Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
+# =============================================================================
+# # Create the figure
+# fig, axs = plt.subplots(2, 2, sharex=True, sharey=True)
+# axs = np.reshape(axs, (-1))
+
+# # Loop across modeling types
+# for i, key in enumerate(corr_tfmri_fmri_roi.keys()):
+
+#     # Plot the stimulus onset and chance dashed line
+#     axs[i].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
+#         alpha=.5, label='_nolegend_')
+
+#     # Loop across ROIs
+#     rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
+#     rois = ['V1', 'V2', 'V3', 'hV4']
+#     for r, roi in enumerate(rois):
+
+#         # Plot the correlation
+#         axs[i].plot(times, np.mean(corr_tfmri_fmri_roi[key][roi], 0),
+#             color=colors[r], linewidth=2, label=roi)
+
+#         # Plot the CIs
+#         axs[i].fill_between(times, ci_corr_tfmri_fmri_roi[key][roi][1],
+#             ci_corr_tfmri_fmri_roi[key][roi][0], color=colors[r], alpha=.1)
+
+#         # Plot the peak time point
+#         peak = times[np.argmax(np.mean(corr_tfmri_fmri_roi[key][roi], 0))]
+#         max_corr = max(np.mean(corr_tfmri_fmri_roi[key][roi], 0))
+#         axs[i].scatter(peak, max_corr, color=colors[r], s=200, marker='o',
+#             edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
+#         ci_low = peak - ci_corr_tfmri_fmri_roi_peak_lat[key][roi][0]
+#         ci_up = ci_corr_tfmri_fmri_roi_peak_lat[key][roi][1] - peak
+#         conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
+#         axs[i].errorbar(peak, max_corr, xerr=conf_int, fmt="none",
+#             ecolor='k', elinewidth=1, capsize=3)
+
+#     # x-axis parameters
+#     if i in [2, 3]:
+#         axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
+#         xticks = [0, .1, .2, .3, .4, .5]
+#         xlabels = [0, 100, 200, 300, 400, 500]
+#         axs[i].set_xticks(ticks=xticks, labels=xlabels)
+#         axs[i].set_xlim(left=min(times), right=max(times))
+
+#     # y-axis parameters
+#     if i in [0, 2]:
+#         axs[i].set_ylabel("Pearson's $r$", fontsize=fontsize)
+#         yticks = [0, 0.2, 0.4, 0.6, 0.8]
+#         ylabels = [0, 0.2, 0.4, 0.6, 0.8]
+#         axs[i].set_yticks(ticks=yticks, labels=ylabels)
+#         axs[i].set_ylim(bottom=-.025, top=.6)
+
+#     # Title
+#     axs[i].set_title(key, fontsize=10)
+
+#     # Legend
+#     if i in [0]:
+#         plt.legend(ncol=4, fontsize=10, loc=4, ncols=2, frameon=False)
+
+# # Save the figure
+# file_name = os.path.join(save_dir, 'roi_correlation_streams.svg')
+# file_name = os.path.join(save_dir, 'roi_correlation_evc.svg')
+# fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+
+
+# =============================================================================
+# Plot the vertex-average correlations between t-fMRI and in silico fMRI test
+# responses # !!! DELETE # !!!
+# =============================================================================
 # Create the plots save directory
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge', 'plots')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 # Create the figure
@@ -198,12 +320,15 @@ fig= plt.figure(figsize=(10, 5))
 plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
     alpha=.5, label='_nolegend_')
 
-# Loop across modeling types
-for i, (key, val) in enumerate(corr_tfmri_fmri.items()):
-
-    # Plot the correlation
-    plt.plot(times, np.nanmean(val, (0, 1, 2)), color=colors[i], linewidth=2,
-        label=key)
+# Plot the correlation
+plt.plot(times, np.nanmean(corr_invivoeeg, (0, 1, 2)), color=colors[0], linewidth=2,
+    label='invivoeeg')
+plt.plot(times, np.nanmean(corr_insilicoeeg_avg_tfmri_avg, (0, 1, 2)), color=colors[1], linewidth=2,
+    label='insilicoeeg_avg_tfmri_avg')
+plt.plot(times, np.nanmean(corr_insilicoeeg_sing_tfmri_avg, (0, 1, 2)), color=colors[2], linewidth=2,
+    label='insilicoeeg_sing_tfmri_avg')
+plt.plot(times, np.nanmean(corr_insilicoeeg_sing_tfmri_sing, (0, 1, 2)), color=colors[3], linewidth=2,
+    label='insilicoeeg_sing_tfmri_sing')
 
 # x-axis parameters
 plt.xlabel('Time (ms)', fontsize=fontsize)
@@ -228,14 +353,20 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 
 
 # =============================================================================
-# Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
+# Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses # !!! DELETE # !!!
 # =============================================================================
 # Create the figure
 fig, axs = plt.subplots(2, 2, sharex=True, sharey=True)
 axs = np.reshape(axs, (-1))
 
+results = {}
+results['invivoeeg'] = corr_invivoeeg_roi
+results['insilicoeeg_avg_tfmri_avg'] = corr_insilicoeeg_avg_tfmri_avg_roi
+results['insilicoeeg_sing_tfmri_avg'] = corr_insilicoeeg_sing_tfmri_avg_roi
+results['insilicoeeg_sing_tfmri_sing'] = corr_insilicoeeg_sing_tfmri_sing_roi
+
 # Loop across modeling types
-for i, key in enumerate(corr_tfmri_fmri_roi.keys()):
+for i, (key, val) in enumerate(results.items()):
 
     # Plot the stimulus onset and chance dashed line
     axs[i].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
@@ -247,23 +378,8 @@ for i, key in enumerate(corr_tfmri_fmri_roi.keys()):
     for r, roi in enumerate(rois):
 
         # Plot the correlation
-        axs[i].plot(times, np.mean(corr_tfmri_fmri_roi[key][roi], 0),
+        axs[i].plot(times, np.mean(val[roi], 0),
             color=colors[r], linewidth=2, label=roi)
-
-        # Plot the CIs
-        axs[i].fill_between(times, ci_corr_tfmri_fmri_roi[key][roi][1],
-            ci_corr_tfmri_fmri_roi[key][roi][0], color=colors[r], alpha=.1)
-
-        # Plot the peak time point
-        peak = times[np.argmax(np.mean(corr_tfmri_fmri_roi[key][roi], 0))]
-        max_corr = max(np.mean(corr_tfmri_fmri_roi[key][roi], 0))
-        axs[i].scatter(peak, max_corr, color=colors[r], s=200, marker='o',
-            edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
-        ci_low = peak - ci_corr_tfmri_fmri_roi_peak_lat[key][roi][0]
-        ci_up = ci_corr_tfmri_fmri_roi_peak_lat[key][roi][1] - peak
-        conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-        axs[i].errorbar(peak, max_corr, xerr=conf_int, fmt="none",
-            ecolor='k', elinewidth=1, capsize=3)
 
     # x-axis parameters
     if i in [2, 3]:

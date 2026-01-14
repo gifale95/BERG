@@ -13,9 +13,6 @@ fmri_subjects : list
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
-eeg_reps : str
-    If 'average' average the EEG responses across repeats. If 'single', use the
-    single-trial EEG responses.
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
@@ -40,9 +37,8 @@ from statsmodels.stats.multitest import multipletests
 from sklearn.utils import resample
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subjects', default=[1, 2], type=list)
-parser.add_argument('--hemispheres', default=['lh'], type=list) # !!!['lh', 'rh']
-parser.add_argument('--eeg_reps', default='single', type=str)
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
+parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
@@ -68,11 +64,6 @@ metadata_eeg = berg.get_model_metadata(
 )
 times = metadata_eeg['eeg']['times']
 
-# DELETE # !!!
-time_range = np.arange(20, 50)
-times = times[time_range]
-# DELETE # !!!
-
 # Analysis parameters
 metadata = []
 n_fsub = len(args.fmri_subjects)
@@ -87,8 +78,16 @@ n_roi = len(rois)
 
 # Empty correlation array of shape:
 # (N fMRI subjects, 2 hemispheres, 163842 fMRI vertices, 140 EEG time points)
-corr_tfmri_fmri = np.zeros((n_fsub, n_hemi, n_vertex, n_time), dtype=np.float32)
-corr_tfmri_fmri[:] = np.nan
+# corr_tfmri_fmri = np.zeros((n_fsub, n_hemi, n_vertex, n_time), dtype=np.float32)
+# corr_tfmri_fmri[:] = np.nan
+corr_invivoeeg = np.zeros((n_fsub, n_hemi, n_vertex, n_time), dtype=np.float32)
+corr_insilicoeeg_avg_tfmri_avg = np.zeros((n_fsub, n_hemi, n_vertex, n_time), dtype=np.float32)
+corr_insilicoeeg_sing_tfmri_avg = np.zeros((n_fsub, n_hemi, n_vertex, n_time), dtype=np.float32)
+corr_insilicoeeg_sing_tfmri_sing = np.zeros((n_fsub, n_hemi, n_vertex, n_time), dtype=np.float32)
+corr_invivoeeg[:] = np.nan
+corr_insilicoeeg_avg_tfmri_avg[:] = np.nan
+corr_insilicoeeg_sing_tfmri_avg[:] = np.nan
+corr_insilicoeeg_sing_tfmri_sing[:] = np.nan
 
 
 # =============================================================================
@@ -115,29 +114,40 @@ for fs, fsub in enumerate(args.fmri_subjects):
         idx_v = np.where(idx_v == 1)[0]
 
         # Load and store the correlation scores
-        data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge',
-            'encoding_fusion_accuracy', f'eeg_reps-{args.eeg_reps}')
+        data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new',
+            'encoding_fusion_accuracy')
         file_name = f'corr_fmri_sub-{fsub:02d}_hemi-{hemi}.npy'
-        if args.eeg_reps == 'single':
-            corr_tfmri_fmri[fs,h,idx_v] = np.mean(np.load(os.path.join(
-                data_dir, file_name)), 1) # Average across EEG repeats
-        elif args.eeg_reps == 'average':
-            corr_tfmri_fmri[fs,h,idx_v] = np.load(os.path.join(
-                data_dir, file_name))
+        data = np.load(os.path.join(data_dir, file_name),
+            allow_pickle=True).item()
+        corr_invivoeeg[fs,h,idx_v] = data['corr_invivoeeg']
+        corr_insilicoeeg_avg_tfmri_avg[fs,h,idx_v] = data['corr_insilicoeeg_avg_tfmri_avg']
+        corr_insilicoeeg_sing_tfmri_avg[fs,h,idx_v] = data['corr_insilicoeeg_sing_tfmri_avg']
+        corr_insilicoeeg_sing_tfmri_sing[fs,h,idx_v] = data['corr_insilicoeeg_sing_tfmri_sing']
+        del data
 
 
 # =============================================================================
 # Get the ROI-wise correlations between t-fMRI and in silico fMRI responses
 # =============================================================================
 # Empty result dictionary
-corr_tfmri_fmri_roi = {}
+# corr_tfmri_fmri_roi = {}
+corr_invivoeeg_roi = {}
+corr_insilicoeeg_avg_tfmri_avg_roi = {}
+corr_insilicoeeg_sing_tfmri_avg_roi = {}
+corr_insilicoeeg_sing_tfmri_sing_roi = {}
 
 # Loop across ROIs
 for r, roi in enumerate(rois):
 
     # Empty ROI correlation array of shape:
     # (N fMRI subjects, 140 EEG time points)
-    corr_tfmri_fmri_roi[roi] = np.zeros((len(args.fmri_subjects), n_time),
+    corr_invivoeeg_roi[roi] = np.zeros((len(args.fmri_subjects), n_time),
+        dtype=np.float32)
+    corr_insilicoeeg_avg_tfmri_avg_roi[roi] = np.zeros((len(args.fmri_subjects), n_time),
+        dtype=np.float32)
+    corr_insilicoeeg_sing_tfmri_avg_roi[roi] = np.zeros((len(args.fmri_subjects), n_time),
+        dtype=np.float32)
+    corr_insilicoeeg_sing_tfmri_sing_roi[roi] = np.zeros((len(args.fmri_subjects), n_time),
         dtype=np.float32)
 
     # Loop across subjects and hemispheres
@@ -177,82 +187,90 @@ for r, roi in enumerate(rois):
             # Get the correlation scores of the above-NCSNR-threshold vertices
             # from the chosen ROI
             if h == 0:
-                corr = corr_tfmri_fmri[fs,h,idx_roi]
+                corr_1 = corr_invivoeeg[fs,h,idx_roi]
+                corr_2 = corr_insilicoeeg_avg_tfmri_avg[fs,h,idx_roi]
+                corr_3 = corr_insilicoeeg_sing_tfmri_avg[fs,h,idx_roi]
+                corr_4 = corr_insilicoeeg_sing_tfmri_sing[fs,h,idx_roi]
             else:
-                corr = np.append(corr, corr_tfmri_fmri[fs,h,idx_roi], 0)
+                corr_1 = np.append(corr_1, corr_invivoeeg[fs,h,idx_roi], 0)
+                corr_2 = np.append(corr_2, corr_insilicoeeg_avg_tfmri_avg[fs,h,idx_roi], 0)
+                corr_3 = np.append(corr_3, corr_insilicoeeg_sing_tfmri_avg[fs,h,idx_roi], 0)
+                corr_4 = np.append(corr_4, corr_insilicoeeg_sing_tfmri_sing[fs,h,idx_roi], 0)
         
         # Store the mean correlation across ROI vertices
-        corr_tfmri_fmri_roi[roi][fs] = np.mean(corr, 0)
-
-
-# =============================================================================
-# Compute the significance (in silico fMRI vs t-fMRI correlation scores)
-# =============================================================================
-# # Calculate the p-values with t-tests
-# pval = ttest_1samp(corr_tfmri_fmri, 0, axis=0, alternative='greater')[1]
-
-# # Correct for multiple comparisons
-# shape = pval.shape
-# sig_corr_tfmri_fmri = multipletests(pval.flatten(), 0.05, 'fdr_bh')[0]
-# sig_corr_tfmri_fmri = np.reshape(sig_corr_tfmri_fmri, (shape))
+        corr_invivoeeg_roi[roi][fs] = np.mean(corr_1, 0)
+        corr_insilicoeeg_avg_tfmri_avg_roi[roi][fs] = np.mean(corr_2, 0)
+        corr_insilicoeeg_sing_tfmri_avg_roi[roi][fs] = np.mean(corr_3, 0)
+        corr_insilicoeeg_sing_tfmri_sing_roi[roi][fs] = np.mean(corr_4, 0)
 
 
 # =============================================================================
 # Compute the significance (ROI-wise in silico fMRI vs t-fMRI correlation
 # scores)
 # =============================================================================
-sig_corr_tfmri_fmri_roi = {}
+# sig_corr_tfmri_fmri_roi = {}
 
-for key, val in corr_tfmri_fmri_roi.items():
+# for key, val in corr_tfmri_fmri_roi.items():
 
-    # Calculate the p-values with t-tests
-    pval = ttest_1samp(val, 0, axis=0, alternative='greater')[1]
+#     # Calculate the p-values with t-tests
+#     pval = ttest_1samp(val, 0, axis=0, alternative='greater')[1]
 
-    # Correct for multiple comparisons
-    sig_corr_tfmri_fmri_roi[key] = multipletests(pval, 0.05, 'fdr_bh')[0]
+#     # Correct for multiple comparisons
+#     sig_corr_tfmri_fmri_roi[key] = multipletests(pval, 0.05, 'fdr_bh')[0]
 
 
 # =============================================================================
 # Bootstrap the confidence intervals (ROI-wise in silico fMRI vs t-fMRI
 # correlation scores)
 # =============================================================================
-ci_corr_tfmri_fmri_roi = {}
-ci_corr_tfmri_fmri_roi_peak_lat = {}
+# ci_corr_tfmri_fmri_roi = {}
+# ci_corr_tfmri_fmri_roi_peak_lat = {}
 
-for key, val in tqdm(corr_tfmri_fmri_roi.items()):
+# for key, val in tqdm(corr_tfmri_fmri_roi.items()):
 
-    ci_corr_tfmri_fmri_roi[key] = np.zeros((2, n_time))
-    ci_corr_tfmri_fmri_roi_peak_lat[key] = np.zeros((2))
-    corr_dist = np.zeros((args.n_iter, n_time))
-    peak_lat_dist = np.zeros((args.n_iter))
+#     ci_corr_tfmri_fmri_roi[key] = np.zeros((2, n_time))
+#     ci_corr_tfmri_fmri_roi_peak_lat[key] = np.zeros((2))
+#     corr_dist = np.zeros((args.n_iter, n_time))
+#     peak_lat_dist = np.zeros((args.n_iter))
 
-    for i in range(args.n_iter):
-        idx = resample(np.arange(len(args.fmri_subjects)))
-        corr_dist[i] = np.mean(val[idx], 0)
-        peak_lat_dist[i] = times[np.argmax(np.mean(val[idx], 0))]
+#     for i in range(args.n_iter):
+#         idx = resample(np.arange(len(args.fmri_subjects)))
+#         corr_dist[i] = np.mean(val[idx], 0)
+#         peak_lat_dist[i] = times[np.argmax(np.mean(val[idx], 0))]
 
-    ci_corr_tfmri_fmri_roi[key][0] = np.percentile(corr_dist, 2.5, axis=0)
-    ci_corr_tfmri_fmri_roi[key][1] = np.percentile(corr_dist, 97.5, axis=0)
-    ci_corr_tfmri_fmri_roi_peak_lat[key][0] = np.percentile(peak_lat_dist, 2.5)
-    ci_corr_tfmri_fmri_roi_peak_lat[key][1] = np.percentile(peak_lat_dist, 97.5)
+#     ci_corr_tfmri_fmri_roi[key][0] = np.percentile(corr_dist, 2.5, axis=0)
+#     ci_corr_tfmri_fmri_roi[key][1] = np.percentile(corr_dist, 97.5, axis=0)
+#     ci_corr_tfmri_fmri_roi_peak_lat[key][0] = np.percentile(peak_lat_dist, 2.5)
+#     ci_corr_tfmri_fmri_roi_peak_lat[key][1] = np.percentile(peak_lat_dist, 97.5)
 
 
 # =============================================================================
 # Save the results
 # =============================================================================
+# results = {
+#     'metadata': metadata,
+#     'times': times,
+#     'corr_tfmri_fmri': corr_tfmri_fmri,
+#     'corr_tfmri_fmri_roi': corr_tfmri_fmri_roi,
+#     'sig_corr_tfmri_fmri_roi': sig_corr_tfmri_fmri_roi,
+#     'ci_corr_tfmri_fmri_roi': ci_corr_tfmri_fmri_roi,
+#     'ci_corr_tfmri_fmri_roi_peak_lat': ci_corr_tfmri_fmri_roi_peak_lat
+# }
 results = {
     'metadata': metadata,
     'times': times,
-    'corr_tfmri_fmri': corr_tfmri_fmri,
-    'corr_tfmri_fmri_roi': corr_tfmri_fmri_roi,
-    #'sig_corr_tfmri_fmri': sig_corr_tfmri_fmri,
-    'sig_corr_tfmri_fmri_roi': sig_corr_tfmri_fmri_roi,
-    'ci_corr_tfmri_fmri_roi': ci_corr_tfmri_fmri_roi,
-    'ci_corr_tfmri_fmri_roi_peak_lat': ci_corr_tfmri_fmri_roi_peak_lat
+    'corr_invivoeeg': corr_invivoeeg,
+    'corr_insilicoeeg_avg_tfmri_avg': corr_insilicoeeg_avg_tfmri_avg,
+    'corr_insilicoeeg_sing_tfmri_avg': corr_insilicoeeg_sing_tfmri_avg,
+    'corr_insilicoeeg_sing_tfmri_sing': corr_insilicoeeg_sing_tfmri_sing,
+    'corr_invivoeeg_roi': corr_invivoeeg_roi,
+    'corr_insilicoeeg_avg_tfmri_avg_roi': corr_insilicoeeg_avg_tfmri_avg_roi,
+    'corr_insilicoeeg_sing_tfmri_avg_roi': corr_insilicoeeg_sing_tfmri_avg_roi,
+    'corr_insilicoeeg_sing_tfmri_sing_roi': corr_insilicoeeg_sing_tfmri_sing_roi
 }
 
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge',
-    'stats', f'eeg_reps-{args.eeg_reps}')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new',
+    'stats')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'

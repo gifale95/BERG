@@ -9,6 +9,9 @@ fmri_subject : int
 hemisphere : str
     String containing the hemisphere used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+eeg_subjects : list
+    List containing the subject identifiers for the THINGS EEG2 subjects. Valid
+    subject identifiers are integers from 1 10.
 criterion : str
     Criterion to define the searchlight neighborhood: 'radius' for all vertices
     within a geodesic radius, 'nearest' for k-nearest neighbors.
@@ -47,7 +50,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subject', default=1, type=int)
 parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--eeg_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
-parser.add_argument('--eeg_reps', default='average', type=str)
 parser.add_argument('--criterion', default='radius', type=str)
 parser.add_argument('--radius_mm', default=10, type=float)
 parser.add_argument('--k', default=10, type=int)
@@ -56,7 +58,7 @@ parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural
 parser.add_argument('--coco_dir', default='/scratch/giffordale95/datasets/image_sets/coco', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Generate t-fMRI <<<')
+print('>>> RSA <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -89,7 +91,7 @@ def corr_matrix(X):
 # Load the 515 NSD test images
 # =============================================================================
 # The test images consist of the 515 images that all NSD subjects saw for three
-# times, and which were used to test BERG's encoding models
+# times, and which were used to test BERG's fMRI encoding models
 
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
@@ -153,10 +155,10 @@ llm_rdm = 1 - corr_matrix(llm_embeddings.T)
 
 
 # =============================================================================
-# Generate the in silico EEG image responses
+# Generate the in silico EEG image responses, and append them across subjects
 # =============================================================================
 # Loop across EEG subjects
-for s, esub in enumerate(tqdm(args.eeg_subjects)):
+for es, esub in enumerate(tqdm(args.eeg_subjects)):
 
     # Load the encoding model
     model = berg.get_encoding_model(
@@ -165,7 +167,7 @@ for s, esub in enumerate(tqdm(args.eeg_subjects)):
     )
 
     # Generate and store the in silico EEG responses
-    if s == 0:
+    if es == 0:
         eeg = berg.encode(model, images)
     else:
         eeg = np.append(eeg, berg.encode(model, images), 2)
@@ -180,10 +182,10 @@ for s, esub in enumerate(tqdm(args.eeg_subjects)):
 # Generate the t-fMRI responses
 # =============================================================================
 # Fusion model and save directories
-model_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge',
-    'encoding_fusion_weights', f'eeg_reps-{args.eeg_reps}')
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge',
-    'llm_modeling', 'tfmri_responses', f'eeg_reps-{args.eeg_reps}')
+model_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new',
+    'encoding_fusion_weights')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new',
+    'llm_modeling', 'tfmri_responses')
 os.makedirs(save_dir, exist_ok=True)
 
 # Only select vertices falling within the NSD visual streams
@@ -196,51 +198,32 @@ for stream in streams:
 idx_v = np.where(idx_v == 1)[0]
 
 # Empty t-fMRI response array of shape:
-# (515 Images, 163842 Vertices, 4 EEG repeats, 30 Time points)
+# (515 Images, 163842 Vertices, 4 EEG repeats, 60 Time points)
 n_rep = eeg.shape[1]
-time_range = np.arange(20, 50) # !!! CHANGE
-tfmri = np.zeros((len(eeg), n_vertex, n_rep, len(time_range)), dtype=np.float32)
+time_range = np.arange(20, 80) # !!! CHANGE
+
+tfmri_insilicoeeg_avg = np.zeros((len(eeg), n_vertex, len(time_range)), dtype=np.float32)
+tfmri_insilicoeeg_sing = np.zeros((len(eeg), n_vertex, n_rep, len(time_range)), dtype=np.float32)
 
 # Loop across EEG time points
 for t, t_idx in enumerate(time_range):
 
-    if args.eeg_reps == 'average':
+    # Load the EEG-fMRI encoding fusion models weights
+    file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
+                f'hemi-{args.hemisphere}_eeg_time-{t_idx:03d}.npy')
+    reg_param = np.load(os.path.join(model_dir, file_name),
+        allow_pickle=True).item()
 
-        # Load the EEG-fMRI encoding fusion models weights
-        file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
-                    f'hemi-{args.hemisphere}_eeg_time-{t:03d}.npy')
-        reg_param = np.load(os.path.join(model_dir, file_name),
-            allow_pickle=True).item()
+    # Instantiate the fusion regression model
+    reg = Ridge()
+    reg.coef_ = reg_param['coef_']
+    reg.intercept_ = reg_param['intercept_']
+    reg.n_features_in_ = reg_param['n_features_in_']
 
-        # Instantiate the fusion regression model
-        reg = Ridge()
-        reg.coef_ = reg_param['coef_']
-        reg.intercept_ = reg_param['intercept_']
-        reg.n_features_in_ = reg_param['n_features_in_']
-
-        # Generate the t-fMRI responses
-        for r in range(eeg.shape[1]):
-            tfmri[:,idx_v,r,t] = reg.predict(eeg[:,r,:,t_idx])
-
-    elif args.eeg_reps == 'single':
-
-        # Load the EEG-fMRI encoding fusion models weights
-        file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
-                    f'hemi-{args.hemisphere}_eeg_time-{t:03d}.npy')
-        reg_param = np.load(os.path.join(model_dir, file_name),
-            allow_pickle=True)
-
-        # Loop across EEG repeats
-        for r in range(len(reg_param)):
-
-            # Instantiate the fusion regression model
-            reg = Ridge()
-            reg.coef_ = reg_param[r]['coef_']
-            reg.intercept_ = reg_param[r]['intercept_']
-            reg.n_features_in_ = reg_param[r]['n_features_in_']
-
-            # Generate the t-fMRI responses
-            tfmri[:,idx_v,r,t] = reg.predict(eeg[:,r,:,t_idx])
+    # Generate the t-fMRI responses
+    tfmri_insilicoeeg_avg[:,idx_v,t] = reg.predict(np.mean(eeg[:,:,:,t_idx], 1))
+    for r in range(eeg.shape[1]):
+        tfmri_insilicoeeg_sing[:,idx_v,r,t] = reg.predict(eeg[:,r,:,t_idx])
 
 
 # =============================================================================
@@ -248,8 +231,14 @@ for t, t_idx in enumerate(time_range):
 # =============================================================================
 # Empty RSA results array of shape:
 # (163842 Vertices, 4 EEG repeats, 140 Time points)
-rsa = np.empty((tfmri.shape[1], tfmri.shape[2], tfmri.shape[3]), dtype=np.float32)
-rsa[:] = np.nan
+#rsa = np.empty((tfmri.shape[1], tfmri.shape[2], tfmri.shape[3]), dtype=np.float32)
+#rsa[:] = np.nan
+rsa_insilicoeeg_avg_tfmri_avg = np.empty((163842, len(time_range)), dtype=np.float32)
+rsa_insilicoeeg_sing_tfmri_avg = np.empty((163842, len(time_range)), dtype=np.float32)
+rsa_insilicoeeg_sing_tfmri_sing = np.empty((163842, 4, len(time_range)), dtype=np.float32)
+rsa_insilicoeeg_avg_tfmri_avg[:] = np.nan
+rsa_insilicoeeg_sing_tfmri_avg[:] = np.nan
+rsa_insilicoeeg_sing_tfmri_sing[:] = np.nan
 
 # Take the lower triangle of the LLM RDM
 idx_tril = np.tril_indices(len(llm_rdm), -1)
@@ -272,27 +261,50 @@ for v in tqdm(idx_v):
         mask = geodesic_distances[v] <= args.radius_mm
         neighborhood = np.where(mask)[0]
 
-    # Loop across EEG time points and repeats
-    for t in range(tfmri.shape[3]):
-        for r in range(tfmri.shape[2]):
+    # # Loop across EEG time points and repeats
+    # for t in range(tfmri.shape[3]):
+    #     for r in range(tfmri.shape[2]):
 
+    #         # Create the fMRI RDM
+    #         fmri_rdm = 1 - corr_matrix(tfmri[:,neighborhood,r,t].T)
+
+    #         # Perform RSA
+    #         rsa[v,r,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
+
+    # Loop across EEG time points
+    for t in range(len(time_range)):
+
+        # Create the fMRI RDM
+        fmri_rdm = 1 - corr_matrix(tfmri_insilicoeeg_avg[:,neighborhood,t].T)
+        # Perform RSA
+        rsa_insilicoeeg_avg_tfmri_avg[v,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
+
+        # Create the fMRI RDM
+        fmri_rdm = 1 - corr_matrix(np.mean(tfmri_insilicoeeg_sing, 2)[:,neighborhood,t].T)
+        # Perform RSA
+        rsa_insilicoeeg_sing_tfmri_avg[v,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
+
+        for r in range(4):
             # Create the fMRI RDM
-            fmri_rdm = 1 - corr_matrix(tfmri[:,neighborhood,r,t].T)
-
+            fmri_rdm = 1 - corr_matrix(tfmri_insilicoeeg_sing[:,neighborhood,r,t].T)
             # Perform RSA
-            rsa[v,r,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
+            rsa_insilicoeeg_sing_tfmri_sing[v,r,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
+
+rsa_insilicoeeg_sing_tfmri_sing = np.mean(rsa_insilicoeeg_sing_tfmri_sing, 1)
 
 
 # =============================================================================
 # Save the results
 # =============================================================================
 results = {
-    'rsa': rsa,
+    'rsa_insilicoeeg_avg_tfmri_avg': rsa_insilicoeeg_avg_tfmri_avg,
+    'rsa_insilicoeeg_sing_tfmri_avg': rsa_insilicoeeg_sing_tfmri_avg,
+    'rsa_insilicoeeg_sing_tfmri_sing': rsa_insilicoeeg_sing_tfmri_sing,
     'metadata': metadata
 }
 
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge', 'llm_modeling_nsd',
-    'rsa', f'eeg_reps-{args.eeg_reps}')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new', 'llm_modeling_nsd',
+    'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = f'rsa_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}.npy'
