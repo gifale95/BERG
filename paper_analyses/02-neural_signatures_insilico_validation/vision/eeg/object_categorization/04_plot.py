@@ -198,10 +198,14 @@ plt.close(fig)
 # (single subjects) # !!!
 # =============================================================================
 # Plot parameters
+fontsize = 25
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
 matplotlib.rcParams['axes.spines.left'] = False
 matplotlib.rcParams['axes.spines.bottom'] = False
+matplotlib.use("svg")
+plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
 colors = [(100/255, 149/255, 237/255), (169/255, 169/255, 169/255)]
 
 # Loop acros subjects
@@ -255,10 +259,14 @@ for s, sub in enumerate(tqdm(args.subjects)):
 # Plot the MDS results with images at peak decoding time points # !!!
 # =============================================================================
 # Plot parameters
+fontsize = 25
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
 matplotlib.rcParams['axes.spines.left'] = False
 matplotlib.rcParams['axes.spines.bottom'] = False
+matplotlib.use("svg")
+plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
 
 # Read all images into memory
 images = []
