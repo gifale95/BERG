@@ -2,10 +2,11 @@
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico EEG
+    responses.
 subjects : list
-    The subject identifiers for the EEG encoding models. Since the used
-    encoding models are trained on THINGS EEG2 data, valid subject identifiers
-    are integers from 1 to 10.
+    List of EEG subject identifiers.
 channels : list
     List containing the EEG channel type(s) retained for the analyses.
     Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
@@ -27,6 +28,7 @@ from matplotlib import pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
 parser.add_argument('--channels', default=['P7', 'P8', 'PO7', 'PO8', 'TP7', 'TP8'], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -37,7 +39,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'n170_faces', 'plots')
+    'vision', 'eeg', 'n170_faces', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -46,7 +48,8 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',  'n170_faces',
-    'stats', 'stats_'+'channels-'+'-'.join(args.channels)+'.npy')
+    'stats', args.encoding_model, 'stats_channels-'+'-'.join(args.channels)+
+    '.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
@@ -63,15 +66,17 @@ times = results['metadata'][0]['eeg']['times']
 # =============================================================================
 # Plot parameters
 # =============================================================================
-fontsize = 30
+fontsize = 25
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams["font.weight"] = "normal"
+matplotlib.rcParams["axes.labelweight"] = "normal"
 matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=fontsize)
 plt.rc('ytick', labelsize=fontsize)
 matplotlib.rcParams['axes.linewidth'] = 1
-matplotlib.rcParams['xtick.major.width'] = 1
+matplotlib.rcParams['xtick.major.width'] = 0
 matplotlib.rcParams['xtick.major.size'] = 5
-matplotlib.rcParams['ytick.major.width'] = 1
+matplotlib.rcParams['ytick.major.width'] = 0
 matplotlib.rcParams['ytick.major.size'] = 5
 matplotlib.rcParams['axes.spines.right'] = False
 matplotlib.rcParams['axes.spines.top'] = False
@@ -88,15 +93,15 @@ colors = [(139/255, 0/255, 0/255), (0/255, 0/255, 0/255)]
 # =============================================================================
 # Plot the ERPs
 # =============================================================================
-fig= plt.figure(figsize=(13, 7))
+fig= plt.figure(figsize=(10, 7.5))
 
 # Plot the stimulus onset dashed line
-plt.plot([0, 0], [100, -100], 'k--', linewidth=3, alpha=.5, label='_nolegend_')
+plt.plot([0, 0], [100, -100], 'k--', linewidth=2, alpha=.5, label='_nolegend_')
 
 # Plot the ERPs
-plt.plot(times, np.mean(erp_faces, 0), color=colors[0], linewidth=3,
+plt.plot(times, np.mean(erp_faces, 0), color=colors[0], linewidth=2,
     label='Faces')
-plt.plot(times, np.mean(erp_objects, 0), color=colors[1], linewidth=3,
+plt.plot(times, np.mean(erp_objects, 0), color=colors[1], linewidth=2,
     label='Objects')
 
 # Plot the CIs
@@ -113,17 +118,17 @@ plt.scatter(times, sig, s=100, color=colors[0])
 
 # x-axis parameters
 plt.xlabel('Time (ms)', fontsize=fontsize)
-xticks = [0, .1, .2, .3, .4, .5]
-xlabels = [0, 100, 200, 300, 400, 500]
-plt.xticks(ticks=xticks, labels=xlabels) # type: ignore
+xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+plt.xticks(ticks=xticks, labels=xlabels)
 plt.xlim(left=min(times), right=max(times))
 
 # y-axis parameters
 plt.ylabel('μV', fontsize=fontsize)
-yticks = [-1.5, -1, -.5, 0, .5]
-ylabels = [-1.5, -1, -.5, 0, .5]
-plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
-plt.ylim(bottom=-1.5, top=.5)
+yticks = [-1, -.5, 0, .5]
+ylabels = [-1, -.5, 0, .5]
+plt.yticks(ticks=yticks, labels=ylabels)
+plt.ylim(bottom=-1.4, top=.5)
 
 # Legend
 plt.legend(ncol=1, fontsize=fontsize, loc=4, frameon=False)
@@ -132,3 +137,4 @@ plt.legend(ncol=1, fontsize=fontsize, loc=4, frameon=False)
 file_name = os.path.join(save_dir, 'erps_channels-'+'-'.join(args.channels)+
     '.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close(fig)

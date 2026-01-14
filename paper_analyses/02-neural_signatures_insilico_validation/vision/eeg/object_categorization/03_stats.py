@@ -5,10 +5,11 @@ animacy decoding peaks.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico EEG
+    responses.
 subjects : list
-    The subject identifiers for the EEG encoding models. Since the used
-    encoding models are trained on THINGS EEG2 data, valid subject identifiers
-    are integers from 1 to 10.
+    List of EEG subject identifiers.
 channels : string
     String containing the EEG channel type(s) retained for the analyses,
     separated by a comma. Possible values are: 'O' (occipital), 'P'
@@ -29,7 +30,6 @@ import numpy as np
 from tqdm import tqdm
 from sklearn.utils import resample
 from scipy.stats import ttest_1samp
-from scipy.stats import ttest_rel
 from statsmodels.stats.multitest import multipletests
 from sklearn.manifold import MDS
 
@@ -38,13 +38,14 @@ from sklearn.manifold import MDS
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
 parser.add_argument('--channels', default='O,P', type=lambda s: s.split(','))
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Pairwise decoding stats <<<')
+print('>>> Stats <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -67,8 +68,9 @@ for s, sub in enumerate(args.subjects):
 
     data_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'eeg',
-        'object_categorization', 'pairwise_decoding', 'pairwise_decoding_sub-'+
-        format(sub,'02')+'_channels-'+'-'.join(args.channels)+'.npy')
+        'object_categorization', 'pairwise_decoding', args.encoding_model,
+        'pairwise_decoding_sub-'+format(sub,'02')+'_channels-'+
+        '-'.join(args.channels)+'.npy')
     results = np.load(data_dir, allow_pickle=True).item()
 
     # Get the in silico EEG responses averaged across repeats, and append them
@@ -156,9 +158,9 @@ pval_exemplars = ttest_1samp(decoding_exemplars, 50, alternative='greater')[1]
 pval_objects = ttest_1samp(decoding_objects, 50, alternative='greater')[1]
 pval_animacy = ttest_1samp(decoding_animacy, 50, alternative='greater')[1]
 # Multiple comparison correction
-sig_exemplars, _, _, _ = multipletests(pval_exemplars, 0.05, 'fdr_bh')
-sig_objects, _, _, _ = multipletests(pval_objects, 0.05, 'fdr_bh')
-sig_animacy, _, _, _ = multipletests(pval_animacy, 0.05, 'fdr_bh')
+sig_exemplars = multipletests(pval_exemplars, 0.05, 'fdr_bh')[0]
+sig_objects = multipletests(pval_objects, 0.05, 'fdr_bh')[0]
+sig_animacy = multipletests(pval_animacy, 0.05, 'fdr_bh')[0]
 
 
 # =============================================================================
@@ -195,14 +197,14 @@ results = {
     'ci_peak_latency_exemplars': ci_peak_latency_exemplars,
     'ci_peak_latency_objects': ci_peak_latency_objects,
     'ci_peak_latency_animacy': ci_peak_latency_animacy,
-    'times': times, # type: ignore
-    'kept_ch_names': kept_ch_names # type: ignore
+    'times': times,
+    'kept_ch_names': kept_ch_names
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_categorization', 'stats')
+    'vision', 'eeg', 'object_categorization', 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'stats_' + 'channels-' + '-'.join(args.channels) + '.npy'
+file_name = 'stats_channels-' + '-'.join(args.channels) + '.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

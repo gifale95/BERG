@@ -6,9 +6,7 @@ encoding_model : str
     The name of BERG's encoding model used for generating the in silico EEG
     responses.
 subjects : list
-    List of the subject identifiers for the EEG encoding models. Since the
-    used encoding models are trained on THINGS EEG2 data, valid subject
-    identifiers are integers from 1 to 10.
+    List of EEG subject identifiers.
 berg_dir : str
     Directory of the BERG.
 
@@ -16,7 +14,6 @@ berg_dir : str
 
 import argparse
 import os
-import random
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
@@ -116,9 +113,10 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'n170_faces', 'insilico_eeg_responses')
+    'vision', 'eeg', 'n170_faces', 'insilico_eeg_responses',
+    args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'insilico_eeg_responses.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

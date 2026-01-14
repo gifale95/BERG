@@ -175,7 +175,7 @@ for key in lh_rsa.keys():
 
         # Average the results across subjects, and append them across left and
         # right hemishperes
-        data = np.append(np.nanmean(lh_rsa[key][:,:,t], 0),
+        data = np.append(np.nanmean(lh_rsa[key][:,:Z,t], 0),
             np.nanmean(rh_rsa[key][:,:,t], 0))
         
         # Create the flat brain surface

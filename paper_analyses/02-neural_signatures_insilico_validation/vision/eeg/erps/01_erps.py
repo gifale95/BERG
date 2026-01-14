@@ -7,14 +7,15 @@ encoding_model : str
     The name of BERG's encoding model used for generating the in silico EEG
     responses.
 subjects : list
-    List of the subject identifiers for the EEG encoding models. Since the
-    used encoding models are trained on THINGS EEG2 data, valid subject
-    identifiers are integers from 1 to 10.
+    List of EEG subject identifiers.
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
     distribution.
 berg_dir : str
     Directory of the BERG.
+things_dir : str
+    Directory of the THINGS database.
+    https://osf.io/jum2f/
 
 """
 
@@ -31,13 +32,13 @@ import torch
 from sklearn.utils import resample
 from scipy.stats import ttest_1samp
 from scipy.stats import pearsonr
-from statsmodels.stats.multitest import multipletests
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
+parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> ERPs <<<')
@@ -45,32 +46,44 @@ print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
+# Set random seed for reproducible results
+seed = 20200220
+random.seed(seed)
+np.random.seed(seed)
+
 
 # =============================================================================
 # Load the stimulus images
 # =============================================================================
-# Image directories
-img_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'erps', 'stimuli')
-categories = os.listdir(img_dir)
-categories.sort()
+# Load the EEG metadata
+berg = BERG(berg_dir=args.berg_dir)
+metadata_eeg = berg.get_model_metadata(
+    args.encoding_model,
+    subject=1
+)
 
-# Loop across image categories
+# Load the test images
+test_img_files = metadata_eeg['encoding_models']['test_img_info']\
+    ['test_img_files']
+
+# Loop across test images
 images = []
-for cat in tqdm(categories):
-    img_files = os.listdir(os.path.join(img_dir, cat))
-    img_files.sort()
+for file in tqdm(test_img_files):
+    # Find correct subfolder
+    img_path = None
+    for root, _, files in os.walk(os.path.join(args.things_dir)):
+        if file in files:
+            img_path = os.path.join(root, file)
+            break
 
-    # Load the images
-    for ifile in img_files:
-        img_path = os.path.join(img_dir, cat, ifile)
-        img = Image.open(img_path).convert('RGB')
-        img = np.array(img)
-        images.append(img)
+    # Load and transform the image
+    img = Image.open(img_path)
+    img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
+    img = np.array(img).transpose(2, 0, 1)  # Convert to (C, H, W)
+    images.append(img)
 
-# Format the images
+# Format the images to a numpy array
 images = np.array(images)
-images = np.swapaxes(images, 1, 3)  # BHWC to BCHW
 
 
 # =============================================================================
@@ -92,7 +105,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
     # Generate the in silico EEG responses, and average them across repeats and
     # image conditions
     eeg, metadata_sub = berg.encode(model, images, return_metadata=True)
-    insilico_erps.append(np.mean(np.mean(eeg, 0), 0))
+    insilico_erps.append(np.mean(eeg, (0, 1)))
     metadata.append(metadata_sub)
     del eeg, metadata_sub, model
     torch.cuda.empty_cache()
@@ -107,7 +120,8 @@ insilico_erps = np.array(insilico_erps)
 # =============================================================================
 # The in vivo EEG responses reflect the same data preprocessing version as the
 # one used to train and test BERG's THINGS EEG2 encoding models. The code for
-# this preprocessing is available at: https://github.com/gifale95/BERG/tree/main/berg_creation_code/01_prepare_data/train_dataset-things_eeg_2
+# this preprocessing is available at:
+# https://github.com/gifale95/BERG/tree/main/berg_creation_code/01_prepare_data/train_dataset-things_eeg_2
 
 invivo_erps = []
 
@@ -119,8 +133,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
     eeg_dir = os.path.join(args.berg_dir, 'model_training_datasets',
         'train_dataset-things_eeg_2', 'eeg_sub-'+format(sub,'02')+
         '_split-test.h5')
-    invivo_erps.append(np.mean(np.mean(
-        h5py.File(eeg_dir, 'r')['eeg'][:], 0), 0)) # type: ignore
+    invivo_erps.append(np.mean(h5py.File(eeg_dir, 'r')['eeg'][:], (0, 1)))
 
 # Convert to numpy arrays
 invivo_erps = np.array(invivo_erps)
@@ -236,9 +249,9 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'erps', 'erps')
+    'vision', 'eeg', 'erps', 'erps', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'erps.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

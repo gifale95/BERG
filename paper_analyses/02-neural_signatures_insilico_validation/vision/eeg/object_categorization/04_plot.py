@@ -1,12 +1,13 @@
-"""Plot the of object exemplar and animacy decoding accuracy of in silico EEG
-responses.
+"""Plot the of object exemplar and animacy decoding accuracy computed onthe in
+silico EEG responses.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico EEG
+    responses.
 subjects : list
-    The subject identifiers for the EEG encoding models. Since the used
-    encoding models are trained on THINGS EEG2 data, valid subject identifiers
-    are integers from 1 to 10.
+    List of EEG subject identifiers.
 channels : string
     String containing the EEG channel type(s) retained for the analyses,
     separated by a comma. Possible values are: 'O' (occipital), 'P'
@@ -18,7 +19,6 @@ berg_dir : str
 """
 
 import argparse
-from operator import sub
 import os
 import numpy as np
 import matplotlib
@@ -32,6 +32,7 @@ from tqdm import tqdm
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
 parser.add_argument('--channels', default='O,P', type=lambda s: s.split(','))
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -42,12 +43,13 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directories
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_categorization', 'plots')
+    'vision', 'eeg', 'object_categorization', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 save_dir_mds = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_categorization', 'plots', 'mds')
-os.makedirs(save_dir, exist_ok=True)
+    'vision', 'eeg', 'object_categorization', 'plots', args.encoding_model,
+    'mds')
+os.makedirs(save_dir_mds, exist_ok=True)
 
 
 # =============================================================================
@@ -55,7 +57,7 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'object_categorization', 'stats', 'stats_'+'channels-'+
+    'object_categorization', 'stats', args.encoding_model, 'stats_channels-'+
     '-'.join(args.channels)+'.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
@@ -111,8 +113,8 @@ colors = [(166/255, 77/255, 121/255), (100/255, 149/255, 237/255),
 # Plot the decoding accuracy results
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(13, 7))
-axs = np.reshape(axs, (-1)) # type: ignore
+    figsize=(10, 7.5))
+axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
 axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
@@ -169,16 +171,16 @@ axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [0, .1, .2, .3, .4, .5]
-xlabels = [0, 100, 200, 300, 400, 500]
-plt.xticks(ticks=xticks, labels=xlabels) # type: ignore
+xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
 
 # y-axis parameters
 axs[0].set_ylabel('Decoding accuracy (%)', fontsize=fontsize)
 yticks = [50, 60, 70, 80, 90, 100]
 ylabels = [50, 60, 70, 80, 90, 100]
-plt.yticks(ticks=yticks, labels=ylabels) # type: ignore
+plt.yticks(ticks=yticks, labels=ylabels)
 axs[0].set_ylim(bottom=45, top=100)
 
 # Legend
@@ -188,62 +190,12 @@ axs[0].legend(ncol=1, fontsize=fontsize, loc=1, frameon=False)
 file_name = os.path.join(save_dir, 'decoding_accuray_channels-'+
     '-'.join(args.channels)+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close(fig)
 
 
 # =============================================================================
 # Plot the EEG responses in MDS space, color coded based on animacy
-# =============================================================================
-# Plot parameters
-matplotlib.rcParams['axes.spines.right'] = False
-matplotlib.rcParams['axes.spines.top'] = False
-matplotlib.rcParams['axes.spines.left'] = False
-matplotlib.rcParams['axes.spines.bottom'] = False
-colors = [(100/255, 149/255, 237/255), (169/255, 169/255, 169/255)]
-
-# Loop across time points
-for t in tqdm(range(len(times))):
-
-    # Create the figure
-    fig, ax = plt.subplots(figsize=(13, 13))
-
-    # Plot the animate images
-    plt.scatter(eeg_mds[:eeg_mds.shape[0]//2,0,t],
-        eeg_mds[:eeg_mds.shape[0]//2,1,t],	s=500, color=colors[0],
-        linewidths=0, alpha=.9)
-
-    # Plot the inanimate images
-    plt.scatter(eeg_mds[eeg_mds.shape[0]//2:,0,t],
-        eeg_mds[eeg_mds.shape[0]//2:,1,t],	s=500, color=colors[1],
-        linewidths=0, alpha=.9)
-
-    # x-axis
-    plt.xticks([])
-#    plt.xlim(left=min(eeg_mds[:,0].flatten()),
-#        right=max(eeg_mds[:,0].flatten()))
-
-    # y-axis
-    plt.yticks([])
-#    plt.ylim(bottom=min(eeg_mds[:,1].flatten()),
-#        top=max(eeg_mds[:,1].flatten()))
-    # Title
-    title = 'Time: ' + str(np.round((times[t]*1000))) + ' ms'
-    plt.title(title, fontsize=fontsize)
-
-    # Save the figure
-    file_name = os.path.join(save_dir_mds, 'mds_animacy_time-'+format(t, '03')+
-        '.svg')
-    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-    file_name = os.path.join(save_dir_mds, 'mds_animacy_time-'+format(t, '03')+
-        '.png')
-    fig.savefig(file_name, bbox_inches='tight', transparent=False, format='png')
-
-    # Close the figure
-    plt.close(fig)
-
-
-# =============================================================================
-# Plot the EEG responses in MDS space, color coded based on animacy
-# (single subjects)
+# (single subjects) # !!!
 # =============================================================================
 # Plot parameters
 matplotlib.rcParams['axes.spines.right'] = False
@@ -262,16 +214,16 @@ for s, sub in enumerate(tqdm(args.subjects)):
     for t in tqdm(range(len(times))):
 
         # Create the figure
-        fig, ax = plt.subplots(figsize=(13, 13))
+        fig, ax = plt.subplots(figsize=(10, 10))
 
         # Plot the animate images
         plt.scatter(eeg_mds_sub[:eeg_mds_sub.shape[0]//2,0,t],
-            eeg_mds_sub[:eeg_mds_sub.shape[0]//2,1,t],	s=500, color=colors[0],
+            eeg_mds_sub[:eeg_mds_sub.shape[0]//2,1,t],	s=250, color=colors[0],
             linewidths=0, alpha=.9)
 
         # Plot the inanimate images
         plt.scatter(eeg_mds_sub[eeg_mds_sub.shape[0]//2:,0,t],
-            eeg_mds_sub[eeg_mds_sub.shape[0]//2:,1,t],	s=500, color=colors[1],
+            eeg_mds_sub[eeg_mds_sub.shape[0]//2:,1,t],	s=250, color=colors[1],
             linewidths=0, alpha=.9)
 
         # x-axis
@@ -296,13 +248,11 @@ for s, sub in enumerate(tqdm(args.subjects)):
             format(sub, '02')+'_time-'+format(t, '03')+'.png')
         fig.savefig(file_name, bbox_inches='tight', transparent=False,
             format='png')
-
-        # Close the figure
         plt.close(fig)
 
 
 # =============================================================================
-# Plot the MDS results with images at peak decoding time points
+# Plot the MDS results with images at peak decoding time points # !!!
 # =============================================================================
 # Plot parameters
 matplotlib.rcParams['axes.spines.right'] = False
@@ -373,6 +323,4 @@ for key, val in tqdm(peak_indices.items()):
     file_name = os.path.join(save_dir, 'mds_images_'+key+
         '_peak_decoding_channels-'+'-'.join(args.channels)+'.svg')
     fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-
-    # Close the figure
     plt.close(fig)

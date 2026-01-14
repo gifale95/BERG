@@ -8,9 +8,7 @@ encoding_model : str
     The name of BERG's encoding model used for generating the in silico EEG
     responses.
 subject : int
-    The subject identifier for the EEG encoding models. Since the used
-    encoidng models are trained on THINGS EEG2 data, valid subject identifiers
-    are integers from 1 to 10.
+    The subject identifier for the EEG encoding models.
 channels : string
     String containing the EEG channel type(s) retained for the analyses,
     separated by a comma. Possible values are: 'O' (occipital), 'P'
@@ -29,8 +27,6 @@ from PIL import Image
 from tqdm import tqdm
 from berg import BERG
 from sklearn.svm import SVC
-import torchvision
-from torchvision import transforms as trn
 from sklearn.manifold import MDS
 
 parser = argparse.ArgumentParser()
@@ -114,11 +110,7 @@ images = np.asarray(images)
 # =============================================================================
 # Generate the in silico EEG responses for the stimulus images
 # =============================================================================
-eeg = berg.encode(
-    model,
-    images,
-    return_metadata=False
-    )
+eeg = berg.encode(model, images)
 
 
 # =============================================================================
@@ -134,12 +126,12 @@ for t in tqdm(range(len(times))):
     for i1 in range(len(eeg)):
 
         # Select the data of the first image exemplar
-        eeg_cond_1 = eeg[i1,:,:,t] # type: ignore
+        eeg_cond_1 = eeg[i1,:,:,t]
 
         for i2 in range(i1):
 
             # Select the data of the second image exemplar
-            eeg_cond_2 = eeg[i2,:,:,t] # type: ignore
+            eeg_cond_2 = eeg[i2,:,:,t]
 
             # SVM target vectors
             y_train = np.zeros(((len(eeg_cond_1)-1)*2))
@@ -186,18 +178,19 @@ for t in tqdm(range(len(times))):
         # Select the data of the first object category
         idx_c1_start = c1 * exemplars_per_cat
         idx_c1_end = idx_c1_start + exemplars_per_cat
-        eeg_cond_1 = eeg[idx_c1_start:idx_c1_end,:,:,t] # type: ignore
+        eeg_cond_1 = eeg[idx_c1_start:idx_c1_end,:,:,t]
 
         for c2 in range(c1):
 
             # Select the data of the second object category
             idx_c2_start = c2 * exemplars_per_cat
             idx_c2_end = idx_c2_start + exemplars_per_cat
-            eeg_cond_2 = eeg[idx_c2_start:idx_c2_end,:,:,t] # type: ignore
+            eeg_cond_2 = eeg[idx_c2_start:idx_c2_end,:,:,t]
 
-            # Loop over object exemplars (to reduce the risk of the classifiers
-            # exploiting low-level visual information, the classifiers are
-            # trained and tested on idendependent object exemplars)
+            # Loop over object exemplars (to mitigate the risk of the
+            # classifiers exploiting low-level visual information, the
+            # classifiers are trained and tested on idendependent object
+            # exemplars)
             scores = []
             for e in range(len(eeg_cond_1)):
 
@@ -260,10 +253,10 @@ decoding_animacy = np.zeros((len(times)), dtype=np.float32)
 for t in tqdm(range(len(times))):
 
     # Select the animacy data
-    eeg_animate = eeg[animate_conditions,:,:,t] # type: ignore
-    eeg_inanimate = eeg[inanimate_conditions,:,:,t] # type: ignore
+    eeg_animate = eeg[animate_conditions,:,:,t]
+    eeg_inanimate = eeg[inanimate_conditions,:,:,t]
 
-    # Loop over the animate object categories (to reduce the risk of the
+    # Loop over the animate object categories (to mitigate the risk of the
     # classifiers exploiting low-level visual information, the classifiers are
     # trained and tested on idendependent object categories)
     scores = []
@@ -335,7 +328,7 @@ for t in tqdm(range(len(times))):
     # Perform MDS
     embedding = MDS(n_components=n_components, n_init=10, max_iter=1000,
         random_state=20200220)
-    eeg_mds[:,:,t] = embedding.fit_transform(np.mean(eeg[:,:,:,t], 1)) # type: ignore
+    eeg_mds[:,:,t] = embedding.fit_transform(np.mean(eeg[:,:,:,t], 1))
 
 
 # =============================================================================
@@ -352,10 +345,11 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_categorization', 'pairwise_decoding')
+    'vision', 'eeg', 'object_categorization', 'pairwise_decoding',
+    args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'pairwise_decoding_sub-' + format(args.subject, '02') + \
     '_channels-' + '-'.join(args.channels) + '.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

@@ -5,10 +5,11 @@ versus objects.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico EEG
+    responses.
 subjects : list
-    The subject identifiers for the EEG encoding models. Since the used
-    encoding models are trained on THINGS EEG2 data, valid subject identifiers
-    are integers from 1 to 10.
+    List of EEG subject identifiers.
 channels : list
     List containing the EEG channel type(s) retained for the analyses.
     Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
@@ -36,6 +37,7 @@ from statsmodels.stats.multitest import multipletests
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
 parser.add_argument('--channels', default=['P7', 'P8', 'PO7', 'PO8', 'TP7', 'TP8'], type=list)
 parser.add_argument('--n_iter', default=100000, type=int)
@@ -58,7 +60,7 @@ np.random.seed(seed)
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'eeg', 'n170_faces', 'insilico_eeg_responses',
-    'insilico_eeg_responses.npy')
+    args.encoding_model, 'insilico_eeg_responses.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 
@@ -142,9 +144,9 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'n170_faces', 'stats')
+    'vision', 'eeg', 'n170_faces', 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'stats_' + 'channels-' + '-'.join(args.channels) + '.npy'
+file_name = 'stats_channels-' + '-'.join(args.channels) + '.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

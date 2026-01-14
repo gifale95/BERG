@@ -11,7 +11,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/eeg/erps
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/eeg/erps
 
 # Run the job
 python 01_erps.py
