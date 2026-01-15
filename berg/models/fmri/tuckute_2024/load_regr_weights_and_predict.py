@@ -13,6 +13,9 @@ import matplotlib.pyplot as plt
 import getpass
 from scipy.stats import spearmanr, kendalltau
 import pickle
+import warnings
+from sklearn.exceptions import InconsistentVersionWarning
+warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
 def check_constant_y_ypred(y_pred: typing.Union[np.ndarray, pd.DataFrame],
 						   y: typing.Union[np.ndarray, pd.DataFrame],
@@ -837,7 +840,7 @@ class Mapping:
         if self.ann_encoder.stim_col != self.brain_encoder.stim_col:
             print(f'Stimset columns do not match: {self.ann_encoder.stim_col} != {self.brain_encoder.stim_col}')
 
-        print(f'== PASSED stimset checks')
+        # print(f'== PASSED stimset checks')
 
     def _check_ANN_encoder(self):
         assert (self.ann_encoder.encoded_ann is not None)
@@ -849,10 +852,10 @@ class Mapping:
         else:
             X = self.ann_encoder.encoded_ann[self.ann_layer]
 
-        print(f'== PASSED ANN encoder checks')
-        print(f'\nANN layer {self.ann_layer} '
-              f'has {X.shape[1]} units'
-              f' for {X.shape[0]} stimuli samples.')
+        # print(f'== PASSED ANN encoder checks')
+        # print(f'\nANN layer {self.ann_layer} '
+        #       f'has {X.shape[1]} units'
+        #       f' for {X.shape[0]} stimuli samples.')
 
     def _check_neuroids(self,
                         A: pd.DataFrame = None,
@@ -1243,25 +1246,58 @@ class Mapping:
 
 
     def load_full_mapping(self, WEIGHTDIR,
-                          mapping_result_identifier: str = None,
-                          mapping_save_str: str = None,
-                          **kwargs):
+                        mapping_result_identifier: str = None,
+                        mapping_save_str: str = None,
+                        roi_selection: typing.Union[list, None] = None,
+                        **kwargs):
         """Load the mapping classifier (weights, alphas (if any), and intercept)
-
         Load the neuroid order as well as the preprocessor transform (if any)
-
         Args
             WEIGHTDIR (str): Directory where the weights (full_mapping) are stored
             mapping_result_identifier (str): Result string identifier (folder) for the weights/mapping
             mapping_save_str (str): String identifier that was used to store the weights/mapping
-
+            roi_selection (list or None): List of ROI names to load. If None, load all ROIs.
+                                        Example: ['lang_LH_IFG', 'lang_LH_netw']
         """
-
         with open(join(WEIGHTDIR, mapping_result_identifier), 'rb') as f:
             d = pickle.load(f)
-
-        self.prefitted_clf = d['clf']
-        self.prefitted_clf_neuroid_order = d['neuroid_order']
+        
+        # Get the full neuroid order from saved mapping
+        full_neuroid_order = d['neuroid_order']
+        
+        # If ROI selection is specified, filter the weights and neuroid order
+        if roi_selection is not None:
+            # Validate that all requested ROIs exist
+            available_rois = set(full_neuroid_order)
+            requested_rois = set(roi_selection)
+            if not requested_rois.issubset(available_rois):
+                missing = requested_rois - available_rois
+                raise ValueError(f"Requested ROIs not found in model: {missing}. "
+                            f"Available ROIs: {list(full_neuroid_order)}")
+            
+            # Get indices of selected ROIs in the original order
+            roi_indices = [i for i, roi in enumerate(full_neuroid_order) if roi in roi_selection]
+            
+            # Filter the classifier weights and biases
+            clf = d['clf']
+            clf.coef_ = clf.coef_[roi_indices, :]  # Filter rows: [n_selected_rois, n_features]
+            clf.intercept_ = clf.intercept_[roi_indices]  # Filter: [n_selected_rois]
+            
+            # Filter alpha if it exists (for RidgeCV)
+            if hasattr(clf, 'alpha_') and isinstance(clf.alpha_, np.ndarray):
+                clf.alpha_ = clf.alpha_[roi_indices]
+            
+            # Update neuroid order to only selected ROIs (in original order)
+            selected_neuroid_order = full_neuroid_order[roi_indices]
+            self.prefitted_clf = clf
+            self.prefitted_clf_neuroid_order = selected_neuroid_order
+            print(f"Loaded {len(roi_indices)} ROIs: {list(selected_neuroid_order)}")
+        else:
+            # Load all ROIs
+            self.prefitted_clf = d['clf']
+            self.prefitted_clf_neuroid_order = d['neuroid_order']
+            print(f"Loaded all {len(full_neuroid_order)} ROIs")
+        
         self.prefitted_X_scaler = d['X_scaler']
         self.prefitted_y_scaler = d['y_scaler']
 

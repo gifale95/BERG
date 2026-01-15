@@ -41,9 +41,12 @@ description: |
 
 metadata: |
     'fmri':
-        roi                  : (6,) 
+        rois                 : (6,)     - Names of the six functionally defined ROIs of the language network ['lang_LH_AntTemp', 'lang_LH_IFG', 'lang_LH_IFGorb', 'lang_LH_MFG', 'lang_LH_PostTemp', 'lang_LH_netw']
+        train_target_ids     : (1000,)  - Stimulus identifiers for the training sentences (e.g., beta-control-neural-T.1 ... beta-control-neural-T.1000)
+        train_targets        : (1000, 6) - Participant-averaged (N=5), z-scored BOLD response magnitude for each training sentence and ROI
     'encoding_model':
-        noise_ceiling        : (N,)     - Noise Ceiling estimates per ROI
+        optimal_layer        : int      - GPT2-XL transformer layer selected via cross-validation (layer 22)
+        noise_ceiling        : (6,)     - Noise ceiling estimates (Pearson's r) averaged across all ROIs
         
 # Input stimulus information
 input:
@@ -170,4 +173,4 @@ performance:
     - 'brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy'
 
 references:
-  - "GPT2-XL architecture (Radford et al., 2019): https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
+  - 
