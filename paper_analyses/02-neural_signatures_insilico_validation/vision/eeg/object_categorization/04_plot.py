@@ -110,7 +110,7 @@ colors = [(166/255, 77/255, 121/255), (100/255, 149/255, 237/255),
 
 
 # =============================================================================
-# Plot the decoding accuracy results
+# Plot the decoding accuracy results # !!!
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(10, 7.5))
@@ -128,7 +128,7 @@ max_dec = max(np.mean(decoding_exemplars, 0))
 axs[0].plot(times, np.mean(decoding_exemplars, 0), color=colors[0],
     linewidth=2, label=label)
 axs[0].fill_between(times, ci_exemplars[0], ci_exemplars[1], color=colors[0],
-    alpha=.2)
+    alpha=.1)
 axs[0].scatter(peak, max_dec, color=colors[0], s=200, marker='o',
     edgecolors='k', linewidths=1, zorder=3)
 ci_low = peak - ci_peak_latency_exemplars[0]
@@ -146,7 +146,7 @@ axs[0].scatter(peak, max_dec, color=colors[1], s=200, marker='o',
 axs[0].plot(times, np.mean(decoding_animacy, 0), color=colors[1], linewidth=2,
     label=label)
 axs[0].fill_between(times, ci_animacy[0], ci_animacy[1], color=colors[1],
-    alpha=.2)
+    alpha=.1)
 ci_low = peak - ci_peak_latency_animacy[0]
 ci_up = ci_peak_latency_animacy[1] - peak
 conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
@@ -162,7 +162,7 @@ axs[0].scatter(peak, max_dec, color=colors[2], s=200, marker='o',
 axs[0].plot(times, np.mean(decoding_objects, 0), color=colors[2], linewidth=2,
     label=label)
 axs[0].fill_between(times, ci_objects[0], ci_objects[1], color=colors[2],
-    alpha=.2)
+    alpha=.1)
 ci_low = peak - ci_peak_latency_objects[0]
 ci_up = ci_peak_latency_objects[1] - peak
 conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))

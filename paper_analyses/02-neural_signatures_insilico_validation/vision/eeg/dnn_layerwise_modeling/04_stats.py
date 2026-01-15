@@ -4,16 +4,17 @@ confidence intervals and correlation between RSA peak latency and DNN layer.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico EEG
+    responses.
 subjects : list
-    The subject identifiers for the EEG encoding models. Since the used
-    encoding models are trained on THINGS EEG2 data, valid subject identifiers
-    are integers from 1 to 10.
+    List of EEG subject identifiers.
 channels : string
     String containing the EEG channel type(s) retained for the analyses,
     separated by a comma. Possible values are: 'O' (occipital), 'P'
     (posterior), 'T' (temporal), 'C' (central), 'F' (frontal). Alternatively,
     the list can also contain the names of the individual channels used.
-model : str
+dnn_model : str
     Name of deep neural network model used to extract the image features.
     Available options are 'alexnet' and 'resnet50'.
 n_iter : int
@@ -39,9 +40,10 @@ from statsmodels.stats.multitest import multipletests
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
 parser.add_argument('--channels', default='O,P', type=lambda s: s.split(','))
-parser.add_argument('--model', default='alexnet', type=str)
+parser.add_argument('--dnn_model', default='alexnet', type=str)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -67,8 +69,9 @@ for sub in args.subjects:
     # Load the results
     data_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'eeg',
-        'dnn_layerwise_modeling', 'eeg_rdms', 'eeg_rdms_sub-'+format(sub,'02')+
-        '_channels-'+'-'.join(args.channels)+'.npy')
+        'dnn_layerwise_modeling', 'eeg_rdms', args.encoding_model,
+        'eeg_rdms_sub-'+format(sub,'02')+'_channels-'+'-'.join(args.channels)+
+        '.npy')
     results = np.load(data_dir, allow_pickle=True).item()
 
     # Average the decoding results across pairwise comparisons
@@ -91,8 +94,9 @@ for s, sub in enumerate(args.subjects):
 
     data_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'eeg',
-        'dnn_layerwise_modeling', 'rsa', 'rsa_sub-'+format(sub,'02')+
-        '_channels-'+'-'.join(args.channels)+'_model-'+args.model+'.npy')
+        'dnn_layerwise_modeling', 'rsa', args.encoding_model, 'rsa_sub-'+
+        format(sub,'02')+'_channels-'+'-'.join(args.channels)+'_dnn_model-'+
+        args.dnn_model+'.npy')
     results = np.load(data_dir, allow_pickle=True).item()
 
     # Loop across DNN layers
@@ -112,7 +116,7 @@ for key, val in rsa.items():
 # Correlate the RSA layerwise peak latency with the layer number
 # =============================================================================
 # Get the DNN layers
-if args.model == 'alexnet':
+if args.dnn_model == 'alexnet':
     model_layers = [
         'features.2',
         'features.5',
@@ -123,7 +127,7 @@ if args.model == 'alexnet':
         'classifier.5',
         'classifier.6'
         ]
-elif args.model == 'resnet50':
+elif args.dnn_model == 'resnet50':
     model_layers = [
         'layer1.2.relu_2',
         'layer2.3.relu_2',
@@ -204,10 +208,10 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'dnn_layerwise_modeling', 'stats')
+    'vision', 'eeg', 'dnn_layerwise_modeling', 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'stats_' + 'channels-' + '-'.join(args.channels) + '_model-' + \
-    args.model + '.npy'
+file_name = 'stats_' + 'channels-' + '-'.join(args.channels) + \
+    '_dnn_model-' + args.dnn_model + '.npy'
 
 np.save(os.path.join(save_dir, file_name), results)

@@ -93,7 +93,7 @@ colors = [(139/255, 0/255, 0/255), (0/255, 0/255, 0/255)]
 # =============================================================================
 # Plot the ERPs
 # =============================================================================
-fig= plt.figure(figsize=(10, 7.5))
+fig = plt.figure(figsize=(10, 7.5))
 
 # Plot the stimulus onset dashed line
 plt.plot([0, 0], [100, -100], 'k--', linewidth=2, alpha=.5, label='_nolegend_')
@@ -106,9 +106,9 @@ plt.plot(times, np.mean(erp_objects, 0), color=colors[1], linewidth=2,
 
 # Plot the CIs
 plt.fill_between(times, ci_erp_faces[1], ci_erp_faces[0], color=colors[0],
-    alpha=.2)
+    alpha=.1)
 plt.fill_between(times, ci_erp_objects[1], ci_erp_objects[0], color=colors[1],
-    alpha=.2)
+    alpha=.1)
 
 # Plot the significance markers
 sig = np.empty(len(times))

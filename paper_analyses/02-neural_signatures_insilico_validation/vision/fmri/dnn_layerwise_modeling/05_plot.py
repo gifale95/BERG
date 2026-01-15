@@ -140,7 +140,7 @@ plt.rc('ytick', labelsize=19)
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-subject = 'fsaverage'
+subject = 'fsaverage_nsd_sub-01'
 
 
 # =============================================================================
@@ -197,7 +197,7 @@ data = np.append(np.nanmean(lh_best_layer, 0),
 vertex_data = cortex.Vertex(
     data,
     subject=subject,
-    cmap='turbo_r',
+    cmap='inferno', # 'turbo_r'
     vmin=1,
     vmax=len(lh_rsa.keys()),
     with_colorbar=True

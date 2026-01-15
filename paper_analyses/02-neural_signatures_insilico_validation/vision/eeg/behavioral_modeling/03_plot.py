@@ -3,10 +3,11 @@ embeddings.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico EEG
+    responses.
 subjects : list
-    The subject identifiers for the EEG encoding models. Since the used
-    encoding models are trained on THINGS EEG2 data, valid subject identifiers
-    are integers from 1 to 10.
+    List of EEG subject identifiers.
 channels : list
     List containing the EEG channel type(s) retained for the analyses.
     Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
@@ -28,6 +29,7 @@ from matplotlib import pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
 parser.add_argument('--channels', default=['O-P'], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -38,7 +40,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'behavioral_modeling', 'plots')
+    'vision', 'eeg', 'behavioral_modeling', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -58,7 +60,8 @@ for chan in args.channels:
 
     results_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'eeg',
-        'behavioral_modeling', 'stats', 'stats_'+'channels-'+chan+'.npy')
+        'behavioral_modeling', 'stats', args.encoding_model,
+        'stats_channels-'+chan+'.npy')
 
     results = np.load(results_dir, allow_pickle=True).item()
 
@@ -97,15 +100,13 @@ matplotlib.rcParams['grid.alpha'] = .3
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-colors = [(139/255, 0/255, 0/255), (166/255, 77/255, 121/255),
-    (103/255, 78/255, 167/255)]
 
 
 # =============================================================================
-# Plot the EEG pairwise decoding results
+# Plot the EEG pairwise decoding results # !!!
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(13, 7))
+    figsize=(10, 7.5))
 axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
@@ -116,14 +117,13 @@ axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
 for c, chan in enumerate(args.channels):
 
     # Plot the RSA subject-average results
-    axs[0].plot(times, np.mean(decoding[chan], 0), color=colors[c],
-        linewidth=2)
+    axs[0].plot(times, np.mean(decoding[chan], 0), color='k', linewidth=2)
 
     # Plot the peak time point
     peak = times[np.argmax(np.mean(decoding[chan], 0))]
     max_dec = max(np.mean(decoding[chan], 0))
-    axs[0].scatter(peak, max_dec, color=colors[c], s=200, marker='o',
-        edgecolors='k', linewidths=1, zorder=3)
+    axs[0].scatter(peak, max_dec, color='k', s=200, marker='o', edgecolors='k',
+        linewidths=1, zorder=3)
     ci_low = peak - ci_peak_latency_ci_decoding[chan][0]
     ci_up = ci_peak_latency_ci_decoding[chan][1] - peak
     conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
@@ -132,7 +132,7 @@ for c, chan in enumerate(args.channels):
 
     # Plot the confidence intervals
     axs[0].fill_between(times, ci_decoding[chan][1], ci_decoding[chan][0],
-        color=colors[c], alpha=.2)
+        color='k', alpha=.1)
 
     # Plot the significance time points
     # sig = np.empty(len(times))
@@ -142,8 +142,8 @@ for c, chan in enumerate(args.channels):
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [0, .1, .2, .3, .4, .5]
-xlabels = [0, 100, 200, 300, 400, 500]
+xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
 
@@ -161,10 +161,10 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 
 
 # =============================================================================
-# Plot the RSA results
+# Plot the RSA results # !!!
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(13, 7))
+    figsize=(10, 7.5))
 axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
@@ -175,13 +175,13 @@ axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
 for c, chan in enumerate(args.channels):
 
     # Plot the RSA subject-average results
-    axs[0].plot(times, np.mean(rsa[chan], 0), color=colors[c], linewidth=2)
+    axs[0].plot(times, np.mean(rsa[chan], 0), color='k', linewidth=2)
 
     # Plot the peak time point
     peak = times[np.argmax(np.mean(rsa[chan], 0))]
     max_rsa = max(np.mean(rsa[chan], 0))
-    axs[0].scatter(peak, max_rsa, color=colors[c], s=200, marker='o',
-        edgecolors='k', linewidths=1, zorder=3)
+    axs[0].scatter(peak, max_rsa, color='k', s=200, marker='o', edgecolors='k',
+        linewidths=1, zorder=3)
     ci_low = peak - ci_peak_latency_ci_rsa[chan][0]
     ci_up = ci_peak_latency_ci_rsa[chan][1] - peak
     conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
@@ -190,7 +190,7 @@ for c, chan in enumerate(args.channels):
 
     # Plot the confidence intervals
     axs[0].fill_between(times, ci_rsa[chan][1], ci_rsa[chan][0],
-        color=colors[c], alpha=.2)
+        color='k', alpha=.1)
 
     # Plot the significance time points
     # sig = np.empty(len(times))
@@ -200,17 +200,17 @@ for c, chan in enumerate(args.channels):
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [0, .1, .2, .3, .4, .5]
-xlabels = [0, 100, 200, 300, 400, 500]
+xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
 
 # y-axis parameters
-axs[0].set_ylabel("RSA (Pearson's $r$)", fontsize=fontsize)
-yticks = [0, 0.1, 0.2]
-ylabels = [0, 0.1, 0.2]
+axs[0].set_ylabel("Pearson's $r$", fontsize=fontsize)
+yticks = [0, 0.05, 0.1, 0.15, 0.2]
+ylabels = [0, 0.05, 0.1, 0.15, 0.2]
 plt.yticks(ticks=yticks, labels=ylabels)
-axs[0].set_ylim(bottom=-.02, top=.2)
+axs[0].set_ylim(bottom=-.02, top=.16)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'rsa_channels-'+'-'.join(args.channels)+

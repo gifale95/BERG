@@ -3,16 +3,17 @@ embeddings.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico EEG
+    responses.
 subjects : list
-    The subject identifiers for the EEG encoding models. Since the used
-    encoding models are trained on THINGS EEG2 data, valid subject identifiers
-    are integers from 1 to 10.
+    List of EEG subject identifiers.
 channels : str
     EEG channel type(s) retained for the analyses. Possible values are:
     'O' (occipital), 'P' (posterior), 'T' (temporal), 'C' (central),
     'F' (frontal). Alternatively, the list can also contain the names of the
     individual channels used.
-model : str
+dnn_model : str
     Name of deep neural network model used to extract the image features.
     Available options are 'alexnet' and 'resnet50'.
 berg_dir : str
@@ -31,9 +32,10 @@ from matplotlib import pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
 parser.add_argument('--channels', default='O-P', type=str)
-parser.add_argument('--model', default='resnet50', type=str)
+parser.add_argument('--dnn_model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -42,7 +44,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'dnn_layerwise_modeling', 'plots')
+    'vision', 'eeg', 'dnn_layerwise_modeling', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -51,8 +53,8 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'dnn_layerwise_modeling', 'stats', 'stats_'+'channels-'+args.channels+
-    '_model-'+args.model+'.npy')
+    'dnn_layerwise_modeling', 'stats', args.encoding_model, 'stats_'+
+    'channels-'+args.channels+'_dnn_model-'+args.dnn_model+'.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
@@ -90,23 +92,13 @@ matplotlib.rcParams['grid.alpha'] = .3
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-colors = [
-    (103/255, 78/255, 167/255),
-    (166/255, 77/255, 121/255),
-    (105/255, 105/255, 105/255),
-    (169/255, 169/255, 169/255),
-    (100/255, 149/255, 237/255),
-    (90/255, 130/255, 200/255),
-    (40/255, 65/255, 150/255),
-    (0/255, 0/255, 0/255)
-    ]
 
 
 # =============================================================================
-# Plot the EEG pairwise decoding results
+# Plot the EEG pairwise decoding results # !!!
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(13, 7))
+    figsize=(10, 7.5))
 axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
@@ -114,22 +106,22 @@ axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=2, alpha=.5, label='_nolegend_')
 
 # Plot the RSA subject-average results
-axs[0].plot(times, np.mean(decoding, 0), color=colors[0], linewidth=2)
+axs[0].plot(times, np.mean(decoding, 0), color='k', linewidth=2)
 
 # Plot the peak time point
 peak = times[np.argmax(np.mean(decoding, 0))]
 max_dec = max(np.mean(decoding, 0))
-axs[0].scatter(peak, max_dec, color=colors[0], s=200, marker='o',
+axs[0].scatter(peak, max_dec, color='k', s=200, marker='o',
     edgecolors='k', linewidths=1, zorder=3)
 
 # Plot the confidence intervals
-axs[0].fill_between(times, ci_decoding[1], ci_decoding[0], color=colors[0],
+axs[0].fill_between(times, ci_decoding[1], ci_decoding[0], color='k',
     alpha=.2)
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [0, .1, .2, .3, .4, .5]
-xlabels = [0, 100, 200, 300, 400, 500]
+xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
 
@@ -146,10 +138,10 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 
 
 # =============================================================================
-# Plot the RSA results
+# Plot the RSA results # !!!
 # =============================================================================
 # Get the DNN layers
-if args.model == 'alexnet':
+if args.dnn_model == 'alexnet':
     model_layers = [
         'features.2',
         'features.5',
@@ -160,7 +152,7 @@ if args.model == 'alexnet':
         'classifier.5',
         'classifier.6'
         ]
-elif args.model == 'resnet50':
+elif args.dnn_model == 'resnet50':
     model_layers = [
         'layer1.2.relu_2',
         'layer2.3.relu_2',
@@ -169,8 +161,16 @@ elif args.model == 'resnet50':
         'fc'
         ]
 
+# Get the plot colors
+def sample_cmap(N):
+    cmap = plt.cm.get_cmap('inferno')
+    values = np.linspace(0, 1, N)
+    colors = cmap(values)
+    return colors
+colors = sample_cmap(len(model_layers))
+
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(13, 7))
+    figsize=(10, 7.5))
 axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
@@ -207,15 +207,15 @@ for c, key in enumerate(model_layers):
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [0, .1, .2, .3, .4, .5]
-xlabels = [0, 100, 200, 300, 400, 500]
+xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
 
 # y-axis parameters
-axs[0].set_ylabel("RSA (Pearson's $r$)", fontsize=fontsize)
-yticks = [0, 0.1, 0.2]
-ylabels = [0, 0.1, 0.2]
+axs[0].set_ylabel("Pearson's $r$", fontsize=fontsize)
+yticks = [0, 0.05, 0.1, 0.15, 0.2]
+ylabels = [0, 0.05, 0.1, 0.15, 0.2]
 plt.yticks(ticks=yticks, labels=ylabels)
 axs[0].set_ylim(bottom=-.02, top=.2)
 
@@ -223,6 +223,6 @@ axs[0].set_ylim(bottom=-.02, top=.2)
 axs[0].legend(fontsize=15, ncol=1, loc=0, frameon=False)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'rsa_channels-'+args.channels+'_model-'+
-    args.model+'.svg')
+file_name = os.path.join(save_dir, 'rsa_channels-'+args.channels+'_dnn_model-'+
+    args.dnn_model+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')

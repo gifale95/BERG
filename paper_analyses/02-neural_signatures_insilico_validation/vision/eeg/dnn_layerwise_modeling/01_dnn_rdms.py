@@ -2,7 +2,7 @@
 
 Parameters
 ----------
-model : str
+dnn_model : str
     Name of deep neural network model used to extract the image features.
     Available options are 'alexnet' and 'resnet50'.
 berg_dir : str
@@ -27,7 +27,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model', default='alexnet', type=str)
+parser.add_argument('--dnn_model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
@@ -84,7 +84,7 @@ test_img_files = metadata_things['encoding_models']['test_img_info']\
 # Select the used layers for feature extraction
 #nodes, _ = get_graph_node_names(model)
 # AlexNet
-if args.model == 'alexnet':
+if args.dnn_model == 'alexnet':
     # Load the model
     model = torchvision.models.alexnet(weights='DEFAULT')
     # Select the used layers for feature extraction
@@ -101,7 +101,7 @@ if args.model == 'alexnet':
         ]
 
 # ResNet-50
-elif args.model == 'resnet50':
+elif args.dnn_model == 'resnet50':
     # Load the model
     model = torchvision.models.resnet50(weights='DEFAULT')
     # Select the used layers for feature extraction
@@ -189,6 +189,6 @@ save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'eeg', 'dnn_layerwise_modeling', 'dnn_rdms')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'dnn_rdms_' + args.model + '.npy'
+file_name = 'dnn_rdms_' + args.dnn_model + '.npy'
 
 np.save(os.path.join(save_dir, file_name), dnn_rdms)

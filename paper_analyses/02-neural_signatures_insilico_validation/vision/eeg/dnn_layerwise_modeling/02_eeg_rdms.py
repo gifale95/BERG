@@ -6,9 +6,7 @@ encoding_model : str
     The name of BERG's encoding model used for generating the in silico EEG
     responses.
 subject : int
-    The subject identifier for the EEG encoding models. Since the used
-    encoidng models are trained on THINGS EEG2 data, valid subject identifiers
-    are integers from 1 to 10.
+    The subject identifier for the EEG encoding models.
 channels : string
     String containing the EEG channel type(s) retained for the analyses,
     separated by a comma. Possible values are: 'O' (occipital), 'P'
@@ -175,7 +173,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'dnn_layerwise_modeling', 'eeg_rdms')
+    'vision', 'eeg', 'dnn_layerwise_modeling', 'eeg_rdms', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'eeg_rdms_sub-' + format(args.subject, '02') + '_channels-' + \
