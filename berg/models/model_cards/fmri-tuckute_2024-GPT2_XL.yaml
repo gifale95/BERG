@@ -39,8 +39,6 @@ description: |
   overall language system.
 
 
-
-
 metadata: |
     'fmri':
         roi                  : (6,) 
@@ -49,135 +47,83 @@ metadata: |
         
 # Input stimulus information
 input:
-  type: "numpy.ndarray"
-  shape: "[n_frames, height, width] or [n_batches, n_frames, height, width]"
+  type: "list[str] or numpy.ndarray"
   description: |
-    The input should be a sequence of grayscale video frames, or a batch of video sequences.
-    - Single video: shape [n_frames, height, width]
-    - Batch of videos: shape [n_batches, n_frames, height, width]
-  constraints:
-    - "Frame values should be integers in range [0, 255]."
+    List or array of natural language sentences to encode.
+    
+    While the model accepts sentences of any length, it was trained exclusively on 
+    six-word sentences. Performance may vary for sentences of different lengths.
+  example: |
+    ["Taste that fowl and those fish.", 
+     "I'm progressive and you fall right."]
 
 # Output information
 output:
   type: "numpy.ndarray"
-  shape: "[n_frames, n_neurons] or [n_batches, n_frames, n_neurons]"
+  shape: "[n_sentences, n_rois]"
   description: |
-    The output is a 2D or 3D array containing in silico calcium imaging responses.
-    - Single video: shape [n_frames, n_neurons]
-    - Batch of videos: shape [n_batches, n_frames, n_neurons]
+    The output is a 2D array containing predicted z-scored BOLD response magnitudes 
+    for the left-hemisphere language network.
     
-    The last dimension (n_neurons) corresponds to the number of neurons in the selected
-    session/scan and ROI combination.
-    
-    Neuron counts vary by session and scan:
-
-      - Session 4, Scan 7:  7,493 neurons
-
-      - Session 5, Scan 6:  8,592 neurons
-
-      - Session 5, Scan 7:  8,138 neurons
-
-      - Session 6, Scan 2:  8,158 neurons
-
-      - Session 6, Scan 4:  8,221 neurons
-
-      - Session 6, Scan 6:  7,971 neurons
-
-      - Session 6, Scan 7:  7,887 neurons
-
-      - Session 7, Scan 3:  8,618 neurons
-
-      - Session 7, Scan 5:  8,194 neurons
-
-      - Session 8, Scan 5:  9,941 neurons
-
-      - Session 9, Scan 3:  7,973 neurons
-
-      - Session 9, Scan 4:  7,855 neurons
-      
-      - Session 9, Scan 6:  5,130 neurons
-
+    Each row corresponds to one input sentence, and each column corresponds to one 
+    language network ROI (or a subset if ROI selection is applied).
   dimensions:
-    - name: "n_batches"
-      description: "Number of batches chosen for inference"
-    - name: "n_frames"
-      description: "Number of video frames in the sequence"
-    - name: "n_neurons"
-      description: "Number of neurons in the selected session/scan and ROI"
-
+    - name: "n_sentences"
+      description: "Number of input sentences."
+    - name: "n_rois"
+      description: |
+        Number of ROIs in the output (6 by default, or fewer if ROI selection is applied).
+        Default ROIs (in order):
+          - lang_LH_AntTemp: Anterior temporal lobe
+          - lang_LH_IFG: Inferior frontal gyrus
+          - lang_LH_IFGorb: Inferior frontal gyrus orbitalis
+          - lang_LH_MFG: Middle frontal gyrus
+          - lang_LH_PostTemp: Posterior temporal lobe
+          - lang_LH_netw: Network average across all five fROIs
 
 # Model parameters and their usage
 parameters:
 
-  # Model ID
   model_id:
     description: Unique identifier of the model to load.
     required: true
     type: "str"
-    valid_values: "calcium_2p-wang_2025-3DCNN"
-    example: "calcium_2p-wang_2025-3DCNN"
+    valid_values: "fmri-tuckute_2024-GPT2_XL"
+    example: "fmri-tuckute_2024-GPT2_XL"
     function: "get_encoding_model, get_model_metadata"
 
-  # Session and scan selection
-  train_session:
-    type: str
-    required: true
-    valid_values: [
-      "session-4_scan-7",
-      "session-5_scan-6", 
-      "session-5_scan-7",
-      "session-6_scan-2",
-      "session-6_scan-4",
-      "session-6_scan-6",
-      "session-6_scan-7",
-      "session-7_scan-3",
-      "session-7_scan-5",
-      "session-8_scan-5",
-      "session-9_scan-3",
-      "session-9_scan-4",
-      "session-9_scan-6"
-    ]
-    example: "session8_scan5"
-    description: "Recording session and scan identifier in format 'session-X_scan-Y'"
-    function: "get_encoding_model, get_model_metadata"
-
-  # Selection parameter to define specific outputs (ROI, neurons, etc.)
   selection:
-    type: dict
     description: |
-      Specifies which outputs to include in the model responses.
-      Can include specific brain areas and/or individual neurons. If not provided,
-      calcium responses are generated for all neurons in the session/scan.
+      Specifies which ROIs to include in the model output.
+      If not provided, responses are generated for all six language network ROIs.
     required: false
+    type: dict
     function: get_encoding_model
     properties:
       roi:
         type: list[str]
-        description: List of brain areas to include in the output
-        valid_values: ["AL", "LM", "RL", "V1"]
-        example: ["V1", "LM"]
-      field:
-        type: list[int]
-        description: Imaging Fields from the recording. Each Scan/Session has a different imaging fields available.
-        valid_values: [1, 2, 3, 4, 5, 6, 7, 8]
-        example: [1, 3]
-      unit_index:
-        type: numpy.ndarray
         description: |
-          Binary one-hot encoded vector indicating which neurons to include.
-          Must have exactly the same length as the total number of neurons in the
-          selected session/scan (varies by session, e.g., 9,941 for session 8, scan 5).
-          Each position set to 1 indicates that neuron should be included.
-        example: [0, 0, ..., 1, 1, 0]
+          List of language network ROI names to include in the output.
+          ROIs will be returned in the order specified.
+        valid_values: [
+          'lang_LH_AntTemp',
+          'lang_LH_IFG', 
+          'lang_LH_IFGorb',
+          'lang_LH_MFG',
+          'lang_LH_PostTemp',
+          'lang_LH_netw'
+        ]
+        example: ['lang_LH_IFG', 'lang_LH_netw']
 
   device:
-    type: str
+    description: |
+      Device to run the model on. This model uses linear regression and always runs on CPU, 
+      but this parameter is included for API consistency with other encoding models.
     required: false
+    type: str
     valid_values: ["cpu", "cuda", "auto"]
-    default: "auto"
-    example: "auto"
-    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    example: "cpu"
+    default: "cpu"
     function: "get_encoding_model"
 
   model:
@@ -187,42 +133,41 @@ parameters:
     function: "encode"
 
   stimulus:
-    description:  |
-      The input should be a sequence of grayscale video frames, or a batch of video sequences.
-      - Single video: shape [n_frames, height, width]
-      - Batch of videos: shape [n_batches, n_frames, height, width]
+    description: |
+      List or array of natural language sentences to encode.
+      
+      The model accepts sentences of any length, though it was trained on six-word sentences.
     required: true
-    type: numpy.ndarray
-    shape: 
-      - [n_frames, height, width]
-      - [n_batches, n_frames, height, width]
-    example: "An array of shape [4, 100, 144, 256] representing 4 grayscale videos with 100 frames each."
+    type: "list[str] or numpy.ndarray"
+    example: |
+      ["Taste that fowl and those fish.", 
+       "I'm progressive and you fall right."]
     function: "encode"
 
   return_metadata:
-    description: "Whether to return the encoding model's metadata together with the in silico neural resposnes."
-    required: False
+    description: "Whether to return the encoding model's metadata together with the in silico neural responses."
+    required: false
     type: bool
-    default: Fale
-    example: True
+    default: false
+    example: true
     function: "encode"
 
   show_progress:
     description: "Whether to show a progress bar during encoding (for large batches)."
     required: false
     type: bool
-    default: True
-    example: True
+    default: true
+    example: true
     function: "encode"
-
 
 # Performance metrics and references
 performance:
+  optimal_layer: 22
+  predictivity_r: 0.38
+  noise_ceiling_r: 0.56
   
   accuracy_plots: 
-    - "brain-encoding-response-generator/encoding_models/modality-calcium_2p/train_dataset-wang_2025/model-3DCNN/encoding_models_accuracy"
-
+    - 'brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy'
 
 references:
-    - Model repository: https://github.com/cajal/fnn
-    - Model paper (Wang et al., Nature 2025): https://www.nature.com/articles/s41586-025-08829-y
+  - "GPT2-XL architecture (Radford et al., 2019): https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
