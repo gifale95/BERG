@@ -93,36 +93,20 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-if args.train_split == 'full':
-    # Create or update full metadata
-    file_name = f'metadata_{args.subject}_full.npy'
-    file_path = os.path.join(save_dir, file_name)
-    
-    if os.path.exists(file_path):
-        metadata = np.load(file_path, allow_pickle=True).item()
-    else:
-        metadata = metadata_meg.copy()
-    
-    metadata['encoding_model']['correlation_results'] = correlation_results
-    metadata['encoding_model']['percent_noise_ceiling'] = percent_noise_ceiling
-    
-    np.save(file_path, metadata)
-    
+file_name = f'metadata_{args.subject}.npy'
+file_path = os.path.join(save_dir, file_name)
+
+# Load existing metadata or create from base
+if os.path.exists(file_path):
+    metadata = np.load(file_path, allow_pickle=True).item()
 else:
-    # Create or update splits metadata
-    file_name = f'metadata_{args.subject}_splits.npy'
-    file_path = os.path.join(save_dir, file_name)
-    
-    if os.path.exists(file_path):
-        metadata = np.load(file_path, allow_pickle=True).item()
-    else:
-        metadata = metadata_meg.copy()
-    
-    # Add results to the appropriate split
-    if args.train_split not in metadata['encoding_model']:
-        metadata['encoding_model'][args.train_split] = {}
-    
-    metadata['encoding_model'][args.train_split]['correlation_results'] = correlation_results
-    metadata['encoding_model'][args.train_split]['percent_noise_ceiling'] = percent_noise_ceiling
-    
-    np.save(file_path, metadata)
+    metadata = metadata_meg.copy()
+
+# Add results to the appropriate split/full
+if args.train_split not in metadata['encoding_model']:
+    metadata['encoding_model'][args.train_split] = {}
+
+metadata['encoding_model'][args.train_split]['correlation_results'] = correlation_results
+metadata['encoding_model'][args.train_split]['percent_noise_ceiling'] = percent_noise_ceiling
+
+np.save(file_path, metadata)

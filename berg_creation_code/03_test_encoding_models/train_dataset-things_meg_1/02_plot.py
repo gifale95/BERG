@@ -52,21 +52,12 @@ metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
     'train_dataset-things_meg_1', 'model-vit_b_32', 'metadata')
 
 for subject in args.subject:
-    # Determine which metadata file to load
-    if args.train_split == 'full':
-        file_name = f'metadata_{subject}_full.npy'
-    else:
-        file_name = f'metadata_{subject}_splits.npy'
-    
+    file_name = f'metadata_{subject}.npy'
     metadata = np.load(os.path.join(metadata_dir, file_name),
         allow_pickle=True).item()
     
     # Extract results from appropriate location
-    if args.train_split == 'full':
-        correlation_results.append(metadata['encoding_model']['correlation_results'])
-    else:
-        correlation_results.append(metadata['encoding_model'][args.train_split]['correlation_results'])
-    
+    correlation_results.append(metadata['encoding_model'][args.train_split]['correlation_results'])
     noise_ceiling_results.append(metadata['encoding_model']['noise_ceiling'])
     times = metadata['meg']['times']
     sensor_regions = metadata['sensors']['sensor_regions']
