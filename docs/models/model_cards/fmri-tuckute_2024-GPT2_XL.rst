@@ -62,7 +62,7 @@ Metadata
 
     **train_target_ids** : ``(1000,)`` - Stimulus identifiers for the training sentences (e.g., beta-control-neural-T.1 ... beta-control-neural-T.1000)
 
-    **train_targets** : ``(1000, 6)`` - Participant-averaged (N=5), z-scored BOLD response magnitude for each training sentence and ROI
+    **train_targets** : ``(1000)`` - Participant-averaged (N=5), z-scored BOLD response magnitude for each training sentence to map onto the language network average
 **encoding_model**
 
     **optimal_layer** : ``int`` - GPT2-XL transformer layer selected via cross-validation (layer 22)
