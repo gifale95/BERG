@@ -18,6 +18,9 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=str, required=True, choices=['P1', 'P2', 'P3', 'P4'])
 parser.add_argument('--berg_dir', required=True, type=str)
+parser.add_argument('--train_split', type=str, default='full',
+                   choices=['full', 'split1', 'split2', 'split3', 'split4'],
+                   help='Which training split to test')
 args = parser.parse_args()
 
 print('>>> Test THINGS MEG encoding models <<<')
@@ -50,7 +53,7 @@ with h5py.File(neural_test_path, 'r') as f:
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
     'modality-meg', 'train_dataset-things_meg_1', 'vit_b_32')
 
-pred_path = os.path.join(results_dir, f'meg_test_pred_{args.subject}.npy')
+pred_path = os.path.join(results_dir, f'meg_test_pred_{args.subject}_{args.train_split}.npy')
 neural_test_pred = np.load(pred_path, allow_pickle=True)
 
 
@@ -97,5 +100,5 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-file_name = f'metadata_{args.subject}.npy'
+file_name = f'metadata_{args.subject}_{args.train_split}.npy'
 np.save(os.path.join(save_dir, file_name), metadata)

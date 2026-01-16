@@ -65,6 +65,7 @@ class MEGEncodingModel(BaseModelInterface):
     MODEL_ID = model_info["model_id"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
+    VALID_TRAIN_SPLITS = model_info["parameters"]["train_split"]["valid_values"]
     VALID_REGIONS = model_info["parameters"]["selection"]["properties"]["region"]["valid_values"]
     VALID_SENSOR_PREFIXES = model_info["parameters"]["selection"]["properties"]["sensors"]["valid_values"]
     SENSORS_LENGTH = 271
@@ -74,7 +75,8 @@ class MEGEncodingModel(BaseModelInterface):
         self, 
         subject: str, 
         device: str = "auto", 
-        selection: Optional[Dict] = None, 
+        selection: Optional[Dict] = None,
+        train_split: str = "full",
         berg_dir: Optional[str] = None
     ):
         """
@@ -94,11 +96,15 @@ class MEGEncodingModel(BaseModelInterface):
             - sensors: List of sensor prefix codes (MLC, MLF, MLO, etc.)
             - sensor_index: Binary one-hot encoded vector for sensor selection
             - timepoints: Binary one-hot encoded vector for timepoint selection
+        train_split : str, default="full"
+            Training data partition to use. Options are "full" (complete training set)
+            or "split1", "split2", "split3", "split4" (randomly shuffled quarters).
         berg_dir : str, optional
             Root path to the BERG directory containing model files and weights.
         """
         # Assign Parameters
         self.subject = subject
+        self.train_split = train_split
         self.berg_dir = berg_dir
         self.model = None
         
@@ -126,6 +132,12 @@ class MEGEncodingModel(BaseModelInterface):
         """
         # Validate subject
         validate_subject(self.subject, self.VALID_SUBJECTS)
+        
+        # Validate train_split
+        if self.train_split not in self.VALID_TRAIN_SPLITS:
+            raise InvalidParameterError(
+                f"train_split must be one of {self.VALID_TRAIN_SPLITS}, got '{self.train_split}'"
+            )
         
         if self.selection is not None:
             # Validate selection keys
@@ -183,8 +195,8 @@ class MEGEncodingModel(BaseModelInterface):
         
         Loads the vision transformer backbone, preprocessing components 
         (scalers, PCA), and trained regression weights for the specified
-        subject. Only loads weights for selected sensors and timepoints
-        to optimize memory usage.
+        subject and training split. Only loads weights for selected sensors 
+        and timepoints to optimize memory usage.
         """
         try:
             # Load metadata
@@ -239,7 +251,7 @@ class MEGEncodingModel(BaseModelInterface):
             # Load the scalers, PCA, and trained regression weights (only for selection)
             self.scaler, self.pca, self.reg = self._load_encoding_weights()
             
-            print(f"Model loaded on {self.device} for subject {self.subject}")
+            print(f"Model loaded on {self.device} for subject {self.subject} (train_split: {self.train_split})")
             
         except Exception as e:
             raise ModelLoadError(f"Failed to load model: {str(e)}")
@@ -312,7 +324,7 @@ class MEGEncodingModel(BaseModelInterface):
             'train_dataset-things_meg_1', 
             'model-vit_b_32',
             'encoding_models_weights',
-            f'weights_P{self.subject}.npy'
+            f'weights_P{self.subject}_{self.train_split}.npy'
         )
         weights = np.load(weights_dir, allow_pickle=True).item()
         

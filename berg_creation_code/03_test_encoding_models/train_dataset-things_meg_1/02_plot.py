@@ -23,6 +23,9 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subject', nargs='+', default=['P1'],
     help='List of subjects to analyze (e.g., --subject P1 P2 P3 P4)')
 parser.add_argument('--berg_dir', required=True, type=str)
+parser.add_argument('--train_split', type=str, default='full',
+                   choices=['full', 'split1', 'split2', 'split3', 'split4'],
+                   help='Which training split to plot')
 args = parser.parse_args()
 
 
@@ -38,7 +41,7 @@ metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
 
 for subject in args.subject:
     # Load all data from single metadata file
-    file_name = f'metadata_{subject}.npy'
+    file_name = f'metadata_{subject}_{args.train_split}.npy'
     metadata = np.load(os.path.join(metadata_dir, file_name),
         allow_pickle=True).item()
     
@@ -173,7 +176,7 @@ for s, subject in enumerate(args.subject):
     ax.set_axisbelow(True)
     
     # Title
-    ax.set_title(f'{subject} - Brain Region Encoding Accuracy', 
+    ax.set_title(f'{subject} ({args.train_split}) - Brain Region Encoding Accuracy', 
                 fontsize=fontsize+3, fontweight='bold', pad=15)
 
 # Hide unused subplots if we have fewer than 4 subjects
@@ -249,7 +252,7 @@ if avg_ax is not None:
     avg_ax.set_axisbelow(True)
     
     # Title
-    avg_ax.set_title('Grand Average Across All Subjects - Brain Region Encoding Accuracy', 
+    avg_ax.set_title(f'Grand Average ({args.train_split}) Across All Subjects - Brain Region Encoding Accuracy', 
                      fontsize=fontsize+3, fontweight='bold', pad=15)
 
 # Add single legend in upper left corner
@@ -281,7 +284,7 @@ if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
 # Save the figure
-save_name = 'encoding_accuracy'
+save_name = f'encoding_accuracy_{args.train_split}'
 fig.savefig(os.path.join(save_dir, f'{save_name}.jpg'), dpi=300, bbox_inches='tight', format='jpeg')
 
 plt.show()

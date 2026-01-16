@@ -1,6 +1,7 @@
 """Preprocess the THINGS-data MEG dataset (Hebart et al., 2023):
  - split training and test data based on trial type,
- - create comprehensive metadata mapping.
+ - create comprehensive metadata mapping,
+ - optionally create random training splits.
 
 The MEG data is saved as:
  - Training data: (Trials x Time points x Sensors)
@@ -18,6 +19,8 @@ meg_data_dir : str
     Directory containing the preprocessed MEG .fif files.
 batch_size : int
     Batch size for chunked processing to manage memory usage.
+create_splits : bool
+    Whether to create 4 random training splits (default: True).
 
 
 Output Files Created (per subject):
@@ -25,6 +28,13 @@ Output Files Created (per subject):
 meg_{subject}_split-train.h5                : (22248, 271, 281) - Non-normalized training data
 meg_{subject}_split-test.h5                 : (2400, 271, 281)  - Non-normalized test data
 meg_{subject}_split-test_averaged.h5        : (200, 271, 281)   - Non-normalized averaged test data
+
+If create_splits=True, additionally:
+meg_{subject}_split-train_split1.h5         : (5562, 271, 281)  - Training split 1
+meg_{subject}_split-train_split2.h5         : (5562, 271, 281)  - Training split 2
+meg_{subject}_split-train_split3.h5         : (5562, 271, 281)  - Training split 3
+meg_{subject}_split-train_split4.h5         : (5562, 271, 281)  - Training split 4
+
 meg_{subject}_metadata.npz                  :
 
 'meg':
@@ -44,17 +54,18 @@ meg_{subject}_metadata.npz                  :
     train_runs                 : (22248,) - Run numbers within each session
     train_img_files            : (22248,) - Full image paths on disk for training images
     
+    train_split{N}_img_ids     : (5562,)  - THINGS image IDs for training split N
+    train_split{N}_concepts    : (5562,)  - Object category IDs for training split N
+    train_split{N}_sessions    : (5562,)  - Session numbers for training split N
+    train_split{N}_runs        : (5562,)  - Run numbers for training split N
+    train_split{N}_img_files   : (5562,)  - Full image paths for training split N
+    
     test_things_img_ids        : (2400,)  - THINGS image IDs for test trials
     test_image_nr              : (2400,)  - Test image numbers (1–200, repeated over repetitions)
     test_concepts              : (2400,)  - Object category IDs for test trials
     test_sessions              : (2400,)  - Session numbers for test trials
     test_runs                  : (2400,)  - Run numbers for test trials
     test_img_files             : (2400,)  - Full image paths on disk for test images
-    
-    test_avg_things_img_ids    : (200,)   - Unique THINGS image IDs used in averaging
-    test_avg_image_nr          : (200,)   - Test image numbers 1–200 (averaged over repetitions)
-    test_avg_concepts          : (200,)   - Object category IDs for averaged test images
-    test_avg_img_files         : (200,)   - Full image paths on disk for averaged test images
     
     ncsnr                      : (281, 271) - Neural cross-validated signal-to-noise ratio per time point and sensor
     noise_ceiling              : (281, 271) - Noise ceiling per time point and sensor
@@ -76,6 +87,8 @@ parser.add_argument('--meg_data_dir', required=True, type=str,
                     help="Directory containing preprocessed MEG .fif files.")
 parser.add_argument('--batch_size', default=1000, type=int,
                     help="Batch size for chunked processing.")
+parser.add_argument('--create_splits', default=True, type=lambda x: str(x).lower() == 'true',
+                    help="Create 4 random training splits (default: True).")
 args = parser.parse_args()
 
 print('>>> MEG THINGS-data preparation <<<')
@@ -98,7 +111,7 @@ if not os.path.exists(meg_file):
 # =============================================================================
 print("")
 print("Splitting training and testing data")
-split_meg_data(meg_file, output_dir, args.subject, args.batch_size)
+shuffled_indices = split_meg_data(meg_file, output_dir, args.subject, args.batch_size, args.create_splits)
 
 
 # =============================================================================
@@ -109,6 +122,8 @@ print("Creating metadata")
 create_meg_metadata(
     meg_filepath=meg_file,
     output_dir=output_dir,
-    subject_id=args.subject)
+    subject_id=args.subject,
+    create_splits=args.create_splits,
+    shuffled_indices=shuffled_indices)
 
 print("\nPreparation complete!")
