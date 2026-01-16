@@ -4,7 +4,7 @@ import pandas as pd
 import yaml
 from typing import Dict, Any, Optional, List, Union
 from pathlib import Path
-from berg.models.fmri.tuckute_2024.load_regr_weights_and_predict import ANNEncoder, BrainEncoder, Metric, Mapping
+from berg.models.fmri.tuckute_2024.load_regr_weights_and_predict import ANNEncoder, BrainEncoder, Mapping
 from berg.interfaces.base_model import BaseModelInterface
 from berg.core.model_registry import register_model
 from berg.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
@@ -184,47 +184,33 @@ class FMRITextEncodingModel(BaseModelInterface):
         Returns
         -------
         pd.DataFrame
-            DataFrame with 'sentence' column and appropriate index.
+            DataFrame with 'sentence' column and sentences as index.
         """
         # Convert to list if numpy array
         if isinstance(stimulus, np.ndarray):
             if stimulus.ndim != 1:
-                raise StimulusError(
-                    f"Stimulus array must be 1D, got shape {stimulus.shape}"
-                )
+                raise StimulusError(f"Stimulus array must be 1D, got shape {stimulus.shape}")
             stimulus = stimulus.tolist()
         
+        # Validate input type and content
         if not isinstance(stimulus, list):
-            raise StimulusError(
-                "Stimulus must be a list of strings or 1D numpy array"
-            )
-        
+            raise StimulusError("Stimulus must be a list of strings or 1D numpy array")
         if len(stimulus) == 0:
             raise StimulusError("Stimulus list cannot be empty")
-        
-        # Validate all elements are strings
         if not all(isinstance(s, str) for s in stimulus):
-            raise StimulusError(
-                "All stimulus elements must be strings"
-            )
+            raise StimulusError("All stimulus elements must be strings")
         
-        # Check word count and warn if not 6 words (only once)
+        # Warn about non-6-word sentences (once per model instance)
         if not self._warning_shown:
-            non_six_word = [s for s in stimulus if len(s.split()) != 6]
-            if non_six_word:
-                print(
-                    "WARNING: This model was trained on 6-word sentences. "
-                    f"Found {len(non_six_word)} sentence(s) with different word counts. "
-                    "Performance may vary for sentences of different lengths."
-                )
+            non_six_word = sum(1 for s in stimulus if len(s.split()) != 6)
+            if non_six_word > 0:
+                print(f"WARNING: This model was trained on 6-word sentences. "
+                    f"Found {non_six_word} sentence(s) with different word counts. "
+                    f"Performance may vary for sentences of different lengths.")
                 self._warning_shown = True
         
-        # Create DataFrame with required format
-        stimset = pd.DataFrame({"sentence": stimulus})
-        
-        # Add required index format: beta-neural-control-test.1, beta-neural-control-test.2, etc.
-        stimset.index = [f"beta-neural-control-test.{i+1}" for i in range(len(stimset))]
-        
+        # Create DataFrame with sentences as index
+        stimset = pd.DataFrame({"sentence": stimulus}, index=stimulus)
         return stimset
     
     def generate_response(
@@ -263,7 +249,7 @@ class FMRITextEncodingModel(BaseModelInterface):
             verbose=False
         )
         
-        # Encode with Brain (mock encoding - no actual neural data needed)
+        # Encode with Brain (the model needs that)
         self.brain_encoder.encode(
             stimset=stimset,
             neural_data=None,
@@ -272,14 +258,12 @@ class FMRITextEncodingModel(BaseModelInterface):
         
         # Initialize mapping after encoders have stimset
         if self.mapping is None:
-            metric = Metric(metric=self.METRIC)
             
             self.mapping = Mapping(
                 ANNEncoder=self.ann_encoder,
                 ann_layer=self.SOURCE_LAYER,
                 BrainEncoder=self.brain_encoder,
                 mapping_class=self.MAPPING_CLASS,
-                metric=metric,
                 Preprocessor=None,
                 preprocess_X=False,
                 preprocess_y=False,

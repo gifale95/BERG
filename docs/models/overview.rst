@@ -98,6 +98,14 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subNSD_verticesAll/encoding_models_accuracy/>`_
+   * - 
+     - :doc:`model_cards/fmri-tuckute_2024-GPT2_XL`
+     - GPT2-XL–based linear encoding model (LLM embeddings + ridge regression) predicting CNN predicting
+     - `Tuckute et al., 2024 <https://www.nature.com/articles/s41562-023-01783-7>`_
+     - Human
+     - Text
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy/>`_
+
 
 modality-eeg
 ~~~~~~~~~~~~

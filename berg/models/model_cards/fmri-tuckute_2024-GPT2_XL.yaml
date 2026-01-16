@@ -41,7 +41,7 @@ description: |
 
 metadata: |
     'fmri':
-        rois                 : (6,)     - Names of the six functionally defined ROIs of the language network ['lang_LH_AntTemp', 'lang_LH_IFG', 'lang_LH_IFGorb', 'lang_LH_MFG', 'lang_LH_PostTemp', 'lang_LH_netw']
+        rois                 : (6,)     - Six functionally defined ROIs of the language network ['lang_LH_AntTemp', 'lang_LH_IFG', 'lang_LH_IFGorb', 'lang_LH_MFG', 'lang_LH_PostTemp', 'lang_LH_netw']
         train_target_ids     : (1000,)  - Stimulus identifiers for the training sentences (e.g., beta-control-neural-T.1 ... beta-control-neural-T.1000)
         train_targets        : (1000, 6) - Participant-averaged (N=5), z-scored BOLD response magnitude for each training sentence and ROI
     'encoding_model':
@@ -62,14 +62,17 @@ input:
 
 # Output information
 output:
-  type: "numpy.ndarray"
-  shape: "[n_sentences, n_rois]"
+  type: "pandas.DataFrame"
+  shape: "(n_sentences, n_rois)"
   description: |
-    The output is a 2D array containing predicted z-scored BOLD response magnitudes 
+    The output is a pandas DataFrame containing predicted z-scored BOLD response magnitudes 
     for the left-hemisphere language network.
     
-    Each row corresponds to one input sentence, and each column corresponds to one 
-    language network ROI (or a subset if ROI selection is applied).
+    Each row corresponds to one input sentence (indexed by sentence identifier), and each 
+    column corresponds to one language network ROI (or a subset if ROI selection is applied).
+    
+    DataFrame index: Sentence
+    DataFrame columns: ROI names (e.g., 'lang_LH_IFG', 'lang_LH_netw')
   dimensions:
     - name: "n_sentences"
       description: "Number of input sentences."
@@ -173,4 +176,7 @@ performance:
     - 'brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy'
 
 references:
-  - 
+    - Model building code: '.berg/models/fmri/tuckute_2024/load_regr_weights_and_predict.py'
+    - Model Paper (Tuckute et al., 2024): https://www.nature.com/articles/s41562-023-01783-7
+    - GPT2-XL (Radford et al., 2020): https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
+
