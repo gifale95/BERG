@@ -198,12 +198,6 @@ class MEGEncodingModel(BaseModelInterface):
         subject and training split. Only loads weights for selected sensors 
         and timepoints to optimize memory usage.
         """
-        
-        # Get split parameter:
-        if self.train_split != "full":
-            train_split = "splits"
-        else:
-            train_split = "full"
         try:
             # Load metadata
             metadata_dir = os.path.join(
@@ -213,7 +207,7 @@ class MEGEncodingModel(BaseModelInterface):
                 'train_dataset-things_meg_1',
                 'model-vit_b_32',
                 'metadata',
-                f'metadata_P{self.subject}_{train_split}.npy'
+                f'metadata_P{self.subject}.npy'
             )
             self.metadata = np.load(metadata_dir, allow_pickle=True).item()
             
@@ -536,11 +530,6 @@ class MEGEncodingModel(BaseModelInterface):
             raise InvalidParameterError(
                 f"Required parameters missing: {', '.join(missing_params)}"
             )
-            
-        # Get split parameter:
-        if train_split != "full":
-            train_split = "splits"
-            
         
         # Validate parameters
         validate_subject(subject, cls.VALID_SUBJECTS)
@@ -553,7 +542,7 @@ class MEGEncodingModel(BaseModelInterface):
             'train_dataset-things_meg_1',
             'model-vit_b_32',
             'metadata',
-            f'metadata_P{subject}_{train_split}.npy'
+            f'metadata_P{subject}.npy'
         )
         
         # Load metadata if file exists
