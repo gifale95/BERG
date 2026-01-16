@@ -5,12 +5,13 @@ versus objects.
 
 Parameters
 ----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico MEG
+    responses.
 subjects : list
-    List of the subject identifiers for the MEG encoding models. Since the
-    used encoding models are trained on THINGS MEG1 data, valid subject
-    identifiers are integers from 1 to 4.
+    List of MEG subject identifiers.
 sensors : list
-    List containing the MEG sensor names retained for the analyses.
+    List containing the names of the individual MEG sensors used.
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
     distribution.
@@ -33,8 +34,9 @@ from statsmodels.stats.multitest import multipletests
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='meg-things_meg_1-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4], type=int)
-parser.add_argument('--sensors', default=['MLT23', 'MLT24', 'MLT33', 'MLT34', 'MRT23', 'MRT24', 'MRT33', 'MRT34'], type=list)
+parser.add_argument('--sensors', default=['MLT23', 'MLT24', 'MLT33', 'MLT34', 'MRT23', 'MRT24', 'MRT33', 'MRT34'], type=list) # !!!
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -55,13 +57,14 @@ np.random.seed(seed)
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'meg', 'm170_faces', 'insilico_meg_responses',
-    'insilico_meg_responses.npy')
+    args.encoding_model, 'insilico_meg_responses.npy')
 
 data = np.load(data_dir, allow_pickle=True).item()
 
 meg_faces = data['insilico_meg']['Faces']
 meg_objects = data['insilico_meg']['Objects']
 metadata = data['metadata']
+times = data['times']
 del data
 
 
@@ -136,13 +139,14 @@ results = {
     'pval_erp_diff': pval_erp_diff,
     'pval_erp_diff_corrected': pval_erp_diff_corrected,
     'sig_erp_diff': sig_erp_diff,
-    'metadata': metadata
+    'metadata': metadata,
+    'times': times
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'meg', 'm170_faces', 'stats')
+    'vision', 'meg', 'm170_faces', 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'stats_' + 'sensors-' + '-'.join(args.sensors) + '.npy'
+file_name = 'stats_sensors-' + '-'.join(args.sensors) + '.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

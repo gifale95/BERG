@@ -1,0 +1,107 @@
+"""Perform RSA between in silico MEG responses and DNN layerwise features.
+
+Parameters
+----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico MEG
+    responses.
+subject : int
+    The subject identifier for the MEG encoding models.
+sensors : string
+    String containing the MEG sensor type(s) retained for the analyses,
+    separated by a comma. Possible values are: 'O' (occipital), 'P'
+    (posterior), 'T' (temporal), 'C' (central), 'F' (frontal).
+dnn_model : str
+    Name of deep neural network model used to extract the image features.
+    Available options are 'alexnet' and 'resnet50'.
+berg_dir : str
+    Directory of the BERG.
+
+"""
+
+import argparse
+import os
+import numpy as np
+from tqdm import tqdm
+from scipy.stats import pearsonr
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='meg-things_meg_1-vit_b_32')
+parser.add_argument('--subject', default=1, type=int)
+parser.add_argument('--sensors', default='O,P', type=lambda s: s.split(','))
+parser.add_argument('--dnn_model', default='alexnet', type=str)
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
+parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
+args, unknown = parser.parse_known_args()
+
+print('>>> RSA <<<')
+print('\nInput arguments:')
+for key, val in vars(args).items():
+    print('{:16} {}'.format(key, val))
+
+
+# =============================================================================
+# Load the EEG RDMs
+# =============================================================================
+data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
+    'vision', 'meg', 'dnn_layerwise_modeling', 'meg_rdms', args.encoding_model,
+    'meg_rdms_sub-'+format(args.subject, '02')+'_sensors-'+
+    '-'.join(args.sensors)+'.npy')
+
+data = np.load(data_dir, allow_pickle=True).item()
+meg_rdm = data['meg_rdm']
+metadata = data['metadata']
+times = data['times']
+
+
+# =============================================================================
+# Load the DNN layerwise RDMs
+# =============================================================================
+data_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
+    'vision', 'meg', 'dnn_layerwise_modeling', 'dnn_rdms',
+    'dnn_rdms_'+args.dnn_model+'.npy')
+
+dnn_rdms = np.load(data_dir, allow_pickle=True).item()
+
+
+# =============================================================================
+# Perform RSA
+# =============================================================================
+# Empty RSA results arrays
+rsa = {}
+for key in dnn_rdms.keys():
+    rsa[key] = np.zeros(meg_rdm.shape[2], dtype=np.float32)
+
+# Take the lower triangle of the DNN amd EEG RDMs
+idx_tril = np.tril_indices(len(meg_rdm), -1)
+dnn_rdm_tril = {}
+for key, val in dnn_rdms.items():
+    dnn_rdm_tril[key] = val[idx_tril]
+meg_rdm_tril = meg_rdm[idx_tril]
+
+# Loop across MEG time points
+for t in tqdm(range(meg_rdm.shape[2])):
+
+    # Perform RSA with each DNN layer
+    for key, val in dnn_rdm_tril.items():
+        rsa[key][t] = pearsonr(val, meg_rdm_tril[:,t])[0]
+
+
+# =============================================================================
+# Save the results
+# =============================================================================
+results = {
+    'meg_rdm': meg_rdm,
+    'rsa': rsa,
+    'metadata': metadata,
+    'times': times
+}
+
+save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
+    'vision', 'meg', 'dnn_layerwise_modeling', 'rsa', args.encoding_model)
+os.makedirs(save_dir, exist_ok=True)
+
+file_name = 'rsa_sub-' + format(args.subject, '02') + '_sensors-' + \
+    '-'.join(args.sensors) + '_dnn_model-' + args.dnn_model + '.npy'
+
+np.save(os.path.join(save_dir, file_name), results)

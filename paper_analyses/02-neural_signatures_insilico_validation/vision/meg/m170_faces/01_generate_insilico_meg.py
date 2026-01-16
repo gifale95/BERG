@@ -3,12 +3,12 @@
 Parameters
 ----------
 encoding_model : str
-    The name of BERG's encoding model used for generating the in silico EEG
+    The name of BERG's encoding model used for generating the in silico MEG
     responses.
 subjects : list
-    List of the subject identifiers for the MEG encoding models. Since the
-    used encoding models are trained on THINGS MEG1 data, valid subject
-    identifiers are integers from 1 to 4.
+    List of MEG subject identifiers.
+tmax : float
+    Maximum epoch time point for the MEG analyses.
 berg_dir : str
     Directory of the BERG.
 
@@ -26,7 +26,8 @@ import torch
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='meg-things_meg_1-vit_b_32')
-parser.add_argument('--subjects', default=[1, 2, 3, 4], type=list)
+parser.add_argument('--subjects', default=[1, 2, 3, 4], type=int)
+parser.add_argument('--tmax', default=0.6, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -66,11 +67,25 @@ for cat in tqdm(categories):
 
 
 # =============================================================================
-# Generate the in silico EEG responses using BERG
+# MEG time point selection
 # =============================================================================
-# Initialize BERG
+# Load the metadata
 berg = BERG(berg_dir=args.berg_dir)
+metadata_meg = berg.get_model_metadata(
+    args.encoding_model,
+    subject=1
+)
 
+# Time point selection
+times = metadata_meg['meg']['times']
+timepoints = np.zeros(len(times), dtype=int)
+timepoints[times <= args.tmax] = 1
+times = times[times <= args.tmax]
+
+
+# =============================================================================
+# Generate the in silico MEG responses using BERG
+# =============================================================================
 # Empty result dictionaries
 insilico_meg = {}
 metadata = []
@@ -79,7 +94,11 @@ metadata = []
 for s, sub in enumerate(tqdm(args.subjects)):
 
     # Load the encoding model
-    model = berg.get_encoding_model(args.encoding_model, subject=sub)
+    model = berg.get_encoding_model(
+        args.encoding_model,
+        subject=sub,
+        selection={'timepoints': timepoints}
+    )
 
     # Loop across image categories
     for c, cat in enumerate(categories):
@@ -88,10 +107,10 @@ for s, sub in enumerate(tqdm(args.subjects)):
         if s == 0:
             insilico_meg[cat] = []
 
-        # Generate the in silico MEG responses
+        # Generate the in silico MEG responses, and average them across repeats
         meg, metadata_sub = berg.encode(model, images[cat],
             return_metadata=True)
-        insilico_meg[cat].append(meg)
+        insilico_meg[cat].append(np.mean(meg, 1))
         if c == 0:
             metadata.append(metadata_sub)
         del meg, metadata_sub
@@ -112,7 +131,8 @@ for cat in categories:
 # =============================================================================
 results = {
     'insilico_meg': insilico_meg,
-    'metadata': metadata
+    'metadata': metadata,
+    'times': times
     }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
@@ -121,4 +141,4 @@ os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'insilico_meg_responses.npy'
 
-np.save(os.path.join(save_dir, file_name), results) # type: ignore
+np.save(os.path.join(save_dir, file_name), results)

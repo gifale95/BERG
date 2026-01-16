@@ -1,17 +1,17 @@
-"""Plot the RSA scores between in silico EEG responses and LLM embeddings.
+"""Plot the RSA scores between in silico MEG responses and behavioral
+embeddings.
 
 Parameters
 ----------
 encoding_model : str
-    The name of BERG's encoding model used for generating the in silico EEG
+    The name of BERG's encoding model used for generating the in silico MEG
     responses.
 subjects : list
-    List of EEG subject identifiers.
-channels : list
-    List containing the EEG channel type(s) retained for the analyses.
+    List of MEG subject identifiers.
+sensors : list
+    List containing the MEG sensor type(s) retained for the analyses.
     Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
-    'C' (central), 'F' (frontal). Alternatively, the list can also contain the
-    names of the individual channels used.
+    'C' (central), 'F' (frontal).
 berg_dir : str
     Directory of the BERG.
 
@@ -28,9 +28,9 @@ from matplotlib import pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
-parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
-parser.add_argument('--channels', default=['O-P'], type=list)
+parser.add_argument('--encoding_model', type=str, default='meg-things_meg_1-vit_b_32')
+parser.add_argument('--subjects', default=[1, 2, 3, 4], type=int)
+parser.add_argument('--sensors', default=['O-P'], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -39,7 +39,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'llm_modeling', 'plots', args.encoding_model)
+    'vision', 'meg', 'behavioral_modeling', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -55,23 +55,23 @@ ci_decoding = {}
 ci_peak_latency_ci_decoding = {}
 sig_decoding = {}
 
-for chan in args.channels:
+for sensor in args.sensors:
 
     results_dir = os.path.join(args.berg_dir,
-        'neural_signatures_insilico_validation', 'vision', 'eeg',
-        'llm_modeling', 'stats', args.encoding_model, 'stats_channels-'+chan+
-        '.npy')
+        'neural_signatures_insilico_validation', 'vision', 'meg',
+        'behavioral_modeling', 'stats', args.encoding_model,
+        'stats_sensors-'+sensor+'.npy')
 
     results = np.load(results_dir, allow_pickle=True).item()
 
-    rsa[chan] = results['rsa']
-    ci_rsa[chan] = results['ci_rsa']
-    ci_peak_latency_ci_rsa[chan] = results['ci_peak_latency_ci_rsa']
-    sig_rsa[chan] = results['sig_rsa']
-    decoding[chan] = results['decoding']
-    ci_decoding[chan] = results['ci_decoding']
-    ci_peak_latency_ci_decoding[chan] = results['ci_peak_latency_ci_decoding']
-    sig_decoding[chan] = results['sig_decoding']
+    rsa[sensor] = results['rsa']
+    ci_rsa[sensor] = results['ci_rsa']
+    ci_peak_latency_ci_rsa[sensor] = results['ci_peak_latency_ci_rsa']
+    sig_rsa[sensor] = results['sig_rsa']
+    decoding[sensor] = results['decoding']
+    ci_decoding[sensor] = results['ci_decoding']
+    ci_peak_latency_ci_decoding[sensor] = results['ci_peak_latency_ci_decoding']
+    sig_decoding[sensor] = results['sig_decoding']
     times = results['times']
 
 
@@ -102,7 +102,7 @@ plt.rcParams['svg.fonttype'] = 'none'
 
 
 # =============================================================================
-# Plot the EEG pairwise decoding results
+# Plot the MEG pairwise decoding results
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(10, 7.5))
@@ -113,24 +113,24 @@ axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=2, alpha=.5, label='_nolegend_')
 
 # Loop across channel groups
-for c, chan in enumerate(args.channels):
+for c, sensor in enumerate(args.sensors):
 
     # Plot the RSA subject-average results
-    axs[0].plot(times, np.mean(decoding[chan], 0), color='k', linewidth=2)
+    axs[0].plot(times, np.mean(decoding[sensor], 0), color='k', linewidth=2)
 
     # Plot the peak time point
-    peak = times[np.argmax(np.mean(decoding[chan], 0))]
-    max_dec = max(np.mean(decoding[chan], 0))
+    peak = times[np.argmax(np.mean(decoding[sensor], 0))]
+    max_dec = max(np.mean(decoding[sensor], 0))
     axs[0].scatter(peak, max_dec, color='k', s=200, marker='o', edgecolors='k',
         linewidths=1, zorder=3)
-    ci_low = peak - ci_peak_latency_ci_decoding[chan][0]
-    ci_up = ci_peak_latency_ci_decoding[chan][1] - peak
+    ci_low = peak - ci_peak_latency_ci_decoding[sensor][0]
+    ci_up = ci_peak_latency_ci_decoding[sensor][1] - peak
     conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
     axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
         elinewidth=1, capsize=3)
 
     # Plot the confidence intervals
-    axs[0].fill_between(times, ci_decoding[chan][1], ci_decoding[chan][0],
+    axs[0].fill_between(times, ci_decoding[sensor][1], ci_decoding[sensor][0],
         color='k', alpha=.1)
 
     # Plot the significance time points
@@ -141,7 +141,7 @@ for c, chan in enumerate(args.channels):
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+xticks = [-0.1, 0, .1, .2, .3, .4, .5, .6]
 xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
@@ -154,8 +154,8 @@ plt.yticks(ticks=yticks, labels=ylabels)
 axs[0].set_ylim(bottom=47, top=100)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'decoding_channels-'+
-    '-'.join(args.channels)+'.svg')
+file_name = os.path.join(save_dir, 'decoding_sensors-'+
+    '-'.join(args.sensors)+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 
 
@@ -171,25 +171,25 @@ axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=2, alpha=.5, label='_nolegend_')
 
 # Loop across channel groups
-for c, chan in enumerate(args.channels):
+for c, sensor in enumerate(args.sensors):
 
     # Plot the RSA subject-average results
-    axs[0].plot(times, np.mean(rsa[chan], 0), color='k', linewidth=2)
+    axs[0].plot(times, np.mean(rsa[sensor], 0), color='k', linewidth=2)
 
     # Plot the peak time point
-    peak = times[np.argmax(np.mean(rsa[chan], 0))]
-    max_rsa = max(np.mean(rsa[chan], 0))
+    peak = times[np.argmax(np.mean(rsa[sensor], 0))]
+    max_rsa = max(np.mean(rsa[sensor], 0))
     axs[0].scatter(peak, max_rsa, color='k', s=200, marker='o', edgecolors='k',
         linewidths=1, zorder=3)
-    ci_low = peak - ci_peak_latency_ci_rsa[chan][0]
-    ci_up = ci_peak_latency_ci_rsa[chan][1] - peak
+    ci_low = peak - ci_peak_latency_ci_rsa[sensor][0]
+    ci_up = ci_peak_latency_ci_rsa[sensor][1] - peak
     conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
     axs[0].errorbar(peak, max_rsa, xerr=conf_int, fmt="none", ecolor='k',
         elinewidth=1, capsize=3)
 
     # Plot the confidence intervals
-    axs[0].fill_between(times, ci_rsa[chan][1], ci_rsa[chan][0], color='k',
-        alpha=.1)
+    axs[0].fill_between(times, ci_rsa[sensor][1], ci_rsa[sensor][0],
+        color='k', alpha=.1)
 
     # Plot the significance time points
     # sig = np.empty(len(times))
@@ -199,7 +199,7 @@ for c, chan in enumerate(args.channels):
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+xticks = [-0.1, 0, .1, .2, .3, .4, .5, .6]
 xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
@@ -212,6 +212,6 @@ plt.yticks(ticks=yticks, labels=ylabels)
 axs[0].set_ylim(bottom=-.02, top=.16)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'rsa_channels-'+'-'.join(args.channels)+
+file_name = os.path.join(save_dir, 'rsa_sensors-'+'-'.join(args.sensors)+
     '.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')

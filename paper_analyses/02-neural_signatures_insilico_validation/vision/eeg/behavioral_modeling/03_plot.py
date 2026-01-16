@@ -103,7 +103,7 @@ plt.rcParams['svg.fonttype'] = 'none'
 
 
 # =============================================================================
-# Plot the EEG pairwise decoding results # !!!
+# Plot the EEG pairwise decoding results
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(10, 7.5))
@@ -161,7 +161,7 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 
 
 # =============================================================================
-# Plot the RSA results # !!!
+# Plot the RSA results
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(10, 7.5))

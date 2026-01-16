@@ -35,7 +35,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
 parser.add_argument('--channels', default='O-P', type=str)
-parser.add_argument('--dnn_model', default='alexnet', type=str)
+parser.add_argument('--dnn_model', default='resnet50', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -53,8 +53,8 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'dnn_layerwise_modeling', 'stats', args.encoding_model, 'stats_'+
-    'channels-'+args.channels+'_dnn_model-'+args.dnn_model+'.npy')
+    'dnn_layerwise_modeling', 'stats', args.encoding_model, 'stats_channels-'+
+    args.channels+'_dnn_model-'+args.dnn_model+'.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
@@ -95,7 +95,7 @@ plt.rcParams['svg.fonttype'] = 'none'
 
 
 # =============================================================================
-# Plot the EEG pairwise decoding results # !!!
+# Plot the EEG pairwise decoding results
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(10, 7.5))
@@ -138,7 +138,7 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 
 
 # =============================================================================
-# Plot the RSA results # !!!
+# Plot the RSA results
 # =============================================================================
 # Get the DNN layers
 if args.dnn_model == 'alexnet':

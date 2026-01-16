@@ -113,7 +113,7 @@ plt.fill_between(times, ci_erp_objects[1], ci_erp_objects[0], color=colors[1],
 # Plot the significance markers
 sig = np.empty(len(times))
 sig[:] = np.nan
-sig[sig_erp_diff] = -1.25
+sig[sig_erp_diff] = -1.2
 plt.scatter(times, sig, s=100, color=colors[0])
 
 # x-axis parameters
@@ -128,7 +128,7 @@ plt.ylabel('μV', fontsize=fontsize)
 yticks = [-1, -.5, 0, .5]
 ylabels = [-1, -.5, 0, .5]
 plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylim(bottom=-1.4, top=.5)
+plt.ylim(bottom=-1.3, top=.5)
 
 # Legend
 plt.legend(ncol=1, fontsize=fontsize, loc=4, frameon=False)
