@@ -88,17 +88,41 @@ print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
 # =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
-metadata = metadata_meg.copy()
-metadata['encoding_model'].update({
-    'correlation_results': correlation_results,
-    'percent_noise_ceiling': percent_noise_ceiling
-})
-
-# Save the metadata
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
     'train_dataset-things_meg_1', 'model-vit_b_32', 'metadata')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-file_name = f'metadata_{args.subject}_{args.train_split}.npy'
-np.save(os.path.join(save_dir, file_name), metadata)
+if args.train_split == 'full':
+    # Create or update full metadata
+    file_name = f'metadata_{args.subject}_full.npy'
+    file_path = os.path.join(save_dir, file_name)
+    
+    if os.path.exists(file_path):
+        metadata = np.load(file_path, allow_pickle=True).item()
+    else:
+        metadata = metadata_meg.copy()
+    
+    metadata['encoding_model']['correlation_results'] = correlation_results
+    metadata['encoding_model']['percent_noise_ceiling'] = percent_noise_ceiling
+    
+    np.save(file_path, metadata)
+    
+else:
+    # Create or update splits metadata
+    file_name = f'metadata_{args.subject}_splits.npy'
+    file_path = os.path.join(save_dir, file_name)
+    
+    if os.path.exists(file_path):
+        metadata = np.load(file_path, allow_pickle=True).item()
+    else:
+        metadata = metadata_meg.copy()
+    
+    # Add results to the appropriate split
+    if args.train_split not in metadata['encoding_model']:
+        metadata['encoding_model'][args.train_split] = {}
+    
+    metadata['encoding_model'][args.train_split]['correlation_results'] = correlation_results
+    metadata['encoding_model'][args.train_split]['percent_noise_ceiling'] = percent_noise_ceiling
+    
+    np.save(file_path, metadata)

@@ -495,7 +495,10 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, create_splits=True
             'noise_ceiling': noise_ceiling}
     }
     
-    if create_splits:        
+    if create_splits:
+        if shuffled_indices is None:
+            raise ValueError("shuffled_indices must be provided when create_splits=True")
+        
         n_train = len(train_things_img_ids)
         split_size = n_train // 4
         
@@ -505,12 +508,14 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, create_splits=True
             
             split_indices = shuffled_indices[start_idx:end_idx]
             
-            metadata_dict['encoding_model'][f'train_split{split_idx}_img_ids'] = train_things_img_ids[split_indices]
-            metadata_dict['encoding_model'][f'train_split{split_idx}_stimuli'] = [train_stimuli[i] for i in split_indices]
-            metadata_dict['encoding_model'][f'train_split{split_idx}_concepts'] = [train_concepts[i] for i in split_indices]
-            metadata_dict['encoding_model'][f'train_split{split_idx}_sessions'] = train_sessions[split_indices]
-            metadata_dict['encoding_model'][f'train_split{split_idx}_runs'] = train_runs[split_indices]
-            metadata_dict['encoding_model'][f'train_split{split_idx}_img_files'] = train_full_image_paths[split_indices]
+            metadata_dict['encoding_model'][f'split{split_idx}'] = {
+                'train_img_ids': train_things_img_ids[split_indices],
+                'train_stimuli': [train_stimuli[i] for i in split_indices],
+                'train_concepts': [train_concepts[i] for i in split_indices],
+                'train_sessions': train_sessions[split_indices],
+                'train_runs': train_runs[split_indices],
+                'train_img_files': train_full_image_paths[split_indices]
+            }
     
     # Save metadata
     metadata_file = os.path.join(output_dir, f'meg_{subject_id}_metadata.npy')

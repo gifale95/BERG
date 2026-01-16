@@ -58,7 +58,7 @@ parser.add_argument('--things_dir', required=True, type=str,
                    help="Directory of the things images.")
 parser.add_argument('--train_chunk_size', type=int, default=2000,
                    help='Number of trials per chunk for loading')
-parser.add_argument('--feature_batch_size', type=int, default=128,
+parser.add_argument('--feature_batch_size', type=int, default=512,
                    help='Batch size for feature extraction')
 parser.add_argument('--n_pca_components', type=int, default=250,
                    help='Number of PCA components')
@@ -126,9 +126,9 @@ if args.train_split == 'full':
     train_concepts = metadata['encoding_model']['train_concepts']
     train_stimuli = metadata['encoding_model']['train_stimuli']
 else:
-    train_img_ids = metadata['encoding_model'][f'train_{args.train_split}_img_ids']
-    train_concepts = metadata['encoding_model'][f'train_{args.train_split}_concepts']
-    train_stimuli = metadata['encoding_model'][f'train_{args.train_split}_stimuli']
+    train_img_ids = metadata['encoding_model'][args.train_split]['train_img_ids']
+    train_concepts = metadata['encoding_model'][args.train_split]['train_concepts']
+    train_stimuli = metadata['encoding_model'][args.train_split]['train_stimuli']
 
 n_train_images = len(train_img_ids)
 fmaps_train = []

@@ -53,12 +53,12 @@ meg_{subject}_metadata.npz                  :
     train_sessions             : (22248,) - Session numbers for training trials
     train_runs                 : (22248,) - Run numbers within each session
     train_img_files            : (22248,) - Full image paths on disk for training images
-    
-    train_split{N}_img_ids     : (5562,)  - THINGS image IDs for training split N
-    train_split{N}_concepts    : (5562,)  - Object category IDs for training split N
-    train_split{N}_sessions    : (5562,)  - Session numbers for training split N
-    train_split{N}_runs        : (5562,)  - Run numbers for training split N
-    train_split{N}_img_files   : (5562,)  - Full image paths for training split N
+    split{N}:                              - Nested dictionary for split N
+        train_img_ids          : (5562,)  - THINGS image IDs for training split N
+        train_concepts         : (5562,)  - Object category IDs for training split N
+        train_sessions         : (5562,)  - Session numbers for training split N
+        train_runs             : (5562,)  - Run numbers for training split N
+        train_img_files        : (5562,)  - Full image paths for training split N
     
     test_things_img_ids        : (2400,)  - THINGS image IDs for test trials
     test_image_nr              : (2400,)  - Test image numbers (1–200, repeated over repetitions)

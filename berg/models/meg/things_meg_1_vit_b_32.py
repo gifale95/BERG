@@ -198,6 +198,12 @@ class MEGEncodingModel(BaseModelInterface):
         subject and training split. Only loads weights for selected sensors 
         and timepoints to optimize memory usage.
         """
+        
+        # Get split parameter:
+        if self.train_split != "full":
+            train_split = "split"
+        else:
+            train_split = "full"
         try:
             # Load metadata
             metadata_dir = os.path.join(
@@ -207,7 +213,7 @@ class MEGEncodingModel(BaseModelInterface):
                 'train_dataset-things_meg_1',
                 'model-vit_b_32',
                 'metadata',
-                f'metadata_P{self.subject}.npy'
+                f'metadata_P{self.subject}_{train_split}.npy'
             )
             self.metadata = np.load(metadata_dir, allow_pickle=True).item()
             
@@ -481,7 +487,8 @@ class MEGEncodingModel(BaseModelInterface):
     def get_metadata(
         cls, 
         berg_dir=None, 
-        subject=None, 
+        subject=None,
+        train_split="full", 
         model_instance=None, 
         **kwargs
     ) -> Dict[str, Any]:
@@ -508,11 +515,13 @@ class MEGEncodingModel(BaseModelInterface):
         if model_instance is not None:
             berg_dir = model_instance.berg_dir
             subject = model_instance.subject
+            train_split = model_instance.train_split
         
         # If this method is called on an instance (rather than the class)
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             berg_dir = cls.berg_dir
             subject = cls.subject
+            train_split = cls.train_split
         
         # Validate required parameters
         missing_params = []
@@ -520,11 +529,18 @@ class MEGEncodingModel(BaseModelInterface):
             missing_params.append('berg_dir')
         if subject is None:
             missing_params.append('subject')
+        if train_split is None:
+            missing_params.append('train_split')
         
         if missing_params:
             raise InvalidParameterError(
                 f"Required parameters missing: {', '.join(missing_params)}"
             )
+            
+        # Get split parameter:
+        if train_split != "full":
+            train_split = "split"
+            
         
         # Validate parameters
         validate_subject(subject, cls.VALID_SUBJECTS)
@@ -537,7 +553,7 @@ class MEGEncodingModel(BaseModelInterface):
             'train_dataset-things_meg_1',
             'model-vit_b_32',
             'metadata',
-            f'metadata_P{subject}.npy'
+            f'metadata_P{subject}_{train_split}.npy'
         )
         
         # Load metadata if file exists
