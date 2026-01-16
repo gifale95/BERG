@@ -27,7 +27,7 @@ Description
 
 This encoding model consists of a linear mapping through linear regression of a vision transformer
 (Dosovitskiy et al., 2020) image features onto whole-brain magnetoencephalography (MEG) responses from the THINGS MEG1 dataset (Hebart et al., eLife 2023). The model provides features from all 12 transformer layers, using the full
-set of patch tokens per layer to represent each stimulus image. For each image stimulus, features are concatenated across all spatial tokens and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve as predictors for MEG responses.
+set of patch tokens per layer to represent each stimulus image. For each image stimulus, features are concatenated across all spatial tokens and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve as predictors for MEG responses. The model supports training on either the full training set or on randomly selected subsets (repeats) for investigating data efficiency and model robustness.
 
 **Neural data.** Encoding models were trained on the preprocessed data preparation provided in THINGS MEG1. MEG data were recorded from four human participants (P1–P4) viewing 1,854 object categories
 from the THINGS database (~22,000 naturalistic object images). Recordings were acquired with 271 sensors at
@@ -36,13 +36,14 @@ band-pass filtering (0.1–40 Hz), epoching, baseline correction (−100 to 0 ms
 sensors.
 
 **Model training partition.** Single-trial responses to approximately 22,000 unique naturalistic images were
-used for training.
+used for training. In addition to the full training set, the training data can be divided into four non-overlapping
+quarters (5,562 trials each) using a reproducible random shuffle (seed: 20200220).
 
 **Model testing partition.** 200 test images, each repeated 12 times, were used for evaluation; the
 target responses correspond to the average MEG activity across repetitions.
 
 **Training procedure.** Independent linear regression models were fitted separately for each MEG sensor
-and time point, predicting the sensor’s time-resolved response from the feature vectors. The resulting model weights provide a spatiotemporal mapping from visual features to MEG sensor activity.
+and time point, predicting the sensor's time-resolved response from the feature vectors. The resulting model weights provide a spatiotemporal mapping from visual features to MEG sensor activity.
 
 **Noise ceiling.** The noise ceiling was computed from the 12 repeated presentations of each of the 200 test image,
 following the analytical procedure described in the Natural Scenes Dataset (NSD) paper (Allen et al., 2022).
@@ -55,9 +56,9 @@ Metadata
 
 **meg**
 
-    **times** : ``(281,)`` - Time points (e.g., -0.1s to 1.3s relative to stimulus onset)
+    **times** : ``(281,)`` - Time points (e.g., -0.1 to 1.3s relative to stimulus onset)
 
-    **subject_id** : ``int`` - Subject identifier
+    **subject_id** : ``str`` - Subject identifier
 **sensors**
 
     **sensor_names** : ``(271,)`` - MEG sensor name strings
@@ -71,33 +72,62 @@ Metadata
     **n_sensors** : ``int`` - Number of MEG sensors (271)
 **encoding_model**
 
-    **train_img_ids** : ``(22248,)`` - THINGS image IDs for training trials
 
-    **train_concepts** : ``(22248,)`` - Object category IDs (1–1854) for training trials
+    **full**: *Full training data and results*
 
-    **train_sessions** : ``(22248,)`` - Session numbers for training trials
 
-    **train_runs** : ``(22248,)`` - Run numbers within each training session
+    **train_img_ids** : ``(22248,)`` - THINGS image IDs for full training
 
-    **train_img_files** : ``(22248,)`` - Full image paths on disk for training trials
+    **train_concepts** : ``(22248,)`` - Object category IDs for full training
+
+    **train_stimuli** : ``(22248,)`` - Image filenames for full training
+
+    **train_sessions** : ``(22248,)`` - Session numbers for full training
+
+    **train_runs** : ``(22248,)`` - Run numbers for full training
+
+    **train_img_files** : ``(22248,)`` - Full image paths for full training
+
+    **correlation_results** : ``(271, 281)`` - Prediction accuracy (Pearson's r)
+
+    **percent_noise_ceiling** : ``(271, 281)`` - Percent noise ceiling
+
+    **repeat{N}**: *Training data and results for repeat N (N=1,2,3,4)*
+
+
+    **train_img_ids** : ``(5562,)`` - THINGS image IDs for repeat N
+
+    **train_concepts** : ``(5562,)`` - Object category IDs for repeat N
+
+    **train_stimuli** : ``(5562,)`` - Image filenames for repeat N
+
+    **train_sessions** : ``(5562,)`` - Session numbers for repeat N
+
+    **train_runs** : ``(5562,)`` - Run numbers for repeat N
+
+    **train_img_files** : ``(5562,)`` - Full image paths for repeat N
+
+    **correlation_results** : ``(271, 281)`` - Prediction accuracy (Pearson's r)
+
+    **percent_noise_ceiling** : ``(271, 281)`` - Percent noise ceiling
 
     **test_things_img_ids** : ``(2400,)`` - THINGS image IDs for test trials
 
-    **test_image_nr** : ``(2400,)`` - Test image numbers (1–200) for test trials
+    **test_stimuli** : ``(2400,)`` - Image filenames for test trials
 
     **test_concepts** : ``(2400,)`` - Object category IDs for test trials
 
+    **test_image_nr** : ``(2400,)`` - Test image numbers (1–200, repeated over repetitions)
+
     **test_sessions** : ``(2400,)`` - Session numbers for test trials
 
-    **test_runs** : ``(2400,)`` - Run numbers within each test session
+    **test_runs** : ``(2400,)`` - Run numbers for test trials
 
-    **test_img_files** : ``(2400,)`` - Full image paths on disk for test images
+    **test_img_files** : ``(2400,)`` - Full image paths for test images
 
-    **ncsnr** : ``(281, 271)`` - Noise ceiling signal-to-noise ratio for each sensor/timepoint (computed on the test data)
+    **ncsnr** : ``(281, 271)`` - Neural cross-validated signal-to-noise ratio
 
-    **noise_ceiling** : ``(281, 271)`` - Noise ceiling for each sensor/timepoint (computed on the test data)
-
-    **correlation_results** : ``(281, 271)`` - Encoding model prediction accuracy (Pearson's r) for each sensor/timepoint (computed on the test data)
+    **noise_ceiling** : ``(281, 271)`` - Noise ceiling
 
 Input
 -----
@@ -159,6 +189,16 @@ This function loads the encoding model.
        | **Description:** Subject ID from the THINGS MEG1 dataset.
        | **Valid Values:** 1, 2, 3, 4
        | **Example:** 1
+   * - **train_repeat**
+     - | **Type:** str or int
+       | **Required:** No
+       | **Description:** Specifies which training data partition to use for the encoding model.
+       | - "full": Use the complete training set (22,248 trials, default)
+       | - 1, 2, 3, 4: Use one of four randomly shuffled quarters of the training 
+       |   data (5,562 trials each). The repeats are generated using a reproducible 
+       |   random seed (20200220) and are non-overlapping.
+       | **Valid Values:** "full", 1, 2, 3, 4
+       | **Example:** 1
    * - **selection**
      - | **Type:** dict
        | **Required:** No
@@ -172,11 +212,11 @@ This function loads the encoding model.
        |     **Type:** list[str]
        |     **Description:** List of anatomical sensor-region labels to include. Each region
        |     groups multiple MEG sensors located over a specific cortical area:
-       |       • Central — midline motor/somatosensory sensors  
-       |       • Frontal — sensors over frontal cortex  
-       |       • Occipital — sensors over visual cortex  
-       |       • Parietal — sensors over parietal cortex  
-       |       • Temporal — sensors over temporal lobes
+       |       • Central – midline motor/somatosensory sensors  
+       |       • Frontal – sensors over frontal cortex  
+       |       • Occipital – sensors over visual cortex  
+       |       • Parietal – sensors over parietal cortex  
+       |       • Temporal – sensors over temporal lobes
        |     If multiple regions are listed, their sensors are concatenated.
        |     **Valid values:** "Central", "Frontal", "Occipital", "Parietal", "Temporal"
        |     **Example:** ['Central', 'Frontal', 'Occipital']
@@ -186,13 +226,13 @@ This function loads the encoding model.
        |     **Description:** List of MEG sensor prefix codes to include. Each code identifies
        |     a cluster of planar gradiometers or magnetometers based on
        |     hemisphere (L = left, R = right, Z = midline) and cortical region:
-       |       • MLC / MRC — Central (motor/somatosensory)
-       |       • MLF / MRF — Frontal
-       |       • MLO / MRO — Occipital (visual)
-       |       • MLP / MRP — Parietal
-       |       • MLT / MRT — Temporal
-       |       • MZC / MZF / MZO / MZP — Midline (central, frontal, occipital, parietal)
-       |     Sensors sharing a prefix (e.g., “MLF”) are typically grouped together
+       |       • MLC / MRC – Central (motor/somatosensory)
+       |       • MLF / MRF – Frontal
+       |       • MLO / MRO – Occipital (visual)
+       |       • MLP / MRP – Parietal
+       |       • MLT / MRT – Temporal
+       |       • MZC / MZF / MZO / MZP – Midline (central, frontal, occipital, parietal)
+       |     Sensors sharing a prefix (e.g., "MLF") are typically grouped together
        |     for regional analyses or dimensionality reduction.
        |     **Valid values:** "MLC", "MLF", "MLO", "MLP", "MLT", "MRC", "MRF", "MRO", "MRP", "MRT", "MZC", "MZF", "MZO", "MZP"
        |     **Example:** ['MLC', 'MLF', 'MLO']
@@ -290,6 +330,7 @@ Example Usage
     model = berg.get_encoding_model(
         "meg-things_meg_1-vit_b_32",
         subject=1,
+        train_repeat=1,
         selection={
             "region": ["Central", "Frontal", "Occipital"],
             "sensors": ["MLC", "MLF", "MLO"],

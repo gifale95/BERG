@@ -217,6 +217,16 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     prev_level = -1
                     continue
                 
+                # Handle subsection headers (no shape, only description)
+                # These are like "full" or "repeat{N}" - they describe a group
+                if not shape and desc:
+                    indent = "    " * nesting_level
+                    rst_content.append("")
+                    rst_content.append(f"{indent}**{key}**: *{desc}*")
+                    rst_content.append("")
+                    prev_level = nesting_level
+                    continue
+                
                 # Add blank line when returning to same or lower nesting level
                 # This separates definition list items properly
                 if prev_level >= 0 and nesting_level <= prev_level:
@@ -243,8 +253,9 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                         # Single line description
                         rst_content.append(f"{indent}{key_formatted} : ``{shape}`` - {desc}")
                 else:
-                    # No description, just key and shape
-                    rst_content.append(f"{indent}{key_formatted} : ``{shape}``")
+                    # No description, just key and shape (don't show if shape is empty)
+                    if shape:
+                        rst_content.append(f"{indent}{key_formatted} : ``{shape}``")
                 
                 prev_level = nesting_level
         
@@ -513,16 +524,23 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                         for prop_name, prop_data in param_data["properties"].items():
                             if "example" in prop_data:
                                 selection_example[prop_name] = prop_data["example"]
-                elif param_data.get("required", False) and param_name not in ["model_id", "device"]:
+                # Include required params (except model_id and device) OR optional params with examples
+                elif param_name not in ["model_id", "device"]:
                     if "example" in param_data:
+                        # Include if: required OR (optional but has example different from default)
+                        is_required = param_data.get("required", False)
                         example_val = param_data["example"]
-                        if isinstance(example_val, str):
-                            param_str = f'{param_name}="{example_val}"'
-                        else:
-                            param_str = f"{param_name}={example_val}"
-                        # Avoid duplicates
-                        if param_str not in get_model_params:
-                            get_model_params.append(param_str)
+                        default_val = param_data.get("default")
+                        
+                        # Include if required, or if optional with example different from default
+                        if is_required or (example_val != default_val):
+                            if isinstance(example_val, str):
+                                param_str = f'{param_name}="{example_val}"'
+                            else:
+                                param_str = f"{param_name}={example_val}"
+                            # Avoid duplicates
+                            if param_str not in get_model_params:
+                                get_model_params.append(param_str)
             
             elif function == "encode":
                 if param_name not in ["model", "stimulus", "return_metadata"]:
