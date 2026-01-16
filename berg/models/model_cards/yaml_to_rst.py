@@ -303,10 +303,13 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         input_example = input_data.get('example', '').strip()
         rst_content.append("   * - Example")
         if '\n' in input_example:
-            rst_content.append("     - .. code-block:: python")
-            rst_content.append("       ")
-            for line in input_example.split('\n'):
-                rst_content.append(f"          {line}")
+            # Just show as plain text lines in the table
+            example_lines = input_example.split('\n')
+            rst_content.append(f"     - {example_lines[0]}")
+            for line in example_lines[1:]:
+                line = line.strip()
+                if line:
+                    rst_content.append(f"       {line}")
         else:
             rst_content.append(f"     - ``{input_example}``")
     
@@ -516,15 +519,13 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                 if "example" in param_data:
                     example = param_data.get('example', '')
                     if isinstance(example, str):
-                        # Handle multiline string examples
+                        # Handle multiline string examples - just show as text in table
                         if '\n' in example:
-                            # Use literal block notation for multiline examples
                             rst_content.append(f'       | **Example:**')
-                            rst_content.append(f'       |')
-                            rst_content.append(f'       | .. code-block:: python')
-                            rst_content.append(f'       |')
                             for line in example.split('\n'):
-                                rst_content.append(f'       |    {line}')
+                                line = line.strip()
+                                if line:
+                                    rst_content.append(f'       | {line}')
                         else:
                             rst_content.append(f'       | **Example:** "{example}"')
                     else:

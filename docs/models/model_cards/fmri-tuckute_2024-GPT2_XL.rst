@@ -84,10 +84,8 @@ Input
        While the model accepts sentences of any length, it was trained exclusively on
        six-word sentences. Performance may vary for sentences of different lengths.
    * - Example
-     - .. code-block:: python
-       
-          ["Taste that fowl and those fish.", 
-           "I'm progressive and you fall right."]
+     - ["Taste that fowl and those fish.", 
+       "I'm progressive and you fall right."]
 
 Output
 ------
@@ -190,12 +188,8 @@ This function generates in silico neural responses using the encoding model prev
        | 
        | The model accepts sentences of any length, though it was trained on six-word sentences.
        | **Example:**
-       |
-       | .. code-block:: python
-       |
-       |    ["Taste that fowl and those fish.", 
-       |     "I'm progressive and you fall right."]
-       |    
+       | ["Taste that fowl and those fish.",
+       | "I'm progressive and you fall right."]
    * - **return_metadata**
      - | **Type:** bool
        | **Required:** No
@@ -297,4 +291,5 @@ References
 
 * Model building code: .berg/models/fmri/tuckute_2024/load_regr_weights_and_predict.py
 * Model Paper (Tuckute et al., 2024): https://www.nature.com/articles/s41562-023-01783-7
+* Model Repository: https://github.com/gretatuckute/drive_suppress_brains
 * GPT2-XL (Radford et al., 2020): https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
