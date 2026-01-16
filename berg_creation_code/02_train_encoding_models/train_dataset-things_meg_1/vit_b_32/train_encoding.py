@@ -121,14 +121,9 @@ metadata = np.load(metadata_path, allow_pickle=True).item()
 # =============================================================================
 # Extract the THINGS MEG1 training image features
 # =============================================================================
-if args.train_split == 'full':
-    train_img_ids = metadata['encoding_model']['train_img_ids']
-    train_concepts = metadata['encoding_model']['train_concepts']
-    train_stimuli = metadata['encoding_model']['train_stimuli']
-else:
-    train_img_ids = metadata['encoding_model'][args.train_split]['train_img_ids']
-    train_concepts = metadata['encoding_model'][args.train_split]['train_concepts']
-    train_stimuli = metadata['encoding_model'][args.train_split]['train_stimuli']
+train_img_ids = metadata['encoding_model'][args.train_split]['train_img_ids']
+train_concepts = metadata['encoding_model'][args.train_split]['train_concepts']
+train_stimuli = metadata['encoding_model'][args.train_split]['train_stimuli']
 
 n_train_images = len(train_img_ids)
 fmaps_train = []

@@ -276,7 +276,8 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, create_splits=True
     """Create comprehensive metadata file for MEG dataset.
     
     Generate metadata linking neural responses to THINGS database images through
-    things_image_nr. Includes experimental conditions and sensor information for both training and test sets.
+    things_image_nr. Includes experimental conditions and sensor information for 
+    both training and test sets.
     
     Parameters
     ----------
@@ -286,12 +287,14 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, create_splits=True
         Output directory for processed data files.
     subject_id : str
         Subject identifier for file naming.
+    create_splits : bool, optional
+        Whether to include split metadata (default: True).
+    shuffled_indices : ndarray, optional
+        Shuffled training indices for creating splits.
         
     Output Files
     ------------
-    meg_{subject}_metadata.npz : Complete dataset metadata including stimulus
-                                mappings, experimental conditions, baseline stats,
-                                and sensor information
+    meg_{subject}_metadata.npy : Complete dataset metadata
     """
     print("Creating dataset metadata...")
     
@@ -476,12 +479,14 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, create_splits=True
         },
         
         'encoding_model': {
-            'train_img_ids': train_things_img_ids,
-            'train_stimuli': train_stimuli,
-            'train_concepts': train_concepts,
-            'train_sessions': train_sessions,
-            'train_runs': train_runs,
-            'train_img_files': train_full_image_paths,
+            'full': {
+                'train_img_ids': train_things_img_ids,
+                'train_stimuli': train_stimuli,
+                'train_concepts': train_concepts,
+                'train_sessions': train_sessions,
+                'train_runs': train_runs,
+                'train_img_files': train_full_image_paths,
+            },
             
             'test_things_img_ids': test_things_img_ids,
             'test_stimuli': test_stimuli,

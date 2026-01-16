@@ -35,12 +35,12 @@ meg_{subject}_split-train_split2.h5         : (5562, 271, 281)  - Training split
 meg_{subject}_split-train_split3.h5         : (5562, 271, 281)  - Training split 3
 meg_{subject}_split-train_split4.h5         : (5562, 271, 281)  - Training split 4
 
-meg_{subject}_metadata.npz                  :
+meg_{subject}_metadata.npy                  :
 
 'meg':
     times                      : (281,)   - Time points (e.g., -0.1 to 1.3s relative to stimulus onset)
     subject_id                 : str      - Subject identifier
-'sensors:
+'sensors':
     sensor_names               : (271,)   - MEG sensor name strings
     sensor_prefixes            : (271,)   - Sensor prefixes (e.g., 'MLF', 'MRC', 'MZO')
     sensor_hemispheres         : (271,)   - Hemisphere labels ('Left', 'Right', 'Midline')
@@ -48,21 +48,30 @@ meg_{subject}_metadata.npz                  :
     n_sensors                  : int      - Number of MEG sensors (271)
     
 'encoding_model':
-    train_img_ids              : (22248,) - THINGS image IDs for training (for ViT linking)
-    train_concepts             : (22248,) - Object category IDs (1–1854)
-    train_sessions             : (22248,) - Session numbers for training trials
-    train_runs                 : (22248,) - Run numbers within each session
-    train_img_files            : (22248,) - Full image paths on disk for training images
-    split{N}:                              - Nested dictionary for split N
+    full:                                  - Full training data
+        train_img_ids          : (22248,) - THINGS image IDs for full training (for ViT linking)
+        train_concepts         : (22248,) - Object category IDs (1–1854) for full training
+        train_stimuli          : (22248,) - Image filenames for full training
+        train_sessions         : (22248,) - Session numbers for full training trials
+        train_runs             : (22248,) - Run numbers for full training trials
+        train_img_files        : (22248,) - Full image paths on disk for full training images
+        correlation_results    : (271, 281) - Prediction accuracy for full training (added by 01_test_encoding.py)
+        percent_noise_ceiling  : (271, 281) - Percent noise ceiling for full training (added by 01_test_encoding.py)
+    
+    split{N}:                              - Training data for split N (N=1,2,3,4)
         train_img_ids          : (5562,)  - THINGS image IDs for training split N
         train_concepts         : (5562,)  - Object category IDs for training split N
+        train_stimuli          : (5562,)  - Image filenames for training split N
         train_sessions         : (5562,)  - Session numbers for training split N
         train_runs             : (5562,)  - Run numbers for training split N
         train_img_files        : (5562,)  - Full image paths for training split N
+        correlation_results    : (271, 281) - Prediction accuracy for split N (added by 01_test_encoding.py)
+        percent_noise_ceiling  : (271, 281) - Percent noise ceiling for split N (added by 01_test_encoding.py)
     
     test_things_img_ids        : (2400,)  - THINGS image IDs for test trials
-    test_image_nr              : (2400,)  - Test image numbers (1–200, repeated over repetitions)
+    test_stimuli               : (2400,)  - Image filenames for test trials
     test_concepts              : (2400,)  - Object category IDs for test trials
+    test_image_nr              : (2400,)  - Test image numbers (1–200, repeated over repetitions)
     test_sessions              : (2400,)  - Session numbers for test trials
     test_runs                  : (2400,)  - Run numbers for test trials
     test_img_files             : (2400,)  - Full image paths on disk for test images
