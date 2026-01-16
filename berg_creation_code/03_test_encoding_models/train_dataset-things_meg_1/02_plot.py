@@ -23,22 +23,22 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subject', nargs='+', default=['P1'],
     help='List of subjects to analyze (e.g., --subject P1 P2 P3 P4)')
 parser.add_argument('--berg_dir', required=True, type=str)
-parser.add_argument('--train_split', type=str, default='full',
-                   choices=['full', 'split1', 'split2', 'split3', 'split4'],
-                   help='Which training split to plot')
+parser.add_argument('--train_repeat', type=str, default='full',
+                   choices=['full', 'repeat1', 'repeat2', 'repeat3', 'repeat4'],
+                   help='Which training repeat to plot')
 args = parser.parse_args()
 
 
-def format_split_name(split):
-    """Format split name for display in titles."""
-    if split == 'full':
+def format_repeat_name(repeat):
+    """Format repeat name for display in titles."""
+    if repeat == 'full':
         return 'Full Training'
     else:
-        split_num = split.replace('split', '')
-        return f'Split {split_num}'
+        repeat_num = repeat.replace('repeat', '')
+        return f'Repeat {repeat_num}'
 
 
-split_display_name = format_split_name(args.train_split)
+repeat_display_name = format_repeat_name(args.train_repeat)
 
 
 # =============================================================================
@@ -57,7 +57,7 @@ for subject in args.subject:
         allow_pickle=True).item()
     
     # Extract results from appropriate location
-    correlation_results.append(metadata['encoding_model'][args.train_split]['correlation_results'])
+    correlation_results.append(metadata['encoding_model'][args.train_repeat]['correlation_results'])
     noise_ceiling_results.append(metadata['encoding_model']['noise_ceiling'])
     times = metadata['meg']['times']
     sensor_regions = metadata['sensors']['sensor_regions']
@@ -188,7 +188,7 @@ for s, subject in enumerate(args.subject):
     ax.set_axisbelow(True)
     
     # Title
-    ax.set_title(f'{subject} ({split_display_name}) - Brain Region Encoding Accuracy', 
+    ax.set_title(f'{subject} ({repeat_display_name}) - Brain Region Encoding Accuracy', 
                 fontsize=fontsize+3, fontweight='bold', pad=15)
 
 # Hide unused subplots if we have fewer than 4 subjects
@@ -264,7 +264,7 @@ if avg_ax is not None:
     avg_ax.set_axisbelow(True)
     
     # Title
-    avg_ax.set_title(f'Grand Average ({split_display_name}) Across All Subjects - Brain Region Encoding Accuracy', 
+    avg_ax.set_title(f'Grand Average ({repeat_display_name}) Across All Subjects - Brain Region Encoding Accuracy', 
                      fontsize=fontsize+3, fontweight='bold', pad=15)
 
 # Add single legend in upper left corner
@@ -296,7 +296,7 @@ if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
 # Save the figure
-save_name = f'encoding_accuracy_{args.train_split}'
+save_name = f'encoding_accuracy_{args.train_repeat}'
 fig.savefig(os.path.join(save_dir, f'{save_name}.jpg'), dpi=300, bbox_inches='tight', format='jpeg')
 
 plt.show()

@@ -10,7 +10,7 @@ creator: Domenic Bersch
 description: |
   This encoding model consists of a linear mapping through linear regression of a vision transformer
   (Dosovitskiy et al., 2020) image features onto whole-brain magnetoencephalography (MEG) responses from the THINGS MEG1 dataset (Hebart et al., eLife 2023). The model provides features from all 12 transformer layers, using the full
-  set of patch tokens per layer to represent each stimulus image. For each image stimulus, features are concatenated across all spatial tokens and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve as predictors for MEG responses. The model supports training on either the full training set or on randomly selected subsets (splits) for investigating data efficiency and model robustness.
+  set of patch tokens per layer to represent each stimulus image. For each image stimulus, features are concatenated across all spatial tokens and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve as predictors for MEG responses. The model supports training on either the full training set or on randomly selected subsets (repeats) for investigating data efficiency and model robustness.
 
   **Neural data.** Encoding models were trained on the preprocessed data preparation provided in THINGS MEG1. MEG data were recorded from four human participants (P1–P4) viewing 1,854 object categories
   from the THINGS database (~22,000 naturalistic object images). Recordings were acquired with 271 sensors at
@@ -19,7 +19,7 @@ description: |
   sensors.
 
   **Model training partition.** Single-trial responses to approximately 22,000 unique naturalistic images were
-  used for training. In addition to the full training set, the training data can be split into four non-overlapping
+  used for training. In addition to the full training set, the training data can be divided into four non-overlapping
   quarters (5,562 trials each) using a reproducible random shuffle (seed: 20200220).
 
   **Model testing partition.** 200 test images, each repeated 12 times, were used for evaluation; the
@@ -55,13 +55,13 @@ metadata: |
           correlation_results    : (271, 281) - Prediction accuracy (Pearson's r)
           percent_noise_ceiling  : (271, 281) - Percent noise ceiling
       
-      split{N}:                              - Training data and results for split N (N=1,2,3,4)
-          train_img_ids          : (5562,)  - THINGS image IDs for split N
-          train_concepts         : (5562,)  - Object category IDs for split N
-          train_stimuli          : (5562,)  - Image filenames for split N
-          train_sessions         : (5562,)  - Session numbers for split N
-          train_runs             : (5562,)  - Run numbers for split N
-          train_img_files        : (5562,)  - Full image paths for split N
+      repeat{N}:                             - Training data and results for repeat N (N=1,2,3,4)
+          train_img_ids          : (5562,)  - THINGS image IDs for repeat N
+          train_concepts         : (5562,)  - Object category IDs for repeat N
+          train_stimuli          : (5562,)  - Image filenames for repeat N
+          train_sessions         : (5562,)  - Session numbers for repeat N
+          train_runs             : (5562,)  - Run numbers for repeat N
+          train_img_files        : (5562,)  - Full image paths for repeat N
           correlation_results    : (271, 281) - Prediction accuracy (Pearson's r)
           percent_noise_ceiling  : (271, 281) - Percent noise ceiling
       
@@ -119,18 +119,18 @@ parameters:
     example: 1
     function: "get_encoding_model, get_model_metadata"
 
-  train_split:
+  train_repeat:
     description: |
       Specifies which training data partition to use for the encoding model.
       - "full": Use the complete training set (22,248 trials, default)
-      - "split1", "split2", "split3", "split4": Use one of four randomly shuffled 
-        quarters of the training data (5,562 trials each). The splits are generated 
-        using a reproducible random seed (20200220) and are non-overlapping.
+      - 1, 2, 3, 4: Use one of four randomly shuffled quarters of the training 
+        data (5,562 trials each). The repeats are generated using a reproducible 
+        random seed (20200220) and are non-overlapping.
     required: false
-    type: str
-    valid_values: ["full", "split1", "split2", "split3", "split4"]
+    type: str or int
+    valid_values: ["full", 1, 2, 3, 4]
     default: "full"
-    example: "split1"
+    example: 1
     function: "get_encoding_model"
 
   selection:

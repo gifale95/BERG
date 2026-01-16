@@ -65,7 +65,7 @@ class MEGEncodingModel(BaseModelInterface):
     MODEL_ID = model_info["model_id"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
-    VALID_TRAIN_SPLITS = model_info["parameters"]["train_split"]["valid_values"]
+    VALID_TRAIN_REPEATS = model_info["parameters"]["train_repeat"]["valid_values"]
     VALID_REGIONS = model_info["parameters"]["selection"]["properties"]["region"]["valid_values"]
     VALID_SENSOR_PREFIXES = model_info["parameters"]["selection"]["properties"]["sensors"]["valid_values"]
     SENSORS_LENGTH = 271
@@ -76,7 +76,7 @@ class MEGEncodingModel(BaseModelInterface):
         subject: str, 
         device: str = "auto", 
         selection: Optional[Dict] = None,
-        train_split: str = "full",
+        train_repeat: str = "full",
         berg_dir: Optional[str] = None
     ):
         """
@@ -96,15 +96,15 @@ class MEGEncodingModel(BaseModelInterface):
             - sensors: List of sensor prefix codes (MLC, MLF, MLO, etc.)
             - sensor_index: Binary one-hot encoded vector for sensor selection
             - timepoints: Binary one-hot encoded vector for timepoint selection
-        train_split : str, default="full"
+        train_repeat : str or int, default="full"
             Training data partition to use. Options are "full" (complete training set)
-            or "split1", "split2", "split3", "split4" (randomly shuffled quarters).
+            or 1, 2, 3, 4 (randomly shuffled quarters).
         berg_dir : str, optional
             Root path to the BERG directory containing model files and weights.
         """
         # Assign Parameters
         self.subject = subject
-        self.train_split = train_split
+        self.train_repeat = train_repeat
         self.berg_dir = berg_dir
         self.model = None
         
@@ -133,10 +133,11 @@ class MEGEncodingModel(BaseModelInterface):
         # Validate subject
         validate_subject(self.subject, self.VALID_SUBJECTS)
         
-        # Validate train_split
-        if self.train_split not in self.VALID_TRAIN_SPLITS:
+        # Validate train_repeat - accept "full" or integers 1-4
+        valid_repeats = ["full", 1, 2, 3, 4]
+        if self.train_repeat not in valid_repeats:
             raise InvalidParameterError(
-                f"train_split must be one of {self.VALID_TRAIN_SPLITS}, got '{self.train_split}'"
+                f"train_repeat must be 'full' or 1, 2, 3, 4, got '{self.train_repeat}'"
             )
         
         if self.selection is not None:
@@ -251,7 +252,7 @@ class MEGEncodingModel(BaseModelInterface):
             # Load the scalers, PCA, and trained regression weights (only for selection)
             self.scaler, self.pca, self.reg = self._load_encoding_weights()
             
-            print(f"Model loaded on {self.device} for subject {self.subject} (train_split: {self.train_split})")
+            print(f"Model loaded on {self.device} for subject {self.subject} (train_repeat: {self.train_repeat})")
             
         except Exception as e:
             raise ModelLoadError(f"Failed to load model: {str(e)}")
@@ -317,6 +318,12 @@ class MEGEncodingModel(BaseModelInterface):
             - reg : LinearRegression - Model with only selected weights
         """
         # Load all weights
+        # Convert train_repeat to filename format
+        if self.train_repeat == "full":
+            filename_repeat = "full"
+        else:
+            filename_repeat = f"repeat_{self.train_repeat}"
+        
         weights_dir = os.path.join(
             self.berg_dir, 
             'encoding_models', 
@@ -324,7 +331,7 @@ class MEGEncodingModel(BaseModelInterface):
             'train_dataset-things_meg_1', 
             'model-vit_b_32',
             'encoding_models_weights',
-            f'weights_P{self.subject}_{self.train_split}.npy'
+            f'weights_P{self.subject}_{filename_repeat}.npy'
         )
         weights = np.load(weights_dir, allow_pickle=True).item()
         
@@ -482,7 +489,7 @@ class MEGEncodingModel(BaseModelInterface):
         cls, 
         berg_dir=None, 
         subject=None,
-        train_split="full", 
+        train_repeat="full", 
         model_instance=None, 
         **kwargs
     ) -> Dict[str, Any]:
@@ -495,6 +502,8 @@ class MEGEncodingModel(BaseModelInterface):
             Path to BERG directory.
         subject : str
             Subject ID (1,2,3,4).
+        train_repeat : str or int
+            Training repeat specification ("full" or 1-4).
         model_instance : BaseModelInterface
             If provided, extract parameters from this model instance.
         **kwargs
@@ -509,13 +518,13 @@ class MEGEncodingModel(BaseModelInterface):
         if model_instance is not None:
             berg_dir = model_instance.berg_dir
             subject = model_instance.subject
-            train_split = model_instance.train_split
+            train_repeat = model_instance.train_repeat
         
         # If this method is called on an instance (rather than the class)
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             berg_dir = cls.berg_dir
             subject = cls.subject
-            train_split = cls.train_split
+            train_repeat = cls.train_repeat
         
         # Validate required parameters
         missing_params = []
@@ -523,8 +532,8 @@ class MEGEncodingModel(BaseModelInterface):
             missing_params.append('berg_dir')
         if subject is None:
             missing_params.append('subject')
-        if train_split is None:
-            missing_params.append('train_split')
+        if train_repeat is None:
+            missing_params.append('train_repeat')
         
         if missing_params:
             raise InvalidParameterError(

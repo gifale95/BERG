@@ -18,9 +18,9 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=str, required=True, choices=['P1', 'P2', 'P3', 'P4'])
 parser.add_argument('--berg_dir', required=True, type=str)
-parser.add_argument('--train_split', type=str, default='full',
-                   choices=['full', 'split1', 'split2', 'split3', 'split4'],
-                   help='Which training split to test')
+parser.add_argument('--train_repeat', type=str, default='full',
+                   choices=['full', 'repeat1', 'repeat2', 'repeat3', 'repeat4'],
+                   help='Which training repeat to test')
 args = parser.parse_args()
 
 print('>>> Test THINGS MEG encoding models <<<')
@@ -53,7 +53,7 @@ with h5py.File(neural_test_path, 'r') as f:
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
     'modality-meg', 'train_dataset-things_meg_1', 'vit_b_32')
 
-pred_path = os.path.join(results_dir, f'meg_test_pred_{args.subject}_{args.train_split}.npy')
+pred_path = os.path.join(results_dir, f'meg_test_pred_{args.subject}_{args.train_repeat}.npy')
 neural_test_pred = np.load(pred_path, allow_pickle=True)
 
 
@@ -102,11 +102,11 @@ if os.path.exists(file_path):
 else:
     metadata = metadata_meg.copy()
 
-# Add results to the appropriate split/full
-if args.train_split not in metadata['encoding_model']:
-    metadata['encoding_model'][args.train_split] = {}
+# Add results to the appropriate repeat/full
+if args.train_repeat not in metadata['encoding_model']:
+    metadata['encoding_model'][args.train_repeat] = {}
 
-metadata['encoding_model'][args.train_split]['correlation_results'] = correlation_results
-metadata['encoding_model'][args.train_split]['percent_noise_ceiling'] = percent_noise_ceiling
+metadata['encoding_model'][args.train_repeat]['correlation_results'] = correlation_results
+metadata['encoding_model'][args.train_repeat]['percent_noise_ceiling'] = percent_noise_ceiling
 
 np.save(file_path, metadata)
