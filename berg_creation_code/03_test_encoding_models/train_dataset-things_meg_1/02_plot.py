@@ -29,6 +29,18 @@ parser.add_argument('--train_split', type=str, default='full',
 args = parser.parse_args()
 
 
+def format_split_name(split):
+    """Format split name for display in titles."""
+    if split == 'full':
+        return 'Full Training'
+    else:
+        split_num = split.replace('split', '')
+        return f'Split {split_num}'
+
+
+split_display_name = format_split_name(args.train_split)
+
+
 # =============================================================================
 # Load the encoding models' encoding accuracy and metadata
 # =============================================================================
@@ -185,7 +197,7 @@ for s, subject in enumerate(args.subject):
     ax.set_axisbelow(True)
     
     # Title
-    ax.set_title(f'{subject} ({args.train_split}) - Brain Region Encoding Accuracy', 
+    ax.set_title(f'{subject} ({split_display_name}) - Brain Region Encoding Accuracy', 
                 fontsize=fontsize+3, fontweight='bold', pad=15)
 
 # Hide unused subplots if we have fewer than 4 subjects
@@ -261,7 +273,7 @@ if avg_ax is not None:
     avg_ax.set_axisbelow(True)
     
     # Title
-    avg_ax.set_title(f'Grand Average ({args.train_split}) Across All Subjects - Brain Region Encoding Accuracy', 
+    avg_ax.set_title(f'Grand Average ({split_display_name}) Across All Subjects - Brain Region Encoding Accuracy', 
                      fontsize=fontsize+3, fontweight='bold', pad=15)
 
 # Add single legend in upper left corner
