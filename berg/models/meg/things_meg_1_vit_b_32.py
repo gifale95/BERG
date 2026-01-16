@@ -201,7 +201,7 @@ class MEGEncodingModel(BaseModelInterface):
         
         # Get split parameter:
         if self.train_split != "full":
-            train_split = "split"
+            train_split = "splits"
         else:
             train_split = "full"
         try:
@@ -539,7 +539,7 @@ class MEGEncodingModel(BaseModelInterface):
             
         # Get split parameter:
         if train_split != "full":
-            train_split = "split"
+            train_split = "splits"
             
         
         # Validate parameters
