@@ -4,7 +4,7 @@ import pandas as pd
 import yaml
 from typing import Dict, Any, Optional, List, Union
 from pathlib import Path
-from berg.models.fmri.tuckute_2024.load_regr_weights_and_predict import ANNEncoder, BrainEncoder, Mapping
+from berg.models.fmri.tuckute_2024.load_tuckute import ANNEncoder, BrainEncoder, Mapping
 from berg.interfaces.base_model import BaseModelInterface
 from berg.core.model_registry import register_model
 from berg.core.exceptions import ModelLoadError, InvalidParameterError, StimulusError
