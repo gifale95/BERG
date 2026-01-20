@@ -217,7 +217,7 @@ class FMRITextEncodingModel(BaseModelInterface):
         self,
         stimulus: Union[List[str], np.ndarray],
         show_progress: bool = True
-    ) -> pd.DataFrame:
+    ) -> np.ndarray:  # Changed from pd.DataFrame
         """
         Generate in silico fMRI responses for text stimuli.
         
@@ -230,11 +230,11 @@ class FMRITextEncodingModel(BaseModelInterface):
         
         Returns
         -------
-        pd.DataFrame
-            DataFrame with shape (n_sentences, n_rois) containing predicted z-scored
-            BOLD response magnitudes. Index contains sentence identifiers, columns
-            contain ROI names. If ROI selection was specified, only selected ROIs
-            are included as columns.
+        np.ndarray
+            Array with shape (n_sentences, n_rois) containing predicted z-scored
+            BOLD response magnitudes. Rows correspond to sentences (in input order),
+            columns correspond to ROIs (in selection order if specified, otherwise
+            in original model order).
         """
         # Validate and prepare stimulus
         stimset = self._validate_and_prepare_stimulus(stimulus)

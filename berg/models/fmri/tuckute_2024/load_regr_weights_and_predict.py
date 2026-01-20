@@ -1275,8 +1275,8 @@ class Mapping:
                 raise ValueError(f"Requested ROIs not found in model: {missing}. "
                             f"Available ROIs: {list(full_neuroid_order)}")
             
-            # Get indices of selected ROIs in the original order
-            roi_indices = [i for i, roi in enumerate(full_neuroid_order) if roi in roi_selection]
+            # Get indices in the order specified by roi_selection (not original order)
+            roi_indices = [list(full_neuroid_order).index(roi) for roi in roi_selection]
             
             # Filter the classifier weights and biases
             clf = d['clf']
@@ -1287,8 +1287,8 @@ class Mapping:
             if hasattr(clf, 'alpha_') and isinstance(clf.alpha_, np.ndarray):
                 clf.alpha_ = clf.alpha_[roi_indices]
             
-            # Update neuroid order to only selected ROIs (in original order)
-            selected_neuroid_order = full_neuroid_order[roi_indices]
+            # Use the user-specified order
+            selected_neuroid_order = np.array(roi_selection)
             self.prefitted_clf = clf
             self.prefitted_clf_neuroid_order = selected_neuroid_order
             print(f"Loaded {len(roi_indices)} ROIs: {list(selected_neuroid_order)}")
@@ -1304,8 +1304,7 @@ class Mapping:
     def predict_using_prefitted_mapping(self):
         """Perform predictions on the brain stimset based on a prefitted clf.
 
-        Return predictions per item (rows), per neuroid (columns)
-
+        Return predictions per item (rows), per neuroid (columns) as numpy array.
         """
         assert (self.prefitted_clf is not None)
 
@@ -1314,22 +1313,16 @@ class Mapping:
 
         # Pass X through the scaler. If prefitted_X_scaler is None, return X_raw
         if self.preprocessor is not None:
-            X = self.preprocessor.transform(scaler=self.prefitted_X_scaler,
-                                        A_raw=X)
-
+            X = self.preprocessor.transform(scaler=self.prefitted_X_scaler, A_raw=X)
 
         preds = self.prefitted_clf.predict(X)
 
         assert (preds.shape[0] == self.ann_encoder.stimset.shape[0])
         assert (preds.shape[0] == self.brain_encoder.stimset.shape[0])
+        assert (preds.shape[1] == len(self.prefitted_clf_neuroid_order))
 
-        assert (preds.shape[1] == len(
-            self.prefitted_clf_neuroid_order))  # make sure that a correct number of neuroids were predicted
-
-        # Package into a df with correct neuroid (col) names
-        df_preds = pd.DataFrame(preds, columns=self.prefitted_clf_neuroid_order, index=X.index)
-
-        return df_preds
+        # Return as numpy array (predictions already in correct ROI order from load_full_mapping)
+        return preds
 
 
 
