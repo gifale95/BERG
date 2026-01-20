@@ -56,18 +56,15 @@ overall language system.
 Metadata
 --------
 
-**fmri**
+**rois** : ``(6,)`` - Six functionally defined ROIs of the language network ['lang_LH_AntTemp', 'lang_LH_IFG', 'lang_LH_IFGorb', 'lang_LH_MFG', 'lang_LH_PostTemp', 'lang_LH_netw']
 
-    **rois** : ``(6,)`` - Six functionally defined ROIs of the language network ['lang_LH_AntTemp', 'lang_LH_IFG', 'lang_LH_IFGorb', 'lang_LH_MFG', 'lang_LH_PostTemp', 'lang_LH_netw']
+**train_target_ids** : ``(1000,)`` - Stimulus identifiers for the training sentences (e.g., beta-control-neural-T.1 ... beta-control-neural-T.1000)
 
-    **train_target_ids** : ``(1000,)`` - Stimulus identifiers for the training sentences (e.g., beta-control-neural-T.1 ... beta-control-neural-T.1000)
+**train_targets** : ``(1000)`` - Participant-averaged (N=5), z-scored BOLD response magnitude for each training sentence to map onto the language network average
 
-    **train_targets** : ``(1000)`` - Participant-averaged (N=5), z-scored BOLD response magnitude for each training sentence to map onto the language network average
-**encoding_model**
+**optimal_layer** : ``int`` - GPT2-XL transformer layer selected via cross-validation (layer 22)
 
-    **optimal_layer** : ``int`` - GPT2-XL transformer layer selected via cross-validation (layer 22)
-
-    **noise_ceiling** : ``(6,)`` - Noise ceiling estimates (Pearson's r) averaged across all ROIs
+**noise_ceiling** : ``(6,)`` - Noise ceiling estimates (Pearson's r) averaged across all ROIs
 
 Input
 -----
@@ -95,18 +92,18 @@ Output
    :stub-columns: 1
 
    * - Type
-     - ``pandas.DataFrame``
+     - ``numpy.ndarray``
    * - Shape
      - ``(n_sentences, n_rois)``
    * - Description
-     - The output is a pandas DataFrame containing predicted z-scored BOLD response magnitudes 
+     - The output is a numpy array containing predicted z-scored BOLD response magnitudes 
        for the left-hemisphere language network.
+       Each row corresponds to one input sentence (in input order), and each column
+       corresponds to one language network ROI (or a subset if ROI selection is applied).
        
-       Each row corresponds to one input sentence (indexed by sentence identifier), and each
-       column corresponds to one language network ROI (or a subset if ROI selection is applied).
-       
-       DataFrame index: Sentence
-       DataFrame columns: ROI names (e.g., 'lang_LH_IFG', 'lang_LH_netw')
+       **ROI ordering:**
+       - When no selection is used: ROIs appear in their default order (see below)
+       - When selection is used: ROIs appear in the order specified in the selection parameter
 
 **Dimensions:**
 
@@ -120,7 +117,7 @@ Output
      - Number of input sentences.
    * - n_rois
      - | Number of ROIs in the output (6 by default, or fewer if ROI selection is applied).
-       | Default ROIs (in order):
+       | Default ROI order (when no selection is specified):
        | - lang_LH_AntTemp: Anterior temporal lobe
        | - lang_LH_IFG: Inferior frontal gyrus
        | - lang_LH_IFGorb: Inferior frontal gyrus orbitalis
@@ -260,12 +257,12 @@ Example Usage
         show_progress=True
     )
     
-    # The in silico fMRI responses will be a pandas.DataFrame of shape:
+    # The in silico fMRI responses will be a numpy.ndarray of shape:
     # (n_sentences, n_rois)
     # where:
     # - n_sentences: Number of input sentences.
     # - n_rois: Number of ROIs in the output (6 by default, or fewer if ROI selection is applied).
-    #   Default ROIs (in order):
+    #   Default ROI order (when no selection is specified):
     #   - lang_LH_AntTemp: Anterior temporal lobe
     #   - lang_LH_IFG: Inferior frontal gyrus
     #   - lang_LH_IFGorb: Inferior frontal gyrus orbitalis
