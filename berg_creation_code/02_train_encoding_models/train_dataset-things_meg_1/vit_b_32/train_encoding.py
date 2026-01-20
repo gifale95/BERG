@@ -63,7 +63,7 @@ parser.add_argument('--feature_batch_size', type=int, default=512,
 parser.add_argument('--n_pca_components', type=int, default=250,
                    help='Number of PCA components')
 parser.add_argument('--train_repeat', type=str, default='full',
-                   choices=['full', 'repeat1', 'repeat2', 'repeat3', 'repeat4'],
+                   choices=['full', 'repeat_1', 'repeat_2', 'repeat_3', 'repeat_4'],
                    help='Which training repeat to use')
 args = parser.parse_args()
 

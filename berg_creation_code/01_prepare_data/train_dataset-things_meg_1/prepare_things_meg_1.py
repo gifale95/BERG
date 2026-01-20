@@ -30,10 +30,10 @@ meg_{subject}_split-test.h5                 : (2400, 271, 281)  - Non-normalized
 meg_{subject}_split-test_averaged.h5        : (200, 271, 281)   - Non-normalized averaged test data
 
 If create_repeats=True, additionally:
-meg_{subject}_split-train_repeat1.h5         : (5562, 271, 281)  - Training repeat 1
-meg_{subject}_split-train_repeat2.h5         : (5562, 271, 281)  - Training repeat 2
-meg_{subject}_split-train_repeat3.h5         : (5562, 271, 281)  - Training repeat 3
-meg_{subject}_split-train_repeat4.h5         : (5562, 271, 281)  - Training repeat 4
+meg_{subject}_split-train_repeat_1.h5         : (5562, 271, 281)  - Training repeat 1
+meg_{subject}_split-train_repeat_2.h5         : (5562, 271, 281)  - Training repeat 2
+meg_{subject}_split-train_repeat_3.h5         : (5562, 271, 281)  - Training repeat 3
+meg_{subject}_split-train_repeat_4.h5         : (5562, 271, 281)  - Training repeat 4
 
 meg_{subject}_metadata.npy                  :
 

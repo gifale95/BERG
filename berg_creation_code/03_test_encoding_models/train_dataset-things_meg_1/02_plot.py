@@ -24,7 +24,7 @@ parser.add_argument('--subject', nargs='+', default=['P1'],
     help='List of subjects to analyze (e.g., --subject P1 P2 P3 P4)')
 parser.add_argument('--berg_dir', required=True, type=str)
 parser.add_argument('--train_repeat', type=str, default='full',
-                   choices=['full', 'repeat1', 'repeat2', 'repeat3', 'repeat4'],
+                   choices=['full', 'repeat_1', 'repeat_2', 'repeat_3', 'repeat_4'],
                    help='Which training repeat to plot')
 args = parser.parse_args()
 
@@ -34,7 +34,7 @@ def format_repeat_name(repeat):
     if repeat == 'full':
         return 'Full Training'
     else:
-        repeat_num = repeat.replace('repeat', '')
+        repeat_num = repeat.replace('repeat_', '')
         return f'Repeat {repeat_num}'
 
 

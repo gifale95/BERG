@@ -38,10 +38,10 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size, create_repe
     meg_{subject}_split-test_averaged.h5 : (200, 271, 281)
     
     If create_repeats=True, additionally:
-    meg_{subject}_split-train_repeat1.h5 : (5562, 271, 281)
-    meg_{subject}_split-train_repeat2.h5 : (5562, 271, 281)
-    meg_{subject}_split-train_repeat3.h5 : (5562, 271, 281)
-    meg_{subject}_split-train_repeat4.h5 : (5562, 271, 281)
+    meg_{subject}_split-train_repeat_1.h5 : (5562, 271, 281)
+    meg_{subject}_split-train_repeat_2.h5 : (5562, 271, 281)
+    meg_{subject}_split-train_repeat_3.h5 : (5562, 271, 281)
+    meg_{subject}_split-train_repeat_4.h5 : (5562, 271, 281)
     """
     print(f"Loading MNE epochs metadata from: {meg_filepath}")
     epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
@@ -164,7 +164,7 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size, create_repe
             repeat_indices = shuffled_indices[start_idx:end_idx]
             repeat_data = train_data[repeat_indices]
             
-            repeat_file = os.path.join(output_dir, f'meg_{subject_id}_split-train_repeat{repeat_idx}.h5')
+            repeat_file = os.path.join(output_dir, f'meg_{subject_id}_split-train_repeat_{repeat_idx}.h5')
             
             with h5py.File(repeat_file, 'w') as f_repeat:
                 f_repeat.create_dataset('neural_data', data=repeat_data)

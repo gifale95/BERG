@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=str, required=True, choices=['P1', 'P2', 'P3', 'P4'])
 parser.add_argument('--berg_dir', required=True, type=str)
 parser.add_argument('--train_repeat', type=str, default='full',
-                   choices=['full', 'repeat1', 'repeat2', 'repeat3', 'repeat4'],
+                   choices=['full', 'repeat_1', 'repeat_2', 'repeat_3', 'repeat_4'],
                    help='Which training repeat to test')
 args = parser.parse_args()
 
