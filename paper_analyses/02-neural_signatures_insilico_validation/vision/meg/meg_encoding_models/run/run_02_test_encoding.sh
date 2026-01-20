@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=meg_encoding_models-02_test_encoding
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
-#SBATCH --time=02:00:00
+#SBATCH --mem=3000
+#SBATCH --time=00:10:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

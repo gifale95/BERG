@@ -60,7 +60,7 @@ correlation_single_splits_avg_rep = np.asarray(
 correlation_single_splits_single_rep = np.asarray(
     correlation_single_splits_single_rep) ** 2
 correlation_all_splits = np.asarray(correlation_all_splits) ** 2
-noise_ceiling = np.asarray(noise_ceiling)
+noise_ceiling = np.asarray(noise_ceiling) / 100
 
 
 # =============================================================================
@@ -101,19 +101,19 @@ plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=1, alpha=.5, label='_nolegend_')
 
 # Plot the correlation results
-plt.plot(times, np.mean(correlation_single_splits_avg_rep, 0), color='b',
+plt.plot(times, np.mean(correlation_single_splits_avg_rep[:,idx_sensor], (0, 1)), color='b',
     linewidth=1, label='correlation_single_splits_avg_rep')
-plt.plot(times, np.mean(correlation_single_splits_single_rep, (0, 1)), color='o',
+plt.plot(times, np.mean(correlation_single_splits_single_rep[:,:,idx_sensor], (0, 1, 2)), color='orange',
     linewidth=1, label='correlation_single_splits_single_rep')
-plt.plot(times, np.mean(correlation_all_splits, 0), color='g',
+plt.plot(times, np.mean(correlation_all_splits[:,idx_sensor], (0, 1)), color='g',
     linewidth=1, label='correlation_all_splits')
-plt.plot(times, np.mean(noise_ceiling, 0), '--k',
+plt.plot(times, np.mean(noise_ceiling[:,idx_sensor], (0, 1)), '--k',
     linewidth=1, label='noise_ceiling')
 
 # x-axis parameters
 plt.xlabel('Time (ms)', fontsize=fontsize)
-yticks = [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2]
-ylabels = [0, 200, 400, 600, 800, 1000, 1200]
+xticks = [0, 0.2, 0.4, 0.6, 0.8, 1, 1.2]
+xlabels = [0, 200, 400, 600, 800, 1000, 1200]
 plt.xticks(ticks=xticks, labels=xlabels)
 plt.xlim(left=min(times), right=max(times))
 
@@ -125,7 +125,7 @@ plt.yticks(ticks=yticks, labels=ylabels)
 plt.ylim(bottom=-.075, top=1)
 
 # Legend
-plt.legend(ncol=1, fontsize=fontsize, frameon=False)
+plt.legend(ncol=1, fontsize=10, frameon=False)
 
 
 

@@ -2,14 +2,9 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=meg_encoding_models-01_train_encoding
 #SBATCH --mail-type=end
-#SBATCH --mem=90000
-#SBATCH --time=20:00:00
+#SBATCH --mem=160000
+#SBATCH --time=09:00:00
 #SBATCH --qos=extended
-#SBATCH --partition=agcichy
-#SBATCH --gres=gpu:1 # number of GPUs
-
-# CUDA module
-module add CUDA/12.4.0
 
 # Create the parameters combinations
 declare -a subject_all

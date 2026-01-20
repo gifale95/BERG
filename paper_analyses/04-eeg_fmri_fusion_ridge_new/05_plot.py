@@ -29,8 +29,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subjects', default=[1, 2], type=list)
-parser.add_argument('--hemispheres', default=['lh'], type=list)
+parser.add_argument('--fmri_subjects', default=[1, 2, 4, 5, 6, 7, 8], type=list)
+parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -89,9 +89,10 @@ for s, sub in enumerate(args.fmri_subjects):
         idx_encoding = encoding >= args.encoding_threshold
         idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
 
-        for key in corr_tfmri_fmri.keys():
-
-            corr_tfmri_fmri[key][s,h,idx_nan] = np.nan
+        corr_invivoeeg[s,h,idx_nan] = np.nan
+        corr_insilicoeeg_avg_tfmri_avg[s,h,idx_nan] = np.nan
+        corr_insilicoeeg_sing_tfmri_avg[s,h,idx_nan] = np.nan
+        corr_insilicoeeg_sing_tfmri_sing[s,h,idx_nan] = np.nan
 
 
 # =============================================================================
@@ -342,7 +343,7 @@ plt.ylabel("Pearson's $r$", fontsize=fontsize)
 yticks = [0, 0.2, 0.4, 0.6, 0.8]
 ylabels = [0, 0.2, 0.4, 0.6, 0.8]
 plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylim(bottom=-.025, top=.6)
+plt.ylim(bottom=-.025, top=.8)
 
 # Legend
 plt.legend(ncol=1, fontsize=15, loc=0, frameon=False)
