@@ -1,4 +1,4 @@
-# fmri-nsd_fsaverage-huze
+# fmri-tuckute_2024-GPT2_XL
 
 In the `model card` you can find a [description][description] of the model, as well as helpful [references][references] such as the **model building code**.
 
