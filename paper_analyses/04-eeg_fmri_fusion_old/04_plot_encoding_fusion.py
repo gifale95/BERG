@@ -40,7 +40,7 @@ args, unknown = parser.parse_known_args()
 # =============================================================================
 # Load the results
 # =============================================================================
-results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_old',
     'encoding_fusion_accuracy', 'encoding_fusion_accuracy.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
@@ -266,8 +266,8 @@ plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
     alpha=.5, label='_nolegend_')
 
 # Loop across ROIs
-rois = ['V1', 'V2', 'V3', 'hV4']
 rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
+rois = ['V1', 'V2', 'V3', 'hV4']
 for r, roi in enumerate(rois):
 
     # Plot the correlation

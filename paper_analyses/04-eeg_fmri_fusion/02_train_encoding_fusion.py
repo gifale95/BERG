@@ -34,6 +34,7 @@ import numpy as np
 import h5py
 from berg import BERG
 from tqdm import tqdm
+import random
 from sklearn.linear_model import RidgeCV
 
 parser = argparse.ArgumentParser()
@@ -48,6 +49,11 @@ print('>>> Train encoding fusion <<<')
 print('Input arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
+
+# Set random seed for reproducible results
+seed = 20200220
+random.seed(seed)
+np.random.seed(seed)
 
 
 # =============================================================================
@@ -119,7 +125,7 @@ times = metadata_eeg['eeg']['times']
 for t in tqdm(range(len(times))):
 
     # Train the encoding fusion models
-    alphas = np.logspace(-6, 6, 13)
+    alphas = np.logspace(-6, 10, 17)
     reg = RidgeCV(alphas=alphas, cv=None, alpha_per_target=True)
     reg.fit(eeg_train[:,:,t], fmri_train)
 

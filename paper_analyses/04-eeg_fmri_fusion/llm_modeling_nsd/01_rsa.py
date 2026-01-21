@@ -1,5 +1,8 @@
 """Perform searchlight RSA between t-fMRI responses and LLM embeddings.
 
+To reduce computational load, the EEG/fMRI fusion encoding models are only
+trained, tested, and used for vertices falling within the NSD visual streams.
+
 Parameters
 ----------
 fmri_subject : int
@@ -37,7 +40,7 @@ import numpy as np
 from tqdm import tqdm
 from berg import BERG
 import h5py
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import LinearRegression
 import pandas as pd
 from pycocotools.coco import COCO
 from sentence_transformers import SentenceTransformer
@@ -97,11 +100,11 @@ def corr_matrix(X):
 berg = BERG(berg_dir=args.berg_dir)
 
 # Get the test image number
-metadata = berg.get_model_metadata(
+metadata_fmri = berg.get_model_metadata(
     'fmri-nsd_fsaverage-huze',
     subject=args.fmri_subject
 )
-test_img_num = metadata['encoding_models']['test_img_num']
+test_img_num = metadata_fmri['encoding_models']['test_img_num']
 
 # Load the test images
 sf = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli', 'stimuli', 'nsd',
@@ -153,6 +156,10 @@ llm_embeddings = np.array(llm_embeddings).astype(np.float32)
 # Create the RDM
 llm_rdm = 1 - corr_matrix(llm_embeddings.T)
 
+# Take the lower triangle of the LLM RDM
+idx_tril = np.tril_indices(len(llm_rdm), -1)
+llm_rdm_tril = llm_rdm[idx_tril]
+
 
 # =============================================================================
 # Generate the in silico EEG image responses, and append them across subjects
@@ -177,136 +184,109 @@ for es, esub in enumerate(tqdm(args.eeg_subjects)):
     gc.collect()
     del model
 
+# Load the EEG time points
+metadata_eeg = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    subject=1
+)
+times = metadata_eeg['eeg']['times']
+
 
 # =============================================================================
 # Generate the t-fMRI responses
 # =============================================================================
-# Fusion model and save directories
-model_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new',
-    'encoding_fusion_weights')
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new',
-    'llm_modeling', 'tfmri_responses')
-os.makedirs(save_dir, exist_ok=True)
-
 # Only select vertices falling within the NSD visual streams
 n_vertex = 163842
 idx_v = np.zeros(n_vertex, dtype=int)
 streams = ['early', 'midventral', 'midlateral', 'midparietal', 'ventral',
     'lateral', 'parietal']
 for stream in streams:
-    idx_v[metadata['fmri'][f'{args.hemisphere}_fsaverage_rois'][stream]] = 1
+    idx_v[metadata_fmri['fmri'][f'{args.hemisphere}_fsaverage_rois'][stream]] = 1
 idx_v = np.where(idx_v == 1)[0]
-
-# Empty t-fMRI response array of shape:
-# (515 Images, 163842 Vertices, 4 EEG repeats, 60 Time points)
-n_rep = eeg.shape[1]
-time_range = np.arange(20, 80) # !!! CHANGE
-
-tfmri_insilicoeeg_avg = np.zeros((len(eeg), n_vertex, len(time_range)), dtype=np.float32)
-tfmri_insilicoeeg_sing = np.zeros((len(eeg), n_vertex, n_rep, len(time_range)), dtype=np.float32)
-
-# Loop across EEG time points
-for t, t_idx in enumerate(time_range):
-
-    # Load the EEG-fMRI encoding fusion models weights
-    file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
-                f'hemi-{args.hemisphere}_eeg_time-{t_idx:03d}.npy')
-    reg_param = np.load(os.path.join(model_dir, file_name),
-        allow_pickle=True).item()
-
-    # Instantiate the fusion regression model
-    reg = Ridge()
-    reg.coef_ = reg_param['coef_']
-    reg.intercept_ = reg_param['intercept_']
-    reg.n_features_in_ = reg_param['n_features_in_']
-
-    # Generate the t-fMRI responses
-    tfmri_insilicoeeg_avg[:,idx_v,t] = reg.predict(np.mean(eeg[:,:,:,t_idx], 1))
-    for r in range(eeg.shape[1]):
-        tfmri_insilicoeeg_sing[:,idx_v,r,t] = reg.predict(eeg[:,r,:,t_idx])
-
-
-# =============================================================================
-# Perform searchlight RSA
-# =============================================================================
-# Empty RSA results array of shape:
-# (163842 Vertices, 4 EEG repeats, 140 Time points)
-#rsa = np.empty((tfmri.shape[1], tfmri.shape[2], tfmri.shape[3]), dtype=np.float32)
-#rsa[:] = np.nan
-rsa_insilicoeeg_avg_tfmri_avg = np.empty((163842, len(time_range)), dtype=np.float32)
-rsa_insilicoeeg_sing_tfmri_avg = np.empty((163842, len(time_range)), dtype=np.float32)
-rsa_insilicoeeg_sing_tfmri_sing = np.empty((163842, 4, len(time_range)), dtype=np.float32)
-rsa_insilicoeeg_avg_tfmri_avg[:] = np.nan
-rsa_insilicoeeg_sing_tfmri_avg[:] = np.nan
-rsa_insilicoeeg_sing_tfmri_sing[:] = np.nan
-
-# Take the lower triangle of the LLM RDM
-idx_tril = np.tril_indices(len(llm_rdm), -1)
-llm_rdm_tril = llm_rdm[idx_tril]
 
 # Access the precomputed geodesic distances
 data_dir = os.path.join(args.berg_dir, 'geodesic_vertex_distances',
     'geodesic_vertex_distances_'+args.hemisphere+'.h5')
 geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
 
-# Loop across fMRI vertices and EEG time points
-for v in tqdm(idx_v):
+# Empty RSA result array of shape:
+# (N fMRI vertices, 140 EEG time points)
+rsa_trials_single = np.zeros((n_vertex, len(times)), dtype=np.float32)
+rsa_trials_single[:] = np.nan
+rsa_trials_avg = np.zeros((n_vertex, len(times)), dtype=np.float32)
+rsa_trials_avg[:] = np.nan
 
-    # Select the neighborhood based on the chosen criterion
-    if args.criterion == 'nearest':
-        # Get k-smallest distances (including the target vertex)
-        neighborhood = np.argsort(geodesic_distances[v])[:args.k]
-    elif args.criterion == 'radius':
-        # Select all vertices whose distance is within the radius
-        mask = geodesic_distances[v] <= args.radius_mm
-        neighborhood = np.where(mask)[0]
+# Loop across EEG time points
+for t in tqdm(range(len(times))):
 
-    # # Loop across EEG time points and repeats
-    # for t in range(tfmri.shape[3]):
-    #     for r in range(tfmri.shape[2]):
+    # Load the EEG-fMRI encoding fusion models weights
+    file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
+                f'hemi-{args.hemisphere}_eeg_time-{t:03d}.npy')
+    reg_param = np.load(os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+        'encoding_fusion_weights', file_name), allow_pickle=True).item()
 
-    #         # Create the fMRI RDM
-    #         fmri_rdm = 1 - corr_matrix(tfmri[:,neighborhood,r,t].T)
+    # Instantiate the fusion regression model
+    reg = LinearRegression()
+    reg.coef_ = reg_param['coef_']
+    reg.intercept_ = reg_param['intercept_']
+    reg.n_features_in_ = reg_param['n_features_in_']
 
-    #         # Perform RSA
-    #         rsa[v,r,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
+    # Generate the t-fMRI responses
+    tfmri_trials_avg = reg.predict(np.mean(eeg[:,:,:,t], 1))
+    tfmri_trials_single = np.zeros((len(eeg), eeg.shape[1], n_vertex),
+        dtype=np.float32)
+    for r in range(eeg.shape[1]):
+        tfmri_trials_single[:,r,:] = reg.predict(eeg[:,r,:,t])
+    del reg_param, reg
 
-    # Loop across EEG time points
-    for t in range(len(time_range)):
 
-        # Create the fMRI RDM
-        fmri_rdm = 1 - corr_matrix(tfmri_insilicoeeg_avg[:,neighborhood,t].T)
-        # Perform RSA
-        rsa_insilicoeeg_avg_tfmri_avg[v,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
+# =============================================================================
+# Perform searchlight RSA
+# =============================================================================
+    # Loop across fMRI vertices
+    for v in idx_v:
 
-        # Create the fMRI RDM
-        fmri_rdm = 1 - corr_matrix(np.mean(tfmri_insilicoeeg_sing, 2)[:,neighborhood,t].T)
-        # Perform RSA
-        rsa_insilicoeeg_sing_tfmri_avg[v,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
+        # Select the neighborhood based on the chosen criterion
+        if args.criterion == 'nearest':
+            # Get k-smallest distances (including the target vertex)
+            neighborhood = np.argsort(geodesic_distances[v])[:args.k]
+        elif args.criterion == 'radius':
+            # Select all vertices whose distance is within the radius
+            mask = geodesic_distances[v] <= args.radius_mm
+            neighborhood = np.where(mask)[0]
 
-        for r in range(4):
-            # Create the fMRI RDM
-            fmri_rdm = 1 - corr_matrix(tfmri_insilicoeeg_sing[:,neighborhood,r,t].T)
-            # Perform RSA
-            rsa_insilicoeeg_sing_tfmri_sing[v,r,t] = pearsonr(llm_rdm_tril, fmri_rdm[idx_tril])[0]
+        # Create the fMRI RDM (trials average)
+        fmri_rdm_trials_avg = 1 - corr_matrix(tfmri_trials_avg[:,neighborhood].T)
 
-rsa_insilicoeeg_sing_tfmri_sing = np.mean(rsa_insilicoeeg_sing_tfmri_sing, 1)
+        # Perform RSA (trials average)
+        rsa_trials_avg[v,t] = pearsonr(llm_rdm_tril, fmri_rdm_trials_avg[idx_tril])[0]
+        del fmri_rdm_trials_avg
+
+        # Create the fMRI RDM (trials single)
+        for r in range(tfmri_trials_single.shape[1]):
+            fmri_rdm_trials_single = 1 - corr_matrix(tfmri_trials_single[:,r,neighborhood].T)
+
+            # Perform RSA (trials single)
+            rsa_trials_single[v,t] += pearsonr(llm_rdm_tril, fmri_rdm_trials_single[idx_tril])[0]
+            del fmri_rdm_trials_single
+        rsa_trials_single[v,t] /= tfmri_trials_single.shape[1]
+
+    del tfmri_trials_avg, tfmri_trials_single
 
 
 # =============================================================================
 # Save the results
 # =============================================================================
 results = {
-    'rsa_insilicoeeg_avg_tfmri_avg': rsa_insilicoeeg_avg_tfmri_avg,
-    'rsa_insilicoeeg_sing_tfmri_avg': rsa_insilicoeeg_sing_tfmri_avg,
-    'rsa_insilicoeeg_sing_tfmri_sing': rsa_insilicoeeg_sing_tfmri_sing,
-    'metadata': metadata
+    'rsa_trials_single': rsa_trials_single,
+    'rsa_trials_avg': rsa_trials_avg,
+    'metadata_fmri': metadata_fmri
 }
 
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new', 'llm_modeling_nsd',
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'llm_modeling_nsd',
     'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = f'rsa_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}.npy'
+file_name = f'rsa_fmri_sub-{args.fmri_subject:02d}_hemi-{args.hemisphere}.npy'
 
 np.save(os.path.join(save_dir, file_name), results)

@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=eeg_fmri_fusion-03_test_encoding_fusion
 #SBATCH --mail-type=end
-#SBATCH --mem=5000
+#SBATCH --mem=10000
 #SBATCH --time=2-00:00:00
 #SBATCH --qos=extended
 

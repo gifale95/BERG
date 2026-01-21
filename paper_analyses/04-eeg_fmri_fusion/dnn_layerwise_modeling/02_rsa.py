@@ -1,5 +1,4 @@
-"""Perform searchlight RSA between the t-fMRI responses and behavioral
-embeddings.
+"""Perform searchlight RSA between t-fMRI responses and DNN layerwise features.
 
 To reduce computational load, the EEG/fMRI fusion encoding models are only
 trained, tested, and used for vertices falling within the NSD visual streams.
@@ -24,6 +23,9 @@ radius_mm : float
 k : int
     Number of nearest geodesic neighbors (default = 10), if criterion is
     'nearest'.
+dnn_model : str
+    Name of deep neural network model used to extract the image features.
+    Available options are 'alexnet' and 'resnet50'.
 berg_dir : str
     Directory of the BERG.
 
@@ -32,11 +34,10 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-from berg import BERG
 from tqdm import tqdm
-import pandas as pd
 from scipy.stats import pearsonr
 import h5py
+from berg import BERG
 from sklearn.linear_model import LinearRegression
 
 parser = argparse.ArgumentParser()
@@ -45,7 +46,8 @@ parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--eeg_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
 parser.add_argument('--criterion', default='radius', type=str)
 parser.add_argument('--radius_mm', default=10, type=float)
-parser.add_argument('--k', default=100, type=int)
+parser.add_argument('--k', default=10, type=int)
+parser.add_argument('--dnn_model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -79,40 +81,18 @@ def corr_matrix(X):
 
 
 # =============================================================================
-# Create the behavioral RDM
+# Load the DNN layerwise RDMs
 # =============================================================================
-# Initialize BERG
-berg = BERG(berg_dir=args.berg_dir)
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'dnn_layerwise_modeling', 'dnn_rdms', 'dnn_rdms_'+args.dnn_model+'.npy')
 
-# Get the THINGS EEG2 test image category number based on the original THINGS
-# database
-metadata_things = berg.get_model_metadata(
-    'eeg-things_eeg_2-vit_b_32',
-    subject=1
-    )
-test_img_concepts_THINGS = metadata_things['encoding_models']['test_img_info']\
-    ['test_img_concepts_THINGS']
+dnn_rdms = np.load(data_dir, allow_pickle=True).item()
 
-# Load the behavioral embeddings (the behavioral emebddings can be downloaded
-# from: https://osf.io/f5rn6/overview)
-embedding_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'eeg',
-    'behavioral_modeling', 'spose_embedding_66d_sorted.txt')
-beh_embeddings_all = np.array(pd.read_csv(embedding_dir, delim_whitespace=True,
-    header=None)).astype(np.float32)
-
-# Retain the embeddings from the 200 test image concepts
-idx_test = np.zeros(len(test_img_concepts_THINGS), dtype=int)
-for i, img in enumerate(test_img_concepts_THINGS):
-    idx_test[i] = int(img[:5]) - 1
-beh_embeddings = beh_embeddings_all[idx_test]
-
-# Create the RDM
-beh_rdm = 1 - corr_matrix(beh_embeddings.T)
-
-# Take the lower triangle of the behavior RDM
-idx_tril = np.tril_indices(len(beh_rdm), -1)
-beh_rdm_tril = beh_rdm[idx_tril]
+# Take the lower triangle of the DNN RDMs
+idx_tril = np.tril_indices(len(dnn_rdms[list(dnn_rdms.keys())[0]]), -1)
+dnn_rdm_tril = {}
+for key, val in dnn_rdms.items():
+    dnn_rdm_tril[key] = val[idx_tril]
 
 
 # =============================================================================
@@ -135,6 +115,7 @@ for es, esub in enumerate(tqdm(args.eeg_subjects)):
     del eeg_test_sub
 
 # Load the EEG time points
+berg = BERG(berg_dir=args.berg_dir)
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
     subject=1
@@ -160,15 +141,17 @@ for stream in streams:
     idx_v[metadata_fmri['fmri'][f'{args.hemisphere}_fsaverage_rois'][stream]] = 1
 idx_v = np.where(idx_v == 1)[0]
 
+# Empty RSA result arrays of shape:
+# (N fMRI vertices, 140 EEG time points)
+rsa = {}
+for key in dnn_rdms.keys():
+    rsa[key] = np.empty((n_vertices, len(times)), dtype=np.float32)
+    rsa[key][:] = np.nan
+
 # Access the precomputed geodesic distances
 data_dir = os.path.join(args.berg_dir, 'geodesic_vertex_distances',
     'geodesic_vertex_distances_'+args.hemisphere+'.h5')
 geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
-
-# Empty RSA result array of shape:
-# (N fMRI vertices, 140 EEG time points)
-rsa = np.zeros((n_vertices, len(times)), dtype=np.float32)
-rsa[:] = np.nan
 
 # Loop across EEG time points
 for t in tqdm(range(len(times))):
@@ -212,8 +195,9 @@ for t in tqdm(range(len(times))):
         # Create the fMRI RDM
         fmri_rdm = 1 - corr_matrix(tfmri[:,neighborhood].T)
 
-        # Perform RSA
-        rsa[v,t] = pearsonr(beh_rdm_tril, fmri_rdm[idx_tril])[0]
+        # Perform RSA with each DNN layer
+        for key, val in dnn_rdm_tril.items():
+            rsa[key][v,t] = pearsonr(val, fmri_rdm[idx_tril])[0]
         del fmri_rdm
     del tfmri
 
@@ -227,9 +211,10 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'behavioral_modeling', 'rsa')
+    'dnn_layerwise_modeling', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = f'rsa_fmri_sub-{args.fmri_subject:02d}_{args.hemisphere}.npy'
+file_name = (f'rsa_fmri_sub-{args.fmri_subject:02d}_{args.hemisphere}'
+             f'_dnn_model-{args.dnn_model}.npy')
 
 np.save(os.path.join(save_dir, file_name), results)

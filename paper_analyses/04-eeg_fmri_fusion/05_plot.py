@@ -52,6 +52,11 @@ corr_tfmri_fmri_roi = results['corr_tfmri_fmri_roi']
 ci_corr_tfmri_fmri_roi = results['ci_corr_tfmri_fmri_roi']
 ci_corr_tfmri_fmri_roi_peak_lat = results['ci_corr_tfmri_fmri_roi_peak_lat']
 
+# Create the plots save directory
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
+    'encoding_accuracy_surfaceplots')
+os.makedirs(save_dir, exist_ok=True)
+
 
 # =============================================================================
 # Vertex selection
@@ -84,11 +89,6 @@ matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 subject = 'fsaverage_nsd_sub-01'
-
-# Create the plots save directory
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
-    'encoding_accuracy_surfaceplots')
-os.makedirs(save_dir, exist_ok=True)
 
 # Loop over EEG time points
 for t, time in enumerate(tqdm(times)):
@@ -222,8 +222,8 @@ plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
     alpha=.5, label='_nolegend_')
 
 # Loop across ROIs
-rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
 rois = ['V1', 'V2', 'V3', 'hV4']
+rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
 for r, roi in enumerate(rois):
 
     # Plot the correlation
@@ -257,7 +257,7 @@ plt.ylabel("Pearson's $r$", fontsize=fontsize)
 yticks = [0, 0.2, 0.4, 0.6, 0.8]
 ylabels = [0, 0.2, 0.4, 0.6, 0.8]
 plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylim(bottom=-.025, top=.6)
+plt.ylim(bottom=-.1, top=.8)
 
 # Legend
 plt.legend(ncol=4, fontsize=fontsize, loc=4, ncols=2, frameon=False)

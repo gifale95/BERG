@@ -121,7 +121,7 @@ for t in tqdm(range(len(times))):
     # Load the EEG-fMRI encoding fusion models weights
     file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
         f'hemi-{args.hemisphere}_eeg_time-{t:03d}.npy')
-    reg_param = np.load(os.path.join(args.berg_dir, 'eeg_fmri_fusion_ridge_new', # !!! 'eeg_fmri_fusion'
+    reg_param = np.load(os.path.join(args.berg_dir, 'eeg_fmri_fusion',
         'encoding_fusion_weights', file_name), allow_pickle=True).item()
 
     # Instantiate the fusion regression model
