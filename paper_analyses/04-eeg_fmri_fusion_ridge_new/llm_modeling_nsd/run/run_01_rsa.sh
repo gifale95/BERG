@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-eeg_fmri_fusion_ridge_new-llm_modeling_nsd-01_rsa
 #SBATCH --mail-type=end
-#SBATCH --mem=50000
-#SBATCH --time=40:00:00
+#SBATCH --mem=80000
+#SBATCH --time=6-00:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
