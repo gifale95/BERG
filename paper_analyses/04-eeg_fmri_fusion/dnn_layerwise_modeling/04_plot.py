@@ -9,12 +9,6 @@ fmri_subjects : list
 dnn_model : str
     Name of deep neural network model used to extract the image features.
     Available options are 'alexnet' and 'resnet50'.
-ncsnr_threshold : float
-    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
-    vertex selection.
-encoding_threshold : float
-    The threshold on the encoding models explained variance for vertex
-    selection (in % units).
 berg_dir : str
     Directory of the BERG.
 
@@ -23,11 +17,12 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-from berg import BERG
+from tqdm import tqdm
 import cortex
 import matplotlib
 import matplotlib.pyplot as plt
-from tqdm import tqdm
+from matplotlib.collections import LineCollection
+from matplotlib.colors import Normalize
 
 
 # =============================================================================
@@ -36,8 +31,6 @@ from tqdm import tqdm
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--dnn_model', default='alexnet', type=str)
-parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
-parser.add_argument('--encoding_threshold', default=20, type=float) # 20
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -46,87 +39,56 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'plots')
+    'dnn_layerwise_modeling', 'plots', 'surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
-
-
-# =============================================================================
-# Load the stats
-# =============================================================================
-stats_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'stats', f'stats_dnn_model-{args.dnn_model}.npy')
-
-stats = np.load(stats_dir, allow_pickle=True).item()
 
 
 # =============================================================================
 # Load the RSA layerwise assignment results
 # =============================================================================
-lh_best_layer = []
-rh_best_layer = []
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'dnn_layerwise_modeling', 'stats', f'stats_dnn_model-{args.dnn_model}.npy')
 
-for s, sub in enumerate(args.fmri_subjects):
-    for hemi in ['lh', 'rh']:
+results = np.load(data_dir, allow_pickle=True).item()
 
-        results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'dnn_layerwise_modeling', 'rsa',
-            f'rsa_fmri_sub-{sub:02d}_{hemi}_dnn_model-{args.dnn_model}.npy')
-        results = np.load(results_dir, allow_pickle=True).item()
+lh_best_layer = results['lh_best_layer']
+rh_best_layer = results['rh_best_layer']
+best_layer_roi = results['best_layer_roi']
+times = results['times']
 
-        # NCSNR and encoding accuracy vertex selection
-        ncsnr = results['metadata_fmri']['fmri'][hemi+'_ncsnr']
-        idx_ncsnr = ncsnr >= args.ncsnr_threshold
-        encoding = results['metadata_fmri']['encoding_models']\
-            [hemi+'_explained_variance_nsdcore']
-        idx_encoding = encoding >= args.encoding_threshold
-        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
-
-        # Store the layer assignment results
-        if hemi == 'lh':
-            best_layer = stats['lh_best_layer'][s].astype(np.float32)
-            best_layer[idx_nan] = np.nan
-            lh_best_layer.append(best_layer)
-        elif hemi == 'rh':
-            best_layer = stats['rh_best_layer'][s].astype(np.float32)
-            best_layer[idx_nan] = np.nan
-            rh_best_layer.append(best_layer)
-
-lh_best_layer = np.array(lh_best_layer)
-rh_best_layer = np.array(rh_best_layer)
-
-
-# =============================================================================
-# Only use vertices falling within the NSD visual streams
-# =============================================================================
-berg = BERG(berg_dir=args.berg_dir)
-metadata = berg.get_model_metadata(
-    'fmri-nsd_fsaverage-huze',
-    subject=1
-    )
-
-lh_idx_v = np.zeros(lh_best_layer.shape[1], dtype=int)
-rh_idx_v = np.zeros(rh_best_layer.shape[1], dtype=int)
-streams = ['early', 'midventral', 'midlateral', 'midparietal', 'ventral',
-    'lateral', 'parietal']
-for stream in streams:
-    lh_idx_v[metadata['fmri']['lh_fsaverage_rois'][stream]] = 1
-    rh_idx_v[metadata['fmri']['rh_fsaverage_rois'][stream]] = 1
-lh_idx_v = np.where(lh_idx_v != 1)[0]
-rh_idx_v = np.where(rh_idx_v != 1)[0]
-
-lh_best_layer[:,lh_idx_v] = np.nan
-rh_best_layer[:,rh_idx_v] = np.nan
+# Get the model layers
+if args.dnn_model == 'alexnet':
+    model_layers = [
+        'features.2',
+        'features.5',
+        'features.7',
+        'features.9',
+        'features.12',
+        'classifier.2',
+        'classifier.5',
+        'classifier.6'
+        ]
+elif args.dnn_model == 'resnet50':
+    model_layers = [
+        'layer1.2.relu_2',
+        'layer2.3.relu_2',
+        'layer3.5.relu_2',
+        'layer4.2.relu_2',
+        'fc'
+        ]
 
 
 # =============================================================================
-# Load the EEG time points
+# Load the behavioral modeling RSA results
 # =============================================================================
-metadata_eeg = berg.get_model_metadata(
-    'eeg-things_eeg_2-vit_b_32',
-    subject=1
-)
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'behavioral_modeling', 'stats', 'stats.npy')
 
-times = metadata_eeg['eeg']['times']
+results = np.load(data_dir, allow_pickle=True).item()
+
+rsa_roi = results['rsa_roi']
+ci_rsa_roi = results['ci_rsa_roi']
+del results
 
 
 # =============================================================================
@@ -144,27 +106,6 @@ subject = 'fsaverage_nsd_sub-01'
 # =============================================================================
 # Plot the vertex DNN layer assignment
 # =============================================================================
-# Get the model layers
-if args.model == 'alexnet':
-    model_layers = [
-        'features.2',
-        'features.5',
-        'features.7',
-        'features.9',
-        'features.12',
-        'classifier.2',
-        'classifier.5',
-        'classifier.6'
-        ]
-elif args.model == 'resnet50':
-    model_layers = [
-        'layer1.2.relu_2',
-        'layer2.3.relu_2',
-        'layer3.5.relu_2',
-        'layer4.2.relu_2',
-        'fc'
-        ]
-
 # Loop over EEG time points
 for t, time in enumerate(tqdm(times)):
 
@@ -207,3 +148,160 @@ for t, time in enumerate(tqdm(times)):
         f'rsa_layer_assigment_dnn_model-{args.dnn_model}_time-{t:03d}.png')
     fig.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
     plt.close()
+
+
+# =============================================================================
+# Plot the ROI-wise DNN layer assignment
+# =============================================================================
+# Plot parameters
+fontsize = 25
+matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams["font.weight"] = "normal"
+matplotlib.rcParams["axes.labelweight"] = "normal"
+matplotlib.rcParams['font.size'] = fontsize
+plt.rc('xtick', labelsize=fontsize)
+plt.rc('ytick', labelsize=fontsize)
+matplotlib.rcParams['axes.linewidth'] = 1
+matplotlib.rcParams['xtick.major.width'] = 0
+matplotlib.rcParams['xtick.major.size'] = 5
+matplotlib.rcParams['ytick.major.width'] = 0
+matplotlib.rcParams['ytick.major.size'] = 5
+matplotlib.rcParams['axes.spines.right'] = False
+matplotlib.rcParams['axes.spines.top'] = False
+matplotlib.rcParams['axes.spines.left'] = True
+matplotlib.rcParams['axes.spines.bottom'] = True
+matplotlib.rcParams['lines.markersize'] = 3
+matplotlib.rcParams['axes.grid'] = False
+matplotlib.rcParams['grid.linewidth'] = 2
+matplotlib.rcParams['grid.alpha'] = .3
+matplotlib.use("svg")
+plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
+
+# Define the ROIs to plot
+rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
+
+# Loop across ROIs
+for r, roi in enumerate(rois):
+
+    # Get the plot data
+    x = times
+    y = np.mean(rsa_roi[roi], 0)
+    c = np.mean(best_layer_roi[roi], 0) + 1 # vector controlling color (add 1 so that the layers start from 1)
+
+    # Create line segments
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+    # Normalize colors
+    norm = Normalize(vmin=1, vmax=len(model_layers))
+
+    # Create LineCollection
+    lc = LineCollection(segments, cmap='turbo_r', norm=norm)
+    lc.set_array(c)
+    lc.set_linewidth(2)
+
+    # Create the figure
+    fig, ax = plt.subplots(1, 1, figsize=(10, 7.5))
+
+    # Plot the stimulus onset and chance dashed line
+    ax.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
+        alpha=.5, label='_nolegend_')
+
+    # Plot the behavioral modeling RSA correlation scores, colored by DNN
+    # layer assignment
+    ax.add_collection(lc)
+
+    # x-axis parameters
+    ax.set_xlabel('Time (ms)', fontsize=fontsize)
+    xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+    xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+    plt.xticks(ticks=xticks, labels=xlabels)
+    ax.set_xlim(left=min(times), right=max(times))
+
+    # y-axis parameters
+    ax.set_ylabel("Pearson's $r$", fontsize=fontsize)
+    yticks = [0, 0.1, 0.2, 0.3, 0.4]
+    ylabels = [0, 0.1, 0.2, 0.3, 0.4]
+    plt.yticks(ticks=yticks, labels=ylabels)
+    ax.set_ylim(bottom=-.03, top=.25)
+
+    # Colorbar
+    if args.dnn_model == 'alexnet':
+        model = 'AlexNet'
+    elif args.dnn_model == 'resnet50':
+        model = 'ResNet-50'
+    plt.colorbar(lc, ax=ax, label=f'{model} layers')
+
+    # Save the figure
+    save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+        'dnn_layerwise_modeling', 'plots')
+    file_name = os.path.join(save_dir, f'layer_assignment_roi-{roi}.svg')
+    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+    plt.close()
+
+
+# =============================================================================
+# Plot all ROIs on the same graph
+# =============================================================================
+# Define the ROIs to plot
+rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
+
+# Create the figure
+fig, ax = plt.subplots(1, 1, figsize=(10, 7.5))
+
+# Plot the stimulus onset and chance dashed line
+ax.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
+    alpha=.5, label='_nolegend_')
+
+# Loop across ROIs
+for r, roi in enumerate(rois):
+
+    # Get the plot data
+    x = times
+    y = np.mean(rsa_roi[roi], 0)
+    c = np.mean(best_layer_roi[roi], 0) + 1 # vector controlling color (add 1 so that the layers start from 1)
+
+    # Create line segments
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+
+    # Normalize colors
+    norm = Normalize(vmin=1, vmax=len(model_layers))
+
+    # Create LineCollection
+    lc = LineCollection(segments, cmap='turbo_r', norm=norm)
+    lc.set_array(c)
+    lc.set_linewidth(2)
+
+    # Plot the behavioral modeling RSA correlation scores, colored by DNN
+    # layer assignment
+    ax.add_collection(lc)
+
+# x-axis parameters
+ax.set_xlabel('Time (ms)', fontsize=fontsize)
+xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+plt.xticks(ticks=xticks, labels=xlabels)
+ax.set_xlim(left=min(times), right=max(times))
+
+# y-axis parameters
+ax.set_ylabel("Pearson's $r$", fontsize=fontsize)
+yticks = [0, 0.1, 0.2, 0.3, 0.4]
+ylabels = [0, 0.1, 0.2, 0.3, 0.4]
+plt.yticks(ticks=yticks, labels=ylabels)
+ax.set_ylim(bottom=-.03, top=.25)
+
+# Colorbar
+if args.dnn_model == 'alexnet':
+    model = 'AlexNet'
+elif args.dnn_model == 'resnet50':
+    model = 'ResNet-50'
+plt.colorbar(lc, ax=ax, label=f'{model} layers')
+
+# Save the figure
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'dnn_layerwise_modeling', 'plots')
+file_name = os.path.join(save_dir, f'layer_assignment_roi-all.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close()

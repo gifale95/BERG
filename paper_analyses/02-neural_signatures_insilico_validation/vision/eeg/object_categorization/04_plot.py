@@ -118,7 +118,7 @@ axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
 axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
-    linewidth=2, alpha=.5, label='_nolegend_')
+    linewidth=2, alpha=.25, label='_nolegend_')
 
 # Plot the decoding subject-average results
 # Exemplar decoding

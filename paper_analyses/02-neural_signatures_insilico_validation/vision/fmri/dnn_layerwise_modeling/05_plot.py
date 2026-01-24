@@ -197,7 +197,7 @@ data = np.append(np.nanmean(lh_best_layer, 0),
 vertex_data = cortex.Vertex(
     data,
     subject=subject,
-    cmap='inferno', # 'turbo_r'
+    cmap='turbo_r',
     vmin=1,
     vmax=len(lh_rsa.keys()),
     with_colorbar=True

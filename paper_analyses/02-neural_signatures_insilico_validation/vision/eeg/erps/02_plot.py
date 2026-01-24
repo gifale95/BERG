@@ -96,7 +96,8 @@ colors = [
 fig = plt.figure(figsize=(10, 7.5))
 
 # Plot the stimulus onset dashed line
-plt.plot([0, 0], [100, -100], 'k--', linewidth=2, alpha=.5, label='_nolegend_')
+plt.plot([0, 0], [100, -100], 'k--', linewidth=2, alpha=.25,
+    label='_nolegend_')
 
 # Loop across channel groups
 chan_groups = ['O', 'P', 'T', 'C', 'F']

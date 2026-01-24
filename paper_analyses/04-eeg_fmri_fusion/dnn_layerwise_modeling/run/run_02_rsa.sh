@@ -13,7 +13,7 @@ declare -a dnn_model_all
 index=0
 for s in `seq 1 8` ; do
     for h in 'lh' 'rh' ; do
-        for m in 'alexnet' 'resnet50' ; do
+        for m in 'alexnet' ; do
             fmri_subject_all[$index]=$s
             hemisphere_all[$index]=$h
             dnn_model_all[$index]=$m

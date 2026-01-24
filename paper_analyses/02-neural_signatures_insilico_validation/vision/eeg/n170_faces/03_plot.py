@@ -96,7 +96,8 @@ colors = [(139/255, 0/255, 0/255), (0/255, 0/255, 0/255)]
 fig = plt.figure(figsize=(10, 7.5))
 
 # Plot the stimulus onset dashed line
-plt.plot([0, 0], [100, -100], 'k--', linewidth=2, alpha=.5, label='_nolegend_')
+plt.plot([0, 0], [100, -100], 'k--', linewidth=2, alpha=.25,
+    label='_nolegend_')
 
 # Plot the ERPs
 plt.plot(times, np.mean(erp_faces, 0), color=colors[0], linewidth=2,

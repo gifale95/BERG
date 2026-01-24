@@ -103,7 +103,7 @@ axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
 axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
-    linewidth=2, alpha=.5, label='_nolegend_')
+    linewidth=2, alpha=.25, label='_nolegend_')
 
 # Plot the RSA subject-average results
 axs[0].plot(times, np.mean(decoding, 0), color='k', linewidth=2)
@@ -175,7 +175,7 @@ axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
 axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
-    linewidth=2, alpha=.5, label='_nolegend_')
+    linewidth=2, alpha=.25, label='_nolegend_')
 
 # Loop across channel groups
 for c, key in enumerate(model_layers):

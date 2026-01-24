@@ -62,6 +62,7 @@ rsa_roi = results['rsa_roi']
 ci_rsa_roi = results['ci_rsa_roi']
 ci_rsa_roi_peak_lat = results['ci_rsa_roi_peak_lat']
 times = results['times']
+del results
 
 
 # =============================================================================
@@ -121,8 +122,9 @@ for t, time in enumerate(tqdm(times)):
 
 
 # =============================================================================
-# Plot parameters
+# Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
 # =============================================================================
+# Plot parameters
 fontsize = 25
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams["font.weight"] = "normal"
@@ -147,12 +149,8 @@ matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 
-
-# =============================================================================
-# Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
-# =============================================================================
 # Define the ROIs to plot
-rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
+rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA']
 
 # Get the plot colors
 def sample_cmap(N):
@@ -167,7 +165,7 @@ fig = plt.figure(figsize=(10, 7.5))
 
 # Plot the stimulus onset and chance dashed line
 plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
-    alpha=.5, label='_nolegend_')
+    alpha=.25, label='_nolegend_')
 
 # Loop across ROIs
 for r, roi in enumerate(rois):
@@ -203,7 +201,7 @@ plt.ylabel("Pearson's $r$", fontsize=fontsize)
 yticks = [0, 0.1, 0.2, 0.3, 0.4]
 ylabels = [0, 0.1, 0.2, 0.3, 0.4]
 plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylim(bottom=-.03, top=.25)
+plt.ylim(bottom=-.03, top=.3)
 
 # Legend
 plt.legend(fontsize=15, loc=0, ncols=3, frameon=False)

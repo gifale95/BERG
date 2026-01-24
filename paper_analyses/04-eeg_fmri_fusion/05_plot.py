@@ -133,34 +133,6 @@ for t, time in enumerate(tqdm(times)):
 
 
 # =============================================================================
-# Plot parameters
-# =============================================================================
-fontsize = 25
-matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
-matplotlib.rcParams["font.weight"] = "normal"
-matplotlib.rcParams["axes.labelweight"] = "normal"
-matplotlib.rcParams['font.size'] = fontsize
-plt.rc('xtick', labelsize=fontsize)
-plt.rc('ytick', labelsize=fontsize)
-matplotlib.rcParams['axes.linewidth'] = 1
-matplotlib.rcParams['xtick.major.width'] = 0
-matplotlib.rcParams['xtick.major.size'] = 5
-matplotlib.rcParams['ytick.major.width'] = 0
-matplotlib.rcParams['ytick.major.size'] = 5
-matplotlib.rcParams['axes.spines.right'] = False
-matplotlib.rcParams['axes.spines.top'] = False
-matplotlib.rcParams['axes.spines.left'] = True
-matplotlib.rcParams['axes.spines.bottom'] = True
-matplotlib.rcParams['lines.markersize'] = 3
-matplotlib.rcParams['axes.grid'] = False
-matplotlib.rcParams['grid.linewidth'] = 2
-matplotlib.rcParams['grid.alpha'] = .3
-matplotlib.use("svg")
-plt.rcParams["text.usetex"] = False
-plt.rcParams['svg.fonttype'] = 'none'
-
-
-# =============================================================================
 # Plot the vertex-average correlations between t-fMRI and in silico fMRI test
 # responses
 # =============================================================================
@@ -205,6 +177,31 @@ plt.rcParams['svg.fonttype'] = 'none'
 # =============================================================================
 # Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
 # =============================================================================
+# Plot parameters
+fontsize = 25
+matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams["font.weight"] = "normal"
+matplotlib.rcParams["axes.labelweight"] = "normal"
+matplotlib.rcParams['font.size'] = fontsize
+plt.rc('xtick', labelsize=fontsize)
+plt.rc('ytick', labelsize=fontsize)
+matplotlib.rcParams['axes.linewidth'] = 1
+matplotlib.rcParams['xtick.major.width'] = 0
+matplotlib.rcParams['xtick.major.size'] = 5
+matplotlib.rcParams['ytick.major.width'] = 0
+matplotlib.rcParams['ytick.major.size'] = 5
+matplotlib.rcParams['axes.spines.right'] = False
+matplotlib.rcParams['axes.spines.top'] = False
+matplotlib.rcParams['axes.spines.left'] = True
+matplotlib.rcParams['axes.spines.bottom'] = True
+matplotlib.rcParams['lines.markersize'] = 3
+matplotlib.rcParams['axes.grid'] = False
+matplotlib.rcParams['grid.linewidth'] = 2
+matplotlib.rcParams['grid.alpha'] = .3
+matplotlib.use("svg")
+plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
+
 # Define the ROIs to plot
 rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA']
 
@@ -221,7 +218,7 @@ fig = plt.figure(figsize=(10, 7.5))
 
 # Plot the stimulus onset and chance dashed line
 plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
-    alpha=.5, label='_nolegend_')
+    alpha=.25, label='_nolegend_')
 
 # Loop across ROIs
 for r, roi in enumerate(rois):

@@ -71,7 +71,6 @@ n_time = len(times)
 rois = ['V1', 'V2', 'V3', 'hV4', 'OFA', 'FFA', 'OWFA', 'VWFA', 'OPA', 'PPA',
     'RSC', 'EBA', 'FBA', 'early', 'intermediate', 'ventral', 'lateral',
     'parietal']
-n_roi = len(rois)
 
 # Empty correlation array of shape:
 # (N fMRI subjects, 2 hemispheres, 163842 fMRI vertices, 140 EEG time points)
