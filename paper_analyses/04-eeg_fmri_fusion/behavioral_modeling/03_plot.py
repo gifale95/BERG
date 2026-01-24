@@ -1,4 +1,4 @@
-"""Plot the encoding accuracy of the EEG-fMRI fusion encoding models.
+"""Plot RSA results between t-fMRI responses and behavioral embeddings.
 
 Parameters
 ----------
@@ -6,7 +6,7 @@ fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
     are integers from 1 8.
-hemisphere : list
+hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
 ncsnr_threshold : float
@@ -28,8 +28,12 @@ import cortex
 import matplotlib
 import matplotlib.pyplot as plt
 
+
+# =============================================================================
+# Input arguments
+# =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
@@ -38,51 +42,32 @@ args, unknown = parser.parse_known_args()
 
 
 # =============================================================================
-# Load the results
-# =============================================================================
-results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats',
-    'stats.npy')
-
-results = np.load(results_dir, allow_pickle=True).item()
-
-metadata = results['metadata']
-times = results['times']
-corr_tfmri_fmri = results['corr_tfmri_fmri']
-corr_tfmri_fmri_roi = results['corr_tfmri_fmri_roi']
-ci_corr_tfmri_fmri_roi = results['ci_corr_tfmri_fmri_roi']
-ci_corr_tfmri_fmri_roi_peak_lat = results['ci_corr_tfmri_fmri_roi_peak_lat']
-
 # Create the plots save directory
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
-    'encoding_accuracy_surfaceplots')
+# =============================================================================
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'behavioral_modeling', 'plots', 'rsa_surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
-# Vertex selection
+# Load the RSA results
 # =============================================================================
-for s, sub in enumerate(args.fmri_subjects):
-    for h, hemi in enumerate(args.hemispheres):
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'behavioral_modeling', 'stats', 'stats.npy')
 
-        # NCSNR and encoding accuracy vertex selection
-        ncsnr = metadata[s]['fmri'][hemi+'_ncsnr']
-        idx_ncsnr = ncsnr >= args.ncsnr_threshold
-        encoding = metadata[s]['encoding_models']\
-            [hemi+'_explained_variance_nsdcore']
-        idx_encoding = encoding >= args.encoding_threshold
-        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
+results = np.load(data_dir, allow_pickle=True).item()
 
-        corr_tfmri_fmri[s,h,idx_nan] = np.nan
+rsa = results['rsa']
+rsa_roi = results['rsa_roi']
+ci_rsa_roi = results['ci_rsa_roi']
+ci_rsa_roi_peak_lat = results['ci_rsa_roi_peak_lat']
+times = results['times']
 
 
-# =============================================================================
-# Plot the encoding accuracy of the EEG-fMRI fusion encoding models on brain
-# surfaces (subject-average)
 # =============================================================================
 # Plot parameters
+# =============================================================================
 fontsize = 40
-matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
-matplotlib.rcParams['font.size'] = fontsize
 plt.rc('xtick', labelsize=19)
 plt.rc('ytick', labelsize=19)
 matplotlib.use("svg")
@@ -90,21 +75,24 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 subject = 'fsaverage_nsd_sub-01'
 
+
+# =============================================================================
+# Plot the RSA results
+# =============================================================================
 # Loop over EEG time points
 for t, time in enumerate(tqdm(times)):
 
     # Average the results across subjects, and append them across left and
     # right hemishperes
-    data = np.append(np.nanmean(corr_tfmri_fmri[:,0,:,t], 0),
-        np.nanmean(corr_tfmri_fmri[:,1,:,t], 0))
-
+    data = np.append(np.nanmean(rsa[:,0,:,t], 0), np.nanmean(rsa[:,1,:,t], 0))
+    
     # Create the flat brain surface
     vertex_data = cortex.Vertex(
         data,
         subject,
         cmap='afmhot',
         vmin=0,
-        vmax=1,
+        vmax=0.3,
         with_colorbar=True)
 
     # Plot the flat brain surface
@@ -127,7 +115,7 @@ for t, time in enumerate(tqdm(times)):
     plt.title(title, fontsize=fontsize)
 
     # Save the plot
-    plot_file = os.path.join(save_dir, f'correlation_time-{t:03d}.png')
+    plot_file = os.path.join(save_dir, f'rsa_time-{t:03d}.png')
     plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
     plt.close()
 
@@ -161,52 +149,10 @@ plt.rcParams['svg.fonttype'] = 'none'
 
 
 # =============================================================================
-# Plot the vertex-average correlations between t-fMRI and in silico fMRI test
-# responses
-# =============================================================================
-# # Create the plots save directory
-# save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots')
-# os.makedirs(save_dir, exist_ok=True)
-
-# # Create the figure
-# fig = plt.figure(figsize=(10, 7.5))
-
-# # Plot the stimulus onset and chance dashed line
-# plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
-#     alpha=.5, label='_nolegend_')
-
-# # Plot the correlation
-# plt.plot(times, np.nanmean(corr_tfmri_fmri, (0, 1, 2)), color='k', linewidth=2)
-
-# # Plot the confidence intervals # !!!
-# plt.fill_between(times, ci_rsa[chan][1], ci_rsa[chan][0],
-#     color='k', alpha=.1)
-
-# # x-axis parameters
-# plt.xlabel('Time (ms)', fontsize=fontsize)
-# xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
-# xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
-# plt.xticks(ticks=xticks, labels=xlabels)
-# plt.xlim(left=min(times), right=max(times))
-
-# # y-axis parameters
-# plt.ylabel("Pearson's $r$", fontsize=fontsize)
-# yticks = [0, 0.2, 0.4, 0.6, 0.8]
-# ylabels = [0, 0.2, 0.4, 0.6, 0.8]
-# plt.yticks(ticks=yticks, labels=ylabels)
-# plt.ylim(bottom=-.025, top=.6)
-
-# # Save the figure
-# file_name = os.path.join(save_dir, 'correlation.svg')
-# fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-# plt.close()
-
-
-# =============================================================================
 # Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
 # =============================================================================
 # Define the ROIs to plot
-rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA']
+rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
 
 # Get the plot colors
 def sample_cmap(N):
@@ -227,23 +173,23 @@ plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
 for r, roi in enumerate(rois):
 
     # Plot the correlation
-    plt.plot(times, np.mean(corr_tfmri_fmri_roi[roi], 0),
+    plt.plot(times, np.mean(rsa_roi[roi], 0),
         color=colors[r], linewidth=2, label=roi)
 
     # Plot the CIs
-    plt.fill_between(times, ci_corr_tfmri_fmri_roi[roi][1],
-        ci_corr_tfmri_fmri_roi[roi][0], color=colors[r], alpha=.1)
+    plt.fill_between(times, ci_rsa_roi[roi][1],
+        ci_rsa_roi[roi][0], color=colors[r], alpha=.1)
 
     # Plot the peak time point
-    peak = times[np.argmax(np.mean(corr_tfmri_fmri_roi[roi], 0))]
-    max_corr = max(np.mean(corr_tfmri_fmri_roi[roi], 0))
-    plt.scatter(peak, max_corr, color=colors[r], s=200, marker='o',
-        edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
-    ci_low = peak - ci_corr_tfmri_fmri_roi_peak_lat[roi][0]
-    ci_up = ci_corr_tfmri_fmri_roi_peak_lat[roi][1] - peak
-    conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-    plt.errorbar(peak, max_corr, xerr=conf_int, fmt="none",
-        ecolor='k', elinewidth=1, capsize=3)
+    # peak = times[np.argmax(np.mean(rsa_roi[roi], 0))]
+    # max_corr = max(np.mean(rsa_roi[roi], 0))
+    # plt.scatter(peak, max_corr, color=colors[r], s=200, marker='o',
+    #     edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
+    # ci_low = peak - ci_rsa_roi_peak_lat[roi][0]
+    # ci_up = ci_rsa_roi_peak_lat[roi][1] - peak
+    # conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
+    # plt.errorbar(peak, max_corr, xerr=conf_int, fmt="none",
+    #     ecolor='k', elinewidth=1, capsize=3)
 
 # x-axis parameters
 plt.xlabel('Time (ms)', fontsize=fontsize)
@@ -254,16 +200,17 @@ plt.xlim(left=min(times), right=max(times))
 
 # y-axis parameters
 plt.ylabel("Pearson's $r$", fontsize=fontsize)
-yticks = [0, 0.2, 0.4, 0.6, 0.8]
-ylabels = [0, 0.2, 0.4, 0.6, 0.8]
+yticks = [0, 0.1, 0.2, 0.3, 0.4]
+ylabels = [0, 0.1, 0.2, 0.3, 0.4]
 plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylim(bottom=-.1, top=.8)
+plt.ylim(bottom=-.03, top=.25)
 
 # Legend
-plt.legend(fontsize=fontsize, loc=4, ncols=2, frameon=False)
+plt.legend(fontsize=15, loc=0, ncols=3, frameon=False)
 
 # Save the figure
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots')
-file_name = os.path.join(save_dir, 'roi_correlation.svg')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'behavioral_modeling', 'plots')
+file_name = os.path.join(save_dir, 'roi_rsa.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

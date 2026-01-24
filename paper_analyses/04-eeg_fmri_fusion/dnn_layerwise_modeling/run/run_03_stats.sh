@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg_eeg_fmri_fusion-dnn_layerwise_modeling-03_stats
 #SBATCH --mail-type=end
 #SBATCH --mem=50000
-#SBATCH --time=00:05:00
+#SBATCH --time=00:20:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

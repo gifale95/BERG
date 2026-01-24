@@ -35,7 +35,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
 parser.add_argument('--channels', default='O-P', type=str)
-parser.add_argument('--dnn_model', default='resnet50', type=str)
+parser.add_argument('--dnn_model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -164,8 +164,8 @@ elif args.dnn_model == 'resnet50':
 # Get the plot colors
 def sample_cmap(N):
     cmap = plt.cm.get_cmap('inferno')
-    values = np.linspace(0, 1, N)
-    colors = cmap(values)
+    values = np.linspace(0, 1, N+2)
+    colors = cmap(values)[1:-1]
     return colors
 colors = sample_cmap(len(model_layers))
 

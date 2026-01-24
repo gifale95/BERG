@@ -22,6 +22,7 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
+from tqdm import tqdm
 
 
 # =============================================================================
@@ -47,12 +48,12 @@ lh_rsa = {}
 rh_rsa = {}
 metadata_fmri = []
 
-for s, sub in enumerate(args.fmri_subjects):
+for s, sub in enumerate(tqdm(args.fmri_subjects)):
     for h, hemi in enumerate(args.hemispheres):
 
         results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
             'dnn_layerwise_modeling', 'rsa',
-            f'rsa_sub-{sub:02d}_{hemi}_dnn_model-{args.dnn_model}.npy')
+            f'rsa_fmri_sub-{sub:02d}_{hemi}_dnn_model-{args.dnn_model}.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         for key, val in results['rsa'].items():
@@ -67,6 +68,8 @@ for s, sub in enumerate(args.fmri_subjects):
 
         if h == 0:
             metadata_fmri.append(results['metadata_fmri'])
+
+        del results
 
 for key in lh_rsa.keys():
     lh_rsa[key] = np.array(lh_rsa[key])
@@ -100,7 +103,7 @@ lh_best_layer = []
 rh_best_layer = []
 
 # Loop across subjects
-for s, sub in enumerate(args.fmri_subjects):
+for s, sub in enumerate(tqdm(args.fmri_subjects)):
 
     # Append the results across all layers
     lh_rsa_all_layers = []
@@ -136,7 +139,7 @@ rh_best_layer = np.array(rh_best_layer)
 results = {
     'lh_best_layer': lh_best_layer,
     'rh_best_layer': rh_best_layer,
-    'metadata_fmri', metadata_fmri
+    'metadata_fmri': metadata_fmri
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',

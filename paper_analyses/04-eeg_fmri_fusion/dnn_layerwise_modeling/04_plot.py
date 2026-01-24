@@ -70,7 +70,7 @@ for s, sub in enumerate(args.fmri_subjects):
 
         results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
             'dnn_layerwise_modeling', 'rsa',
-            f'rsa_sub-{sub:02d}_{hemi}_dnn_model-{args.dnn_model}.npy')
+            f'rsa_fmri_sub-{sub:02d}_{hemi}_dnn_model-{args.dnn_model}.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
         # NCSNR and encoding accuracy vertex selection

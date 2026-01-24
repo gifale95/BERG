@@ -1,6 +1,5 @@
-"""Aggregate the t-fMRI encoding accuracies across fMRI subjects and
-hemispheres, and compute the ROI-wise correlations between the in silico fMRI
-responses and the t-fMRI responses.
+"""Aggregate the behavioral modeling RSA scores across fMRI subjects and
+hemispheres, and compute the ROI-wise RSA scores.
 
 Parameters
 ----------
@@ -63,7 +62,6 @@ metadata_eeg = berg.get_model_metadata(
 times = metadata_eeg['eeg']['times']
 
 # Analysis parameters
-metadata = []
 n_fsub = len(args.fmri_subjects)
 n_hemi = len(args.hemispheres)
 n_vertex = 163842
@@ -73,55 +71,43 @@ rois = ['V1', 'V2', 'V3', 'hV4', 'OFA', 'FFA', 'OWFA', 'VWFA', 'OPA', 'PPA',
     'parietal']
 n_roi = len(rois)
 
-# Empty correlation array of shape:
+
+# =============================================================================
+# Load the RSA results
+# =============================================================================
+# Empty RSA correlation array of shape:
 # (N fMRI subjects, 2 hemispheres, 163842 fMRI vertices, 140 EEG time points)
-corr_tfmri_fmri = np.zeros((n_fsub, n_hemi, n_vertex, n_time),
-    dtype=np.float32)
-corr_tfmri_fmri[:] = np.nan
+rsa = np.zeros((n_fsub, n_hemi, n_vertex, n_time), dtype=np.float32)
+rsa[:] = np.nan
+metadata = []
 
-
-# =============================================================================
-# Load the correlation results
-# =============================================================================
-# Loop across fMRI subjects
+# Loop across fMRI subjects and hemispheres
 for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
-
-    # Load the subject's metadata
-    metadata.append(berg.get_model_metadata(
-        'fmri-nsd_fsaverage-huze',
-        subject=fsub
-        ))
-
-    # Loop across fMRI hemispheres
     for h, hemi in enumerate(args.hemispheres):
 
-        # Only select vertices falling within the NSD visual streams
-        idx_v = np.zeros(n_vertex, dtype=int)
-        streams = ['early', 'midventral', 'midlateral', 'midparietal',
-            'ventral', 'lateral', 'parietal']
-        for stream in streams:
-            idx_v[metadata[fs]['fmri'][f'{hemi}_fsaverage_rois'][stream]] = 1
-        idx_v = np.where(idx_v == 1)[0]
-
-        # Load and store the correlation scores
+        # Load and store the RSA correlation scores
         data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'encoding_fusion_accuracy')
-        file_name = f'corr_fmri_sub-{fsub:02d}_hemi-{hemi}.npy'
-        corr_tfmri_fmri[fs,h,idx_v] = np.load(os.path.join(data_dir, file_name))
+            'behavioral_modeling', 'rsa')
+        file_name = f'rsa_fmri_sub-{fsub:02d}_{hemi}.npy'
+        results = np.load(os.path.join(data_dir, file_name),
+            allow_pickle=True).item()
+        rsa[fs,h] = results['rsa']
+        if h == 0:
+            metadata.append(results['metadata_fmri'])
 
 
 # =============================================================================
-# Get the ROI-wise correlations between t-fMRI and in silico fMRI responses
+# Get the ROI-wise RSA scores
 # =============================================================================
 # Empty result dictionary
-corr_tfmri_fmri_roi = {}
+rsa_roi = {}
 
 # Loop across ROIs
 for r, roi in enumerate(rois):
 
     # Empty ROI correlation array of shape:
     # (N fMRI subjects, 140 EEG time points)
-    corr_tfmri_fmri_roi[roi] = np.zeros((len(args.fmri_subjects), n_time),
+    rsa_roi[roi] = np.zeros((len(args.fmri_subjects), n_time),
         dtype=np.float32)
 
     # Loop across subjects and hemispheres
@@ -161,41 +147,26 @@ for r, roi in enumerate(rois):
             # Get the correlation scores of the above threshold vertices
             # from the chosen ROI
             if h == 0:
-                corr = corr_tfmri_fmri[fs,h,idx_roi]
+                corr = rsa[fs,h,idx_roi]
             else:
-                corr = np.append(corr, corr_tfmri_fmri[fs,h,idx_roi], 0)
+                corr = np.append(corr, rsa[fs,h,idx_roi], 0)
         
         # Store the mean correlation across ROI vertices
-        corr_tfmri_fmri_roi[roi][fs] = np.nanmean(corr, 0)
+        rsa_roi[roi][fs] = np.nanmean(corr, 0)
         del corr
-
-
-# =============================================================================
-# Compute the significance (ROI-wise in silico fMRI vs t-fMRI correlation
-# scores)
-# =============================================================================
-# sig_corr_tfmri_fmri_roi = {}
-
-# for key, val in corr_tfmri_fmri_roi.items():
-
-#     # Calculate the p-values with t-tests
-#     pval = ttest_1samp(val, 0, axis=0, alternative='greater')[1]
-
-#     # Correct for multiple comparisons
-#     sig_corr_tfmri_fmri_roi[key] = multipletests(pval, 0.05, 'fdr_bh')[0]
 
 
 # =============================================================================
 # Bootstrap the confidence intervals (ROI-wise in silico fMRI vs t-fMRI
 # correlation scores)
 # =============================================================================
-ci_corr_tfmri_fmri_roi = {}
-ci_corr_tfmri_fmri_roi_peak_lat = {}
+ci_rsa_roi = {}
+ci_rsa_roi_peak_lat = {}
 
-for key, val in tqdm(corr_tfmri_fmri_roi.items()):
+for key, val in tqdm(rsa_roi.items()):
 
-    ci_corr_tfmri_fmri_roi[key] = np.zeros((2, n_time))
-    ci_corr_tfmri_fmri_roi_peak_lat[key] = np.zeros((2))
+    ci_rsa_roi[key] = np.zeros((2, n_time))
+    ci_rsa_roi_peak_lat[key] = np.zeros((2))
     corr_dist = np.zeros((args.n_iter, n_time))
     peak_lat_dist = np.zeros((args.n_iter))
 
@@ -204,10 +175,10 @@ for key, val in tqdm(corr_tfmri_fmri_roi.items()):
         corr_dist[i] = np.mean(val[idx], 0)
         peak_lat_dist[i] = times[np.argmax(np.mean(val[idx], 0))]
 
-    ci_corr_tfmri_fmri_roi[key][0] = np.percentile(corr_dist, 2.5, axis=0)
-    ci_corr_tfmri_fmri_roi[key][1] = np.percentile(corr_dist, 97.5, axis=0)
-    ci_corr_tfmri_fmri_roi_peak_lat[key][0] = np.percentile(peak_lat_dist, 2.5)
-    ci_corr_tfmri_fmri_roi_peak_lat[key][1] = np.percentile(peak_lat_dist, 97.5)
+    ci_rsa_roi[key][0] = np.percentile(corr_dist, 2.5, axis=0)
+    ci_rsa_roi[key][1] = np.percentile(corr_dist, 97.5, axis=0)
+    ci_rsa_roi_peak_lat[key][0] = np.percentile(peak_lat_dist, 2.5)
+    ci_rsa_roi_peak_lat[key][1] = np.percentile(peak_lat_dist, 97.5)
 
 
 # =============================================================================
@@ -216,13 +187,14 @@ for key, val in tqdm(corr_tfmri_fmri_roi.items()):
 results = {
     'metadata': metadata,
     'times': times,
-    'corr_tfmri_fmri': corr_tfmri_fmri,
-    'corr_tfmri_fmri_roi': corr_tfmri_fmri_roi,
-    'ci_corr_tfmri_fmri_roi': ci_corr_tfmri_fmri_roi,
-    'ci_corr_tfmri_fmri_roi_peak_lat': ci_corr_tfmri_fmri_roi_peak_lat
+    'rsa': rsa,
+    'rsa_roi': rsa_roi,
+    'ci_rsa_roi': ci_rsa_roi,
+    'ci_rsa_roi_peak_lat': ci_rsa_roi_peak_lat
 }
 
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'behavioral_modeling', 'stats')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'

@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-behavioral_modeling-02_plot
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-behavioral_modeling-02_stats
 #SBATCH --mail-type=end
 #SBATCH --mem=7000
 #SBATCH --time=02:00:00
@@ -14,4 +14,4 @@ conda activate general
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/behavioral_modeling
 
 # Run the job
-python 02_plot.py
+python 02_stats.py

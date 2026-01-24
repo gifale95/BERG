@@ -41,7 +41,7 @@ metadata = berg.get_model_metadata(
 # Load the ROI indices
 fsaverage_rois = np.empty(163842)
 fsaverage_rois[:] = np.nan
-rois = ['OVWFA', 'VWFA-1', 'VWFA-2', 'mfs-words', 'mTL-words']
+rois = ['OWFA', 'VWFA-1', 'VWFA-2', 'mfs-words', 'mTL-words']
 for r, roi in enumerate(rois):
     idx = metadata['fmri'][args.hemisphere+'_fsaverage_rois'][roi]
     fsaverage_rois[idx] = r + 1
