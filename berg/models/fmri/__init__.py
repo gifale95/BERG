@@ -5,3 +5,4 @@ import berg.models.fmri.nsd_fsaverage_huze
 import berg.models.fmri.things_fmri_1_vit_b_32
 import berg.models.fmri.mosaic_CNN8_multihead_subNSD_verticesAll
 import berg.models.fmri.mosaic_CNN8_multihead_subAll_verticesVisual
+import berg.models.fmri.text2fmri
