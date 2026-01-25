@@ -49,7 +49,7 @@ for key, val in vars(args).items():
 
 
 # =============================================================================
-# EEG metadata and analysis parameters
+# Empty result arrays
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
@@ -86,7 +86,7 @@ for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
 
         # Load and store the RSA correlation scores
         data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'behavioral_modeling', 'rsa')
+            'behavioral_modeling_100_voxel_neighbor', 'rsa')
         file_name = f'rsa_fmri_sub-{fsub:02d}_{hemi}.npy'
         results = np.load(os.path.join(data_dir, file_name),
             allow_pickle=True).item()
@@ -193,7 +193,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'behavioral_modeling', 'stats')
+    'behavioral_modeling_100_voxel_neighbor', 'stats')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'

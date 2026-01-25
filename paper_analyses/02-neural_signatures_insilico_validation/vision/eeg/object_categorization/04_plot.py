@@ -239,6 +239,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
         plt.yticks([])
     #    plt.ylim(bottom=min(eeg_mds[:,1].flatten()),
     #        top=max(eeg_mds[:,1].flatten()))
+
         # Title
         title = 'Time: ' + str(np.round((times[t]*1000))) + ' ms'
         plt.title(title, fontsize=fontsize)

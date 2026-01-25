@@ -49,7 +49,7 @@ for key, val in vars(args).items():
 
 
 # =============================================================================
-# EEG metadata and analysis parameters
+# Empty result arrays
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
@@ -72,87 +72,25 @@ rois = ['V1', 'V2', 'V3', 'hV4', 'OFA', 'FFA', 'OWFA', 'VWFA', 'OPA', 'PPA',
 
 
 # =============================================================================
-# Load the RSA results
+# Load the ROI-wise RSA results
 # =============================================================================
-# Empty RSA correlation array of shape:
-# (N fMRI subjects, 2 hemispheres, 163842 fMRI vertices, 140 EEG time points)
-rsa = np.zeros((n_fsub, n_hemi, n_vertex, n_time), dtype=np.float32)
-rsa[:] = np.nan
+rsa_roi = {}
 metadata = []
 
-# Loop across fMRI subjects and hemispheres
+# Loop across fMRI subjects
 for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
-    for h, hemi in enumerate(args.hemispheres):
 
-        # Load and store the RSA correlation scores
-        data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'behavioral_modeling', 'rsa')
-        file_name = f'rsa_fmri_sub-{fsub:02d}_{hemi}.npy'
-        results = np.load(os.path.join(data_dir, file_name),
-            allow_pickle=True).item()
-        rsa[fs,h] = results['rsa']
-        if h == 0:
-            metadata.append(results['metadata_fmri'])
+    data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+        'behavioral_modeling_roiwise', 'rsa', f'rsa_fmri_sub-{fsub:02d}.npy')
 
+    data = np.load(data_dir, allow_pickle=True).item()
 
-# =============================================================================
-# Get the ROI-wise RSA scores
-# =============================================================================
-# Empty result dictionary
-rsa_roi = {}
+    metadata.append(data['metadata_fmri'])
 
-# Loop across ROIs
-for r, roi in enumerate(rois):
-
-    # Empty ROI correlation array of shape:
-    # (N fMRI subjects, 140 EEG time points)
-    rsa_roi[roi] = np.zeros((len(args.fmri_subjects), n_time),
-        dtype=np.float32)
-
-    # Loop across subjects and hemispheres
-    for fs, fsub in enumerate(args.fmri_subjects):
-        for h, hemi in enumerate(args.hemispheres):
-
-            # Get the indices of the ROI vertices
-            if roi in ['V1', 'V2', 'V3']:
-                idx_roi = np.append(
-                    metadata[fs]['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}v'],
-                    metadata[fs]['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}d'])
-                idx_roi.sort()
-            elif roi in ['FFA', 'VWFA', 'FBA']:
-                idx_roi = np.append(
-                    metadata[fs]['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}-1'],
-                    metadata[fs]['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}-2'])
-                idx_roi.sort()
-            elif roi in ['intermediate']:
-                idx_roi = np.append(
-                    metadata[fs]['fmri'][f'{hemi}_fsaverage_rois']['midventral'],
-                    metadata[fs]['fmri'][f'{hemi}_fsaverage_rois']['midlateral'])
-                idx_roi = np.append(idx_roi,
-                    metadata[fs]['fmri'][f'{hemi}_fsaverage_rois']['midparietal'])
-                idx_roi.sort()
-            else:
-                idx_roi = metadata[fs]['fmri'][f'{hemi}_fsaverage_rois'][roi]
-
-            # NCSNR and encoding accuracy vertex selection
-            ncsnr = metadata[fs]['fmri'][hemi+'_ncsnr'][idx_roi]
-            idx_ncsnr = ncsnr >= args.ncsnr_threshold
-            encoding = metadata[fs]['encoding_models']\
-                [hemi+'_explained_variance_nsdcore'][idx_roi]
-            idx_encoding = encoding >= args.encoding_threshold
-            idx_vertex = np.logical_and(idx_ncsnr, idx_encoding)
-            idx_roi = idx_roi[idx_vertex]
-
-            # Get the correlation scores of the above threshold vertices
-            # from the chosen ROI
-            if h == 0:
-                corr = rsa[fs,h,idx_roi]
-            else:
-                corr = np.append(corr, rsa[fs,h,idx_roi], 0)
-        
-        # Store the mean correlation across ROI vertices
-        rsa_roi[roi][fs] = np.nanmean(corr, 0)
-        del corr
+    for roi in data['rsa_roi'].keys():
+        if fs == 0:
+            rsa_roi[roi] = np.zeros((n_fsub, n_time))
+        rsa_roi[roi][fs] = data['rsa_roi'][roi]
 
 
 # =============================================================================
@@ -186,14 +124,13 @@ for key, val in tqdm(rsa_roi.items()):
 results = {
     'metadata': metadata,
     'times': times,
-    'rsa': rsa,
     'rsa_roi': rsa_roi,
     'ci_rsa_roi': ci_rsa_roi,
     'ci_rsa_roi_peak_lat': ci_rsa_roi_peak_lat
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'behavioral_modeling', 'stats')
+    'behavioral_modeling_roiwise', 'stats')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'
