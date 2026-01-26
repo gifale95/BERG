@@ -1288,7 +1288,7 @@ class Mapping:
                 clf.alpha_ = clf.alpha_[roi_indices]
             
             # Use the user-specified order
-            selected_neuroid_order = np.array(roi_selection)
+            selected_neuroid_order = roi_selection
             self.prefitted_clf = clf
             self.prefitted_clf_neuroid_order = selected_neuroid_order
             print(f"Loaded {len(roi_indices)} ROIs: {list(selected_neuroid_order)}")
