@@ -194,7 +194,7 @@ class Text2fMRI(BaseModelInterface):
 
     @classmethod
     def get_metadata(cls, berg_dir=None, model_instance=None, roi=None, **kwargs) -> dict[str, Any]:
-        pass
+        return model_info
 
     def _extract_network_names(self):
         """
