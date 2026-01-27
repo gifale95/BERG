@@ -1,4 +1,4 @@
-# Brain Encoding Response Generator (BERG)
+![BERG logo](docs/img/berg_logo.png)
 
 📋 **BERG Survey** 📋
 
