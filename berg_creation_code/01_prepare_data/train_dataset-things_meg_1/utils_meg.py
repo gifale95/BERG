@@ -9,14 +9,14 @@ from tqdm import tqdm
 # Split training and test data
 # =============================================================================
 
-def split_meg_data(meg_filepath, output_dir, subject_id, batch_size, create_repeats=True):
+def split_meg_data(meg_filepath, output_dir, subject_id, batch_size, create_splits=True):
     """Split MEG neural data into training and test partitions.
     
     Load preprocessed MNE epochs and separate based on trial_type using
     chunked processing to minimize memory usage. Data is never fully loaded
     into memory - instead processed in batches and written directly to disk.
     
-    Optionally creates 4 random training repeats by shuffling training indices.
+    Optionally creates 4 random training splits by shuffling training indices.
     
     Parameters
     ----------
@@ -28,20 +28,20 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size, create_repe
         Subject identifier for file naming.
     batch_size : int
         Batch size for chunked processing.
-    create_repeats : bool, optional
-        Whether to create 4 random training repeats (default: True).
+    create_splits : bool, optional
+        Whether to create 4 random training splits (default: True).
         
     Output Files
     ------------
-    meg_{subject}_split-train.h5 : (22248, 271, 281)
+    meg_{subject}_all_training_splits.h5 : (22248, 271, 281)
     meg_{subject}_split-test.h5  : (2400, 271, 281)
     meg_{subject}_split-test_averaged.h5 : (200, 271, 281)
     
-    If create_repeats=True, additionally:
-    meg_{subject}_split-train_repeat_1.h5 : (5562, 271, 281)
-    meg_{subject}_split-train_repeat_2.h5 : (5562, 271, 281)
-    meg_{subject}_split-train_repeat_3.h5 : (5562, 271, 281)
-    meg_{subject}_split-train_repeat_4.h5 : (5562, 271, 281)
+    If create_splits=True, additionally:
+    meg_{subject}_single_training_split_1.h5 : (5562, 271, 281)
+    meg_{subject}_single_training_split_2.h5 : (5562, 271, 281)
+    meg_{subject}_single_training_split_3.h5 : (5562, 271, 281)
+    meg_{subject}_single_training_split_4.h5 : (5562, 271, 281)
     """
     print(f"Loading MNE epochs metadata from: {meg_filepath}")
     epochs = mne.read_epochs(meg_filepath, preload=False, verbose=False)
@@ -71,7 +71,7 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size, create_repe
     test_image_nrs = test_metadata['test_image_nr'].values
     
     # Create output files with pre-allocated datasets
-    train_file = os.path.join(output_dir, f'meg_{subject_id}_split-train.h5')
+    train_file = os.path.join(output_dir, f'meg_{subject_id}_all_training_splits.h5')
     test_file = os.path.join(output_dir, f'meg_{subject_id}_split-test.h5')
     
     with h5py.File(train_file, 'w') as f_train:
@@ -143,9 +143,9 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size, create_repe
     
     print(f"Averaged test shape: {test_averaged.shape}")
     
-    if create_repeats:
+    if create_splits:
         print("")
-        print("Creating 4 random training repeats...")
+        print("Creating 4 random training splits...")
         
         seed = 20200220
         np.random.seed(seed)
@@ -157,19 +157,19 @@ def split_meg_data(meg_filepath, output_dir, subject_id, batch_size, create_repe
         with h5py.File(train_file, 'r') as f_train:
             train_data = f_train['neural_data'][:]
         
-        for repeat_idx in range(1, 5):
-            start_idx = (repeat_idx - 1) * repeat_size
-            end_idx = repeat_idx * repeat_size
+        for split_idx in range(1, 5):
+            start_idx = (split_idx - 1) * repeat_size
+            end_idx = split_idx * repeat_size
             
-            repeat_indices = shuffled_indices[start_idx:end_idx]
-            repeat_data = train_data[repeat_indices]
+            split_indices = shuffled_indices[start_idx:end_idx]
+            split_data = train_data[split_indices]
             
-            repeat_file = os.path.join(output_dir, f'meg_{subject_id}_split-train_repeat_{repeat_idx}.h5')
+            split_file = os.path.join(output_dir, f'meg_{subject_id}_single_training_split_{split_idx}.h5')
             
-            with h5py.File(repeat_file, 'w') as f_repeat:
-                f_repeat.create_dataset('neural_data', data=repeat_data)
+            with h5py.File(split_file, 'w') as f_split:
+                f_split.create_dataset('neural_data', data=split_data)
             
-            print(f"Repeat {repeat_idx} shape: {repeat_data.shape}")
+            print(f"Split {split_idx} shape: {split_data.shape}")
         
         return shuffled_indices
     else:
@@ -272,7 +272,7 @@ def compute_noise_ceiling(meg_filepath, test_filepath, subject_id):
 # Create dataset metadata
 # =============================================================================
 
-def create_meg_metadata(meg_filepath, output_dir, subject_id, create_repeats=True, shuffled_indices=None):
+def create_meg_metadata(meg_filepath, output_dir, subject_id, create_splits=True, shuffled_indices=None):
     """Create comprehensive metadata file for MEG dataset.
     
     Generate metadata linking neural responses to THINGS database images through
@@ -479,7 +479,7 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, create_repeats=Tru
         },
         
         'encoding_model': {
-            'full': {
+            'all_training_splits': {
                 'train_img_ids': train_things_img_ids,
                 'train_stimuli': train_stimuli,
                 'train_concepts': train_concepts,
@@ -488,7 +488,7 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, create_repeats=Tru
                 'train_img_files': train_full_image_paths,
             },
             
-            'test_things_img_ids': test_things_img_ids,
+            'test_img_ids': test_things_img_ids,
             'test_stimuli': test_stimuli,
             'test_concepts': test_concepts,
             'test_image_nr': test_image_nr,
@@ -500,26 +500,26 @@ def create_meg_metadata(meg_filepath, output_dir, subject_id, create_repeats=Tru
             'noise_ceiling': noise_ceiling}
     }
     
-    if create_repeats:
+    if create_splits:
         if shuffled_indices is None:
-            raise ValueError("shuffled_indices must be provided when create_repeats=True")
+            raise ValueError("shuffled_indices must be provided when create_splits=True")
         
         n_train = len(train_things_img_ids)
-        repeat_size = n_train // 4
+        split_size = n_train // 4
         
-        for repeat_idx in range(1, 5):
-            start_idx = (repeat_idx - 1) * repeat_size
-            end_idx = repeat_idx * repeat_size
+        for split_idx in range(1, 5):
+            start_idx = (split_idx - 1) * split_size
+            end_idx = split_idx * split_size
             
-            repeat_indices = shuffled_indices[start_idx:end_idx]
+            split_indices = shuffled_indices[start_idx:end_idx]
             
-            metadata_dict['encoding_model'][f'repeat_{repeat_idx}'] = {
-                'train_img_ids': train_things_img_ids[repeat_indices],
-                'train_stimuli': [train_stimuli[i] for i in repeat_indices],
-                'train_concepts': [train_concepts[i] for i in repeat_indices],
-                'train_sessions': train_sessions[repeat_indices],
-                'train_runs': train_runs[repeat_indices],
-                'train_img_files': train_full_image_paths[repeat_indices]
+            metadata_dict['encoding_model'][f'single_training_split_{split_idx}'] = {
+                'train_img_ids': train_things_img_ids[split_indices],
+                'train_stimuli': [train_stimuli[i] for i in split_indices],
+                'train_concepts': [train_concepts[i] for i in split_indices],
+                'train_sessions': train_sessions[split_indices],
+                'train_runs': train_runs[split_indices],
+                'train_img_files': train_full_image_paths[split_indices]
             }
     
     # Save metadata
