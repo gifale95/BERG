@@ -20,11 +20,11 @@ We thank you and look forward to your input!
 
 ---
 
-The **Brain Encoding Response Generator (BERG)** is a resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.
+The [**Brain Encoding Response Generator (BERG)**][website] is a resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.
 
 In silico neural responses from encoding models increasingly resemble in vivo responses recorded from real brains, enabling the novel research paradigm of in silico neuroscience. In silico neural responses are quick and cheap to generate, allowing researchers to explore and test scientific hypotheses across vastly larger solution spaces than possible in vivo. Novel findings from large-scale in silico experimentation are then validated through targeted small-scale in vivo data collection, in this way optimizing research resources. Thus, in silico neuroscience scales beyond what is possible with in vivo data, and democratizes research across groups with diverse data collection infrastructure and resources. To catalyze this emerging research paradigm, we introduce the Brain Encoding Response Generator (BERG), a resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code. BERG includes a growing, well documented library of encoding models trained on different neural data acquisition modalities, datasets, subjects, stimulation types, and brain areas, offering broad versatility for addressing a wide range of research questions through in silico neuroscience.
 
-For additional information on BERG, you can check out our [paper][paper] and [documentation][documentation].
+For additional information on BERG, you can check out our [website][website], [paper][paper], and [documentation][documentation].
 
 
 
@@ -197,6 +197,7 @@ If you use BERG, please cite:
 > *Gifford AT, Bersch D, Janini D, Roig G, Cichy RM. 2025. The Brain Encoding Response Generator. In preparation. https://github.com/gifale95/BERG*
 
 
+[website]: https://gifale95.github.io/BERG/
 [paper]: https://2025.ccneuro.org/poster/?id=dIxr3CPuPR
 [documentation]: https://brain-encoding-response-generator.readthedocs.io/en/latest/
 [berg_structure]: https://brain-encoding-response-generator.readthedocs.io/en/latest/data_storage.html#
