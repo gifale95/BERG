@@ -60,6 +60,9 @@ class Text2fMRI(BaseModelInterface):
         model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
 
+    # Setting it to None so that no calls to hugging face are made during the import
+    pretrained_configs_dict = None
+
     def __init__(self, berg_dir: str = None, selection: dict = None, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "auto", low_mem_use: bool = False):
         """
         Initialize the Text2fMRI interface.
@@ -88,8 +91,8 @@ class Text2fMRI(BaseModelInterface):
         self.config: Text2fMRIConfig = config
         self.berg_dir = berg_dir
         self.selection = selection
-        self.PRETRAINED_CONFIGS: dict[Text2fMRIConfig, str] = get_pretrained_model_configs(
-            self._collection_slug)
+        if Text2fMRI.pretrained_configs_dict is None:
+            Text2fMRI.get_pretrained_configs()
         self._validate_parameters()
         self.roi = self.selection.get(
             "roi", None) if self.selection is not None else None
@@ -100,12 +103,12 @@ class Text2fMRI(BaseModelInterface):
         """
         Validate the input parameters against the model specs.
         """
-        if self.config not in self.PRETRAINED_CONFIGS:
+        if self.config not in self.pretrained_configs_dict:
             logging.warning(
                 f"Config {self.config} not found in pretrained registry. "
                 "Model will be initialized with RANDOM weights. "
                 "To use a pretrained model, ensure parameters match a valid config."
-                f"Pretrained configs: {self.PRETRAINED_CONFIGS.keys()}"
+                f"Pretrained configs: {self.pretrained_configs_dict.keys()}"
             )
 
         if self.selection is not None:
@@ -118,6 +121,25 @@ class Text2fMRI(BaseModelInterface):
                     self.selection["roi"], self.VALID_ROIS
                 )
 
+    @classmethod
+    def get_pretrained_configs(cls) -> list[Text2fMRIConfig]:
+        """
+        A list of all pretrained configs available on HuggingFace. Choose from this list to get a pretrained model.
+
+        Returns
+        -------
+        List[Text2fMRIConfig]:
+            A list of all pretrained configs available on HuggingFace.
+
+        Notes
+        -----
+        This property is a lazy loader, meaning it only loads the registry when first accessed.
+        """
+        if cls.pretrained_configs_dict is None:
+            cls.pretrained_configs_dict = get_pretrained_model_configs(
+                cls._collection_slug)
+        return list(cls.pretrained_configs_dict.keys())
+
     def load_model(self, load_feature_extractor=True):
         """
         Loads the neural network weights and optionally the LLM backbone.
@@ -129,8 +151,8 @@ class Text2fMRI(BaseModelInterface):
             self.feature_extractor.load_model()
         self.model = Text2fMRIModel(config=self.config, device=self.device)
 
-        if self.config in self.PRETRAINED_CONFIGS:
-            self.model.load_model(self.PRETRAINED_CONFIGS)
+        if self.config in self.pretrained_configs_dict:
+            self.model.load_model(self.pretrained_configs_dict)
         self.model.eval()
 
     @torch.no_grad()
