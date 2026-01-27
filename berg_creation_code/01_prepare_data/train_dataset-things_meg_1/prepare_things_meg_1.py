@@ -19,21 +19,21 @@ meg_data_dir : str
     Directory containing the preprocessed MEG .fif files.
 batch_size : int
     Batch size for chunked processing to manage memory usage.
-create_repeats : bool
-    Whether to create 4 random training repeats (default: True).
+create_splits : bool
+    Whether to create 4 random training splits (default: True).
 
 
 Output Files Created (per subject):
 ────────────────────────────────────────────────────────────────
-meg_{subject}_split-train.h5                : (22248, 271, 281) - Non-normalized training data
+meg_{subject}_all_training_splits.h5        : (22248, 271, 281) - Non-normalized training data (all splits)
 meg_{subject}_split-test.h5                 : (2400, 271, 281)  - Non-normalized test data
 meg_{subject}_split-test_averaged.h5        : (200, 271, 281)   - Non-normalized averaged test data
 
-If create_repeats=True, additionally:
-meg_{subject}_split-train_repeat_1.h5         : (5562, 271, 281)  - Training repeat 1
-meg_{subject}_split-train_repeat_2.h5         : (5562, 271, 281)  - Training repeat 2
-meg_{subject}_split-train_repeat_3.h5         : (5562, 271, 281)  - Training repeat 3
-meg_{subject}_split-train_repeat_4.h5         : (5562, 271, 281)  - Training repeat 4
+If create_splits=True, additionally:
+meg_{subject}_single_training_split_1.h5    : (5562, 271, 281)  - Training split 1
+meg_{subject}_single_training_split_2.h5    : (5562, 271, 281)  - Training split 2
+meg_{subject}_single_training_split_3.h5    : (5562, 271, 281)  - Training split 3
+meg_{subject}_single_training_split_4.h5    : (5562, 271, 281)  - Training split 4
 
 meg_{subject}_metadata.npy                  :
 
@@ -48,27 +48,27 @@ meg_{subject}_metadata.npy                  :
     n_sensors                  : int      - Number of MEG sensors (271)
     
 'encoding_model':
-    full:                                  - Full training data
-        train_img_ids          : (22248,) - THINGS image IDs for full training (for ViT linking)
-        train_concepts         : (22248,) - Object category IDs (1–1854) for full training
-        train_stimuli          : (22248,) - Image filenames for full training
-        train_sessions         : (22248,) - Session numbers for full training trials
-        train_runs             : (22248,) - Run numbers for full training trials
-        train_img_files        : (22248,) - Full image paths on disk for full training images
-        correlation_results    : (271, 281) - Prediction accuracy for full training (added by 01_test_encoding.py)
-        percent_noise_ceiling  : (271, 281) - Percent noise ceiling for full training (added by 01_test_encoding.py)
+    all_training_splits:                   - Training data and encoding accuracy results for encoding models trained on all training splits
+        train_img_ids          : (22248,) - THINGS image IDs for train trials
+        train_concepts         : (22248,) - Object category IDs for train trials
+        train_stimuli          : (22248,) - Image filenames for train trials
+        train_sessions         : (22248,) - Session numbers for train trials
+        train_runs             : (22248,) - Run numbers for train trials
+        train_img_files        : (22248,) - Full image paths for train trials
+        correlation_results    : (271, 281) - Prediction accuracy (Pearson's r) (added by 01_test_encoding.py)
+        percent_noise_ceiling  : (271, 281) - Noise ceiling normalized prediction accuracy (% of noise ceiling) (added by 01_test_encoding.py)
     
-    repeat_{N}:                           - Training data for repeat N (N=1,2,3,4)
-        train_img_ids          : (5562,)  - THINGS image IDs for training repeat N
-        train_concepts         : (5562,)  - Object category IDs for training repeat N
-        train_stimuli          : (5562,)  - Image filenames for training repeat N
-        train_sessions         : (5562,)  - Session numbers for training repeat N
-        train_runs             : (5562,)  - Run numbers for training repeat N
-        train_img_files        : (5562,)  - Full image paths for training repeat N
-        correlation_results    : (271, 281) - Prediction accuracy for repeat N (added by 01_test_encoding.py)
-        percent_noise_ceiling  : (271, 281) - Percent noise ceiling for repeat N (added by 01_test_encoding.py)
-    
-    test_things_img_ids        : (2400,)  - THINGS image IDs for test trials
+    single_training_split_{N}:            - Training data and encoding accuracy results for encoding models trained on training split N
+        train_img_ids          : (5562,)  - THINGS image IDs for train trials
+        train_concepts         : (5562,)  - Object category IDs for train trials
+        train_stimuli          : (5562,)  - Image filenames for train trials
+        train_sessions         : (5562,)  - Session numbers for train trials
+        train_runs             : (5562,)  - Run numbers for train trials
+        train_img_files        : (5562,)  - Full image paths for train trials
+        correlation_results    : (271, 281) - Prediction accuracy (Pearson's r) (added by 01_test_encoding.py)
+        percent_noise_ceiling  : (271, 281) - Noise ceiling normalized prediction accuracy (% of noise ceiling) (added by 01_test_encoding.py)
+
+    test_img_ids               : (2400,)  - THINGS image IDs for test trials
     test_stimuli               : (2400,)  - Image filenames for test trials
     test_concepts              : (2400,)  - Object category IDs for test trials
     test_image_nr              : (2400,)  - Test image numbers (1–200, repeated over repetitions)
@@ -96,8 +96,8 @@ parser.add_argument('--meg_data_dir', required=True, type=str,
                     help="Directory containing preprocessed MEG .fif files.")
 parser.add_argument('--batch_size', default=1000, type=int,
                     help="Batch size for chunked processing.")
-parser.add_argument('--create_repeats', default=True, type=lambda x: str(x).lower() == 'true',
-                    help="Create 4 random training repeats (default: True).")
+parser.add_argument('--create_splits', default=True, type=lambda x: str(x).lower() == 'true',
+                    help="Create 4 random training splits (default: True).")
 args = parser.parse_args()
 
 print('>>> MEG THINGS-data preparation <<<')
@@ -120,7 +120,7 @@ if not os.path.exists(meg_file):
 # =============================================================================
 print("")
 print("Splitting training and testing data")
-shuffled_indices = split_meg_data(meg_file, output_dir, args.subject, args.batch_size, args.create_repeats)
+shuffled_indices = split_meg_data(meg_file, output_dir, args.subject, args.batch_size, args.create_splits)
 
 
 # =============================================================================
@@ -132,7 +132,7 @@ create_meg_metadata(
     meg_filepath=meg_file,
     output_dir=output_dir,
     subject_id=args.subject,
-    create_repeats=args.create_repeats,
+    create_splits=args.create_splits,
     shuffled_indices=shuffled_indices)
 
 print("\nPreparation complete!")

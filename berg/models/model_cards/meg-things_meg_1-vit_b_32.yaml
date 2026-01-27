@@ -47,7 +47,7 @@ metadata: |
       sensor_regions             : (271,)   - Region labels ('Frontal', 'Central', 'Parietal', 'Temporal', 'Occipital')
       n_sensors                  : int      - Number of MEG sensors (271)
   'encoding_model':
-      All training splits:        - Training data and encoding accuracy results for encoding models trained on all training splits
+      'all_training_splits':       - Training data and encoding accuracy results for encoding models trained on all training splits
           train_img_ids          : (22248,) - THINGS image IDs for train trials
           train_concepts         : (22248,) - Object category IDs for train trials
           train_stimuli          : (22248,) - Image filenames for train trials
@@ -57,7 +57,7 @@ metadata: |
           correlation_results    : (271, 281) - Prediction accuracy (Pearson's r)
           percent_noise_ceiling  : (271, 281) - Noise ceiling normalized prediction accuracy (% of noise ceiling)
       
-      Single training splits (split N):  - Training data and encoding accuracy results for encoding models trained on training split N (N=1,2,3,4)
+      'single_training split_{N}':  - Training data and encoding accuracy results for encoding models trained on training split N (N=1,2,3,4)
           train_img_ids          : (5562,)  - THINGS image IDs for train trials
           train_concepts         : (5562,)  - Object category IDs for train trials
           train_stimuli          : (5562,)  - Image filenames for train trials
@@ -92,7 +92,7 @@ input:
 output:
   description: "The output is a 3D or 4D array containing in silico MEG responses."
   type: "numpy.ndarray"
-  shape: [batch_size, n_sensors, n_timepoints] or [batch_size, repeats, n_sensors, n_timepoints]
+  shape: "[batch_size, n_sensors, n_timepoints] or [batch_size, repeats, n_sensors, n_timepoints]"
   dimensions:
     - name: "batch_size"
       description: "Number of stimuli in the batch."

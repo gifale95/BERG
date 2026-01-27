@@ -65,7 +65,7 @@ class MEGEncodingModel(BaseModelInterface):
     MODEL_ID = model_info["model_id"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
-    VALID_TRAIN_REPEATS = model_info["parameters"]["train_repeat"]["valid_values"]
+    VALID_TRAIN_SPLITS = model_info["parameters"]["train_splits"]["valid_values"]
     VALID_REGIONS = model_info["parameters"]["selection"]["properties"]["region"]["valid_values"]
     VALID_SENSOR_PREFIXES = model_info["parameters"]["selection"]["properties"]["sensors"]["valid_values"]
     SENSORS_LENGTH = 271
@@ -76,7 +76,7 @@ class MEGEncodingModel(BaseModelInterface):
         subject: str, 
         device: str = "auto", 
         selection: Optional[Dict] = None,
-        train_repeat: str = "full",
+        train_splits: str = "all",
         berg_dir: Optional[str] = None
     ):
         """
@@ -96,15 +96,15 @@ class MEGEncodingModel(BaseModelInterface):
             - sensors: List of sensor prefix codes (MLC, MLF, MLO, etc.)
             - sensor_index: Binary one-hot encoded vector for sensor selection
             - timepoints: Binary one-hot encoded vector for timepoint selection
-        train_repeat : str or int, default="full"
-            Training data partition to use. Options are "full" (complete training set)
-            or 1, 2, 3, 4 (randomly shuffled quarters).
+        train_splits : str, default="all"
+            Training data split specification. Options are "all" (complete training set)
+            or "single" (four independent splits generating 4 repeats per image).
         berg_dir : str, optional
             Root path to the BERG directory containing model files and weights.
         """
         # Assign Parameters
         self.subject = subject
-        self.train_repeat = train_repeat
+        self.train_splits = train_splits
         self.berg_dir = berg_dir
         self.model = None
         
@@ -133,11 +133,10 @@ class MEGEncodingModel(BaseModelInterface):
         # Validate subject
         validate_subject(self.subject, self.VALID_SUBJECTS)
         
-        # Validate train_repeat - accept "full" or integers 1-4
-        valid_repeats = ["full", 1, 2, 3, 4]
-        if self.train_repeat not in valid_repeats:
+        # Validate train_splits
+        if self.train_splits not in self.VALID_TRAIN_SPLITS:
             raise InvalidParameterError(
-                f"train_repeat must be 'full' or 1, 2, 3, 4, got '{self.train_repeat}'"
+                f"train_splits must be one of {self.VALID_TRAIN_SPLITS}, got '{self.train_splits}'"
             )
         
         if self.selection is not None:
@@ -250,9 +249,21 @@ class MEGEncodingModel(BaseModelInterface):
             self.feature_extractor = self._load_feature_extractor(self.device)
             
             # Load the scalers, PCA, and trained regression weights (only for selection)
-            self.scaler, self.pca, self.reg = self._load_encoding_weights()
+            if self.train_splits == "single":
+                # Load 4 separate models for single splits mode
+                self.scalers = []
+                self.pcas = []
+                self.regs = []
+                for split_idx in range(1, 5):
+                    scaler, pca, reg = self._load_encoding_weights(split_idx)
+                    self.scalers.append(scaler)
+                    self.pcas.append(pca)
+                    self.regs.append(reg)
+            else:
+                # Load single model for all splits mode
+                self.scaler, self.pca, self.reg = self._load_encoding_weights()
             
-            print(f"Model loaded on {self.device} for subject {self.subject} (train_repeat: {self.train_repeat})")
+            print(f"Model loaded on {self.device} for subject {self.subject} (train_splits: {self.train_splits})")
             
         except Exception as e:
             raise ModelLoadError(f"Failed to load model: {str(e)}")
@@ -304,10 +315,16 @@ class MEGEncodingModel(BaseModelInterface):
         
         return feature_extractor
     
-    def _load_encoding_weights(self):
+    def _load_encoding_weights(self, split_idx=None):
         """
         Load pretrained scaler, PCA, and regression weights.
         Only loads regression weights for selected sensors and timepoints.
+        
+        Parameters
+        ----------
+        split_idx : int, optional
+            If provided, loads weights for single_training_split_{split_idx}.
+            Otherwise loads weights for all_training_splits.
         
         Returns
         -------
@@ -318,11 +335,11 @@ class MEGEncodingModel(BaseModelInterface):
             - reg : LinearRegression - Model with only selected weights
         """
         # Load all weights
-        # Convert train_repeat to filename format
-        if self.train_repeat == "full":
-            filename_repeat = "full"
+        # Convert train_splits to filename format
+        if split_idx is not None:
+            filename_splits = f"single_training_split_{split_idx}"
         else:
-            filename_repeat = f"repeat_{self.train_repeat}"
+            filename_splits = "all_training_splits"
         
         weights_dir = os.path.join(
             self.berg_dir, 
@@ -331,7 +348,7 @@ class MEGEncodingModel(BaseModelInterface):
             'train_dataset-things_meg_1', 
             'model-vit_b_32',
             'encoding_models_weights',
-            f'weights_P{self.subject}_{filename_repeat}.npy'
+            f'weights_P{self.subject}_{filename_splits}.npy'
         )
         weights = np.load(weights_dir, allow_pickle=True).item()
         
@@ -448,22 +465,45 @@ class MEGEncodingModel(BaseModelInterface):
                 ft = torch.cat(batch_features, dim=-1)
                 ft = ft.detach().cpu().numpy()
                 
-                # Process features through scaler and PCA
-                ft = self.scaler.transform(ft)
-                ft = self.pca.transform(ft)
-                ft = ft.astype(np.float32)
-                
-                # Generate predictions with model
-                batch_pred = self.reg.predict(ft)
+                if self.train_splits == "single":
+                    # Generate predictions from all 4 splits
+                    batch_responses_list = []
+                    for split_idx in range(4):
+                        # Process features through scaler and PCA for this split
+                        ft_split = self.scalers[split_idx].transform(ft)
+                        ft_split = self.pcas[split_idx].transform(ft_split)
+                        ft_split = ft_split.astype(np.float32)
+                        
+                        # Generate predictions with this split's model
+                        batch_pred = self.regs[split_idx].predict(ft_split)
+                        
+                        # Reshape to (batch_size, n_sensors, n_timepoints)
+                        batch_resp = batch_pred.reshape(
+                            batch_pred.shape[0],
+                            len(self.selected_sensors),
+                            len(self.selected_timepoints)
+                        )
+                        batch_responses_list.append(batch_resp)
+                    
+                    # Stack along repeat dimension: (batch_size, 4, n_sensors, n_timepoints)
+                    batch_responses = np.stack(batch_responses_list, axis=1).astype(np.float32)
+                else:
+                    # Process features through scaler and PCA
+                    ft = self.scaler.transform(ft)
+                    ft = self.pca.transform(ft)
+                    ft = ft.astype(np.float32)
+                    
+                    # Generate predictions with model
+                    batch_pred = self.reg.predict(ft)
 
-                # Reshape to (batch_size, n_sensors, n_timepoints)
-                batch_responses = batch_pred.reshape(
-                    batch_pred.shape[0],
-                    len(self.selected_sensors),
-                    len(self.selected_timepoints)
-                )
-                
-                batch_responses = batch_responses.astype(np.float32)
+                    # Reshape to (batch_size, n_sensors, n_timepoints)
+                    batch_responses = batch_pred.reshape(
+                        batch_pred.shape[0],
+                        len(self.selected_sensors),
+                        len(self.selected_timepoints)
+                    )
+                    
+                    batch_responses = batch_responses.astype(np.float32)
                 
                 # Combine with previous batches
                 if insilico_meg_responses is None:
@@ -489,7 +529,7 @@ class MEGEncodingModel(BaseModelInterface):
         cls, 
         berg_dir=None, 
         subject=None,
-        train_repeat="full", 
+        train_splits="all", 
         model_instance=None, 
         **kwargs
     ) -> Dict[str, Any]:
@@ -502,8 +542,8 @@ class MEGEncodingModel(BaseModelInterface):
             Path to BERG directory.
         subject : str
             Subject ID (1,2,3,4).
-        train_repeat : str or int
-            Training repeat specification ("full" or 1-4).
+        train_splits : str
+            Training splits specification ("all" or "single").
         model_instance : BaseModelInterface
             If provided, extract parameters from this model instance.
         **kwargs
@@ -518,13 +558,13 @@ class MEGEncodingModel(BaseModelInterface):
         if model_instance is not None:
             berg_dir = model_instance.berg_dir
             subject = model_instance.subject
-            train_repeat = model_instance.train_repeat
+            train_splits = model_instance.train_splits
         
         # If this method is called on an instance (rather than the class)
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             berg_dir = cls.berg_dir
             subject = cls.subject
-            train_repeat = cls.train_repeat
+            train_splits = cls.train_splits
         
         # Validate required parameters
         missing_params = []
@@ -532,8 +572,8 @@ class MEGEncodingModel(BaseModelInterface):
             missing_params.append('berg_dir')
         if subject is None:
             missing_params.append('subject')
-        if train_repeat is None:
-            missing_params.append('train_repeat')
+        if train_splits is None:
+            missing_params.append('train_splits')
         
         if missing_params:
             raise InvalidParameterError(
@@ -593,3 +633,4 @@ class MEGEncodingModel(BaseModelInterface):
             # Force CUDA cache clear if available
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
+                

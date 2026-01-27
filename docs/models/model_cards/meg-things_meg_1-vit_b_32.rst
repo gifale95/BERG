@@ -25,9 +25,10 @@ Model Summary
 Description
 ----------
 
-This encoding model consists of a linear mapping through linear regression of a vision transformer
+This encoding models consist of a linear mapping through linear regression of a vision transformer
 (Dosovitskiy et al., 2020) image features onto whole-brain magnetoencephalography (MEG) responses from the THINGS MEG1 dataset (Hebart et al., eLife 2023). The model provides features from all 12 transformer layers, using the full
-set of patch tokens per layer to represent each stimulus image. For each image stimulus, features are concatenated across all spatial tokens and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve as predictors for MEG responses. The model supports training on either the full training set or on randomly selected subsets (repeats) for investigating data efficiency and model robustness.
+set of patch tokens per layer to represent each stimulus image. For each image stimulus, features are concatenated across all spatial tokens and reduced to 250 principal components via principal-component analysis (PCA). These reduced features serve as predictors for MEG responses.
+The encoding models are trained on either the full training data, or on four independent training data random splits.
 
 **Neural data.** Encoding models were trained on the preprocessed data preparation provided in THINGS MEG1. MEG data were recorded from four human participants (P1–P4) viewing 1,854 object categories
 from the THINGS database (~22,000 naturalistic object images). Recordings were acquired with 271 sensors at
@@ -36,8 +37,9 @@ band-pass filtering (0.1–40 Hz), epoching, baseline correction (−100 to 0 ms
 sensors.
 
 **Model training partition.** Single-trial responses to approximately 22,000 unique naturalistic images were
-used for training. In addition to the full training set, the training data can be divided into four non-overlapping
-quarters (5,562 trials each) using a reproducible random shuffle (seed: 20200220).
+used for training. One set of encoding models are trained on the full training data. Another set of encoding
+models are trained on four independent training data random splits (of 5,562 trials each), therefore generating
+four different in silico MEG response predictions (i.e., repetitions) per image.
 
 **Model testing partition.** 200 test images, each repeated 12 times, were used for evaluation; the
 target responses correspond to the average MEG activity across repetitions.
@@ -73,45 +75,45 @@ Metadata
 **encoding_model**
 
 
-    **full**: *Full training data and results*
+    **all_training_splits**: *Training data and encoding accuracy results for encoding models trained on all training splits*
 
 
-    **train_img_ids** : ``(22248,)`` - THINGS image IDs for full training
+    **train_img_ids** : ``(22248,)`` - THINGS image IDs for train trials
 
-    **train_concepts** : ``(22248,)`` - Object category IDs for full training
+    **train_concepts** : ``(22248,)`` - Object category IDs for train trials
 
-    **train_stimuli** : ``(22248,)`` - Image filenames for full training
+    **train_stimuli** : ``(22248,)`` - Image filenames for train trials
 
-    **train_sessions** : ``(22248,)`` - Session numbers for full training
+    **train_sessions** : ``(22248,)`` - Session numbers for train trials
 
-    **train_runs** : ``(22248,)`` - Run numbers for full training
+    **train_runs** : ``(22248,)`` - Run numbers for train trials
 
-    **train_img_files** : ``(22248,)`` - Full image paths for full training
-
-    **correlation_results** : ``(271, 281)`` - Prediction accuracy (Pearson's r)
-
-    **percent_noise_ceiling** : ``(271, 281)`` - Percent noise ceiling
-
-    **repeat{N}**: *Training data and results for repeat N (N=1,2,3,4)*
-
-
-    **train_img_ids** : ``(5562,)`` - THINGS image IDs for repeat N
-
-    **train_concepts** : ``(5562,)`` - Object category IDs for repeat N
-
-    **train_stimuli** : ``(5562,)`` - Image filenames for repeat N
-
-    **train_sessions** : ``(5562,)`` - Session numbers for repeat N
-
-    **train_runs** : ``(5562,)`` - Run numbers for repeat N
-
-    **train_img_files** : ``(5562,)`` - Full image paths for repeat N
+    **train_img_files** : ``(22248,)`` - Full image paths for train trials
 
     **correlation_results** : ``(271, 281)`` - Prediction accuracy (Pearson's r)
 
-    **percent_noise_ceiling** : ``(271, 281)`` - Percent noise ceiling
+    **percent_noise_ceiling** : ``(271, 281)`` - Noise ceiling normalized prediction accuracy (% of noise ceiling)
 
-    **test_things_img_ids** : ``(2400,)`` - THINGS image IDs for test trials
+    **single_training split_{N}**: *Training data and encoding accuracy results for encoding models trained on training split N (N=1,2,3,4)*
+
+
+    **train_img_ids** : ``(5562,)`` - THINGS image IDs for train trials
+
+    **train_concepts** : ``(5562,)`` - Object category IDs for train trials
+
+    **train_stimuli** : ``(5562,)`` - Image filenames for train trials
+
+    **train_sessions** : ``(5562,)`` - Session numbers for train trials
+
+    **train_runs** : ``(5562,)`` - Run numbers for train trials
+
+    **train_img_files** : ``(5562,)`` - Full image paths for train trials
+
+    **correlation_results** : ``(271, 281)`` - Prediction accuracy (Pearson's r)
+
+    **percent_noise_ceiling** : ``(271, 281)`` - Noise ceiling normalized prediction accuracy (% of noise ceiling)
+
+    **test_img_ids** : ``(2400,)`` - THINGS image IDs for test trials
 
     **test_stimuli** : ``(2400,)`` - Image filenames for test trials
 
@@ -146,9 +148,9 @@ Output
 ------
 
 **Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 'n_sensors', 'n_timepoints']``  
+**Shape**: ``[batch_size, n_sensors, n_timepoints] or [batch_size, repeats, n_sensors, n_timepoints]``  
 **Description**:  
-The output is a 3D array containing in silico MEG responses.
+The output is a 3D or 4D array containing in silico MEG responses.
 
 **Dimensions:**
 
@@ -160,6 +162,8 @@ The output is a 3D array containing in silico MEG responses.
      - Description
    * - batch_size
      - Number of stimuli in the batch.
+   * - repeats
+     - Number of simulated repetitions of the same stimulus (always 4; only applies when using the encoding models trained on single training data splits).
    * - n_sensors
      - Number of MEG sensors (up to 271, based on the number of sensors selected).
    * - n_timepoints
@@ -189,16 +193,14 @@ This function loads the encoding model.
        | **Description:** Subject ID from the THINGS MEG1 dataset.
        | **Valid Values:** 1, 2, 3, 4
        | **Example:** 1
-   * - **train_repeat**
-     - | **Type:** str or int
+   * - **train_splits**
+     - | **Type:** str
        | **Required:** No
-       | **Description:** Specifies which training data partition to use for the encoding model.
-       | - "full": Use the complete training set (22,248 trials, default)
-       | - 1, 2, 3, 4: Use one of four randomly shuffled quarters of the training 
-       |   data (5,562 trials each). The repeats are generated using a reproducible 
-       |   random seed (20200220) and are non-overlapping.
-       | **Valid Values:** "full", 1, 2, 3, 4
-       | **Example:** 1
+       | **Description:** Specifies the training data split on which the encoding model is trained.
+       | - "all": Use an encoding model trained on all traning data splits.
+       | - "single": Use encoding models trained on four independent training data random splits, therefore generating four different in silico MEG response predictions (i.e., repetitions) per image.
+       | **Valid Values:** "all", "single"
+       | **Example:** "single"
    * - **selection**
      - | **Type:** dict
        | **Required:** No
@@ -330,7 +332,7 @@ Example Usage
     model = berg.get_encoding_model(
         "meg-things_meg_1-vit_b_32",
         subject=1,
-        train_repeat=1,
+        train_splits="single",
         selection={
             "region": ["Central", "Frontal", "Occipital"],
             "sensors": ["MLC", "MLF", "MLO"],
@@ -351,8 +353,9 @@ Example Usage
     )
     
     # The in silico fMRI responses will be a numpy.ndarray of shape:
-    # ['batch_size', 'n_sensors', 'n_timepoints']
+    # [batch_size, n_sensors, n_timepoints] or [batch_size, repeats, n_sensors, n_timepoints]
     # where:
+    # - repeats: Number of simulated repetitions of the same stimulus (always 4; only applies when using the encoding models trained on single training data splits).
     # - n_sensors: Number of MEG sensors (up to 271, based on the number of sensors selected).
     # - n_timepoints: Number of time points in the MEG epoch (up to 281, based on the number of time points selected).
     
