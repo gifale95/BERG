@@ -65,9 +65,8 @@ del results
 
 
 # =============================================================================
-# Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
-# =============================================================================
 # Plot parameters
+# =============================================================================
 fontsize = 25
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams["font.weight"] = "normal"
@@ -92,6 +91,10 @@ matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 
+
+# =============================================================================
+# Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
+# =============================================================================
 # Define the ROIs to plot
 rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA']
 

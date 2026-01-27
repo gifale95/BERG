@@ -72,6 +72,27 @@ def corr_matrix(X):
 
     return (Xc.T @ Xc).astype(np.float32)
 
+def corr_matrix_eeg(X, Y):
+    """
+    Computes the correlation matrix of the input data.
+    Parameters
+    ----------
+    X : (N, M) float array
+        Input data matrix with N features and M samples.
+
+    Returns
+    -------
+    corr : (M, M) float array
+        Correlation matrix of the input data.
+    """
+
+    Xc = X - X.mean(axis=0)
+    Yc = Y - Y.mean(axis=0)
+    Xc /= np.sqrt((Xc**2).sum(axis=0))
+    Yc /= np.sqrt((Yc**2).sum(axis=0))
+
+    return (Xc.T @ Yc).astype(np.float32)
+
 
 # =============================================================================
 # Get the THINGS EEG2 test image metadata
@@ -145,19 +166,16 @@ times = metadata['eeg']['times']
 
 
 # =============================================================================
-# Create the EEG RDM (pairwise decoding)
+# Create the EEG RDMs
 # =============================================================================
-# Average the EEG responses across repeats
-eeg = np.mean(eeg, 1)
-
-# Results array of shape:
+# Result array of shape:
 # (Image conditions × Image conditions × EEG time points)
 eeg_rdm = np.zeros((len(eeg), len(eeg), len(times)), dtype=np.float32)
 
 # Loop over EEG time points and images
 for t in tqdm(range(len(times))):
 
-    eeg_rdm[:,:,t] = 1 - corr_matrix(eeg[:,:,t].T)
+    eeg_rdm[:,:,t] = 1 - corr_matrix_eeg(eeg[:,0,:,t].T, eeg[:,1,:,t].T)
 
 
 # =============================================================================
@@ -199,8 +217,6 @@ for t in range(len(times)):
 # Save the results
 # =============================================================================
 results = {
-    'eeg_rdm': eeg_rdm,
-    'beh_rdm': beh_rdm,
     'rsa': rsa,
     'metadata': metadata
 }

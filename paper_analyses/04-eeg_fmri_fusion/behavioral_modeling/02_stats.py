@@ -29,8 +29,6 @@ import os
 import numpy as np
 from tqdm import tqdm
 from berg import BERG
-from scipy.stats import ttest_1samp
-from statsmodels.stats.multitest import multipletests
 from sklearn.utils import resample
 
 parser = argparse.ArgumentParser()

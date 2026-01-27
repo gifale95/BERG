@@ -9,12 +9,6 @@ fmri_subjects : list
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
-ncsnr_threshold : float
-    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
-    vertex selection.
-encoding_threshold : float
-    The threshold on the encoding models explained variance for vertex
-    selection (in % units).
 berg_dir : str
     Directory of the BERG.
 
@@ -35,8 +29,6 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
-parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 

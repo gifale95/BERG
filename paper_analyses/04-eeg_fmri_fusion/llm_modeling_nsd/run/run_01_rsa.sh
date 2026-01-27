@@ -10,7 +10,7 @@
 declare -a fmri_subject_all
 declare -a hemisphere_all
 index=0
-for s in '1' '2' ; do
+for s in `seq 1 8` ; do
     for h in 'lh' 'rh' ; do
         fmri_subject_all[$index]=$s
         hemisphere_all[$index]=$h
@@ -30,7 +30,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate general
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion_ridge_new/llm_modeling_nsd
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/llm_modeling_nsd
 
 # Run the job
 python 01_rsa.py --fmri_subject $fmri_subject --hemisphere $hemisphere

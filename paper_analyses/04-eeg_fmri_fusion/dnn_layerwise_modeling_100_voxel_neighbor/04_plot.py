@@ -37,7 +37,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'plots', 'surfaceplots')
+    'dnn_layerwise_modeling_100_voxel_neighbor', 'plots', 'surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -45,7 +45,7 @@ os.makedirs(save_dir, exist_ok=True)
 # Load the RSA layerwise assignment results
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'stats', f'stats_dnn_model-{args.dnn_model}.npy')
+    'dnn_layerwise_modeling_100_voxel_neighbor', 'stats', f'stats_dnn_model-{args.dnn_model}.npy')
 
 results = np.load(data_dir, allow_pickle=True).item()
 
@@ -74,19 +74,6 @@ elif args.dnn_model == 'resnet50':
         'layer4.2.relu_2',
         'fc'
         ]
-
-
-# =============================================================================
-# Load the behavioral modeling RSA results
-# =============================================================================
-data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'behavioral_modeling', 'stats', 'stats.npy')
-
-results = np.load(data_dir, allow_pickle=True).item()
-
-rsa_roi = results['rsa_roi']
-ci_rsa_roi = results['ci_rsa_roi']
-del results
 
 
 # =============================================================================
@@ -212,7 +199,7 @@ plt.colorbar(ax, shrink=0.75, ticks=ticks,
 
 # Save the figure
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'plots')
+    'dnn_layerwise_modeling_100_voxel_neighbor', 'plots')
 file_name = os.path.join(save_dir, f'layer_assignment_rois.svg')
 fig.savefig(file_name, bbox_inches='tight', dpi=300, transparent=True,
     format='svg')

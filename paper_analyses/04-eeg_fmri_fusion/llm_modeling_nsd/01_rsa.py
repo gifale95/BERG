@@ -232,11 +232,12 @@ for t in tqdm(range(len(times))):
     reg.n_features_in_ = reg_param['n_features_in_']
 
     # Generate the t-fMRI responses
-    tfmri_trials_avg = reg.predict(np.mean(eeg[:,:,:,t], 1))
+    tfmri_trials_avg = np.zeros((len(eeg), n_vertex), dtype=np.float32)
+    tfmri_trials_avg[:,idx_v] = reg.predict(np.mean(eeg[:,:,:,t], 1))
     tfmri_trials_single = np.zeros((len(eeg), eeg.shape[1], n_vertex),
         dtype=np.float32)
     for r in range(eeg.shape[1]):
-        tfmri_trials_single[:,r,:] = reg.predict(eeg[:,r,:,t])
+        tfmri_trials_single[:,r,idx_v] = reg.predict(eeg[:,r,:,t])
     del reg_param, reg
 
 

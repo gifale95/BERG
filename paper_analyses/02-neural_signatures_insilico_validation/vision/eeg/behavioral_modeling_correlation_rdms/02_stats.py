@@ -55,9 +55,8 @@ np.random.seed(seed)
 
 
 # =============================================================================
-# Load the decoding and RSA results
+# Load the RSA results
 # =============================================================================
-decoding = []
 rsa = []
 
 for sub in args.subjects:
@@ -68,47 +67,29 @@ for sub in args.subjects:
         format(sub,'02')+'_channels-'+'-'.join(args.channels)+'.npy')
     results = np.load(data_dir, allow_pickle=True).item()
 
-    # Get the decoding results
-    idx_tril = np.tril_indices(len(results['eeg_rdm']), -1)
-    decoding.append(np.mean(results['eeg_rdm'][idx_tril], 0))
-
-    # Get the RSA results
     rsa.append(results['rsa'])
-
-    # EEG metadata
     times = results['metadata']['eeg']['times']
 
 # Convert to numpy arrays
-decoding = np.asarray(decoding) * 100
 rsa = np.asarray(rsa)
 
 
 # =============================================================================
 # Bootstrap the confidence intervals (CIs)
 # =============================================================================
-ci_decoding = np.zeros((2, len(times)))
 ci_rsa = np.zeros((2, len(times)))
-ci_peak_latency_ci_decoding = np.zeros((2))
 ci_peak_latency_ci_rsa = np.zeros((2))
 
-decoding_dist = np.zeros((args.n_iter, len(times)))
 rsa_dist = np.zeros((args.n_iter, len(times)))
-peak_lat_dec_dist = np.zeros((args.n_iter))
 peak_lat_rsa_dist = np.zeros((args.n_iter))
 
 for i in tqdm(range(args.n_iter)):
     idx = resample(np.arange(len(args.subjects)))
-    decoding_dist[i] = np.mean(decoding[idx], 0)
     rsa_dist[i] = np.mean(rsa[idx], 0)
-    peak_lat_dec_dist[i] = times[np.argmax(np.mean(decoding[idx], 0))]
     peak_lat_rsa_dist[i] = times[np.argmax(np.mean(rsa[idx], 0))]
 
-ci_decoding[0] = np.percentile(decoding_dist, 2.5, axis=0)
-ci_decoding[1] = np.percentile(decoding_dist, 97.5, axis=0)
 ci_rsa[0] = np.percentile(rsa_dist, 2.5, axis=0)
 ci_rsa[1] = np.percentile(rsa_dist, 97.5, axis=0)
-ci_peak_latency_ci_decoding[0] = np.percentile(peak_lat_dec_dist, 2.5, axis=0)
-ci_peak_latency_ci_decoding[1] = np.percentile(peak_lat_dec_dist, 97.5, axis=0)
 ci_peak_latency_ci_rsa[0] = np.percentile(peak_lat_rsa_dist, 2.5, axis=0)
 ci_peak_latency_ci_rsa[1] = np.percentile(peak_lat_rsa_dist, 97.5, axis=0)
 
@@ -117,12 +98,9 @@ ci_peak_latency_ci_rsa[1] = np.percentile(peak_lat_rsa_dist, 97.5, axis=0)
 # Compute the significance
 # =============================================================================
 # Compute the p-values with t-tests
-pval_decoding = ttest_1samp(decoding, 50, axis=0, alternative='greater')[1]
 pval_rsa = ttest_1samp(rsa, 0, axis=0, alternative='greater')[1]
 
 # Correct for multiple comparisons
-sig_decoding, pval_decoding_corrected, _, _ = multipletests(pval_decoding,
-    0.05, 'fdr_bh')
 sig_rsa, pval_rsa_corrected, _, _ = multipletests(pval_rsa, 0.05, 'fdr_bh')
 
 
@@ -130,15 +108,10 @@ sig_rsa, pval_rsa_corrected, _, _ = multipletests(pval_rsa, 0.05, 'fdr_bh')
 # Save the results
 # =============================================================================
 results = {
-    'decoding': decoding,
     'rsa': rsa,
-    'ci_decoding': ci_decoding,
     'ci_rsa': ci_rsa,
-    'ci_peak_latency_ci_decoding': ci_peak_latency_ci_decoding,
     'ci_peak_latency_ci_rsa': ci_peak_latency_ci_rsa,
-    'pval_decoding': pval_decoding,
     'pval_rsa': pval_rsa,
-    'sig_decoding': sig_decoding,
     'sig_rsa': sig_rsa,
     'times': times
 }

@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-04_eeg_fmri_fusion-animacy_mds-01_mds
 #SBATCH --mail-type=end
-#SBATCH --mem=30000
-#SBATCH --time=10:00:00
+#SBATCH --mem=100000
+#SBATCH --time=04-00:00:00
 #SBATCH --qos=extended
 
 # Activate the Anaconda environment

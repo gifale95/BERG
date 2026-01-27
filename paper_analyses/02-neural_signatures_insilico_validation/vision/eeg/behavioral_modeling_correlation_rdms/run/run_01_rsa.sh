@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-eeg-behavioral_modeling_correlation_rdms-01_rsa
 #SBATCH --mail-type=end
-#SBATCH --mem=3000
-#SBATCH --time=00:15:00
+#SBATCH --mem=4000
+#SBATCH --time=00:10:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

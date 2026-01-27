@@ -171,7 +171,7 @@ def compute_t_statistics(beta_hat, sigma2_hat, XtX_inv, c):
     Computes voxel-wise t-statistics for the contrast.
     """
     # Contrast estimate: c^T beta
-    theta_hat = c @ beta_hat                # (V,)
+    theta_hat = c @ beta_hat # (V,)
 
     # Variance of contrast
     contrast_var = sigma2_hat * (c @ XtX_inv @ c)
