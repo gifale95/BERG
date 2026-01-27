@@ -286,13 +286,19 @@ html {
 .landing-hero-logo {
     text-align: center;
     margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .landing-hero-logo img {
     height: 400px;
     width: auto;
+    max-width: 100%;
     filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.3));
     transition: transform 0.3s ease;
+    display: block;
+    margin: 0 auto;
 }
 
 .landing-hero-logo img:hover {
