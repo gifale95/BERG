@@ -121,6 +121,7 @@ if 'F' in args.sensors:
 # Load the encoding model
 model = berg.get_encoding_model(
     args.encoding_model,
+    train_splits='all',
     subject=args.subject,
     selection={'region': region,
                'timepoints': timepoints}

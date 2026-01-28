@@ -213,7 +213,7 @@ plt.colorbar(ax, shrink=0.75, ticks=ticks,
 # Save the figure
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'dnn_layerwise_modeling', 'plots')
-file_name = os.path.join(save_dir, f'layer_assignment_rois.svg')
+file_name = os.path.join(save_dir, f'layer_assignment_rois_dnn_model-{args.dnn_model}.svg')
 fig.savefig(file_name, bbox_inches='tight', dpi=300, transparent=True,
     format='svg')
 plt.close()

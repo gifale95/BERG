@@ -16,7 +16,6 @@ berg_dir : str
 
 import argparse
 import os
-import random
 import numpy as np
 from PIL import Image
 from tqdm import tqdm
@@ -97,6 +96,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
     model = berg.get_encoding_model(
         args.encoding_model,
         subject=sub,
+        train_splits='all',
         selection={'timepoints': timepoints}
     )
 

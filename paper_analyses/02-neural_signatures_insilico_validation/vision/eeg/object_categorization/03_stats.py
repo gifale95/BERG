@@ -81,9 +81,7 @@ for s, sub in enumerate(args.subjects):
         eeg = np.append(eeg, np.mean(results['eeg'], 1), 1)
 
     # Get the exemplars decoding results
-    idx_tril = np.tril_indices(len(results['decoding_exemplars']), -1)
-    decoding_exemplars.append(np.mean(
-        results['decoding_exemplars'][idx_tril], 0))
+    decoding_exemplars.append(np.mean(results['decoding_exemplars'], 0))
 
     # Get the object category decoding results
     idx_tril = np.tril_indices(len(results['decoding_objects']), -1)

@@ -110,6 +110,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
     model = berg.get_encoding_model(
         args.encoding_model,
         subject=sub,
+        train_splits='all',
         selection={'timepoints': timepoints}
     )
 

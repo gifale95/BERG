@@ -68,7 +68,7 @@ for s, sub in enumerate(args.subjects):
 
     data_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'eeg',
-        'object_categorization_within_category_exemplar_decoding', 'pairwise_decoding', args.encoding_model,
+        'object_categorization', 'pairwise_decoding', args.encoding_model,
         'pairwise_decoding_sub-'+format(sub,'02')+'_channels-'+
         '-'.join(args.channels)+'.npy')
     results = np.load(data_dir, allow_pickle=True).item()
@@ -202,7 +202,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_categorization_within_category_exemplar_decoding', 'stats', args.encoding_model)
+    'vision', 'eeg', 'object_categorization', 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats_channels-' + '-'.join(args.channels) + '.npy'

@@ -86,6 +86,7 @@ if 'F' in args.sensors:
 model = berg.get_encoding_model(
     args.encoding_model,
     subject=args.subject,
+    train_splits='all',
     selection={'region': region,
                'timepoints': timepoints}
     )

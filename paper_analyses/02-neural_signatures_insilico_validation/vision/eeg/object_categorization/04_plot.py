@@ -40,19 +40,6 @@ args, unknown = parser.parse_known_args()
 
 
 # =============================================================================
-# Create the plots save directories
-# =============================================================================
-save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_categorization', 'plots', args.encoding_model)
-os.makedirs(save_dir, exist_ok=True)
-
-save_dir_mds = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_categorization', 'plots', args.encoding_model,
-    'mds')
-os.makedirs(save_dir_mds, exist_ok=True)
-
-
-# =============================================================================
 # Load the pairwise decoding results
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
@@ -80,8 +67,9 @@ eeg_mds_single_sub = results['eeg_mds_single_sub']
 
 
 # =============================================================================
-# Plot parameters
+# Plot the decoding accuracy results
 # =============================================================================
+# Plot parameters
 fontsize = 25
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams["font.weight"] = "normal"
@@ -108,10 +96,12 @@ plt.rcParams['svg.fonttype'] = 'none'
 colors = [(166/255, 77/255, 121/255), (100/255, 149/255, 237/255),
     (105/255, 105/255, 105/255)] # (169/255, 169/255, 169/255)]
 
+# Create the plots save directory
+save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
+    'vision', 'eeg', 'object_categorization', 'plots', args.encoding_model)
+os.makedirs(save_dir, exist_ok=True)
 
-# =============================================================================
-# Plot the decoding accuracy results
-# =============================================================================
+# Create the figure
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(10, 7.5))
 axs = np.reshape(axs, (-1))
@@ -208,11 +198,18 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 colors = [(100/255, 149/255, 237/255), (169/255, 169/255, 169/255)]
 
-# Loop acros subjects
+# Loop across subjects
 for s, sub in enumerate(tqdm(args.subjects)):
 
     # Select the MDS results from the subject of interest
     eeg_mds_sub = eeg_mds_single_sub[s]
+
+    # Create the plots save directory
+    save_dir_mds = os.path.join(args.berg_dir,
+        'neural_signatures_insilico_validation', 'vision', 'eeg',
+        'object_categorization', 'plots', args.encoding_model, 'mds',
+        f'sub-{sub:02d}')
+    os.makedirs(save_dir, exist_ok=True)
 
     # Loop across time points
     for t in range(len(times)):

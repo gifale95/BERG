@@ -118,47 +118,56 @@ eeg = berg.encode(model, images)
 # =============================================================================
 # Results array of shape:
 # (Images × Images × EEG time points)
-decoding_exemplars = np.zeros((len(eeg), len(eeg), len(times)),
-    dtype=np.float32)
+object_cats = 40
+exemplars_per_cat = 10
+decoding_exemplars = np.zeros((object_cats, len(times)), dtype=np.float32)
 
-# Loop over EEG time points and image exemplars
+# Loop over EEG time points and object categories
 for t in tqdm(range(len(times))):
-    for i1 in range(len(eeg)):
+    for c in range(object_cats):
 
-        # Select the data of the first image exemplar
-        eeg_cond_1 = eeg[i1,:,:,t]
+        # Select the data of object category
+        idx_c_start = c * exemplars_per_cat
+        idx_c_end = idx_c_start + exemplars_per_cat
+        eeg_cond = eeg[idx_c_start:idx_c_end,:,:,t]
 
-        for i2 in range(i1):
+        # Loop over object exemplars
+        scores = []
+        for e1 in range(len(eeg_cond)):
 
-            # Select the data of the second image exemplar
-            eeg_cond_2 = eeg[i2,:,:,t]
+            # Select the data of the first image exemplar
+            eeg_cond_1 = eeg_cond[e1]
 
-            # SVM target vectors
-            y_train = np.zeros(((len(eeg_cond_1)-1)*2))
-            y_train[int(len(y_train)/2):] = 1
-            y_test = np.asarray((0, 1))
-            scores = np.zeros(len(eeg_cond_1))
+            for e2 in range(e1):
 
-            # Loop across repeats (leave-one-repeat-out cross-decoding)
-            for r in range(len(eeg_cond_1)):
+                # Select the data of the second image exemplar
+                eeg_cond_2 = eeg_cond[e2]
 
-                # Define the train/test partitions
-                X_train = np.append(np.delete(eeg_cond_1, r, 0),
-                    np.delete(eeg_cond_2, r, 0), 0)
-                X_test = np.append(np.expand_dims(eeg_cond_1[r], 0),
-                    np.expand_dims(eeg_cond_2[r], 0), 0)
+                # SVM target vectors
+                y_train = np.zeros(((len(eeg_cond_1)-1)*2))
+                y_train[int(len(y_train)/2):] = 1
+                y_test = np.asarray((0, 1))
 
-                # Train the classifier
-                dec_svm = SVC(kernel='linear')
-                dec_svm.fit(X_train, y_train)
+                # Loop across repeats (leave-one-repeat-out cross-decoding)
+                for r in range(len(eeg_cond_1)):
 
-                # Test the classifier
-                y_pred = dec_svm.predict(X_test)
-                scores[r] = sum(y_pred == y_test) / len(y_test)
+                    # Define the train/test partitions
+                    X_train = np.append(np.delete(eeg_cond_1, r, 0),
+                        np.delete(eeg_cond_2, r, 0), 0)
+                    X_test = np.append(np.expand_dims(eeg_cond_1[r], 0),
+                        np.expand_dims(eeg_cond_2[r], 0), 0)
 
-            # Store the accuracy
-            decoding_exemplars[i1,i2,t] = np.mean(scores)
-            decoding_exemplars[i2,i1,t] = decoding_exemplars[i1,i2,t]
+                    # Train the classifier
+                    dec_svm = SVC(kernel='linear')
+                    dec_svm.fit(X_train, y_train)
+
+                    # Test the classifier
+                    y_pred = dec_svm.predict(X_test)
+                    scores.append(sum(y_pred == y_test) / len(y_test))
+
+        # Store the accuracy
+        decoding_exemplars[c,t] = np.mean(scores)
+        decoding_exemplars[c,t] = decoding_exemplars[c,t]
 
 
 # =============================================================================
@@ -166,8 +175,6 @@ for t in tqdm(range(len(times))):
 # =============================================================================
 # Results array of shape:
 # (Object categories × Object categories × EEG time points)
-object_cats = 40
-exemplars_per_cat = 10
 decoding_objects = np.zeros((object_cats, object_cats, len(times)),
     dtype=np.float32)
 

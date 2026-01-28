@@ -118,56 +118,47 @@ eeg = berg.encode(model, images)
 # =============================================================================
 # Results array of shape:
 # (Images × Images × EEG time points)
-object_cats = 40
-exemplars_per_cat = 10
-decoding_exemplars = np.zeros((object_cats, len(times)), dtype=np.float32)
+decoding_exemplars = np.zeros((len(eeg), len(eeg), len(times)),
+    dtype=np.float32)
 
-# Loop over EEG time points and object categories
+# Loop over EEG time points and image exemplars
 for t in tqdm(range(len(times))):
-    for c in range(object_cats):
+    for i1 in range(len(eeg)):
 
-        # Select the data of object category
-        idx_c_start = c * exemplars_per_cat
-        idx_c_end = idx_c_start + exemplars_per_cat
-        eeg_cond = eeg[idx_c_start:idx_c_end,:,:,t]
+        # Select the data of the first image exemplar
+        eeg_cond_1 = eeg[i1,:,:,t]
 
-        # Loop over object exemplars
-        scores = []
-        for e1 in range(len(eeg_cond)):
+        for i2 in range(i1):
 
-            # Select the data of the first image exemplar
-            eeg_cond_1 = eeg_cond[e1]
+            # Select the data of the second image exemplar
+            eeg_cond_2 = eeg[i2,:,:,t]
 
-            for e2 in range(e1):
+            # SVM target vectors
+            y_train = np.zeros(((len(eeg_cond_1)-1)*2))
+            y_train[int(len(y_train)/2):] = 1
+            y_test = np.asarray((0, 1))
+            scores = np.zeros(len(eeg_cond_1))
 
-                # Select the data of the second image exemplar
-                eeg_cond_2 = eeg_cond[e2]
+            # Loop across repeats (leave-one-repeat-out cross-decoding)
+            for r in range(len(eeg_cond_1)):
 
-                # SVM target vectors
-                y_train = np.zeros(((len(eeg_cond_1)-1)*2))
-                y_train[int(len(y_train)/2):] = 1
-                y_test = np.asarray((0, 1))
+                # Define the train/test partitions
+                X_train = np.append(np.delete(eeg_cond_1, r, 0),
+                    np.delete(eeg_cond_2, r, 0), 0)
+                X_test = np.append(np.expand_dims(eeg_cond_1[r], 0),
+                    np.expand_dims(eeg_cond_2[r], 0), 0)
 
-                # Loop across repeats (leave-one-repeat-out cross-decoding)
-                for r in range(len(eeg_cond_1)):
+                # Train the classifier
+                dec_svm = SVC(kernel='linear')
+                dec_svm.fit(X_train, y_train)
 
-                    # Define the train/test partitions
-                    X_train = np.append(np.delete(eeg_cond_1, r, 0),
-                        np.delete(eeg_cond_2, r, 0), 0)
-                    X_test = np.append(np.expand_dims(eeg_cond_1[r], 0),
-                        np.expand_dims(eeg_cond_2[r], 0), 0)
+                # Test the classifier
+                y_pred = dec_svm.predict(X_test)
+                scores[r] = sum(y_pred == y_test) / len(y_test)
 
-                    # Train the classifier
-                    dec_svm = SVC(kernel='linear')
-                    dec_svm.fit(X_train, y_train)
-
-                    # Test the classifier
-                    y_pred = dec_svm.predict(X_test)
-                    scores.append(sum(y_pred == y_test) / len(y_test))
-
-        # Store the accuracy
-        decoding_exemplars[c,t] = np.mean(scores)
-        decoding_exemplars[c,t] = decoding_exemplars[c,t]
+            # Store the accuracy
+            decoding_exemplars[i1,i2,t] = np.mean(scores)
+            decoding_exemplars[i2,i1,t] = decoding_exemplars[i1,i2,t]
 
 
 # =============================================================================
@@ -175,6 +166,8 @@ for t in tqdm(range(len(times))):
 # =============================================================================
 # Results array of shape:
 # (Object categories × Object categories × EEG time points)
+object_cats = 40
+exemplars_per_cat = 10
 decoding_objects = np.zeros((object_cats, object_cats, len(times)),
     dtype=np.float32)
 
@@ -352,7 +345,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'eeg', 'object_categorization_within_category_exemplar_decoding', 'pairwise_decoding',
+    'vision', 'eeg', 'object_categorization', 'pairwise_decoding',
     args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
