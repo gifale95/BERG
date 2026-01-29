@@ -7,10 +7,14 @@ Parameters
 fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
-    are integers from 1 8.
+    are integers from 1 to 8.
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+source_dataset : str
+    If 'things_eeg_2', the source dataset is THINGS EEG2. If 'things_meg_1',
+    the source dataset  is THINGS MEG1. (The source dataset is the dataset that
+    is mapped onto fMRI responses.)
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
@@ -30,13 +34,12 @@ import os
 import numpy as np
 from tqdm import tqdm
 from berg import BERG
-from scipy.stats import ttest_1samp
-from statsmodels.stats.multitest import multipletests
 from sklearn.utils import resample
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
+parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
@@ -55,7 +58,7 @@ for key, val in vars(args).items():
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
-# Load the EEG time points
+# Load the M/EEG time points
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
     subject=1
@@ -104,9 +107,18 @@ for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
 
         # Load and store the correlation scores
         data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'encoding_fusion_accuracy')
+            'encoding_fusion_accuracy', f'source_dataset-{args.source_dataset}')
         file_name = f'corr_fmri_sub-{fsub:02d}_hemi-{hemi}.npy'
         corr_tfmri_fmri[fs,h,idx_v] = np.load(os.path.join(data_dir, file_name))
+
+        # NCSNR and encoding accuracy vertex selection
+        ncsnr = metadata[fs]['fmri'][hemi+'_ncsnr']
+        idx_ncsnr = ncsnr >= args.ncsnr_threshold
+        encoding = metadata[fs]['encoding_models']\
+            [hemi+'_explained_variance_nsdcore']
+        idx_encoding = encoding >= args.encoding_threshold
+        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
+        corr_tfmri_fmri[fs,h,idx_nan] = np.nan
 
 
 # =============================================================================
@@ -148,15 +160,6 @@ for r, roi in enumerate(rois):
             else:
                 idx_roi = metadata[fs]['fmri'][f'{hemi}_fsaverage_rois'][roi]
 
-            # NCSNR and encoding accuracy vertex selection
-            ncsnr = metadata[fs]['fmri'][hemi+'_ncsnr'][idx_roi]
-            idx_ncsnr = ncsnr >= args.ncsnr_threshold
-            encoding = metadata[fs]['encoding_models']\
-                [hemi+'_explained_variance_nsdcore'][idx_roi]
-            idx_encoding = encoding >= args.encoding_threshold
-            idx_vertex = np.logical_and(idx_ncsnr, idx_encoding)
-            idx_roi = idx_roi[idx_vertex]
-
             # Get the correlation scores of the above threshold vertices
             # from the chosen ROI
             if h == 0:
@@ -167,21 +170,6 @@ for r, roi in enumerate(rois):
         # Store the mean correlation across ROI vertices
         corr_tfmri_fmri_roi[roi][fs] = np.nanmean(corr, 0)
         del corr
-
-
-# =============================================================================
-# Compute the significance (ROI-wise in silico fMRI vs t-fMRI correlation
-# scores)
-# =============================================================================
-# sig_corr_tfmri_fmri_roi = {}
-
-# for key, val in corr_tfmri_fmri_roi.items():
-
-#     # Calculate the p-values with t-tests
-#     pval = ttest_1samp(val, 0, axis=0, alternative='greater')[1]
-
-#     # Correct for multiple comparisons
-#     sig_corr_tfmri_fmri_roi[key] = multipletests(pval, 0.05, 'fdr_bh')[0]
 
 
 # =============================================================================
@@ -221,7 +209,8 @@ results = {
     'ci_corr_tfmri_fmri_roi_peak_lat': ci_corr_tfmri_fmri_roi_peak_lat
 }
 
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats',
+    f'source_dataset-{args.source_dataset}')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'

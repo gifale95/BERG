@@ -5,16 +5,14 @@ Parameters
 fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
-    are integers from 1 8.
+    are integers from 1 to 8.
 hemisphere : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
-ncsnr_threshold : float
-    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
-    vertex selection.
-encoding_threshold : float
-    The threshold on the encoding models explained variance for vertex
-    selection (in % units).
+source_dataset : str
+    If 'things_eeg_2', the source dataset is THINGS EEG2. If 'things_meg_1',
+    the source dataset  is THINGS MEG1. (The source dataset is the dataset that
+    is mapped onto fMRI responses.)
 berg_dir : str
     Directory of the BERG.
 
@@ -31,8 +29,7 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
-parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--encoding_threshold', default=20, type=float)
+parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -41,7 +38,7 @@ args, unknown = parser.parse_known_args()
 # Load the results
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats',
-    'stats.npy')
+    f'source_dataset-{args.source_dataset}', 'stats.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
@@ -54,25 +51,8 @@ ci_corr_tfmri_fmri_roi_peak_lat = results['ci_corr_tfmri_fmri_roi_peak_lat']
 
 # Create the plots save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
-    'encoding_accuracy_surfaceplots')
+    f'source_dataset-{args.source_dataset}', 'encoding_accuracy_surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
-
-
-# =============================================================================
-# Vertex selection
-# =============================================================================
-for s, sub in enumerate(args.fmri_subjects):
-    for h, hemi in enumerate(args.hemispheres):
-
-        # NCSNR and encoding accuracy vertex selection
-        ncsnr = metadata[s]['fmri'][hemi+'_ncsnr']
-        idx_ncsnr = ncsnr >= args.ncsnr_threshold
-        encoding = metadata[s]['encoding_models']\
-            [hemi+'_explained_variance_nsdcore']
-        idx_encoding = encoding >= args.encoding_threshold
-        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
-
-        corr_tfmri_fmri[s,h,idx_nan] = np.nan
 
 
 # =============================================================================
@@ -130,48 +110,6 @@ for t, time in enumerate(tqdm(times)):
     plot_file = os.path.join(save_dir, f'correlation_time-{t:03d}.png')
     plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
     plt.close()
-
-
-# =============================================================================
-# Plot the vertex-average correlations between t-fMRI and in silico fMRI test
-# responses
-# =============================================================================
-# # Create the plots save directory
-# save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots')
-# os.makedirs(save_dir, exist_ok=True)
-
-# # Create the figure
-# fig = plt.figure(figsize=(10, 7.5))
-
-# # Plot the stimulus onset and chance dashed line
-# plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
-#     alpha=.5, label='_nolegend_')
-
-# # Plot the correlation
-# plt.plot(times, np.nanmean(corr_tfmri_fmri, (0, 1, 2)), color='k', linewidth=2)
-
-# # Plot the confidence intervals # !!!
-# plt.fill_between(times, ci_rsa[chan][1], ci_rsa[chan][0],
-#     color='k', alpha=.1)
-
-# # x-axis parameters
-# plt.xlabel('Time (ms)', fontsize=fontsize)
-# xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
-# xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
-# plt.xticks(ticks=xticks, labels=xlabels)
-# plt.xlim(left=min(times), right=max(times))
-
-# # y-axis parameters
-# plt.ylabel("Pearson's $r$", fontsize=fontsize)
-# yticks = [0, 0.2, 0.4, 0.6, 0.8]
-# ylabels = [0, 0.2, 0.4, 0.6, 0.8]
-# plt.yticks(ticks=yticks, labels=ylabels)
-# plt.ylim(bottom=-.025, top=.6)
-
-# # Save the figure
-# file_name = os.path.join(save_dir, 'correlation.svg')
-# fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-# plt.close()
 
 
 # =============================================================================

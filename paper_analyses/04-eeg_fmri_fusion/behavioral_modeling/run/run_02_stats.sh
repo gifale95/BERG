@@ -6,12 +6,25 @@
 #SBATCH --time=02:00:00
 #SBATCH --qos=extended
 
+# Create the parameters combinations
+declare -a source_dataset_all
+index=0
+for d in 'things_meg_1' ; do
+    source_dataset_all[$index]=$d
+    ((index=index+1))
+done
+
+# Extract the parameters
+echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
+source_dataset=${source_dataset_all[$SLURM_ARRAY_TASK_ID]}
+echo source_dataset: $source_dataset
+
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
-conda activate general
+conda activate berg
 
 # Change to the .py script directory
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/behavioral_modeling
 
 # Run the job
-python 02_stats.py
+python 02_stats.py --source_dataset $source_dataset

@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-eeg_fmri_fusion-llm_modeling_nsd-01_rsa
 #SBATCH --mail-type=end
-#SBATCH --mem=120000
-#SBATCH --time=40:00:00
+#SBATCH --mem=40000
+#SBATCH --time=60:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -27,7 +27,7 @@ echo hemisphere: $hemisphere
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
-conda activate general
+conda activate berg
 
 # Change to the .py script directory
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/llm_modeling_nsd
