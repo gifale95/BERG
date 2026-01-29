@@ -58,7 +58,7 @@ Metadata
 
 **rois** : ``list`` - Six functionally defined ROIs of the language network ['lang_LH_AntTemp', 'lang_LH_IFG', 'lang_LH_IFGorb', 'lang_LH_MFG', 'lang_LH_PostTemp', 'lang_LH_netw']
 
-**noise_ceiling** : ``(6,)`` - Noise ceiling estimates (Pearson's r) for each ROIxs
+**noise_ceiling** : ``(6,)`` - Noise ceiling estimates (Pearson's r) for each ROI
 
 **noise_ceiling_snr** : ``(6,)`` - Noise ceiling signal-to-noise ratio for each ROI
 
