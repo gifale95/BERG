@@ -18,6 +18,9 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=str, required=True, choices=['P1', 'P2', 'P3', 'P4'])
 parser.add_argument('--berg_dir', required=True, type=str)
+parser.add_argument('--train_split', type=str, default='all_training_splits',
+                   choices=['all_training_splits', 'single_training_split_1', 'single_training_split_2', 'single_training_split_3', 'single_training_split_4'],
+                   help='Which training split to test')
 args = parser.parse_args()
 
 print('>>> Test THINGS MEG encoding models <<<')
@@ -50,7 +53,7 @@ with h5py.File(neural_test_path, 'r') as f:
 results_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
     'modality-meg', 'train_dataset-things_meg_1', 'vit_b_32')
 
-pred_path = os.path.join(results_dir, f'meg_test_pred_{args.subject}.npy')
+pred_path = os.path.join(results_dir, f'meg_test_pred_{args.subject}_{args.train_split}.npy')
 neural_test_pred = np.load(pred_path, allow_pickle=True)
 
 
@@ -85,17 +88,25 @@ print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
 # =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
-metadata = metadata_meg.copy()
-metadata['encoding_model'].update({
-    'correlation_results': correlation_results,
-    'percent_noise_ceiling': percent_noise_ceiling
-})
-
-# Save the metadata
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
     'train_dataset-things_meg_1', 'model-vit_b_32', 'metadata')
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
 file_name = f'metadata_{args.subject}.npy'
-np.save(os.path.join(save_dir, file_name), metadata)
+file_path = os.path.join(save_dir, file_name)
+
+# Load existing metadata or create from base
+if os.path.exists(file_path):
+    metadata = np.load(file_path, allow_pickle=True).item()
+else:
+    metadata = metadata_meg.copy()
+
+# Add results to the appropriate split
+if args.train_split not in metadata['encoding_model']:
+    metadata['encoding_model'][args.train_split] = {}
+
+metadata['encoding_model'][args.train_split]['correlation_results'] = correlation_results
+metadata['encoding_model'][args.train_split]['percent_noise_ceiling'] = percent_noise_ceiling
+
+np.save(file_path, metadata)
