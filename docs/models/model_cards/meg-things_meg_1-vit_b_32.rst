@@ -127,30 +127,41 @@ Metadata
 
     **test_img_files** : ``(2400,)`` - Full image paths for test images
 
-    **ncsnr** : ``(281, 271)`` - Neural cross-validated signal-to-noise ratio
+    **ncsnr** : ``(271, 281)`` - Neural cross-validated signal-to-noise ratio
 
-    **noise_ceiling** : ``(281, 271)`` - Noise ceiling
+    **noise_ceiling** : ``(271, 281)`` - Noise ceiling
 
 Input
 -----
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 3, 'height', 'width']``  
-**Description**: The input should be a batch of RGB images.
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
 
-**Constraints:**
-
-* Image values should be integers in range [0, 255].
-* Image dimensions (height, width) should be equal (square).
-* Minimum recommended image size: 224×224 pixels.
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``['batch_size', 3, 'height', 'width']``
+   * - Description
+     - The input should be a batch of RGB images.
+   * - Constraints
+     - * Image values should be integers in range [0, 255].
+       * Image dimensions (height, width) should be equal (square).
+       * Minimum recommended image size: 224×224 pixels.
 
 Output
 ------
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``[batch_size, n_sensors, n_timepoints] or [batch_size, repeats, n_sensors, n_timepoints]``  
-**Description**:  
-The output is a 3D or 4D array containing in silico MEG responses.
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``[batch_size, n_sensors, n_timepoints] or [batch_size, repeats, n_sensors, n_timepoints]``
+   * - Description
+     - The output is a 3D or 4D array containing in silico MEG responses.
 
 **Dimensions:**
 
@@ -343,12 +354,12 @@ Example Usage
     
     # Prepare the stimulus images
     # Image shape should be [batch_size, 3 RGB channels, height, width]
-    images = np.random.randint(0, 255, (100, 3, 256, 256))
+    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
     
-    # Generates the in silico neural responses to images using the encoding model previously loaded
+    # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(
         model,
-        images,
+        stimulus,
         show_progress=True
     )
     
@@ -362,7 +373,7 @@ Example Usage
     # Generate in silico neural responses with metadata
     responses, metadata = berg.encode(
         model,
-        images,
+        stimulus,
         return_metadata=True
     )
     
