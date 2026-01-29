@@ -1,0 +1,188 @@
+
+# Basic metadata
+model_id: fmri-tuckute_2024-GPT2_XL
+modality: fMRI
+training_dataset: Tuckute et. al (2024)
+species: Human
+stimuli: Text
+model_type: GPT2-XL–based linear encoding model (LLM embeddings + ridge regression)
+creator: Greta Tuckute
+
+# General description of the model
+description: |
+  This encoding model predicts activity in the human left-hemisphere (LH) language network from 
+  natural language input. It uses GPT2-XL representations mapped to fMRI BOLD responses via 
+  linear ridge regression, enabling prediction and closed-loop control of language network activity.
+
+  **Neural data.** Trained on fMRI data from five participants reading 1,000 diverse six-word sentences 
+  in a rapid event-related design. The LH language network was defined per participant using a functional 
+  localizer (top 10% language-responsive voxels across five parcels: IFGorb, IFG, MFG, AntTemp, PostTemp). 
+  BOLD responses were averaged across voxels within each fROI, then averaged across participants and 
+  z-scored session-wise. Target values are participant-averaged scalars (one per sentence per fROI).
+
+  **Architecture.** Linear ridge regression model mapping GPT2-XL layer 22 last-token embeddings 
+  (sentence-level representations) to predicted BOLD responses for six ROIs: lang_LH_AntTemp, lang_LH_IFG, 
+  lang_LH_IFGorb, lang_LH_MFG, lang_LH_PostTemp, and lang_LH_netw (network average). Layer 22 was selected 
+  via 5-fold cross-validation across all 48 GPT2-XL layers, achieving r ≈ 0.38 predictivity (noise ceiling 
+  r ≈ 0.56).
+
+  **Training.** Final model trained on all 1,000 sentences using GPT2-XL layer 22 embeddings. Ridge 
+  regularization parameter selected via nested cross-validation. No fine-tuning of GPT2-XL performed. 
+  Sentences preprocessed to six words with printable ASCII and standardized punctuation.
+
+  **Evaluation.** Model tested on held-out baseline sentences, novel model-selected "drive" and "suppress" 
+  sentences from external corpora, and new participants. Successfully demonstrated closed-loop control by 
+  reliably modulating fMRI responses with model-selected sentences.
+
+  **Output.** Six scalar values per sentence: z-scored, participant-averaged BOLD response magnitudes for 
+  five language fROIs plus the network average, representing predicted engagement of each region and the 
+  overall language system.
+
+
+metadata: |
+    rois                     : list    - Six functionally defined ROIs of the language network ['lang_LH_AntTemp', 'lang_LH_IFG', 'lang_LH_IFGorb', 'lang_LH_MFG', 'lang_LH_PostTemp', 'lang_LH_netw']
+    noise_ceiling            : (6,)    - Noise ceiling estimates (Pearson's r) for each ROI
+    noise_ceiling_snr        : (6,)    - Noise ceiling signal-to-noise ratio for each ROI
+    optimal_layer            : int     - GPT2-XL transformer layer selected via cross-validation (layer 22)
+    train_stimulus_ids       : (1000,) - Stimulus identifiers for training sentences (e.g., 'beta-control-neural-T.1' ... 'beta-control-neural-T.1000')
+    train_sentences          : (1000,) - Text content of the 1000 training sentences
+    train_targets            : (1000,) - Participant-averaged (N=5), z-scored BOLD response magnitude for each training sentence (lang_LH_netw)
+    drive_stimulus_ids       : (250,)  - Stimulus identifiers for drive sentences predicted to elicit maximal language network responses
+    drive_sentences          : (250,)  - Text content of the 250 drive sentences
+    suppress_stimulus_ids    : (250,)  - Stimulus identifiers for suppress sentences predicted to elicit minimal language network responses
+    suppress_sentences       : (250,)  - Text content of the 250 suppress sentences
+        
+# Input stimulus information
+input:
+  type: "list[str] or numpy.ndarray"
+  description: |
+    List or array of natural language sentences to encode.
+    
+    While the model accepts sentences of any length, it was trained exclusively on 
+    six-word sentences. Performance may vary for sentences of different lengths.
+  example: |
+    ["Taste that fowl and those fish.", 
+     "I'm progressive and you fall right."]
+
+# Output information
+output:
+  type: "numpy.ndarray"
+  shape: "(n_sentences, n_rois)"
+  description: |
+    The output is a numpy array containing predicted z-scored BOLD response magnitudes 
+    for the left-hemisphere language network.
+    Each row corresponds to one input sentence (in input order), and each column 
+    corresponds to one language network ROI (or a subset if ROI selection is applied).
+    
+    **ROI ordering:**
+    - When no selection is used: ROIs appear in their default order (see below)
+    - When selection is used: ROIs appear in the order specified in the selection parameter
+    
+  dimensions:
+    - name: "n_sentences"
+      description: "Number of input sentences."
+    - name: "n_rois"
+      description: |
+        Number of ROIs in the output (6 by default, or fewer if ROI selection is applied).
+        Default ROI order (when no selection is specified):
+          - lang_LH_AntTemp: Anterior temporal lobe
+          - lang_LH_IFG: Inferior frontal gyrus
+          - lang_LH_IFGorb: Inferior frontal gyrus orbitalis
+          - lang_LH_MFG: Middle frontal gyrus
+          - lang_LH_PostTemp: Posterior temporal lobe
+          - lang_LH_netw: Network average across all five fROIs
+
+# Model parameters and their usage
+parameters:
+
+  model_id:
+    description: Unique identifier of the model to load.
+    required: true
+    type: "str"
+    valid_values: "fmri-tuckute_2024-GPT2_XL"
+    example: "fmri-tuckute_2024-GPT2_XL"
+    function: "get_encoding_model, get_model_metadata"
+
+  selection:
+    description: |
+      Specifies which ROIs to include in the model output.
+      If not provided, responses are generated for all six language network ROIs.
+    required: false
+    type: dict
+    function: get_encoding_model
+    properties:
+      roi:
+        type: list[str]
+        description: |
+          List of language network ROI names to include in the output.
+          ROIs will be returned in the order specified.
+        valid_values: [
+          'lang_LH_AntTemp',
+          'lang_LH_IFG', 
+          'lang_LH_IFGorb',
+          'lang_LH_MFG',
+          'lang_LH_PostTemp',
+          'lang_LH_netw'
+        ]
+        example: ['lang_LH_IFG', 'lang_LH_netw']
+
+  device:
+    description: |
+      Device to run the model on. This model uses linear regression and always runs on CPU, 
+      but this parameter is included for API consistency with other encoding models.
+    required: false
+    type: str
+    valid_values: ["cpu", "cuda", "auto"]
+    example: "cpu"
+    default: "cpu"
+    function: "get_encoding_model"
+
+  model:
+    description: An instantiated and loaded encoding model.
+    required: true
+    type: BaseModelInterface
+    function: "encode"
+
+  stimulus:
+    description: |
+      List or array of natural language sentences to encode.
+      
+      The model accepts sentences of any length, though it was trained on six-word sentences.
+    required: true
+    type: "list[str] or numpy.ndarray"
+    example: |
+      ["Taste that fowl and those fish.", 
+       "I'm progressive and you fall right."]
+    function: "encode"
+
+  return_metadata:
+    description: "Whether to return the encoding model's metadata together with the in silico neural responses."
+    required: false
+    type: bool
+    default: false
+    example: true
+    function: "encode"
+
+  show_progress:
+    description: "Whether to show a progress bar during encoding (for large batches)."
+    required: false
+    type: bool
+    default: true
+    example: true
+    function: "encode"
+
+# Performance metrics and references
+performance:
+  optimal_layer: 22
+  predictivity_r: 0.38
+  noise_ceiling_r: 0.56
+  
+  accuracy_plots: 
+    - 'brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy'
+
+references:
+    - Model building code: '.berg/models/fmri/tuckute_2024/load_regr_weights_and_predict.py'
+    - Model Paper (Tuckute et al., 2024): https://www.nature.com/articles/s41562-023-01783-7
+    - Model Repository: https://github.com/gretatuckute/drive_suppress_brains
+    - GPT2-XL (Radford et al., 2020): https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
+
