@@ -1,5 +1,25 @@
 ![BERG logo](docs/img/berg_logo.png)
 
+📋 **BERG Survey** 📋
+
+Dear Users,
+
+We would be grateful if you could take a few minutes to share your feedback on BERG. Your input will contribute to improving BERG’s usefulness and reliability!
+
+- **Link to survey:** [https://forms.gle/pybrqcaqdso2LJK88](https://forms.gle/pybrqcaqdso2LJK88)
+
+We would also appreciate it if you could share the survey by forwarding this message to your colleagues, and/or by sharing the corresponding Bluesky/X posts:
+
+- **Blusesky post:** [https://bsky.app/profile/alessandrogifford.bsky.social/post/3m6f5nm5wb22l](https://bsky.app/profile/alessandrogifford.bsky.social/post/3m6f5nm5wb22l)
+
+- **X post:** [https://x.com/AlgonautsProj/status/1992980825160483019?s=20](https://x.com/AlgonautsProj/status/1992980825160483019?s=20)
+
+We thank you and look forward to your input!
+
+*The BERG Team*
+
+---
+
 The [**Brain Encoding Response Generator (BERG)**][website] is a resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.
 
 In silico neural responses from encoding models increasingly resemble in vivo responses recorded from real brains, enabling the novel research paradigm of in silico neuroscience. In silico neural responses are quick and cheap to generate, allowing researchers to explore and test scientific hypotheses across vastly larger solution spaces than possible in vivo. Novel findings from large-scale in silico experimentation are then validated through targeted small-scale in vivo data collection, in this way optimizing research resources. Thus, in silico neuroscience scales beyond what is possible with in vivo data, and democratizes research across groups with diverse data collection infrastructure and resources. To catalyze this emerging research paradigm, we introduce the Brain Encoding Response Generator (BERG), a resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code. BERG includes a growing, well documented library of encoding models trained on different neural data acquisition modalities, datasets, subjects, stimulation types, and brain areas, offering broad versatility for addressing a wide range of research questions through in silico neuroscience.
@@ -77,8 +97,6 @@ The following table shows BERG's most accurate encoding models for each dataset 
 | [eeg-things_eeg_2-vit_b_32][eeg-things_eeg_2-vit_b_32] | [THINGS EEG2][THINGS EEG2] | EEG | Human | Images | [Accuracy plots][acc-eeg-things_eeg_2-vit_b_32] |
 | [meg-things_meg_1-vit_b_32][meg-things_meg_1-vit_b_32] | [THINGS MEG1][things_data] | MEG | Human | Images | [Accuracy plots][acc-meg-things_meg_1-vit_b_32] |
 | [utah_array-tvsd-vit_b_32][utah_array-tvsd-vit_b_32] | [TVSD][tvsd] | Utah arrays | Macaque | Images | [Accuracy plots][acc-utah_array-tvsd-vit_b_32] |
-| [fmri-mosaic-CNN8_multihead_subAll_verticesVisual][fmri-mosaic-CNN8_multihead_subAll_verticesVisual] | [MOSAIC][MOSAIC] | fMRI | Human | Images | [Accuracy plots][acc-mosaic-CNN8_multihead_subAll_verticesVisual] |
-| [fmri-mosaic-CNN8_multihead_subNSD_verticesAll][fmri-mosaic-CNN8_multihead_subNSD_verticesAll] | [MOSAIC][MOSAIC] | fMRI | Human | Images | [Accuracy plots][acc-mosaic-CNN8_multihead_subNSD_verticesAll] |
 | [calcium_2p-wang_2025-3DCNN][calcium_2p-wang_2025-3DCNN] | [Wang et al., 2025][wang_2025] | two-photon calcium imaging | Mouse | Videos | [Accuracy plots][acc-calcium_2p-wang_2025-3DCNN] |
 | [fmri-tuckute_2024-GPT2_XL][fmri-tuckute_2024-GPT2_XL] | [Tuckute et al., 2024][tuckute_2024] | fMRI | Human | Text | [Accuracy plots][acc-fmri-tuckute_2024-GPT2_XL] |
 
