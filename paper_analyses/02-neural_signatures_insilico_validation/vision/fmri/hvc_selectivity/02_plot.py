@@ -9,7 +9,7 @@ encoding_model : str
 subjects : list
     List of subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
-    integers from 1 8.
+    integers from 1 to 8.
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.

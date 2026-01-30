@@ -7,10 +7,14 @@ Parameters
 fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
-    are integers from 1 8.
+    are integers from 1 to 8.
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+source_dataset : str
+    If 'things_eeg_2', the source dataset is THINGS EEG2. If 'things_meg_1',
+    the source dataset  is THINGS MEG1. (The source dataset is the dataset that
+    is mapped onto fMRI responses.)
 dnn_model : str
     Name of deep neural network model used to extract the image features.
     Available options are 'alexnet' and 'resnet50'.
@@ -38,6 +42,7 @@ from berg import BERG
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
+parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
 parser.add_argument('--dnn_model', default='alexnet', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
 parser.add_argument('--encoding_threshold', default=20, type=float) # 20
@@ -76,6 +81,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 
         results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
             'dnn_layerwise_modeling', 'rsa',
+            f'source_dataset-{args.source_dataset}',
             f'rsa_fmri_sub-{sub:02d}_{hemi}_dnn_model-{args.dnn_model}.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
@@ -249,7 +255,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'stats')
+    'dnn_layerwise_modeling', 'stats', f'source_dataset-{args.source_dataset}')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = f'stats_dnn_model-{args.dnn_model}.npy'

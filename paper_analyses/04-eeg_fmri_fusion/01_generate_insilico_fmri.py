@@ -77,7 +77,7 @@ metadata = berg.get_model_metadata(
 
 
 # =============================================================================
-# Generate and save the in silico fMRI responses (# THINGS EEG2)
+# Generate and save the in silico fMRI responses (THINGS EEG2)
 # =============================================================================
 if args.source_dataset == 'things_eeg_2':
 
@@ -132,7 +132,7 @@ if args.source_dataset == 'things_eeg_2':
 
 
 # =============================================================================
-# Generate and save the in silico fMRI responses (# THINGS MEG1)
+# Generate and save the in silico fMRI responses (THINGS MEG1)
 # =============================================================================
 elif args.source_dataset == 'things_meg_1':
 

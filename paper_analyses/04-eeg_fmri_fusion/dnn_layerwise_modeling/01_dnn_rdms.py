@@ -2,6 +2,10 @@
 
 Parameters
 ----------
+source_dataset : str
+    If 'things_eeg_2', the source dataset is THINGS EEG2. If 'things_meg_1',
+    the source dataset  is THINGS MEG1. (The source dataset is the dataset that
+    is mapped onto fMRI responses.)
 dnn_model : str
     Name of deep neural network model used to extract the image features.
     Available options are 'alexnet' and 'resnet50'.
@@ -18,10 +22,8 @@ import os
 import numpy as np
 from tqdm import tqdm
 from berg import BERG
-import h5py
 from PIL import Image
 import torch
-import torch.nn as nn
 import torchvision
 from torchvision import transforms as trn
 from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
@@ -29,6 +31,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
 parser.add_argument('--dnn_model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
@@ -72,14 +75,23 @@ def corr_matrix(X):
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
-# Load the THINGS EEG 2 metadata
+# Load the M/EEG metadata
 metadata = berg.get_model_metadata(
-    'eeg-things_eeg_2-vit_b_32',
+    f'eeg-{args.source_dataset}-vit_b_32',
     subject=1
     )
 
 # Get the test image file names
-test_img_files = metadata['encoding_models']['test_img_info']['test_img_files']
+if args.source_dataset == 'things_eeg_2':
+    test_img_files = metadata['encoding_models']['test_img_info']\
+        ['test_img_files']
+elif args.source_dataset == 'things_meg_1':
+    img_ids = metadata['encoding_model']['test_img_ids']
+    img_stimuli = metadata['encoding_model']['test_stimuli']
+    unique_img_ids = np.unique(img_ids)
+    test_img_files = []
+    for id in unique_img_ids:
+        test_img_files.append(img_stimuli[np.where(img_ids == id)[0][0]])
 
 
 # =============================================================================
@@ -188,7 +200,8 @@ for key, val in ft_dict.items():
 # Save the DNN RDMs
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'dnn_rdms')
+    'dnn_layerwise_modeling', 'dnn_rdms',
+    f'source_dataset-{args.source_dataset}')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'dnn_rdms_' + args.dnn_model + '.npy'

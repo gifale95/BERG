@@ -46,7 +46,7 @@ from sklearn.linear_model import LinearRegression
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subject', default=1, type=int)
 parser.add_argument('--hemisphere', default='lh', type=str)
-parser.add_argument('--source_dataset', default='things_meg_1', type=str)
+parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
 parser.add_argument('--eeg_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
 parser.add_argument('--meg_subjects', default=[1, 2, 3, 4], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)

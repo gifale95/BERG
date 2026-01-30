@@ -9,7 +9,7 @@ encoding_model : str
 subjects : list
     The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
-    integers from 1 8.
+    integers from 1 to 8.
 berg_dir : str
     Directory of the BERG.
 

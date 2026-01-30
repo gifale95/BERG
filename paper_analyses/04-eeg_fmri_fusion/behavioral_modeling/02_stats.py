@@ -6,10 +6,14 @@ Parameters
 fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
-    are integers from 1 8.
+    are integers from 1 to 8.
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+source_dataset : str
+    If 'things_eeg_2', the source dataset is THINGS EEG2. If 'things_meg_1',
+    the source dataset  is THINGS MEG1. (The source dataset is the dataset that
+    is mapped onto fMRI responses.)
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
@@ -34,6 +38,7 @@ from sklearn.utils import resample
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
+parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=20, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
@@ -84,13 +89,23 @@ for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
 
         # Load and store the RSA correlation scores
         data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'behavioral_modeling', 'rsa')
+            'behavioral_modeling', 'rsa',
+            f'source_dataset-{args.source_dataset}')
         file_name = f'rsa_fmri_sub-{fsub:02d}_{hemi}.npy'
         results = np.load(os.path.join(data_dir, file_name),
             allow_pickle=True).item()
         rsa[fs,h] = results['rsa']
         if h == 0:
             metadata.append(results['metadata_fmri'])
+
+        # NCSNR and encoding accuracy vertex selection
+        ncsnr = metadata[fs]['fmri'][hemi+'_ncsnr']
+        idx_ncsnr = ncsnr >= args.ncsnr_threshold
+        encoding = metadata[fs]['encoding_models']\
+            [hemi+'_explained_variance_nsdcore']
+        idx_encoding = encoding >= args.encoding_threshold
+        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
+        rsa[fs,h,idx_nan] = np.nan
 
 
 # =============================================================================
@@ -131,15 +146,6 @@ for r, roi in enumerate(rois):
                 idx_roi.sort()
             else:
                 idx_roi = metadata[fs]['fmri'][f'{hemi}_fsaverage_rois'][roi]
-
-            # NCSNR and encoding accuracy vertex selection
-            ncsnr = metadata[fs]['fmri'][hemi+'_ncsnr'][idx_roi]
-            idx_ncsnr = ncsnr >= args.ncsnr_threshold
-            encoding = metadata[fs]['encoding_models']\
-                [hemi+'_explained_variance_nsdcore'][idx_roi]
-            idx_encoding = encoding >= args.encoding_threshold
-            idx_vertex = np.logical_and(idx_ncsnr, idx_encoding)
-            idx_roi = idx_roi[idx_vertex]
 
             # Get the correlation scores of the above threshold vertices
             # from the chosen ROI
@@ -191,7 +197,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'behavioral_modeling', 'stats')
+    'behavioral_modeling', 'stats', f'source_dataset-{args.source_dataset}')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'

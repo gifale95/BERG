@@ -5,10 +5,14 @@ Parameters
 fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
-    are integers from 1 8.
+    are integers from 1 to 8.
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+source_dataset : str
+    If 'things_eeg_2', the source dataset is THINGS EEG2. If 'things_meg_1',
+    the source dataset  is THINGS MEG1. (The source dataset is the dataset that
+    is mapped onto fMRI responses.)
 berg_dir : str
     Directory of the BERG.
 
@@ -29,6 +33,7 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
+parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -37,7 +42,8 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'behavioral_modeling', 'plots', 'rsa_surfaceplots')
+    'behavioral_modeling', 'plots', f'source_dataset-{args.source_dataset}',
+    'rsa_surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -45,7 +51,8 @@ os.makedirs(save_dir, exist_ok=True)
 # Load the RSA results
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'behavioral_modeling', 'stats', 'stats.npy')
+    'behavioral_modeling', 'stats', f'source_dataset-{args.source_dataset}',
+    'stats.npy')
 
 results = np.load(data_dir, allow_pickle=True).item()
 
@@ -170,17 +177,6 @@ for r, roi in enumerate(rois):
     plt.fill_between(times, ci_rsa_roi[roi][1],
         ci_rsa_roi[roi][0], color=colors[r], alpha=.1)
 
-    # Plot the peak time point
-    # peak = times[np.argmax(np.mean(rsa_roi[roi], 0))]
-    # max_corr = max(np.mean(rsa_roi[roi], 0))
-    # plt.scatter(peak, max_corr, color=colors[r], s=200, marker='o',
-    #     edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
-    # ci_low = peak - ci_rsa_roi_peak_lat[roi][0]
-    # ci_up = ci_rsa_roi_peak_lat[roi][1] - peak
-    # conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-    # plt.errorbar(peak, max_corr, xerr=conf_int, fmt="none",
-    #     ecolor='k', elinewidth=1, capsize=3)
-
 # x-axis parameters
 plt.xlabel('Time (ms)', fontsize=fontsize)
 xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
@@ -200,7 +196,7 @@ plt.legend(fontsize=15, loc=0, ncols=3, frameon=False)
 
 # Save the figure
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'behavioral_modeling', 'plots')
+    'behavioral_modeling', 'plots', f'source_dataset-{args.source_dataset}')
 file_name = os.path.join(save_dir, 'roi_rsa.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()
