@@ -3,7 +3,7 @@ import numpy as np
 import yaml
 import torch
 import logging
-from typing import Any
+from typing import Any, Optional
 from nilearn.datasets import fetch_atlas_schaefer_2018
 from berg.core.exceptions import InvalidParameterError
 from berg.core.model_registry import register_model
@@ -124,9 +124,8 @@ class Text2fMRI(BaseModelInterface):
                 if not isinstance(roi_list, list):
                     validate_roi(roi_list, self.VALID_ROIS)
                 else:
-                    for roi in roi_list:
                         validate_roi(roi, self.VALID_ROIS)
-                self.roi_list = roi_list
+
 
         # Validate subject
         self.subject = validate_subjects(
@@ -187,13 +186,19 @@ class Text2fMRI(BaseModelInterface):
         if self.model is None:
             self.load_model(load_feature_extractor=not self.low_mem_use)
 
-        with torch.inference_mode():
-            responses = self.model(features[None], torch.as_tensor(
-                [self.subject], device=self.device)).squeeze()
-
+        # Compute ROI indices if ROI selection is active
+        roi_indices = None
         if self.roi is not None:
+            # Handle both single ROI (string) and multiple ROIs (list)
             roi_mask = np.isin(self.roi_labels, self.roi)
-            responses = responses[:, roi_mask]
+            roi_indices = np.where(roi_mask)[0]  # Convert boolean mask to integer indices
+
+        with torch.inference_mode():
+            responses = self.model(
+                features[None], 
+                torch.as_tensor([self.subject], device=self.device),
+                roi_indices=roi_indices
+            ).squeeze()
 
         if self.low_mem_use:
             self.cleanup()

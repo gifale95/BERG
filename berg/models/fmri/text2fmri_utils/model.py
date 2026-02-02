@@ -74,16 +74,20 @@ class Text2fMRIModel(nn.Module):
         with torch.no_grad():
             nn.init.zeros_(self.out_bias.weight)
 
-    def forward(self, x: torch.Tensor, subject_ids: torch.Tensor):
+    def forward(self, x: torch.Tensor, subject_ids: torch.Tensor, roi_indices=None):
         """
         Forward pass to predict brain activity from text features.
 
         Args:
             x (torch.Tensor): Input features of shape [B, T, extractor_LLM_feature_size].
             subject_ids (torch.Tensor): Subject indices of shape [B].
+            roi_indices (numpy.ndarray, optional): Integer indices of ROIs to compute.
+                If None, computes all ROIs. If provided, only computes selected ROIs
+                for efficiency (mathematically equivalent to computing all and slicing).
 
         Returns:
-            torch.Tensor: Predicted brain activity of shape [B, T, num_rois].
+            torch.Tensor: Predicted brain activity of shape [B, T, num_rois] or 
+                [B, T, num_selected_rois] if roi_indices is provided.
         """
         # Minimal sanity checks that fail fast with a clear message
         assert x.dim(
@@ -105,9 +109,18 @@ class Text2fMRIModel(nn.Module):
         # past-only context, you’d switch to a causal mask.
         h = self.encoder(x)          # [B, T, d_model]
 
-        base = self.out(h)                      # [B, T, num_rois]
-        bias = self.out_bias(subject_ids).unsqueeze(1)  # [B, 1, num_rois]]
-        return base + bias                      # [B, T, num_rois]
+        # Efficient ROI slicing: only compute selected ROIs if indices provided
+        if roi_indices is not None:
+            roi_indices_tensor = torch.as_tensor(roi_indices, device=self.device)
+            # Slice output layer weights to only compute selected ROIs
+            base = torch.nn.functional.linear(h, self.out.weight[roi_indices_tensor])  # [B, T, num_selected_rois]
+            bias = self.out_bias.weight[subject_ids][:, roi_indices_tensor].unsqueeze(1)  # [B, 1, num_selected_rois]
+        else:
+            # Compute all ROIs
+            base = self.out(h)                      # [B, T, num_rois]
+            bias = self.out_bias(subject_ids).unsqueeze(1)  # [B, 1, num_rois]
+        
+        return base + bias
 
     def load_model_from_hub(self, PRETRAINED_CONFIGS: dict[Text2fMRIConfig, str]):
         """
