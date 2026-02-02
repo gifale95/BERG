@@ -7,7 +7,7 @@ from typing import Any
 from nilearn.datasets import fetch_atlas_schaefer_2018
 from berg.core.exceptions import InvalidParameterError
 from berg.core.model_registry import register_model
-from berg.core.parameter_validator import validate_roi, validate_selection_keys
+from berg.core.parameter_validator import validate_roi, validate_selection_keys, validate_subjects
 from berg.interfaces.base_model import BaseModelInterface
 from berg.models.fmri.text2fmri_utils.config import Text2fMRIConfig, get_pretrained_model_configs
 from berg.models.fmri.text2fmri_utils.feature_extractor import FeatureExtractor
@@ -28,7 +28,7 @@ model_info = load_model_info()
 # Register this model with the registry using model_info
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.text2fmri",
+    module_path="berg.models.fmri.cneuromod_text2fmri",
     class_name="Text2fMRI",
     modality=model_info.get("modality", "fmri"),
     training_dataset=model_info.get("training_dataset", "cneuromod"),
@@ -50,6 +50,7 @@ class Text2fMRI(BaseModelInterface):
         model (Text2fMRIModel): The mapping model from LLM features to brain space.
         config (Text2fMRIConfig): Hyperparameters for the model architecture.
         selection (dict): User selection criteria (e.g., specific ROIs).
+        subject (int): The subject ID for predictions.
     """
 
     MODEL_ID = model_info["model_id"]
@@ -58,11 +59,12 @@ class Text2fMRI(BaseModelInterface):
     SELECTION_KEYS = list(
         model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
+    VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
 
     # Setting it to None so that no calls to hugging face are made during the import
     pretrained_configs_dict = None
 
-    def __init__(self, berg_dir: str = None, selection: dict = None, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "auto", low_mem_use: bool = False):
+    def __init__(self, berg_dir: str = None, selection: dict = None, subject: int = None, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "auto", low_mem_use: bool = False):
         """
         Initialize the Text2fMRI interface.
 
@@ -73,6 +75,7 @@ class Text2fMRI(BaseModelInterface):
                 to a network name from the Schaefer 2018 atlas (7-network parcellation).
                 Valid values include: 'Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 
                 'Limbic', 'Cont', or 'Default'.
+            subject (int): The subject ID (index) to generate predictions for.
             config (Text2fMRIConfig): Configuration object for the model architecture.
             device (str): Computation device ('cpu', 'cuda', 'auto').
             low_mem_use : bool
@@ -90,6 +93,7 @@ class Text2fMRI(BaseModelInterface):
         self.config: Text2fMRIConfig = config
         self.berg_dir = berg_dir
         self.selection = selection
+        self.subject = subject
         if Text2fMRI.pretrained_configs_dict is None:
             Text2fMRI.get_pretrained_configs()
         self._validate_parameters()
@@ -116,9 +120,19 @@ class Text2fMRI(BaseModelInterface):
 
             # Individual validations
             if "roi" in self.selection:
-                self.roi = validate_roi(
-                    self.selection["roi"], self.VALID_ROIS
-                )
+                roi_list = self.selection["roi"]
+                print(roi_list)
+                if not isinstance(roi_list, list):
+                    validate_roi(roi_list, self.VALID_ROIS)
+                else:
+                    for roi in roi_list:
+                        validate_roi(roi, self.VALID_ROIS)
+                self.roi_list = roi_list
+
+        # Validate subject
+        self.subject = validate_subjects(
+            self.subject, self.VALID_SUBJECTS
+        )[0]
 
     @classmethod
     def get_pretrained_configs(cls) -> list[Text2fMRIConfig]:
@@ -155,24 +169,18 @@ class Text2fMRI(BaseModelInterface):
         self.model.eval()
 
     @torch.no_grad()
-    def generate_response(self, stimulus: list[str], subject: int = 1) -> torch.Tensor:
+    def generate_response(self, stimulus: list[str]) -> torch.Tensor:
         """
         Generates in silico neural responses (fMRI TRs) for a given text stimulus.
 
         Args:
             stimulus (List[str]): A list of strings, where each string corresponds 
                 to the transcript of one fMRI TR (Time Repetition).
-            subject (int): The subject ID (index) to generate predictions for.
 
         Returns:
             torch.Tensor: Predicted brain activity. 
                 Shape: [num_timepoints, num_rois] (or subset of ROIs if selected).
         """
-
-        if subject < 0 or subject >= self.config.num_subjects:
-            raise InvalidParameterError(
-                f"Subject ID must be in the range [0, {self.config.num_subjects})")
-
         features = self.feature_extractor.extract_features(stimulus)
         if self.low_mem_use:
             self.feature_extractor.cleanup()
@@ -182,7 +190,9 @@ class Text2fMRI(BaseModelInterface):
 
         with torch.inference_mode():
             responses = self.model(features[None], torch.as_tensor(
-                [subject], device=self.device)).squeeze()
+                [self.subject], device=self.device)).squeeze()
+            
+        print(responses)
 
         if self.roi is not None:
             responses = responses[:, self.roi_labels == self.roi]
