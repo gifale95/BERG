@@ -42,7 +42,7 @@ dependencies = [
     "fnn @ git+https://github.com/cajal/fnn.git",
     "transformers>=4.46.3",
     "huggingface-hub>=0.36.0",
-    "x-transformers>=2.0.0",
+    "x-transformers==1.27.0",
 ]
 
 [project.urls]
