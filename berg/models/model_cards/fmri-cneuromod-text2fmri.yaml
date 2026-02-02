@@ -1,6 +1,6 @@
 model_id: fmri-cneuromod-text2fmri
 modality: fMRI
-training_dataset: CNeuroMod (Algonauts2025 2nd winning model)
+training_dataset: CNeuroMod
 species: Human
 stimuli: Text
 model_type: Transformers
@@ -134,4 +134,5 @@ performance:
 
 # References
 references:
-  - "Dixit, S. (2026). Text2fMRI: Brain Encoding Models using LLMs (Course Materials) (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.18369862"
+  - Course Materials: "Dixit, S. (2026). Text2fMRI: Brain Encoding Models using LLMs (Course Materials) (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.18369862"
+  - Huggingface Collection: https://huggingface.co/ShreyDixit/Text2fMRI-Qwen-2.5-0.5B
