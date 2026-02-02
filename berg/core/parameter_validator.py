@@ -63,6 +63,12 @@ def validate_subjects(
     InvalidParameterError
         If the subject parameter is invalid
     """
+    
+    if subjects == None:
+        raise InvalidParameterError(
+                f"Subject is not selected and must be one of {valid_subjects}, got {subjects}"
+            )
+    
     # Handle single integer
     if isinstance(subjects, int):
         if subjects not in valid_subjects:
