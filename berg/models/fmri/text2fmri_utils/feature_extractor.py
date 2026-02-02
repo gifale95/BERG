@@ -1,4 +1,5 @@
 import logging
+import os
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from berg.models.fmri.text2fmri_utils.config import Text2fMRIConfig
@@ -18,20 +19,23 @@ class FeatureExtractor:
         device (str): The target device ('cuda', 'cpu', or 'mps').
         model (AutoModelForCausalLM): The loaded Hugging Face model.
         tokenizer (AutoTokenizer): The loaded tokenizer.
+        berg_dir (str): Path to the BERG cache directory.
     """
 
-    def __init__(self, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "cpu"):
+    def __init__(self, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "cpu", berg_dir: str = None):
         """
         Initialize the FeatureExtractor.
 
         Args:
             config (Text2fMRIConfig): Configuration dataclass.
             device (str): Device to load the model on.
+            berg_dir (str, optional): Path to the BERG cache directory.
         """
         self.config: Text2fMRIConfig = config
         self.model = None
         self.tokenizer = None
         self.device = device
+        self.berg_dir = berg_dir
 
     def load_model(self):
         """
@@ -42,15 +46,31 @@ class FeatureExtractor:
         - `low_cpu_mem_usage=True` to prevent RAM spikes during weight loading.
         - Casts to the dtype specified in config (usually float16) to save VRAM.
         """
+        # Construct cache directory path
+        cache_dir = None
+        if self.berg_dir is not None:
+            cache_dir = os.path.join(
+                self.berg_dir,
+                "encoding_models",
+                "modality-fmri",
+                "train_dataset-cneuromod",
+                "model-text2fmri",
+                "encoding_models_weights"
+            )
+        
         self.tokenizer = AutoTokenizer.from_pretrained(
-            self.config.extractor_LLM, trust_remote_code=True)
+            self.config.extractor_LLM, 
+            trust_remote_code=True,
+            cache_dir=cache_dir
+        )
         self.model = (
             AutoModelForCausalLM
             .from_pretrained(
                 self.config.extractor_LLM,
                 trust_remote_code=True,
                 dtype=self.config.extractor_LLM_dtype,
-                low_cpu_mem_usage=True        # helps avoid CPU RAM spikes during load
+                low_cpu_mem_usage=True,        # helps avoid CPU RAM spikes during load
+                cache_dir=cache_dir
             )
             .to(self.device)
             .eval()

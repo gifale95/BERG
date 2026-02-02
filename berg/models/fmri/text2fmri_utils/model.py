@@ -4,6 +4,7 @@ from x_transformers import Encoder
 
 import torch
 import torch.nn as nn
+import os
 
 from berg.models.fmri.text2fmri_utils.config import Text2fMRIConfig
 
@@ -25,16 +26,18 @@ class Text2fMRIModel(nn.Module):
         out_bias (nn.Embedding): Learnable subject-specific bias per output ROI.
     """
 
-    def __init__(self, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "cpu"):
+    def __init__(self, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "cpu", berg_dir: str = None):
         """
         Initialize the Text2fMRI model.
 
         Args:
             config (Text2fMRIConfig): Model hyperparameters.
             device (str): Device to initialize on ('cpu' or 'cuda').
+            berg_dir (str, optional): Path to the BERG cache directory.
         """
         super().__init__()
         self.config = config
+        self.berg_dir = berg_dir
         self.subj_emb = nn.Embedding(
             config.num_subjects, config.subject_embedding_dim)
         self.device = device
@@ -131,8 +134,25 @@ class Text2fMRIModel(nn.Module):
                 configuration objects to Hugging Face repository IDs.
         """
         model_id = PRETRAINED_CONFIGS[self.config]
+        
+        # Construct cache directory path
+        cache_dir = None
+        if self.berg_dir is not None:
+            cache_dir = os.path.join(
+                self.berg_dir,
+                "encoding_models",
+                "modality-fmri",
+                "train_dataset-cneuromod",
+                "model-text2fmri",
+                "encoding_models_weights"
+            )
+        
         # Download the weights file (cached automatically)
-        weights_path = hf_hub_download(repo_id=model_id, filename="model.pt")
+        weights_path = hf_hub_download(
+            repo_id=model_id, 
+            filename="model.pt",
+            cache_dir=cache_dir
+        )
         state_dict = torch.load(weights_path, map_location=self.device)
         self.load_state_dict(state_dict)
         self.to(self.device)

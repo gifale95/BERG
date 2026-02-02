@@ -89,7 +89,7 @@ class Text2fMRI(BaseModelInterface):
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
         self.feature_extractor: FeatureExtractor = FeatureExtractor(
-            config=config, device=device)
+            config=config, device=device, berg_dir=berg_dir)
         self.config: Text2fMRIConfig = config
         self.berg_dir = berg_dir
         self.selection = selection
@@ -155,7 +155,7 @@ class Text2fMRI(BaseModelInterface):
         """
         if load_feature_extractor:
             self.feature_extractor.load_model()
-        self.model = Text2fMRIModel(config=self.config, device=self.device)
+        self.model = Text2fMRIModel(config=self.config, device=self.device, berg_dir=self.berg_dir)
 
         if self.config in self.pretrained_configs_dict:
             self.model.load_model(self.pretrained_configs_dict)
