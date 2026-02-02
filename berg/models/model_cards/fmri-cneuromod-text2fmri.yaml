@@ -4,7 +4,7 @@
 # Basic metadata
 model_id: fmri-cneuromods-text2fmri
 modality: fmri
-training_dataset: CNeuroMods
+training_dataset: cneuromod
 species: Human
 stimuli: Videos
 model_architecture: Transformers

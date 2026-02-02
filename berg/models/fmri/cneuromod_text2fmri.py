@@ -5,7 +5,6 @@ import torch
 import logging
 from typing import Any
 from nilearn.datasets import fetch_atlas_schaefer_2018
-
 from berg.core.exceptions import InvalidParameterError
 from berg.core.model_registry import register_model
 from berg.core.parameter_validator import validate_roi, validate_selection_keys
@@ -18,7 +17,7 @@ from berg.models.fmri.text2fmri_utils.model import Text2fMRIModel
 # Load model info from YAML
 def load_model_info():
     yaml_path = os.path.join(os.path.dirname(
-        __file__), "..", "model_cards", "text2fmri.yaml")
+        __file__), "..", "model_cards", "fmri-cneuromod-text2fmri.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -32,9 +31,9 @@ register_model(
     module_path="berg.models.fmri.text2fmri",
     class_name="Text2fMRI",
     modality=model_info.get("modality", "fmri"),
-    training_dataset=model_info.get("training_dataset", "CNeuroMods"),
+    training_dataset=model_info.get("training_dataset", "cneuromod"),
     yaml_path=os.path.join(os.path.dirname(__file__),
-                           "..", "model_cards", "text2fmri.yaml")
+                           "..", "model_cards", "fmri-cneuromod-text2fmri.yaml")
 )
 
 
