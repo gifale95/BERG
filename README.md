@@ -245,6 +245,6 @@ If you use BERG, please cite:
 [tuckute_2024]: https://www.nature.com/articles/s41562-023-01783-7
 [acc-fmri-tuckute_2024-GPT2_XL]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy/
 
-[fmri-cneuromod-text2fmri]: docs/models/model_cards/fmri-cneuromod-text2fmri.md
-[dixit_2026]: https://doi.org/10.5281/zenodo.18369862
+[fmri-cneuromod-text2fmri]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod-text2fmri.md
+[dixit_2026]: https://algonautsproject.com/2025/index.html
 [acc-fmri-cneuromod-text2fmri]: https://huggingface.co/collections/ShreyDixit/text2fmri
