@@ -77,27 +77,35 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy/>`_
-   * - 
+   * - ✅
      - :doc:`model_cards/fmri-things_fmri_1-vit_b_32`
      - Linear mapping of vision transformer image features onto whole-brain fMRI responses.
      - THINGS fMRI1
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32/encoding_models_accuracy/>`_
-   * - 
+   * - ✅
      - :doc:`model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual`
      - CNN predicting visual cortex responses (7,831 vertices) for 93 subjects across 8 datasets.
      - MOSAIC (all datasets)
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subAll_verticesVisual/encoding_models_accuracy/>`_
-   * - 
+   * - ✅
      - :doc:`model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll`
      - CNN predicting whole-cortex responses (57,051 vertices) for 8 NSD subjects.
      - MOSAIC (NSD)
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subNSD_verticesAll/encoding_models_accuracy/>`_
+   * - 
+     - :doc:`model_cards/fmri-tuckute_2024-GPT2_XL`
+     - GPT2-XL–based linear encoding model (LLM embeddings + ridge regression) predicting CNN predicting
+     - `Tuckute et al., 2024 <https://www.nature.com/articles/s41562-023-01783-7>`_
+     - Human
+     - Text
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy/>`_
+
 
 modality-eeg
 ~~~~~~~~~~~~

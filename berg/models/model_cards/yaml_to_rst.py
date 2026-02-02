@@ -217,6 +217,16 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                     prev_level = -1
                     continue
                 
+                # Handle subsection headers (no shape, only description)
+                # These are like "full" or "repeat{N}" - they describe a group
+                if not shape and desc:
+                    indent = "    " * nesting_level
+                    rst_content.append("")
+                    rst_content.append(f"{indent}**{key}**: *{desc}*")
+                    rst_content.append("")
+                    prev_level = nesting_level
+                    continue
+                
                 # Add blank line when returning to same or lower nesting level
                 # This separates definition list items properly
                 if prev_level >= 0 and nesting_level <= prev_level:
@@ -243,8 +253,9 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                         # Single line description
                         rst_content.append(f"{indent}{key_formatted} : ``{shape}`` - {desc}")
                 else:
-                    # No description, just key and shape
-                    rst_content.append(f"{indent}{key_formatted} : ``{shape}``")
+                    # No description, just key and shape (don't show if shape is empty)
+                    if shape:
+                        rst_content.append(f"{indent}{key_formatted} : ``{shape}``")
                 
                 prev_level = nesting_level
         
@@ -257,47 +268,98 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     # Input section
     rst_content.extend(["Input", "-----", ""])
     input_data = data.get("input", {})
-    rst_content.append(f"**Type**: ``{input_data.get('type', '')}``  ")
-    rst_content.append(f"**Shape**: ``{input_data.get('shape', '')}``  ")
-    rst_content.append(f"**Description**: {input_data.get('description', '')}")
+    
+    rst_content.append(".. list-table::")
+    rst_content.append("   :widths: 20 80")
+    rst_content.append("   :stub-columns: 1")
     rst_content.append("")
     
-    # Input constraints
-    if "constraints" in input_data:
-        rst_content.append("**Constraints:**")
-        rst_content.append("")
-        for constraint in input_data["constraints"]:
-            rst_content.append(f"* {constraint}")
-        rst_content.append("")
+    # Type
+    if input_data.get('type'):
+        rst_content.append("   * - Type")
+        rst_content.append(f"     - ``{input_data.get('type', '')}``")
+    
+    # Shape (if exists)
+    if input_data.get('shape'):
+        rst_content.append("   * - Shape")
+        rst_content.append(f"     - ``{input_data.get('shape', '')}``")
+    
+    # Description
+    if input_data.get('description'):
+        input_desc = input_data.get('description', '').strip()
+        rst_content.append("   * - Description")
+        if '\n' in input_desc:
+            desc_lines = input_desc.split('\n')
+            rst_content.append(f"     - {desc_lines[0]}")
+            for line in desc_lines[1:]:
+                line = line.strip()
+                if line:
+                    rst_content.append(f"       {line}")
+                else:
+                    rst_content.append("       ")
+        else:
+            rst_content.append(f"     - {input_desc}")
+    
+    # Constraints (if exists)
+    if input_data.get('constraints'):
+        rst_content.append("   * - Constraints")
+        constraints = input_data.get('constraints', [])
+        if constraints:
+            rst_content.append(f"     - * {constraints[0]}")
+            for constraint in constraints[1:]:
+                rst_content.append(f"       * {constraint}")
+    
+    # Example (if exists)
+    if input_data.get('example'):
+        input_example = input_data.get('example', '').strip()
+        rst_content.append("   * - Example")
+        if '\n' in input_example:
+            # Just show as plain text lines in the table
+            example_lines = input_example.split('\n')
+            rst_content.append(f"     - {example_lines[0]}")
+            for line in example_lines[1:]:
+                line = line.strip()
+                if line:
+                    rst_content.append(f"       {line}")
+        else:
+            rst_content.append(f"     - ``{input_example}``")
+    
+    rst_content.append("")
     
     # Output section
     rst_content.extend(["Output", "------", ""])
     output_data = data.get("output", {})
-    rst_content.append(f"**Type**: ``{output_data.get('type', '')}``  ")
-    rst_content.append(f"**Shape**: ``{output_data.get('shape', '')}``  ")
-    rst_content.append("**Description**:  ")
     
-    # Handle multiline output description
-    output_description = output_data.get("description", "").strip()
+    rst_content.append(".. list-table::")
+    rst_content.append("   :widths: 20 80")
+    rst_content.append("   :stub-columns: 1")
+    rst_content.append("")
     
-    if "\n" in output_description:
-        output_lines = output_description.split("\n")
-        
-        for line in output_lines:
-            line = line.strip()
-            if not line:
-                rst_content.append("")
-                continue
-            
-            # Check if the line is a bullet point
-            if line.startswith("-") or line.startswith("*"):
-                if line.startswith("-"):
-                    line = "* " + line[1:].strip()
-                rst_content.append(line)
-            else:
-                rst_content.append(line)
-    else:
-        rst_content.append(output_description)
+    # Type
+    if output_data.get('type'):
+        rst_content.append("   * - Type")
+        rst_content.append(f"     - ``{output_data.get('type', '')}``")
+    
+    # Shape
+    if output_data.get('shape'):
+        rst_content.append("   * - Shape")
+        rst_content.append(f"     - ``{output_data.get('shape', '')}``")
+    
+    # Description
+    if output_data.get('description'):
+        output_description = output_data.get("description", "").strip()
+        rst_content.append("   * - Description")
+        if '\n' in output_description:
+            desc_lines = output_description.split('\n')
+            rst_content.append(f"     - {desc_lines[0]}")
+            for line in desc_lines[1:]:
+                line = line.strip()
+                if line:
+                    rst_content.append(f"       {line}")
+                else:
+                    rst_content.append("       ")
+        else:
+            rst_content.append(f"     - {output_description}")
     
     rst_content.append("")
     
@@ -314,7 +376,18 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         
         for dim in output_data["dimensions"]:
             rst_content.append(f"   * - {dim.get('name', '')}")
-            rst_content.append(f"     - {dim.get('description', '')}")
+            # Handle multiline dimension descriptions properly
+            dim_desc = dim.get('description', '').strip()
+            if '\n' in dim_desc:
+                # For multiline descriptions, use pipe notation
+                desc_lines = dim_desc.split('\n')
+                rst_content.append(f"     - | {desc_lines[0]}")
+                for line in desc_lines[1:]:
+                    line = line.strip()
+                    if line:
+                        rst_content.append(f"       | {line}")
+            else:
+                rst_content.append(f"     - {dim_desc}")
         
         rst_content.append("")
     
@@ -457,7 +530,15 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                 if "example" in param_data:
                     example = param_data.get('example', '')
                     if isinstance(example, str):
-                        rst_content.append(f'       | **Example:** "{example}"')
+                        # Handle multiline string examples - just show as text in table
+                        if '\n' in example:
+                            rst_content.append(f'       | **Example:**')
+                            for line in example.split('\n'):
+                                line = line.strip()
+                                if line:
+                                    rst_content.append(f'       | {line}')
+                        else:
+                            rst_content.append(f'       | **Example:** "{example}"')
                     else:
                         rst_content.append(f"       | **Example:** {example}")
         
@@ -467,6 +548,21 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     rst_content.extend(["Performance", "----------", ""])
     
     performance_data = data.get("performance", {})
+    
+    # Show non-plot metrics first
+    metric_items = []
+    for key, value in performance_data.items():
+        if key != "accuracy_plots":
+            # Format the key nicely (convert snake_case to Title Case)
+            formatted_key = key.replace('_', ' ').title()
+            metric_items.append((formatted_key, value))
+    
+    if metric_items:
+        rst_content.append("**Metrics:**")
+        rst_content.append("")
+        for key, value in metric_items:
+            rst_content.append(f"* **{key}**: {value}")
+        rst_content.append("")
     
     if "accuracy_plots" in performance_data:
         rst_content.append("**Accuracy Plots (AWS directory):**")
@@ -513,16 +609,23 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                         for prop_name, prop_data in param_data["properties"].items():
                             if "example" in prop_data:
                                 selection_example[prop_name] = prop_data["example"]
-                elif param_data.get("required", False) and param_name not in ["model_id", "device"]:
+                # Include required params (except model_id and device) OR optional params with examples
+                elif param_name not in ["model_id", "device"]:
                     if "example" in param_data:
+                        # Include if: required OR (optional but has example different from default)
+                        is_required = param_data.get("required", False)
                         example_val = param_data["example"]
-                        if isinstance(example_val, str):
-                            param_str = f'{param_name}="{example_val}"'
-                        else:
-                            param_str = f"{param_name}={example_val}"
-                        # Avoid duplicates
-                        if param_str not in get_model_params:
-                            get_model_params.append(param_str)
+                        default_val = param_data.get("default")
+                        
+                        # Include if required, or if optional with example different from default
+                        if is_required or (example_val != default_val):
+                            if isinstance(example_val, str):
+                                param_str = f'{param_name}="{example_val}"'
+                            else:
+                                param_str = f"{param_name}={example_val}"
+                            # Avoid duplicates
+                            if param_str not in get_model_params:
+                                get_model_params.append(param_str)
             
             elif function == "encode":
                 if param_name not in ["model", "stimulus", "return_metadata"]:
@@ -579,17 +682,47 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     example_code.append(")")
     example_code.append("")
     
-    # Add stimulus preparation
-    example_code.append("# Prepare the stimulus images")
-    example_code.append("# Image shape should be [batch_size, 3 RGB channels, height, width]")
-    example_code.append("images = np.random.randint(0, 255, (100, 3, 256, 256))")
+    # Add stimulus preparation - use example from YAML if available
+    stimulus_param = data.get("parameters", {}).get("stimulus", {})
+    stimulus_example = stimulus_param.get("example", "")
+    input_data = data.get("input", {})
+    input_example = input_data.get("example", "")
+    
+    # Determine stimulus type and create appropriate example
+    if stimulus_example or input_example:
+        # Use the example from the YAML
+        example_to_use = stimulus_example if stimulus_example else input_example
+        
+        # Clean up the example if it's multiline
+        example_to_use = example_to_use.strip()
+        
+        # Check if this looks like a text/language stimulus
+        if "list[str]" in input_data.get("type", "").lower() or isinstance(example_to_use, str) and example_to_use.startswith("["):
+            example_code.append("# Prepare the stimulus (text/sentences)")
+            # Use the example directly
+            if '\n' in example_to_use:
+                # Multiline - add as is
+                example_code.append(f"stimulus = {example_to_use}")
+            else:
+                example_code.append(f"stimulus = {example_to_use}")
+        else:
+            # Default to image stimulus
+            example_code.append("# Prepare the stimulus images")
+            example_code.append("# Image shape should be [batch_size, 3 RGB channels, height, width]")
+            example_code.append("stimulus = np.random.randint(0, 255, (100, 3, 256, 256))")
+    else:
+        # Fallback to image stimulus
+        example_code.append("# Prepare the stimulus images")
+        example_code.append("# Image shape should be [batch_size, 3 RGB channels, height, width]")
+        example_code.append("stimulus = np.random.randint(0, 255, (100, 3, 256, 256))")
+    
     example_code.append("")
     
     # Build encode example
-    example_code.append("# Generates the in silico neural responses to images using the encoding model previously loaded")
+    example_code.append("# Generates the in silico neural responses using the encoding model previously loaded")
     example_code.append("responses = berg.encode(")
     example_code.append("    model,")
-    example_code.append("    images,")
+    example_code.append("    stimulus,")
     
     if encode_params:
         for param in encode_params:
@@ -615,7 +748,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
             example_code.append("# where:")
             for dim in dimensions:
                 name = dim.get("name", "")
-                desc = dim.get("description", "")
+                desc = dim.get("description", "").strip()
                 if name and desc and name != "batch_size":
                     if "lh_vertices" in name.lower():
                         example_code.append(f"# - {name} is the number of selected left hemisphere (LH) vertices for which the in silico")
@@ -624,7 +757,18 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                         example_code.append(f"# - {name} is the number of selected right hemisphere (RH) vertices for which the in silico")
                         example_code.append("#   fMRI responses are generated.")
                     else:
-                        example_code.append(f"# - {name}: {desc}")
+                        # Handle multiline descriptions in code comments
+                        if '\n' in desc:
+                            desc_lines = desc.split('\n')
+                            # First line
+                            example_code.append(f"# - {name}: {desc_lines[0].strip()}")
+                            # Remaining lines with proper indentation
+                            for line in desc_lines[1:]:
+                                line = line.strip()
+                                if line:
+                                    example_code.append(f"#   {line}")
+                        else:
+                            example_code.append(f"# - {name}: {desc}")
         
         example_code.append("")
     
@@ -632,7 +776,7 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     example_code.append("# Generate in silico neural responses with metadata")
     example_code.append("responses, metadata = berg.encode(")
     example_code.append("    model,")
-    example_code.append("    images,")
+    example_code.append("    stimulus,")
     example_code.append("    return_metadata=True")
     example_code.append(")")
     example_code.append("")
@@ -688,6 +832,7 @@ if __name__ == "__main__":
     print(f"Converted {args.yaml_file} to {output_file}")
     
 
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-tuckute_2024-GPT2_XL.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/calcium_2p-wang_2025-3DCNN.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual.yaml
