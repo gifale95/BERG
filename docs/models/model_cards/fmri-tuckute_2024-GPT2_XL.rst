@@ -38,8 +38,8 @@ z-scored session-wise. Target values are participant-averaged scalars (one per s
 **Architecture.** Linear ridge regression model mapping GPT2-XL layer 22 last-token embeddings 
 (sentence-level representations) to predicted BOLD responses for six ROIs: lang_LH_AntTemp, lang_LH_IFG, 
 lang_LH_IFGorb, lang_LH_MFG, lang_LH_PostTemp, and lang_LH_netw (network average). Layer 22 was selected 
-via 5-fold cross-validation across all 48 GPT2-XL layers, achieving r ≈ 0.38 predictivity (noise ceiling 
-r ≈ 0.56).
+via 5-fold cross-validation across all 48 GPT2-XL layers (for the language network average ROI), achieving r ≈ 0.38 predictivity (noise ceiling 
+r ≈ 0.56 for the network average; see metadata for noise ceilings for other ROIs).
 
 **Training.** Final model trained on all 1,000 sentences using GPT2-XL layer 22 embeddings. Ridge 
 regularization parameter selected via nested cross-validation. No fine-tuning of GPT2-XL performed. 
