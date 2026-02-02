@@ -118,13 +118,8 @@ class Text2fMRI(BaseModelInterface):
             # Validate selection keys
             validate_selection_keys(self.selection, self.SELECTION_KEYS)
 
-            # Individual validations
             if "roi" in self.selection:
-                roi_list = self.selection["roi"]
-                if not isinstance(roi_list, list):
-                    validate_roi(roi_list, self.VALID_ROIS)
-                else:
-                        validate_roi(roi, self.VALID_ROIS)
+                self.roi = validate_roi(self.selection["roi"], self.VALID_ROIS)
 
 
         # Validate subject
