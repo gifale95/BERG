@@ -855,6 +855,7 @@ if __name__ == "__main__":
     
 
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-cneuromod-text2fmri.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-tuckute_2024-GPT2_XL.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/calcium_2p-wang_2025-3DCNN.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual.yaml
