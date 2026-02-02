@@ -550,17 +550,39 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     performance_data = data.get("performance", {})
     
     # Show non-plot metrics first
-    metric_items = []
-    for key, value in performance_data.items():
-        if key != "accuracy_plots":
-            # Format the key nicely (convert snake_case to Title Case)
-            formatted_key = key.replace('_', ' ').title()
-            metric_items.append((formatted_key, value))
+    has_metrics = False
     
-    if metric_items:
-        rst_content.append("**Metrics:**")
-        rst_content.append("")
-        for key, value in metric_items:
+    # Handle 'metrics' as a special case - if it's a dict, expand it
+    if "metrics" in performance_data:
+        metrics = performance_data["metrics"]
+        if isinstance(metrics, dict):
+            rst_content.append("**Metrics:**")
+            rst_content.append("")
+            for metric_key, metric_value in metrics.items():
+                formatted_metric_key = metric_key.replace('_', ' ').title()
+                rst_content.append(f"* **{formatted_metric_key}**: {metric_value}")
+            rst_content.append("")
+            has_metrics = True
+        else:
+            # If metrics is not a dict, treat it normally
+            rst_content.append("**Metrics:**")
+            rst_content.append("")
+            rst_content.append(f"* {metrics}")
+            rst_content.append("")
+            has_metrics = True
+    
+    # Show other non-plot, non-metrics items
+    other_items = []
+    for key, value in performance_data.items():
+        if key not in ["accuracy_plots", "metrics"]:
+            formatted_key = key.replace('_', ' ').title()
+            other_items.append((formatted_key, value))
+    
+    if other_items:
+        if not has_metrics:
+            rst_content.append("**Metrics:**")
+            rst_content.append("")
+        for key, value in other_items:
             rst_content.append(f"* **{key}**: {value}")
         rst_content.append("")
     

@@ -1,18 +1,14 @@
-# Model Card for Text2fMRI
-# -----------------------------------------------------------------------
-
-# Basic metadata
 model_id: fmri-cneuromod-text2fmri
 modality: fMRI
 training_dataset: CNeuroMod (Algonauts2025 2nd winning model)
 species: Human
-stimuli: Videos
-model_architecture: Transformers
+stimuli: Text
+model_type: Transformers
 creator: Shrey Dixit
 
 # General description of the model
 description: |
-  Text2fMRI offers a suite of lightweightencoding models, available through the Hugging Face 
+  Text2fMRI offers a suite of lightweight encoding models, available through the Hugging Face 
   collection 'ShreyDixit/Text2fMRI', designed to predict whole-brain fMRI responses 
   solely from video transcripts.
   
@@ -33,7 +29,8 @@ input:
   description: |
     A list of strings where each string corresponds to the text spoken during a 
     single fMRI Time Repetition (TR).
-    Example: ['hello, are you', 'awake? Yes,', 'I am']
+  example: |
+    ["Hello, are you", "awake? Yes,"]
 
 # Output information
 output:
@@ -48,21 +45,22 @@ output:
 
 # Model parameters and their usage
 parameters:
+
+  model_id:
+    description: Unique identifier of the model to load.
+    required: true
+    type: "str"
+    valid_values: "fmri-cneuromod-text2fmri"
+    example: "fmri-cneuromod-text2fmri"
+    function: "get_encoding_model, get_model_metadata"
+
   subject:
     type: int
     required: true
     valid_values: [0, 1, 2, 3] # Adjust based on your config.num_subjects
     description: "The ID of the subject to generate predictions for."
+    example: 0
     function: "get_encoding_model, get_model_metadata"
-
-  low_mem_use:
-    type: bool
-    required: false
-    default: false
-    description: |
-      If True, sequentially loads/unloads the Feature Extractor and the Encoding Model 
-      to minimize VRAM usage, at the cost of slower execution.
-    function: "encode"
 
   device:
     type: str
@@ -70,6 +68,7 @@ parameters:
     default: "auto"
     valid_values: ["cpu", "cuda", "auto"]
     description: "The computing device to use for inference."
+    example: "auto"
     function: "get_encoding_model"
 
   selection:
@@ -82,24 +81,57 @@ parameters:
       roi:
         type: list[str]
         description: "Filter output by Schaefer 2018 (7-network) atlas labels."
-        valid_values: 
-          - 'Vis'          # Visual
-          - 'SomMot'       # Somatomotor
-          - 'DorsAttn'     # Dorsal Attention
-          - 'SalVentAttn'  # Salience / Ventral Attention
-          - 'Limbic'       # Limbic
-          - 'Cont'         # Control
-          - 'Default'      # Default Mode Network
-        example: "Vis"
+        valid_values: ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']
+        example: ['Vis']
+
+  model:
+    description: An instantiated and loaded encoding model.
+    required: true
+    type: BaseModelInterface
+    function: "encode"
+
+  stimulus:
+    type: "list[str]"
+    required: true
+    description: |
+      A list of strings where each string corresponds to the text spoken during a 
+      single fMRI Time Repetition (TR).
+    example: |
+      ["Hello, are you", "awake? Yes,"]
+    function: "encode"
+
+  low_mem_use:
+    type: bool
+    required: false
+    default: false
+    description: |
+      If True, sequentially loads/unloads the Feature Extractor and the Encoding Model 
+      to minimize VRAM usage, at the cost of slower execution.
+    example: true
+    function: "encode"
+
+  return_metadata:
+    description: "Whether to return the encoding model's metadata together with the in silico neural responses."
+    required: false
+    type: bool
+    default: false
+    example: true
+    function: "encode"
+
+  show_progress:
+    description: "Whether to show a progress bar during encoding (for large batches)."
+    required: false
+    type: bool
+    default: true
+    example: true
+    function: "encode"
 
 # Performance metrics
 performance:
   metrics:
-    - name: "Pearson Correlation"
-      value: "Refer to Hugging Face Collection for specific values. Collection Slug: ShreyDixit/text2fmri" 
-      description: "Average Pearson correlation between predicted and actual fMRI responses across test set."
-  
-  plots: ""
+    pearson_correlation: "Refer to Hugging Face Collection for specific values"
+  collection: "ShreyDixit/text2fmri"
+
 # References
 references:
-    - "Dixit, S. (2026). Text2fMRI: Brain Encoding Models using LLMs (Course Materials) (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.18369862"
+  - "Dixit, S. (2026). Text2fMRI: Brain Encoding Models using LLMs (Course Materials) (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.18369862"
