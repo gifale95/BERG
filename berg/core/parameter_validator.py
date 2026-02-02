@@ -312,35 +312,31 @@ def validate_integer_list(
     )
 
 
-def validate_roi(roi: Any, valid_rois: List[str]) -> str:
+def validate_roi(roi: Any, valid_rois: List[str]) -> List[str]:
     """
-    Validate a single ROI (Region of Interest) selection.
-
-    Parameters
-    ----------
-    roi : any
-        The ROI value to validate
-    valid_rois : list
-        List of valid ROI names
-
-    Returns
-    -------
-    str
-        The validated ROI string
-
-    Raises
-    ------
-    ValidationError
-        If the ROI is not a string or not in the list of valid ROIs
+    Validate one or multiple ROI selections.
+    Accepts a string or a list of strings.
+    Always returns a list of validated ROI strings.
     """
-    if not isinstance(roi, str):
+
+    # normalize to list
+    roi_list = [roi] if isinstance(roi, str) else roi
+
+    if not isinstance(roi_list, list):
         raise ValidationError(
-            f"ROI parameter must be a string, got {type(roi)}"
+            f"ROI must be a string or list of strings, got {type(roi)}"
         )
 
-    if roi not in valid_rois:
-        raise ValidationError(
-            f"Invalid ROI: '{roi}'. Valid ROIs are: {valid_rois}"
-        )
+    validated = []
+    for r in roi_list:
+        if not isinstance(r, str):
+            raise ValidationError(f"ROI must be a string, got {type(r)}")
 
-    return roi
+        if r not in valid_rois:
+            raise ValidationError(
+                f"Invalid ROI: '{r}'. Valid ROIs are: {valid_rois}"
+            )
+
+        validated.append(r)
+
+    return validated
