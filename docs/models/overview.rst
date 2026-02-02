@@ -105,6 +105,13 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Text
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy/>`_
+* - 
+     - :doc:`model_cards/fmri-cneuromod-text2fmri`
+     - Transformer-based encoding model predicting whole-brain fMRI from video transcripts using LLM features
+     - `Dixit, 2026 <https://doi.org/10.5281/zenodo.18369862>`_
+     - Human
+     - Text
+     - `Hugging Face Collection <https://huggingface.co/collections/ShreyDixit/text2fmri>`_
 
 
 modality-eeg
