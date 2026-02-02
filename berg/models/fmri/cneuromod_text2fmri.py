@@ -121,7 +121,6 @@ class Text2fMRI(BaseModelInterface):
             # Individual validations
             if "roi" in self.selection:
                 roi_list = self.selection["roi"]
-                print(roi_list)
                 if not isinstance(roi_list, list):
                     validate_roi(roi_list, self.VALID_ROIS)
                 else:
@@ -191,11 +190,10 @@ class Text2fMRI(BaseModelInterface):
         with torch.inference_mode():
             responses = self.model(features[None], torch.as_tensor(
                 [self.subject], device=self.device)).squeeze()
-            
-        print(responses)
 
         if self.roi is not None:
-            responses = responses[:, self.roi_labels == self.roi]
+            roi_mask = np.isin(self.roi_labels, self.roi)
+            responses = responses[:, roi_mask]
 
         if self.low_mem_use:
             self.cleanup()
