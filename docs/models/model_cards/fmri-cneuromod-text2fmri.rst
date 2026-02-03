@@ -40,6 +40,29 @@ without requiring visual or audio inputs. Despite its efficiency, even the
 smallest model outperforms standard baselines and achieves near-SOTA performance 
 in auditory and language-selective cortices.
 
+Metadata
+--------
+
+.. note::
+
+   Metadata contains ROI masks for the Schaefer 1000-parcel 7-network atlas
+
+**roi_masks**
+
+    **cont** : ``(1000,)`` - Binary mask for Control/Frontoparietal network parcels
+
+    **default** : ``(1000,)`` - Binary mask for Default Mode network parcels
+
+    **dorsattn** : ``(1000,)`` - Binary mask for Dorsal Attention network parcels
+
+    **limbic** : ``(1000,)`` - Binary mask for Limbic network parcels
+
+    **salventattn** : ``(1000,)`` - Binary mask for Salience/Ventral Attention network parcels
+
+    **sommot** : ``(1000,)`` - Binary mask for Somatomotor network parcels
+
+    **vis** : ``(1000,)`` - Binary mask for Visual network parcels
+
 Input
 -----
 
@@ -189,9 +212,7 @@ Performance
 
 **Metrics:**
 
-* **Pearson Correlation**: Refer to Hugging Face Collection for specific values
-
-* **Collection**: ShreyDixit/text2fmri
+* **Performance Metrics**: Available in Hugging Face Collection: ShreyDixit/text2fmri
 
 Example Usage
 ------------

@@ -222,8 +222,57 @@ class Text2fMRI(BaseModelInterface):
         return cls.MODEL_ID
 
     @classmethod
-    def get_metadata(cls, berg_dir=None, model_instance=None, roi=None, **kwargs) -> dict[str, Any]:
-        return model_info
+    def get_metadata(
+        cls, 
+        berg_dir=None, 
+        model_instance=None,
+        **kwargs
+    ) -> dict[str, Any]:
+        """
+        Retrieve metadata for the model.
+
+        Parameters
+        ----------
+        berg_dir : str, optional
+            Path to BERG directory.
+        model_instance : BaseModelInterface, optional
+            If provided, extract parameters from this model instance.
+        **kwargs
+            Additional parameters (subject is ignored as metadata is shared across subjects).
+
+        Returns
+        -------
+        Dict[str, Any]
+            Metadata dictionary.
+        """
+        # If model_instance is provided, extract parameters from it
+        if model_instance is not None:
+            berg_dir = model_instance.berg_dir
+        # If this method is called on an instance (rather than the class)
+        elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
+            berg_dir = cls.berg_dir
+
+        # Validate required parameters
+        if berg_dir is None:
+            raise InvalidParameterError("Required parameter missing: berg_dir")
+
+        # Build metadata path
+        file_name = os.path.join(
+            berg_dir,
+            'encoding_models',
+            'modality-fmri',
+            'train_dataset-cneuromod',
+            'model-text2fmri',
+            'metadata',
+            'metadata.npy'
+        )
+
+        # Load metadata if file exists
+        if os.path.exists(file_name):
+            metadata = np.load(file_name, allow_pickle=True).item()
+            return metadata
+        else:
+            raise FileNotFoundError(f"Metadata file not found: {file_name}")
 
     def _extract_network_names(self):
         """

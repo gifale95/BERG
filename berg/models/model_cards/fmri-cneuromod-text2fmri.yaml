@@ -23,6 +23,18 @@ description: |
   smallest model outperforms standard baselines and achieves near-SOTA performance 
   in auditory and language-selective cortices.
 
+
+metadata: |
+  NOTE: Metadata contains ROI masks for the Schaefer 1000-parcel 7-network atlas
+  'roi_masks':
+      cont                               : (1000,) - Binary mask for Control/Frontoparietal network parcels
+      default                            : (1000,) - Binary mask for Default Mode network parcels
+      dorsattn                           : (1000,) - Binary mask for Dorsal Attention network parcels
+      limbic                             : (1000,) - Binary mask for Limbic network parcels
+      salventattn                        : (1000,) - Binary mask for Salience/Ventral Attention network parcels
+      sommot                             : (1000,) - Binary mask for Somatomotor network parcels
+      vis                                : (1000,) - Binary mask for Visual network parcels
+
 # Input stimulus information
 input:
   type: "list[str]"
@@ -129,8 +141,8 @@ parameters:
 # Performance metrics
 performance:
   metrics:
-    pearson_correlation: "Refer to Hugging Face Collection for specific values"
-  collection: "ShreyDixit/text2fmri"
+    - name: "Performance Metrics"
+      value: "Available in Hugging Face Collection: ShreyDixit/text2fmri"
 
 # References
 references:
