@@ -552,10 +552,12 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
     # Show non-plot metrics first
     has_metrics = False
     
-    # Handle 'metrics' as a special case - if it's a dict, expand it
+    # Handle 'metrics' as a special case - can be dict, list, or other
     if "metrics" in performance_data:
         metrics = performance_data["metrics"]
+        
         if isinstance(metrics, dict):
+            # Dict format: {metric_name: value, ...}
             rst_content.append("**Metrics:**")
             rst_content.append("")
             for metric_key, metric_value in metrics.items():
@@ -563,8 +565,25 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                 rst_content.append(f"* **{formatted_metric_key}**: {metric_value}")
             rst_content.append("")
             has_metrics = True
+            
+        elif isinstance(metrics, list):
+            # List format: [{name: ..., value: ...}, ...]
+            rst_content.append("**Metrics:**")
+            rst_content.append("")
+            for metric_item in metrics:
+                if isinstance(metric_item, dict):
+                    name = metric_item.get("name", "")
+                    value = metric_item.get("value", "")
+                    if name and value:
+                        rst_content.append(f"* **{name}**: {value}")
+                else:
+                    # If list item is not a dict, just display it
+                    rst_content.append(f"* {metric_item}")
+            rst_content.append("")
+            has_metrics = True
+            
         else:
-            # If metrics is not a dict, treat it normally
+            # If metrics is neither dict nor list, treat it as a simple value
             rst_content.append("**Metrics:**")
             rst_content.append("")
             rst_content.append(f"* {metrics}")
