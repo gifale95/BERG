@@ -7,7 +7,7 @@ from typing import Any, Optional
 from nilearn.datasets import fetch_atlas_schaefer_2018
 from berg.core.exceptions import InvalidParameterError
 from berg.core.model_registry import register_model
-from berg.core.parameter_validator import validate_roi, validate_selection_keys, validate_subjects
+from berg.core.parameter_validator import validate_roi, validate_selection_keys, validate_subjects, validate_binary_array
 from berg.interfaces.base_model import BaseModelInterface
 from berg.models.fmri.text2fmri_utils.config import Text2fMRIConfig, get_pretrained_model_configs
 from berg.models.fmri.text2fmri_utils.feature_extractor import FeatureExtractor
@@ -60,6 +60,7 @@ class Text2fMRI(BaseModelInterface):
         model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
+    N_PARCELS_MODEL = 1000  # Model output size (1000 ROIs from Schaefer 2018 atlas)
 
     # Setting it to None so that no calls to hugging face are made during the import
     pretrained_configs_dict = None
@@ -94,6 +95,7 @@ class Text2fMRI(BaseModelInterface):
         self.berg_dir = berg_dir
         self.selection = selection
         self.subject = subject
+        self.voxel_index = None
         if Text2fMRI.pretrained_configs_dict is None:
             Text2fMRI.get_pretrained_configs()
         self._validate_parameters()
@@ -121,6 +123,15 @@ class Text2fMRI(BaseModelInterface):
             if "roi" in self.selection:
                 self.roi = validate_roi(self.selection["roi"], self.VALID_ROIS)
 
+            if "voxel_index" in self.selection:
+                parcel_index = self.selection["voxel_index"]
+                # Validate as binary array
+                validated_array = validate_binary_array(
+                    parcel_index,
+                    expected_length=self.N_PARCELS_MODEL,
+                    parameter_name="voxel_index"
+                )
+                self.voxel_index = validated_array.astype(bool)
 
         # Validate subject
         self.subject = validate_subjects(
@@ -181,12 +192,23 @@ class Text2fMRI(BaseModelInterface):
         if self.model is None:
             self.load_model(load_feature_extractor=not self.low_mem_use)
 
-        # Compute ROI indices if ROI selection is active
+        # Compute ROI indices if any selection is active
         roi_indices = None
-        if self.roi is not None:
-            # Handle both single ROI (string) and multiple ROIs (list)
-            roi_mask = np.isin(self.roi_labels, self.roi)
-            roi_indices = np.where(roi_mask)[0]  # Convert boolean mask to integer indices
+        if self.roi is not None or self.voxel_index is not None:
+            # Start with all False
+            combined_mask = np.zeros(self.N_PARCELS_MODEL, dtype=bool)
+            
+            # Apply ROI selection (if present)
+            if self.roi is not None:
+                roi_mask = np.isin(self.roi_labels, self.roi)
+                combined_mask = combined_mask | roi_mask
+            
+            # Apply voxel_index selection (if present)
+            if self.voxel_index is not None:
+                combined_mask = combined_mask | self.voxel_index
+            
+            # Convert to integer indices
+            roi_indices = np.where(combined_mask)[0]
 
         with torch.inference_mode():
             responses = self.model(

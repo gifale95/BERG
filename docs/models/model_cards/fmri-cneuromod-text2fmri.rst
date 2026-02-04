@@ -147,6 +147,13 @@ This function loads the encoding model.
        |     **Description:** Filter output by Schaefer 2018 (7-network) atlas labels.
        |     **Valid values:** "Vis", "SomMot", "DorsAttn", "SalVentAttn", "Limbic", "Cont", "Default"
        |     **Example:** ['Vis']
+       | 
+       | **voxel_index**
+       |     **Type:** numpy.ndarray
+       |     **Description:** Binary one-hot encoded vector indicating which voxels to include.
+       |     Must have exactly the same length as the number of available voxels (1000).
+       |     Each position set to 1 indicates that voxel should be included.
+       |     **Example:** [0, 0, '...', 1, 1, 0]
 
 Parameters used in ``encode``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -230,7 +237,8 @@ Example Usage
         "fmri-cneuromod-text2fmri",
         subject=0,
         selection={
-            "roi": ["Vis"]
+            "roi": ["Vis"],
+            "voxel_index": [0, 0, '...', 1, 1, 0]
         }
     )
     

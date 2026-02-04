@@ -95,6 +95,13 @@ parameters:
         description: "Filter output by Schaefer 2018 (7-network) atlas labels."
         valid_values: ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']
         example: ['Vis']
+      voxel_index:
+        type: numpy.ndarray
+        description: |
+          Binary one-hot encoded vector indicating which voxels to include.
+          Must have exactly the same length as the number of available voxels (1000).
+          Each position set to 1 indicates that voxel should be included.
+        example: [0, 0, ..., 1, 1, 0]
 
   model:
     description: An instantiated and loaded encoding model.
