@@ -214,7 +214,7 @@ geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
 rsa_trials_single = np.zeros((n_vertex, len(times)), dtype=np.float32)
 rsa_trials_single[:] = np.nan
 rsa_trials_avg = np.zeros((n_vertex, len(times)), dtype=np.float32)
-rsa_trials_avg[:] = np.nan
+#rsa_trials_avg[:] = np.nan
 
 # Loop across EEG time points
 for t in tqdm(range(len(times))):
@@ -223,7 +223,7 @@ for t in tqdm(range(len(times))):
     file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
                 f'hemi-{args.hemisphere}_eeg_time-{t:03d}.npy')
     reg_param = np.load(os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-        'encoding_fusion_weights', 'source_dataset-things_eeg_2', file_name), # !!!
+        'encoding_fusion_weights', 'source_dataset-things_eeg_2', file_name),
         allow_pickle=True).item()
 
     # Instantiate the fusion regression model
@@ -269,7 +269,7 @@ for t in tqdm(range(len(times))):
             fmri_rdm_trials_single = 1 - corr_matrix(tfmri_trials_single[:,r,neighborhood].T)
 
             # Perform RSA (trials single)
-            rsa_trials_single[v,t] += pearsonr(llm_rdm_tril, fmri_rdm_trials_single[idx_tril])[0]
+            rsa_trials_single[v,t] += pearsonr(llm_rdm_tril, fmri_rdm_trials_single[idx_tril])[0] # !!! NAN + float is NAN !!!
             del fmri_rdm_trials_single
         rsa_trials_single[v,t] /= tfmri_trials_single.shape[1]
 

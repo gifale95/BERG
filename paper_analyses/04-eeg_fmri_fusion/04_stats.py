@@ -1,6 +1,5 @@
-"""Aggregate the t-fMRI encoding accuracies across fMRI subjects and
-hemispheres, and compute the ROI-wise correlations between the in silico fMRI
-responses and the t-fMRI responses.
+"""Aggregate the t-fMRI encoding accuracies for each ROI across fMRI subjects
+and hemispheres, and compute the confidence intervals.
 
 Parameters
 ----------
@@ -76,7 +75,7 @@ rois = ['V1', 'V2', 'V3', 'hV4', 'OFA', 'FFA', 'OWFA', 'VWFA', 'OPA', 'PPA',
     'parietal']
 
 # Empty correlation array of shape:
-# (N fMRI subjects, 2 hemispheres, 163842 fMRI vertices, 140 EEG time points)
+# (N fMRI subjects, 2 hemispheres, 163842 fMRI vertices, 140 M/EEG time points)
 corr_tfmri_fmri = np.zeros((n_fsub, n_hemi, n_vertex, n_time),
     dtype=np.float32)
 corr_tfmri_fmri[:] = np.nan

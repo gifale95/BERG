@@ -1,11 +1,17 @@
 """Use the trained encoding fusion models to predict time-resolved fMRI
 (t-fMRI) responses for the 200 THINGS EEG2 test images. These t-fMRI responses
 are then correlated with the in silico fMRI responses for the same test images,
-resulting in one encoding accuracy score for each fMRI vertex and EEG time
+resulting in one encoding accuracy score for each fMRI vertex and M/EEG time
 point.
 
-To reduce computational load, the EEG/fMRI fusion encoding models are only
+To reduce computational load, the M/EEG-fMRI fusion encoding models are only
 trained, tested, and used for vertices falling within the NSD visual streams.
+
+The in vivo THINGS EEG2 responses are prepared using this code:
+https://github.com/gifale95/BERG/tree/main/berg_creation_code/01_prepare_data/train_dataset-things_eeg_2
+
+The in vivo THINGS MEG1 responses are prepared using this code:
+https://github.com/gifale95/BERG/tree/main/berg_creation_code/01_prepare_data/train_dataset-things_meg_1
 
 Parameters
 ----------
@@ -189,7 +195,7 @@ for t in tqdm(range(len(times))):
     reg.intercept_ = reg_param['intercept_']
     reg.n_features_in_ = reg_param['n_features_in_']
 
-    # Generate the t-fMRI responses for the test images with in vivo EEG
+    # Generate the t-fMRI responses for the test images with in vivo M/EEG
     tfmri = reg.predict(source_test[:,:,t])
 
     # Center and normalize the t-fMRI responses

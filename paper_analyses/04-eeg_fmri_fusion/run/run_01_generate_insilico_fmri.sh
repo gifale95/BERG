@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=eeg_fmri_fusion-01a_generate_insilico_fmri
 #SBATCH --mail-type=end
-#SBATCH --mem=90000
-#SBATCH --time=03:00:00
+#SBATCH --mem=95000
+#SBATCH --time=03-00:00:00
 #SBATCH --qos=prio
 #SBATCH --partition=agcichy
 #SBATCH --gres=gpu:1 # number of GPUs
@@ -15,7 +15,7 @@ module add CUDA/12.4.0
 declare -a fmri_subject_all
 declare -a source_dataset_all
 index=0
-for s in `seq 1 8` ; do
+for s in '8' ; do
     for d in 'things_meg_1' ; do
         fmri_subject_all[$index]=$s
         source_dataset_all[$index]=$d
@@ -41,4 +41,4 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Run the job
-python 01a_generate_insilico_fmri.py --fmri_subject $fmri_subject --source_dataset $source_dataset
+python 01_generate_insilico_fmri.py --fmri_subject $fmri_subject --source_dataset $source_dataset

@@ -8,6 +8,12 @@ using the EEG channel responses appended across the 10 THINGS EEG2 subjects
 To reduce computational load, the M/EEG-fMRI fusion encoding models are only
 trained, tested, and used for vertices falling within the NSD visual streams.
 
+The in vivo THINGS EEG2 responses are prepared using this code:
+https://github.com/gifale95/BERG/tree/main/berg_creation_code/01_prepare_data/train_dataset-things_eeg_2
+
+The in vivo THINGS MEG1 responses are prepared using this code:
+https://github.com/gifale95/BERG/tree/main/berg_creation_code/01_prepare_data/train_dataset-things_meg_1
+
 Parameters
 ----------
 fmri_subject : int
@@ -173,7 +179,7 @@ elif args.source_dataset == 'things_meg_1':
 # =============================================================================
 # Train the encoding fusion models
 # =============================================================================
-# Loop across EEG time points
+# Loop across M/EEG time points
 for t in tqdm(range(len(times))):
 
     # Train the encoding fusion models

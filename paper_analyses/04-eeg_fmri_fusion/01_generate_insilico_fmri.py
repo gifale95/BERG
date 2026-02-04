@@ -70,10 +70,17 @@ model = berg.get_encoding_model(
 # =============================================================================
 # Load the source dataset metadata
 # =============================================================================
-metadata = berg.get_model_metadata(
-    f'eeg-{args.source_dataset}-vit_b_32',
-    subject=1
-    )
+if args.source_dataset == 'things_eeg_2':
+    metadata = berg.get_model_metadata(
+        f'eeg-things_eeg_2-vit_b_32',
+        subject=1
+        )
+
+elif args.source_dataset == 'things_meg_1':
+    metadata = berg.get_model_metadata(
+        f'meg-things_meg_1-vit_b_32',
+        subject=1
+        )
 
 
 # =============================================================================
