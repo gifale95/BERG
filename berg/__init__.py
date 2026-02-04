@@ -1,4 +1,11 @@
 import logging
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message="`torch.cuda.amp.autocast",
+    category=FutureWarning
+)
+
 logging.getLogger('nibabel').setLevel(logging.ERROR)
 
 from berg.core.berg import BERG
