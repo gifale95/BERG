@@ -1,0 +1,127 @@
+model_id: brainscore
+modality: ephys
+training_dataset: BrainScore
+species: Macaque
+stimuli: Images
+model_type: BrainScore Vision Models (External)
+creator: BrainScore Community (Marti)
+
+description: |
+  Gateway to BrainScore vision models. BrainScore provides pre-trained 
+  neural network models with biologically-constrained representations
+  benchmarked against neural recordings from visual cortex.
+  
+  **Accessing BrainScore Models:**
+  - Use `berg.list_models()` to see the BrainScore gateway entry
+  - Use `berg.list_models(expand_brainscore=True)` to see all 440+ available models
+  - Individual models are accessed via: `model_id = "brainscore-{model_name}"`
+  - Example: `model_id = "brainscore-vonegrcnn_47e"`
+  - Visit https://www.brain-score.org/ for more information on available models
+  
+  Models are loaded on-demand from the BrainScore API. This is an external 
+  model source - models are not hosted by BERG but cached at ~/.brain-score
+
+metadata: |
+  BrainScore models provide limited metadata compared to BERG native models.
+  Available recording targets and layers vary by model.
+
+input:
+  description: "Path to image directory or list of image file paths"
+  type: "str or list[str]"
+  constraints:
+    - "Images must be readable image files (JPEG, PNG, etc.)"
+    - "BrainScore handles preprocessing internally"
+
+output:
+  description: "Neural responses for specified recording target and time bins"
+  type: "numpy.ndarray"
+  shape: [batch_size, n_units]
+  dimensions:
+    - name: "batch_size"
+      description: "Number of stimuli"
+    - name: "n_units"
+      description: "Number of neural units (varies by model and recording target)"
+
+parameters:
+  model_id:
+    description: |
+      Model identifier. Format: "brainscore-{model_name}"
+      Example: "brainscore-vonegrcnn_47e"
+      Use berg.list_models(expand_brainscore=True) to see all available models.
+    required: true
+    type: str
+    example: "brainscore-vonegrcnn_47e"
+    function: get_encoding_model
+
+  selection:
+    description: |
+      Specifies recording target (brain region) and temporal windows.
+      **REQUIRED**: The 'region' parameter must be specified for all BrainScore models.
+    required: true
+    type: dict
+    function: get_encoding_model
+    properties:
+      region:
+        type: str
+        description: |
+          Brain region to record from. **REQUIRED parameter.**
+          Common regions: V1 (primary visual cortex), V2, V4 (mid-level visual), 
+          IT (inferior temporal cortex, high-level object recognition).
+          Available regions depend on the specific BrainScore model.
+          Each region extracts from different network layers:
+          - V1: Early layers (low-level features like edges, orientations)
+          - V4: Middle layers (shapes, textures, intermediate features)
+          - IT: Late layers (objects, categories, semantic features)
+        example: "V1"
+        valid_values: ["V1", "V2", "V4", "IT"]
+      
+      time_bins:
+        type: list[tuple[int, int]]
+        description: |
+          Temporal windows for neural responses in milliseconds after stimulus onset.
+          Each tuple specifies (start_ms, end_ms) for averaging neural activity.
+          
+          **Default: [(70, 170)]** - Standard visual response window (100ms duration 
+          capturing peak stimulus-evoked activity in visual cortex).
+          
+          **Why time bins matter:** Neurons respond dynamically over time. Different
+          time windows capture different processing stages:
+          - Early (50-100ms): Low-level visual features, feedforward processing
+          - Peak (70-170ms): Standard stimulus-evoked response window
+          - Late (100-200ms): Recurrent processing, higher-level representations
+          
+          **Examples:**
+          - [(70, 170)]: Single 100ms window (default, most common)
+          - [(50, 100), (100, 150)]: Two windows for early vs. late responses
+          - [(100, 200)]: Alternative standard window
+          
+          If not specified, uses default [(70, 170)].
+        example: [[100, 200]]
+
+  device:
+    description: "Device to run the model on"
+    required: false
+    type: str
+    valid_values: ["cpu", "cuda", "auto"]
+    default: "auto"
+    function: get_encoding_model
+
+  stimulus:
+    description: |
+      Path to directory containing images, or list of image file paths.
+      Images should be standard formats (JPEG, PNG, etc.).
+    required: true
+    type: "str or list[str]"
+    example: "/path/to/images"
+    function: "encode"
+
+  show_progress:
+    description: "Whether to show progress bar during encoding"
+    required: false
+    type: bool
+    default: true
+    function: "encode"
+
+references:
+  - BrainScore: https://www.brain-score.org/
+  - BrainScore Vision Models: https://github.com/brain-score/vision
