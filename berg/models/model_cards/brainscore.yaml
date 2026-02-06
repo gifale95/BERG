@@ -7,19 +7,17 @@ model_type: BrainScore Vision Models (External)
 creator: Martin Schrimpf
 
 description: |
-  Gateway to BrainScore vision models. BrainScore provides pre-trained 
-  neural network models with biologically-constrained representations
-  benchmarked against neural recordings from visual cortex.
+  This interface provides access to the BrainScore vision model ecosystem. BrainScore benchmarks neural network models against biological neural recordings from macaque visual cortex (V1, V2, V4, IT), offering 440+ pre-trained models with biologically-constrained representations.
   
-  **Accessing BrainScore Models:**
-  - Use `berg.list_models()` to see the BrainScore gateway entry
-  - Use `berg.list_models(expand_brainscore=True)` to see all 440+ available models
-  - Individual models are accessed via: `model_id = "brainscore-{model_name}"`
-  - Example: `model_id = "brainscore-vonegrcnn_47e"`
-  - Visit https://www.brain-score.org/ for more information on available models
+  **Neural data.** BrainScore models are benchmarked against electrophysiological recordings from macaque visual cortex. Each model includes a region-to-layer mapping that specifies which network layer corresponds to which brain region (e.g., early layers → V1, late layers → IT).
   
-  Models are loaded on-demand from the BrainScore API. This is an external 
-  model source - models are not hosted by BERG but cached at ~/.brain-score
+  **Model architecture.** The interface supports diverse architectures and custom neurally-constrained models. Each model maps specific network layers to distinct brain regions based on benchmarking results.
+  
+  **Temporal dynamics.** Models provide time-binned responses representing neural activity within specified temporal windows (e.g., 70-170ms post-stimulus). Different time bins capture distinct processing stages: early feedforward processing (50-100ms), peak stimulus-evoked responses (70-170ms), and recurrent processing (100-200ms).
+  
+  **Accessing models.** Use `berg.list_models()` to see the interface entry, or `berg.list_models(expand_brainscore=True)` to list all 440+ available models. Individual models are accessed via `model_id = "brainscore-{model_name}"` (e.g., `"brainscore-vonegrcnn_47e"`).
+  
+  **External source.** Models are loaded on-demand from the BrainScore API. This is an external model source not hosted by BERG. For detailed model information and benchmarking scores, visit https://www.brain-score.org/
 
 
 input:
@@ -37,7 +35,7 @@ output:
     - name: "batch_size"
       description: "Number of stimuli"
     - name: "n_units"
-      description: "Number of neural units"
+      description: "Number of neural units (varies by model and recording target)"
 
 parameters:
   model_id:
@@ -53,45 +51,39 @@ parameters:
   selection:
     description: |
       Specifies recording target (brain region) and temporal windows.
-    required: true
+      If not provided, responses are generated for all available brain regions.
+    required: false
     type: dict
     function: get_encoding_model
     properties:
-      roi:
+      region:
         type: str
         description: |
-          Brain region to record from.
-          Common regions: V1 (primary visual cortex), V2, V4 (mid-level visual), 
-          IT (inferior temporal cortex, high-level object recognition).
-          Available regions depend on the specific BrainScore model.
-          Each region extracts from different network layers:
-          - V1: Early layers (low-level features like edges, orientations)
-          - V4: Middle layers (shapes, textures, intermediate features)
-          - IT: Late layers (objects, categories, semantic features)
-        example: "V1"
+          Brain region to record from. Each region corresponds to a specific network layer:
+            • V1 (primary visual cortex): Early layers capturing low-level features (edges, orientations, spatial frequencies)
+            • V2: Early-to-mid layers for intermediate feature processing
+            • V4: Mid-level layers representing shapes, textures, and mid-level object features
+            • IT (inferior temporal cortex): Late layers encoding high-level object representations and semantic categories
+
+          When region is not specified, activations from all available regions are returned.
         valid_values: ["V1", "V2", "V4", "IT"]
+        example: "V1"
       
       time_bins:
         type: list[tuple[int, int]]
         description: |
           Temporal windows for neural responses in milliseconds after stimulus onset.
-          Each tuple specifies (start_ms, end_ms) for averaging neural activity.
+          Each tuple specifies (start_ms, end_ms) for averaging neural activity within that window.
           
-          **Default: [(70, 170)]** - Standard visual response window (100ms duration 
-          capturing peak stimulus-evoked activity in visual cortex).
+          **Default: [(70, 170)]** - Standard 100ms window capturing peak stimulus-evoked activity 
+          in visual cortex, widely used in electrophysiology literature.
           
-          **Why time bins matter:** Neurons respond dynamically over time. Different
-          time windows capture different processing stages:
-          - Early (50-100ms): Low-level visual features, feedforward processing
-          - Peak (70-170ms): Standard stimulus-evoked response window
-          - Late (100-200ms): Recurrent processing, higher-level representations
+          **Temporal processing stages:**
+          Early (50-100ms): Initial feedforward sweep through visual hierarchy, low-level feature extraction
+          Peak (70-170ms): Maximum stimulus-driven responses, standard measurement window
+          Late (100-200ms): Recurrent processing, feedback modulation, higher-level feature integration
           
-          **Examples:**
-          - [(70, 170)]: Single 100ms window (default, most common)
-          - [(50, 100), (100, 150)]: Two windows for early vs. late responses
-          - [(100, 200)]: Alternative standard window
-          
-          If not specified, uses default [(70, 170)].
+          If not specified, defaults to [(70, 170)].
         example: [[100, 200]]
 
   device:
@@ -105,7 +97,13 @@ parameters:
   stimulus:
     description: |
       Path to directory containing images, or list of image file paths.
-      Images should be standard formats (JPEG, PNG, etc.).
+      
+      Unlike BERG native models which accept numpy arrays, BrainScore models require 
+      file paths to images. The interface handles conversion to BrainScore's internal 
+      StimulusSet format automatically.
+      
+      Images should be standard formats (JPEG, PNG, etc.). BrainScore handles 
+      preprocessing (resizing, normalization) internally based on each model's requirements.
     required: true
     type: "str or list[str]"
     example: "/path/to/images"
@@ -119,6 +117,6 @@ parameters:
     function: "encode"
 
 references:
-  - BrainScore: https://www.brain-score.org/
-  - BrainScore Vision Models: https://github.com/brain-score/vision
-  - BrainScore Paper (Martin Schrimpf et al. (2018): https://www.biorxiv.org/content/10.1101/407007v1
+  - BrainScore Website: https://www.brain-score.org/
+  - BrainScore Vision Models Repository: https://github.com/brain-score/vision
+  - BrainScore Paper (Schrimpf et al., 2018): https://www.biorxiv.org/content/10.1101/407007v1
