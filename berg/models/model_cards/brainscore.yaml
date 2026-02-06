@@ -61,10 +61,10 @@ parameters:
     type: dict
     function: get_encoding_model
     properties:
-      region:
+      roi:
         type: str
         description: |
-          Brain region to record from. **REQUIRED parameter.**
+          Brain region to record from.
           Common regions: V1 (primary visual cortex), V2, V4 (mid-level visual), 
           IT (inferior temporal cortex, high-level object recognition).
           Available regions depend on the specific BrainScore model.

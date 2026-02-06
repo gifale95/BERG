@@ -9,6 +9,9 @@ import pkgutil
 from berg.interfaces.base_model import BaseModelInterface
 from berg.core.model_registry import register_model, MODEL_REGISTRY
 
+from berg.core.parameter_validator import validate_selection_keys
+from berg.core.exceptions import InvalidParameterError
+
 from brainscore_vision import load_model
 from brainio.stimuli import StimulusSet
 import brainscore_vision.models as bs_models
@@ -18,6 +21,21 @@ warnings.filterwarnings('ignore', category=RuntimeWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
 warnings.filterwarnings('ignore', category=FutureWarning)
 
+
+# Load model info from YAML
+def load_model_info():
+    yaml_path = os.path.join(
+        os.path.dirname(__file__), 
+        "..", 
+        "model_cards", 
+        "brainscore.yaml"
+    )
+    with open(os.path.abspath(yaml_path), "r") as f:
+        return yaml.safe_load(f)
+
+
+# Load model_info once at the top
+model_info = load_model_info()
 
 # Register the gateway model
 register_model(
@@ -38,7 +56,9 @@ class BrainScoreGateway(BaseModelInterface):
     of neural network models trained on biological neural recordings.
     """
     
-    MODEL_ID = "brainscore"
+    MODEL_ID = model_info["model_id"]
+    SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
+    VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     
     def __init__(
         self,
@@ -60,12 +80,16 @@ class BrainScoreGateway(BaseModelInterface):
             Device for computation ("cpu", "cuda", or "auto")
         selection : dict, optional
             Selection parameters:
-                - region: str (e.g., "V1", "V4", "IT") - if None, all regions returned
+                - roi: str (e.g., "V1", "V4", "IT") - if None, all regions returned
                 - time_bins: list of tuples (e.g., [(100, 200)])
         """
         self.berg_dir = berg_dir
         self.model_id_full = model_id
         self.device = device
+        self.selection = selection
+        
+        # Validate parameters
+        self._validate_parameters()
         
         # Parse BrainScore model name from model_id (lowercase)
         if model_id.startswith("brainscore-"):
@@ -77,14 +101,71 @@ class BrainScoreGateway(BaseModelInterface):
         self.brainscore_model_name = get_original_case_model_name(lowercase_name)
         
         # Parse selection parameters - region is now optional
-        self.region = None
+        self.roi = None
         self.time_bins = None
         if selection:
-            self.region = selection.get('region', None)
+            self.roi = selection.get('roi', None)
             self.time_bins = selection.get('time_bins', None)
         
         # Model will be loaded in load_model()
         self.model = None
+        
+        
+    def _validate_parameters(self):
+            """
+            Validate user-provided parameters.
+            Ensures that region and time_bins match expected values.
+            """
+            
+            if self.selection is not None:
+                # Validate selection keys
+                validate_selection_keys(self.selection, self.SELECTION_KEYS)
+                
+                # Validate region
+                if "roi" in self.selection:
+                    roi = self.selection["roi"]
+                    
+                    if not isinstance(roi, str):
+                        raise InvalidParameterError("roi must be provided as a string")
+                    
+                    if roi not in self.VALID_ROIS:
+                        raise InvalidParameterError(
+                            f"Invalid roi: '{roi}'. "
+                            f"Valid rois are: {self.VALID_ROIS}"
+                        )
+                
+                # Validate time_bins
+                if "time_bins" in self.selection:
+                    time_bins = self.selection["time_bins"]
+                    
+                    if not isinstance(time_bins, list):
+                        raise InvalidParameterError("time_bins must be provided as a list of tuples")
+                    
+                    for tb in time_bins:
+                        if not isinstance(tb, (list, tuple)) or len(tb) != 2:
+                            raise InvalidParameterError(
+                                f"Each time bin must be a tuple of (start_ms, end_ms). Got: {tb}"
+                            )
+                        
+                        start, end = tb
+                        if not isinstance(start, (int, float)) or not isinstance(end, (int, float)):
+                            raise InvalidParameterError(
+                                f"Time bin values must be numeric. Got: {tb}"
+                            )
+                        
+                        if start >= end:
+                            raise InvalidParameterError(
+                                f"Time bin start must be less than end. Got: {tb}"
+                            )
+                        
+                        # Placeholder for future validation (commented out for now)
+                        # MIN_TIME_MS = 0
+                        # MAX_TIME_MS = 500
+                        # if start < MIN_TIME_MS or end > MAX_TIME_MS:
+                        #     raise InvalidParameterError(
+                        #         f"Time bins should be within biologically plausible range "
+                        #         f"[{MIN_TIME_MS}, {MAX_TIME_MS}]ms. Got: {tb}"
+                        #     )
         
     def load_model(self):
         """Load the BrainScore model."""
@@ -93,8 +174,8 @@ class BrainScoreGateway(BaseModelInterface):
         self.model = load_model(self.brainscore_model_name)
         
         # Configure recording only if region specified
-        if self.region:
-            recording_target = getattr(self.model.RecordingTarget, self.region)
+        if self.roi:
+            recording_target = getattr(self.model.RecordingTarget, self.roi)
             
             # Use default time_bins if not provided
             if self.time_bins is None:
@@ -105,7 +186,7 @@ class BrainScoreGateway(BaseModelInterface):
                 time_bins=self.time_bins
             )
             
-            print(f"Recording configured: region={self.region}, time_bins={self.time_bins}")
+            print(f"Recording configured: region={self.roi}, time_bins={self.time_bins}")
         else:
             print("No region selected - will extract all available regions")
     
@@ -150,9 +231,9 @@ class BrainScoreGateway(BaseModelInterface):
         }
         
         # Extract layers
-        if self.region:
+        if self.roi:
             # Extract only the layer for selected region
-            layer_for_region = self.model.layer_model.region_layer_map[self.region]
+            layer_for_region = self.model.layer_model.region_layer_map[self.roi]
             layers = [layer_for_region]
             
             if show_progress:
