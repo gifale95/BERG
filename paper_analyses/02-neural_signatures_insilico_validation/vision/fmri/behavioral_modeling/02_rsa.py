@@ -103,7 +103,7 @@ metadata_eeg = berg.get_model_metadata(
 test_img_concepts_THINGS = metadata_eeg['encoding_models']['test_img_info']\
     ['test_img_concepts_THINGS']
 
-# Load the behavioral embeddings (the behavioral emebddings can be downloaded
+# Load the behavioral embeddings (the behavioral embeddings can be downloaded
 # from: https://osf.io/f5rn6/overview)
 embedding_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',

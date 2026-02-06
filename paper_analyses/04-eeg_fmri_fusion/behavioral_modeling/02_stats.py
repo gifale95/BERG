@@ -52,12 +52,12 @@ for key, val in vars(args).items():
 
 
 # =============================================================================
-# EEG metadata and analysis parameters
+# M/EEG metadata and analysis parameters
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
-# Load the EEG time points
+# Load the M/EEG time points
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
     subject=1

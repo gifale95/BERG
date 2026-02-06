@@ -94,7 +94,7 @@ def corr_matrix(X):
 # =============================================================================
 # Create the behavioral RDM
 # =============================================================================
-# Load the behavioral embeddings (the behavioral emebddings can be downloaded
+# Load the behavioral embeddings (the behavioral embeddings can be downloaded
 # from: https://osf.io/f5rn6/overview)
 embedding_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'behavioral_modeling', 'spose_embedding_66d_sorted.txt')

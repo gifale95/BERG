@@ -1,5 +1,8 @@
-"""Perform RSA between t-fMRI responses and DNN layerwise features,
+"""Perform RSA between the t-fMRI responses and behavioral embeddings,
 independently for each fMRI ROI.
+
+To reduce computational load, the M/EEG-fMRI fusion encoding models are only
+trained, tested, and used for vertices falling within the NSD visual streams.
 
 Parameters
 ----------
@@ -11,29 +14,30 @@ meg_subjects : list
     subject identifiers are integers from 1 to 4.
 noise_ceiling_threshold : float
     The threshold on the noise ceiling for voxel selection.
-dnn_model : str
-    Name of deep neural network model used to extract the image features.
-    Available options are 'alexnet' and 'resnet50'.
 berg_dir : str
     Directory of the BERG.
+things_dir : str
+    Directory of the THINGS database.
+    https://osf.io/jum2f/
 
 """
 
 import argparse
 import os
 import numpy as np
+from berg import BERG
 from tqdm import tqdm
+import pandas as pd
 from scipy.stats import pearsonr
 import h5py
-from berg import BERG
 from sklearn.linear_model import LinearRegression
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subject', default=1, type=int)
 parser.add_argument('--meg_subjects', default=[1, 2, 3, 4], type=list)
 parser.add_argument('--noise_ceiling_threshold', default=20, type=float)
-parser.add_argument('--dnn_model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
+parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> RSA <<<')
@@ -66,23 +70,7 @@ def corr_matrix(X):
 
 
 # =============================================================================
-# Load the DNN layerwise RDMs
-# =============================================================================
-data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_things_meg_fmri_control', 'dnn_layerwise_modeling', 'dnn_rdms',
-    'dnn_rdms_'+args.dnn_model+'.npy')
-
-dnn_rdms = np.load(data_dir, allow_pickle=True).item()
-
-# Take the lower triangle of the DNN RDMs
-idx_tril = np.tril_indices(len(dnn_rdms[list(dnn_rdms.keys())[0]]), -1)
-dnn_rdm_tril = {}
-for key, val in dnn_rdms.items():
-    dnn_rdm_tril[key] = val[idx_tril]
-
-
-# =============================================================================
-# Get the 100 THINGS fMRI1 test image file names
+# Get the 100 THINGS fMRI1 test images
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
@@ -93,9 +81,37 @@ metadata_fmri = berg.get_model_metadata(
     subject=args.fmri_subject
     )
 
-# Get the test image file names
-test_stimuli_fmri = metadata_fmri['encoding_model']['test_stimuli']
-unique_test_stimuli = np.unique(test_stimuli_fmri)
+# Get the test image metadata
+test_concepts = np.unique(metadata_fmri['encoding_model']['test_concepts'])
+test_stimuli = np.unique(metadata_fmri['encoding_model']['test_stimuli'])
+
+
+# =============================================================================
+# Create the behavioral RDM
+# =============================================================================
+# Load the behavioral embeddings (the behavioral embeddings can be downloaded
+# from: https://osf.io/f5rn6/overview)
+embedding_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'behavioral_modeling', 'spose_embedding_66d_sorted.txt')
+beh_embeddings_all = np.array(pd.read_csv(embedding_dir, delim_whitespace=True,
+    header=None)).astype(np.float32)
+
+# Get the behavioral embeddings for the 100 THINGS fMRI1 test images
+things_concept_dir = os.listdir(os.path.join(args.things_dir,
+    'image-database_things'))
+things_concept_dir.sort()
+idx_test = []
+for concept in test_concepts:
+    idx_test.append(things_concept_dir.index(concept))
+idx_test = np.array(idx_test)
+beh_embeddings = beh_embeddings_all[idx_test]
+
+# Create the RDM
+beh_rdm = 1 - corr_matrix(beh_embeddings.T)
+
+# Take the lower triangle of the behavior RDM
+idx_tril = np.tril_indices(len(beh_rdm), -1)
+beh_rdm_tril = beh_rdm[idx_tril]
 
 
 # =============================================================================
@@ -128,7 +144,7 @@ for ms, msub in enumerate(tqdm(args.meg_subjects)):
     # the fMRI
     test_stimuli_meg = metadata_meg['encoding_model']['test_stimuli']
     meg_test_sub = []
-    for stim in unique_test_stimuli:
+    for stim in test_stimuli:
         idx = [i for i, x in enumerate(test_stimuli_meg) if x == stim]
         meg_test_sub.append(meg_test_all[idx].mean(0))
     meg_test_sub = np.array(meg_test_sub)
@@ -158,9 +174,7 @@ for r, roi in enumerate(tqdm(rois)):
 
     # Empty RSA result arrays of shape:
     # (N MEG time points)
-    rsa[roi] = {}
-    for key in dnn_rdms.keys():
-        rsa[roi][key] = np.zeros((len(times)), dtype=np.float32)
+    rsa[roi] = np.zeros((len(times)), dtype=np.float32)
 
     # Noise ceiling voxel selection
     if roi in ['FFA', 'FFA', 'OFA', 'EBA', 'PPA', 'RSC', 'TOS', 'LOC', 'STS']:
@@ -210,9 +224,8 @@ for r, roi in enumerate(tqdm(rois)):
         tfmri_rdm = 1 - corr_matrix(tfmri.T)
         del tfmri
 
-        # Perform RSA with each DNN layer
-        for key, val in dnn_rdm_tril.items():
-            rsa[roi][key][t] = pearsonr(val, tfmri_rdm[idx_tril])[0]
+        # Perform RSA with the behavioral embedding RDM
+        rsa[roi][t] = pearsonr(beh_rdm_tril, tfmri_rdm[idx_tril])[0]
         del tfmri_rdm
 
 
@@ -220,10 +233,9 @@ for r, roi in enumerate(tqdm(rois)):
 # Save the results
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_things_meg_fmri_control', 'dnn_layerwise_modeling', 'rsa')
+    'invivo_things_meg_fmri_control', 'behavioral_modeling', 'rsa')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = (f'rsa_fmri_sub-{args.fmri_subject:02d}'
-            f'_dnn_model-{args.dnn_model}.npy')
+file_name = f'rsa_fmri_sub-{args.fmri_subject:02d}.npy'
 
 np.save(os.path.join(save_dir, file_name), rsa)

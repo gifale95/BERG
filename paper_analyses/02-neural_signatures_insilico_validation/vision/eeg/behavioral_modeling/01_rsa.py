@@ -194,7 +194,7 @@ for t in tqdm(range(len(times))):
 # =============================================================================
 # Create the behavioral RDM
 # =============================================================================
-# Load the behavioral embeddings (the behavioral emebddings can be downloaded
+# Load the behavioral embeddings (the behavioral embeddings can be downloaded
 # from: https://osf.io/f5rn6/overview)
 embedding_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'eeg',
