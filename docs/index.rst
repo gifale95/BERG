@@ -72,7 +72,7 @@ Generate in silico fMRI responses:
    berg = BERG("/path/to/brain-encoding-response-generator")
    
    # Get an encoding model
-   model = berg.get_encoding_model("fmri-nsd-fwrf", subject=1, selection={"roi": "V1"})
+   model = berg.get_encoding_model("fmri-nsd_fsaverage-huze", subject=1)
    
    # Generate responses to stimuli
    stimuli = np.random.randint(0, 255, (10, 3, 224, 224), dtype=np.uint8)
