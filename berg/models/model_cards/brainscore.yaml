@@ -21,9 +21,6 @@ description: |
   Models are loaded on-demand from the BrainScore API. This is an external 
   model source - models are not hosted by BERG but cached at ~/.brain-score
 
-metadata: |
-  BrainScore models provide limited metadata compared to BERG native models.
-  Available recording targets and layers vary by model.
 
 input:
   description: "Path to image directory or list of image file paths"
@@ -40,7 +37,7 @@ output:
     - name: "batch_size"
       description: "Number of stimuli"
     - name: "n_units"
-      description: "Number of neural units (varies by model and recording target)"
+      description: "Number of neural units"
 
 parameters:
   model_id:
