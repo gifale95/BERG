@@ -1,6 +1,6 @@
 model_id: fmri-cneuromod-text2fmri
 modality: fMRI
-training_dataset: CNeuroMod
+training_dataset: CNeuroMod (Algonauts 2025 challenge preparation)
 species: Human
 stimuli: Text
 model_type: Transformers
