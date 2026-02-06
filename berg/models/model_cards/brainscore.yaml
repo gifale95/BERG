@@ -56,7 +56,6 @@ parameters:
   selection:
     description: |
       Specifies recording target (brain region) and temporal windows.
-      **REQUIRED**: The 'region' parameter must be specified for all BrainScore models.
     required: true
     type: dict
     function: get_encoding_model
@@ -125,3 +124,4 @@ parameters:
 references:
   - BrainScore: https://www.brain-score.org/
   - BrainScore Vision Models: https://github.com/brain-score/vision
+  - BrainScore Paper (Martin Schrimpf et al. (2018): https://www.biorxiv.org/content/10.1101/407007v1

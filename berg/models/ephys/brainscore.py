@@ -91,7 +91,7 @@ class BrainScoreGateway(BaseModelInterface):
         # Validate parameters
         self._validate_parameters()
         
-        # Parse BrainScore model name from model_id (lowercase)
+        # Parse BrainScore model name from model_id 
         if model_id.startswith("brainscore-"):
             lowercase_name = model_id.replace("brainscore-", "")
         else:
@@ -100,14 +100,13 @@ class BrainScoreGateway(BaseModelInterface):
         # Get original case for BrainScore API
         self.brainscore_model_name = get_original_case_model_name(lowercase_name)
         
-        # Parse selection parameters - region is now optional
+        # Parse selection parameters
         self.roi = None
         self.time_bins = None
         if selection:
             self.roi = selection.get('roi', None)
             self.time_bins = selection.get('time_bins', None)
         
-        # Model will be loaded in load_model()
         self.model = None
         
         
@@ -158,14 +157,7 @@ class BrainScoreGateway(BaseModelInterface):
                                 f"Time bin start must be less than end. Got: {tb}"
                             )
                         
-                        # Placeholder for future validation (commented out for now)
-                        # MIN_TIME_MS = 0
-                        # MAX_TIME_MS = 500
-                        # if start < MIN_TIME_MS or end > MAX_TIME_MS:
-                        #     raise InvalidParameterError(
-                        #         f"Time bins should be within biologically plausible range "
-                        #         f"[{MIN_TIME_MS}, {MAX_TIME_MS}]ms. Got: {tb}"
-                        #     )
+                        # TODO: ONCE WE KNOW MIN AND MAX ALSO ADD THIS
         
     def load_model(self):
         """Load the BrainScore model."""
