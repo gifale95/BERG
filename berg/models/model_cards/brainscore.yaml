@@ -4,7 +4,7 @@ training_dataset: BrainScore
 species: Macaque
 stimuli: Images
 model_type: BrainScore Vision Models (External)
-creator: BrainScore Community (Marti)
+creator: Martin Schrimpf
 
 description: |
   Gateway to BrainScore vision models. BrainScore provides pre-trained 

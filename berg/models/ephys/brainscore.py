@@ -60,44 +60,45 @@ class BrainScoreGateway(BaseModelInterface):
             Device for computation ("cpu", "cuda", or "auto")
         selection : dict, optional
             Selection parameters:
-                - region: str (e.g., "V1", "V4", "IT") - REQUIRED
+                - region: str (e.g., "V1", "V4", "IT") - if None, all regions returned
                 - time_bins: list of tuples (e.g., [(100, 200)])
         """
         self.berg_dir = berg_dir
         self.model_id_full = model_id
         self.device = device
         
-        # Parse BrainScore model name from model_id
+        # Parse BrainScore model name from model_id (lowercase)
         if model_id.startswith("brainscore-"):
             lowercase_name = model_id.replace("brainscore-", "")
         else:
             lowercase_name = model_id
-
+        
         # Get original case for BrainScore API
         self.brainscore_model_name = get_original_case_model_name(lowercase_name)
         
-        # Parse selection parameters - region is REQUIRED
-        if not selection or 'region' not in selection:
-            raise ValueError("BrainScore models require 'region' in selection parameter (e.g., selection={'region': 'V1'})")
-        
-        self.region = selection['region']
-        self.time_bins = selection.get('time_bins', None)
+        # Parse selection parameters - region is now optional
+        self.region = None
+        self.time_bins = None
+        if selection:
+            self.region = selection.get('region', None)
+            self.time_bins = selection.get('time_bins', None)
         
         # Model will be loaded in load_model()
         self.model = None
         
     def load_model(self):
         """Load the BrainScore model."""
+        
         print(f"Loading BrainScore model: {self.brainscore_model_name}")
         self.model = load_model(self.brainscore_model_name)
         
-        # Configure recording if region specified
+        # Configure recording only if region specified
         if self.region:
             recording_target = getattr(self.model.RecordingTarget, self.region)
             
             # Use default time_bins if not provided
             if self.time_bins is None:
-                self.time_bins = [(70, 170)]  # BrainScore default
+                self.time_bins = [(70, 170)]  # TODO: WHAT IS THE DEFAULT?
             
             self.model.start_recording(
                 recording_target=recording_target,
@@ -105,7 +106,10 @@ class BrainScoreGateway(BaseModelInterface):
             )
             
             print(f"Recording configured: region={self.region}, time_bins={self.time_bins}")
+        else:
+            print("No region selected - will extract all available regions")
     
+
     def generate_response(
         self,
         stimulus: Union[str, List[str]],
@@ -145,12 +149,20 @@ class BrainScoreGateway(BaseModelInterface):
             for sid, path in zip(stimulus_ids, image_paths)
         }
         
-        # Extract only the layer(s) for the selected region
-        layer_for_region = self.model.layer_model.region_layer_map[self.region]
-        layers = [layer_for_region]
-        
-        if show_progress:
-            print(f"Extracting activations from layer '{layer_for_region}' for {len(image_paths)} images...")
+        # Extract layers
+        if self.region:
+            # Extract only the layer for selected region
+            layer_for_region = self.model.layer_model.region_layer_map[self.region]
+            layers = [layer_for_region]
+            
+            if show_progress:
+                print(f"Extracting activations from layer '{layer_for_region}' for {len(image_paths)} images...")
+        else:
+            # Extract all unique layers for all regions
+            layers = list(dict.fromkeys(self.model.layer_model.region_layer_map.values()))
+            
+            if show_progress:
+                print(f"Extracting activations from {len(layers)} layers (all regions) for {len(image_paths)} images...")
         
         activations = self.model.activations_model._extractor.from_stimulus_set(
             stimulus_set=stimuli,
