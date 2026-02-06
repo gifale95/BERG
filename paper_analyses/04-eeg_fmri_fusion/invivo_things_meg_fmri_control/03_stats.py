@@ -58,8 +58,8 @@ times = times[times <= tmax]
 # Analysis parameters
 n_fsub = len(args.fmri_subjects)
 n_time = len(times)
-rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'rFFA', 'OFA', 'EBA', 'PPA', 'RSC',
-    'TOS', 'LOC', 'IT', 'STS']
+rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'OFA', 'EBA', 'PPA', 'RSC', 'TOS',
+    'LOC', 'IT', 'STS']
 
 # Empty correlation dictionary
 corr_tfmri_fmri = {}
@@ -92,7 +92,7 @@ for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
             corr_tfmri_fmri[roi] = np.zeros((n_fsub, n_time), dtype=np.float32)
 
         # Noise ceiling voxel selection
-        if roi in ['FFA', 'rFFA', 'OFA', 'EBA', 'PPA', 'RSC', 'TOS', 'LOC', 'STS']:
+        if roi in ['FFA', 'FFA', 'OFA', 'EBA', 'PPA', 'RSC', 'TOS', 'LOC', 'STS']:
             noise_ceiling_lh = metadata_fmri['encoding_model']\
                 ['noise_ceiling_testset'][metadata_fmri['roi'][f'l{roi}']]
             noise_ceiling_rh = metadata_fmri['encoding_model']\

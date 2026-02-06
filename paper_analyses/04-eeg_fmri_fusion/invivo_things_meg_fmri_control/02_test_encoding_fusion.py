@@ -49,13 +49,13 @@ for key, val in vars(args).items():
 
 
 # =============================================================================
-# Load the in vivo THINGS fMRI1 test responses # !!!
+# Load the in vivo THINGS fMRI1 test responses
 # =============================================================================
 # Load the fMRI responses
 fmri_dir = os.path.join(args.berg_dir, 'model_training_datasets',
     'train_dataset-things_fmri_1',
     f'fmri_sub-{args.fmri_subject:02d}_split-test.h5')
-fmri_test = h5py.File(fmri_dir, 'r')['neural_data']
+fmri_test_all = h5py.File(fmri_dir, 'r')['neural_data']
 
 # Load the metadata
 berg = BERG(berg_dir=args.berg_dir)
@@ -64,15 +64,22 @@ metadata_fmri = berg.get_model_metadata(
     subject=args.fmri_subject
     )
 
-# Sort the image conditions based on the image IDs # !!!
-train_img_ids_fmri = metadata_fmri['encoding_model']['train_img_ids'].astype(int)
-idx_fmri_sort = np.argsort(train_img_ids_fmri)
+# Get the image files names
+test_stimuli_fmri = metadata_fmri['encoding_model']['test_stimuli']
+unique_test_stimuli = np.unique(test_stimuli_fmri)
+
+# Average the fMRI responses across repetitions of the same test image
+fmri_test = []
+for stim in tqdm(unique_test_stimuli):
+    idx = np.where(test_stimuli_fmri == stim)[0]
+    fmri_test.append(fmri_test_all[idx].mean(0))
+fmri_test = np.array(fmri_test)
 
 
 # =============================================================================
-# Load and append the in vivo THINGS MEG1 test responses across subjects # !!!
+# Load and append the in vivo THINGS MEG1 test responses across subjects
 # =============================================================================
-# Loop across subjects
+# Loop across MEG subjects
 for ms, msub in enumerate(tqdm(args.meg_subjects)):
 
     # Load the MEG metadata
@@ -81,6 +88,11 @@ for ms, msub in enumerate(tqdm(args.meg_subjects)):
         subject=msub
     )
 
+    # Load the MEG responses
+    meg_dir = os.path.join(args.berg_dir, 'model_training_datasets',
+        'train_dataset-things_meg_1', f'meg_P{msub}_split-test.h5')
+    meg_test_all = h5py.File(meg_dir, 'r')['neural_data']
+
     # Time point selection
     tmax = 0.595
     times = metadata_meg['meg']['times']
@@ -88,39 +100,39 @@ for ms, msub in enumerate(tqdm(args.meg_subjects)):
     time_idx[times <= tmax] = 1
     time_idx = np.where(time_idx == 1)[0]
     times = times[times <= tmax]
+    meg_test_all = meg_test_all[:,:,time_idx].astype(np.float32)
 
-    # Get the MEG training image IDs overlapping with the fMRI image IDs # !!!
-    train_img_ids_meg = metadata_meg['encoding_model']['all_training_splits']\
-        ['train_img_ids'].astype(int)
-    img_ids, idx_meg, idx_fmri = np.intersect1d(train_img_ids_meg,
-        train_img_ids_fmri, return_indices=True)
-
-    # Load and sort the MEG responses according to the image IDs
-    meg_train_dir = os.path.join(args.berg_dir, 'model_training_datasets',
-        'train_dataset-things_meg_1', f'meg_P{msub}_split-train.h5')
-    meg_train_sub = h5py.File(meg_train_dir, 'r')['neural_data']\
-        [:,:,time_idx].astype(np.float32)
-    meg_train_sub = meg_train_sub[idx_meg]
-    train_img_ids_meg = train_img_ids_meg[idx_meg]
-    idx_meg_sort = np.argsort(train_img_ids_meg)
-    meg_train_sub = meg_train_sub[idx_meg_sort]
+    # Average the MEG responses across repetitions for the images shared with
+    # the fMRI
+    test_stimuli_meg = metadata_meg['encoding_model']['test_stimuli']
+    meg_test_sub = []
+    for stim in unique_test_stimuli:
+        idx = [i for i, x in enumerate(test_stimuli_meg) if x == stim]
+        meg_test_sub.append(meg_test_all[idx].mean(0))
+    meg_test_sub = np.array(meg_test_sub)
 
     # Append the MEG sensor responses across subjects
     if ms == 0:
-        meg_train = meg_train_sub
+        meg_test = meg_test_sub
     else:
-        meg_train = np.append(meg_train, meg_train_sub, 1)
-    del meg_train_sub
+        meg_test = np.append(meg_test, meg_test_sub, 1)
+    del meg_test_all, meg_test_sub
 
 
 # =============================================================================
 # Test the encoding fusion models
 # =============================================================================
+# Load the encoding fusion model regression weights
+weight_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'invivo_things_meg_fmri_control', 'encoding_fusion_weights',
+    f'weights_fmri_sub-{args.fmri_subject:02d}.npy')
+reg_param = np.load(weight_dir, allow_pickle=True).item()
+
 # Loop across ROIs
+correlation = {}
 rois = ['V1', 'V2', 'V3', 'hV4', 'lFFA', 'rFFA', 'lOFA', 'rOFA', 'lEBA',
     'rEBA', 'lPPA', 'rPPA', 'lRSC', 'rRSC', 'lTOS', 'rTOS', 'lLOC', 'rLOC',
     'IT', 'lSTS', 'rSTS']
-correlation = {}
 for r, roi in enumerate(tqdm(rois)):
 
     # Empty correlation array of shape:
@@ -128,22 +140,14 @@ for r, roi in enumerate(tqdm(rois)):
     n_voxels = len(metadata_fmri['roi'][roi])
     correlation[roi] = np.zeros((n_voxels, len(times)), dtype=np.float32)
 
-    # Get the fMRI voxel responses for the current ROI, and sort them based on
-    # the image IDs
+    # Get the fMRI voxel responses for the current ROI
     roi_idx = metadata_fmri['roi'][roi]
-    fmri_train_roi = fmri_train[:,roi_idx]
-    fmri_train_roi = fmri_train_roi[idx_fmri_sort] # !!!
+    fmri_test_roi = fmri_test[:,roi_idx]
 
     # Center and normalize the test fMRI responses (for later correlation)
     eps = 1e-8
-    fmri_train_roi_z = (fmri_train_roi - fmri_train_roi.mean(0)) /  \
-        (fmri_train_roi.std(0) + eps)
-
-    # Load the encoding fusion model regression weights
-    weight_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-        'invivo_things_meg_fmri_control', 'encoding_fusion_weights',
-        f'weights_fmri_sub-{args.fmri_subject:02d}.npy')
-    reg_param = np.load(weight_dir, allow_pickle=True).item()
+    fmri_test_roi_z = (fmri_test_roi - fmri_test_roi.mean(0)) /  \
+        (fmri_test_roi.std(0) + eps)
 
     # Loop across MEG time points
     for t in tqdm(range(len(times))):
@@ -162,12 +166,13 @@ for r, roi in enumerate(tqdm(rois)):
 
         # Correlate the t-fMRI test responses with the fMRI test responses
         correlation[roi][:,t] = \
-            np.diag(tfmri_z.T @ fmri_train_roi_z) / len(tfmri_z)
+            np.diag(tfmri_z.T @ fmri_test_roi_z) / len(tfmri_z)
 
         # Delete unused variables
         del tfmri, tfmri_z, reg
         gc.collect()
-    del fmri_train_roi, fmri_train_roi_z, reg_param
+    del fmri_test_roi, fmri_test_roi_z
+del reg_param, metadata_fmri, metadata_meg, meg_test
 
 
 # =============================================================================

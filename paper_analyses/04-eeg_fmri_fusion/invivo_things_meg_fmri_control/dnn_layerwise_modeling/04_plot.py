@@ -3,13 +3,8 @@
 Parameters
 ----------
 fmri_subjects : list
-    List containing the subject identifiers for the fMRI encoding models. Since
-    the used encoding models are trained on NSD data, valid subject identifiers
-    are integers from 1 to 8.
-source_dataset : str
-    If 'things_eeg_2', the source dataset is THINGS EEG2. If 'things_meg_1',
-    the source dataset  is THINGS MEG1. (The source dataset is the dataset that
-    is mapped onto fMRI responses.)
+    List of THINGS fMRI1 subject identifiers. Valid subject identifiers are
+    integers from 1 to 3.
 dnn_model : str
     Name of deep neural network model used to extract the image features.
     Available options are 'alexnet' and 'resnet50'.
@@ -21,8 +16,6 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-from tqdm import tqdm
-import cortex
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -31,8 +24,7 @@ import matplotlib.pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
-parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
+parser.add_argument('--fmri_subjects', default=[1, 2, 3], type=int)
 parser.add_argument('--dnn_model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -42,8 +34,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'plots', f'source_dataset-{args.source_dataset}',
-    'surfaceplots')
+    'invivo_things_meg_fmri_control', 'dnn_layerwise_modeling', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -51,14 +42,12 @@ os.makedirs(save_dir, exist_ok=True)
 # Load the RSA layerwise assignment results
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'stats', f'source_dataset-{args.source_dataset}',
+    'invivo_things_meg_fmri_control', 'dnn_layerwise_modeling', 'stats',
     f'stats_dnn_model-{args.dnn_model}.npy')
 
 results = np.load(data_dir, allow_pickle=True).item()
 
-lh_best_layer = results['lh_best_layer']
-rh_best_layer = results['rh_best_layer']
-best_layer_roi = results['best_layer_roi']
+best_layer = results['best_layer']
 times = results['times']
 
 # Get the model layers
@@ -81,62 +70,6 @@ elif args.dnn_model == 'resnet50':
         'layer4.2.relu_2',
         'fc'
         ]
-
-
-# =============================================================================
-# Plot the vertex DNN layer assignment
-# =============================================================================
-# Plot parameters
-fontsize = 40
-plt.rc('xtick', labelsize=19)
-plt.rc('ytick', labelsize=19)
-matplotlib.use("svg")
-plt.rcParams["text.usetex"] = False
-plt.rcParams['svg.fonttype'] = 'none'
-subject = 'fsaverage_nsd_sub-01'
-
-# Loop over EEG time points
-for t, time in enumerate(tqdm(times)):
-
-    # Average the results across subjects, and append them across left and
-    # right hemishperes
-    data = np.append(np.nanmean(lh_best_layer[:,:,t], 0),
-        np.nanmean(rh_best_layer[:,:,t], 0))
-
-    # Create the flat brain surface
-    vertex_data = cortex.Vertex(
-        data,
-        subject=subject,
-        cmap='gist_rainbow',
-        vmin=1,
-        vmax=len(model_layers),
-        with_colorbar=True
-        )
-
-    # Plot the flat brain surface
-    fig = cortex.quickshow(
-        vertex_data,
-        #height=2000, # Increase resolution of map and ROI contours
-        with_curvature=True,
-        with_rois=True,
-        roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-        linewidth=3,
-        linecolor=(1, 1, 1),
-        with_labels=True,
-        labelsize=25,
-        curvature_brightness=0.4,
-        with_colorbar=True
-        )
-
-    # Add title
-    title = f'Time (ms): {np.round(time*1000)}'
-    plt.title(title, fontsize=fontsize)
-
-    # Save the figure
-    plot_file = os.path.join(save_dir,
-        f'rsa_layer_assigment_dnn_model-{args.dnn_model}_time-{t:03d}.png')
-    fig.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
-    plt.close()
 
 
 # =============================================================================
@@ -173,7 +106,7 @@ rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA']
 # Average the results across subjects
 results = []
 for roi in rois:
-    results.append(np.mean(best_layer_roi[roi], 0) + 1) # add 1 so that the layers start from 1
+    results.append(np.mean(best_layer[roi], 0) + 1) # add 1 so that the layers start from 1
 results = np.array(results)
 
 # Create the figure
@@ -204,8 +137,6 @@ plt.colorbar(ax, shrink=0.75, ticks=ticks,
     label=f'{model} layers', location='right')
 
 # Save the figure
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'plots', f'source_dataset-{args.source_dataset}')
 file_name = os.path.join(save_dir, f'layer_assignment_rois_dnn_model-{args.dnn_model}.svg')
 fig.savefig(file_name, bbox_inches='tight', dpi=300, transparent=True,
     format='svg')

@@ -1,6 +1,6 @@
 """Perform searchlight RSA between t-fMRI responses and DNN layerwise features.
 
-To reduce computational load, the EEG/fMRI fusion encoding models are only
+To reduce computational load, the M/EEG-fMRI fusion encoding models are only
 trained, tested, and used for vertices falling within the NSD visual streams.
 
 Parameters
@@ -253,12 +253,12 @@ for t in tqdm(range(len(times))):
             neighborhood = np.where(mask)[0]
 
         # Create the fMRI RDM
-        fmri_rdm = 1 - corr_matrix(tfmri[:,neighborhood].T)
+        tfmri_rdm = 1 - corr_matrix(tfmri[:,neighborhood].T)
 
         # Perform RSA with each DNN layer
         for key, val in dnn_rdm_tril.items():
-            rsa[key][v,t] = pearsonr(val, fmri_rdm[idx_tril])[0]
-        del fmri_rdm
+            rsa[key][v,t] = pearsonr(val, tfmri_rdm[idx_tril])[0]
+        del tfmri_rdm
     del tfmri
 
 

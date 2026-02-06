@@ -70,9 +70,8 @@ metadata_fmri = berg.get_model_metadata(
     subject=args.fmri_subject
     )
 
-# Sort the image conditions based on the image IDs # !!!
-train_img_ids_fmri = metadata_fmri['encoding_model']['train_img_ids'].astype(int)
-idx_fmri_sort = np.argsort(train_img_ids_fmri)
+# Get the image files names
+train_stimuli_fmri = metadata_fmri['encoding_model']['train_stimuli']
 
 
 # =============================================================================
@@ -95,21 +94,19 @@ for ms, msub in enumerate(tqdm(args.meg_subjects)):
     time_idx = np.where(time_idx == 1)[0]
     times = times[times <= tmax]
 
-    # Get the MEG training image IDs overlapping with the fMRI image IDs # !!!
-    train_img_ids_meg = metadata_meg['encoding_model']['all_training_splits']\
-        ['train_img_ids'].astype(int)
-    img_ids, idx_meg, idx_fmri = np.intersect1d(train_img_ids_meg,
-        train_img_ids_fmri, return_indices=True)
-
-    # Load and sort the MEG responses according to the image IDs
+    # Load the MEG responses
     meg_train_dir = os.path.join(args.berg_dir, 'model_training_datasets',
         'train_dataset-things_meg_1', f'meg_P{msub}_split-train.h5')
-    meg_train_sub = h5py.File(meg_train_dir, 'r')['neural_data']\
-        [:,:,time_idx].astype(np.float32)
-    meg_train_sub = meg_train_sub[idx_meg]
-    train_img_ids_meg = train_img_ids_meg[idx_meg]
-    idx_meg_sort = np.argsort(train_img_ids_meg)
-    meg_train_sub = meg_train_sub[idx_meg_sort]
+    meg_train_sub = h5py.File(meg_train_dir, 'r')['neural_data']
+
+    # Get the MEG responses for the images shared with the fMRI
+    train_stimuli_meg = metadata_meg['encoding_model']['all_training_splits']\
+        ['train_stimuli']
+    idx_meg = []
+    for stim in train_stimuli_fmri:
+        idx_meg.append(train_stimuli_meg.index(stim))
+    idx_meg = np.array(idx_meg)
+    meg_train_sub = meg_train_sub[:,:,time_idx][idx_meg].astype(np.float32)
 
     # Append the MEG sensor responses across subjects
     if ms == 0:
@@ -133,7 +130,7 @@ for r, roi in enumerate(tqdm(rois)):
     # the image IDs
     roi_idx = metadata_fmri['roi'][roi]
     fmri_train_roi = fmri_train[:,roi_idx]
-    fmri_train_roi = fmri_train_roi[idx_fmri_sort]
+    fmri_train_roi = fmri_train_roi
 
     # Empty dictionary to store the encoding fusion model weights for the
     # current ROI

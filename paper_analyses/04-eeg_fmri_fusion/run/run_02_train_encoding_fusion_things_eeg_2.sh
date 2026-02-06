@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion-02_train_encoding_fusion
+#SBATCH --job-name=eeg_fmri_fusion-02_train_encoding_fusion_things_eeg_2
 #SBATCH --mail-type=end
 #SBATCH --mem=50000
 #SBATCH --time=25:00:00
@@ -13,7 +13,7 @@ declare -a source_dataset_all
 index=0
 for fs in `seq 1 8` ; do
     for h in 'lh' 'rh' ; do
-        for d in 'things_meg_1' ; do
+        for d in 'things_eeg_2' ; do
             fmri_subject_all[$index]=$fs
             hemisphere_all[$index]=$h
             source_dataset_all[$index]=$d

@@ -1,7 +1,7 @@
 """Perform searchlight RSA between the t-fMRI responses and behavioral
 embeddings.
 
-To reduce computational load, the EEG/fMRI fusion encoding models are only
+To reduce computational load, the M/EEG-fMRI fusion encoding models are only
 trained, tested, and used for vertices falling within the NSD visual streams.
 
 Parameters
@@ -290,11 +290,11 @@ for t in tqdm(range(len(times))):
             neighborhood = np.where(mask)[0]
 
         # Create the fMRI RDM
-        fmri_rdm = 1 - corr_matrix(tfmri[:,neighborhood].T)
+        tfmri_rdm = 1 - corr_matrix(tfmri[:,neighborhood].T)
 
         # Perform RSA
-        rsa[v,t] = pearsonr(beh_rdm_tril, fmri_rdm[idx_tril])[0]
-        del fmri_rdm
+        rsa[v,t] = pearsonr(beh_rdm_tril, tfmri_rdm[idx_tril])[0]
+        del tfmri_rdm
     del tfmri
 
 
