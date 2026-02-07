@@ -132,7 +132,7 @@ reg_param = np.load(weight_dir, allow_pickle=True).item()
 correlation = {}
 rois = ['V1', 'V2', 'V3', 'hV4', 'lFFA', 'rFFA', 'lOFA', 'rOFA', 'lEBA',
     'rEBA', 'lPPA', 'rPPA', 'lRSC', 'rRSC', 'lTOS', 'rTOS', 'lLOC', 'rLOC',
-    'IT', 'lSTS', 'rSTS']
+    'IT']
 for r, roi in enumerate(tqdm(rois)):
 
     # Empty correlation array of shape:

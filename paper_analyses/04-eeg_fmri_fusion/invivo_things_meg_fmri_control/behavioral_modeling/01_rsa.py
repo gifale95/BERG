@@ -169,7 +169,7 @@ reg_param = np.load(weight_dir, allow_pickle=True).item()
 # Loop across ROIs
 rsa = {}
 rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'OFA', 'EBA', 'PPA', 'RSC', 'TOS',
-    'LOC', 'IT', 'STS']
+    'LOC', 'IT']
 for r, roi in enumerate(tqdm(rois)):
 
     # Empty RSA result arrays of shape:
@@ -177,7 +177,7 @@ for r, roi in enumerate(tqdm(rois)):
     rsa[roi] = np.zeros((len(times)), dtype=np.float32)
 
     # Noise ceiling voxel selection
-    if roi in ['FFA', 'FFA', 'OFA', 'EBA', 'PPA', 'RSC', 'TOS', 'LOC', 'STS']:
+    if roi in ['FFA', 'FFA', 'OFA', 'EBA', 'PPA', 'RSC', 'TOS', 'LOC']:
         noise_ceiling_lh = metadata_fmri['encoding_model']\
             ['noise_ceiling_testset'][metadata_fmri['roi'][f'l{roi}']]
         noise_ceiling_rh = metadata_fmri['encoding_model']\
@@ -194,7 +194,7 @@ for r, roi in enumerate(tqdm(rois)):
 
         # Instantiate the fusion regression model, while selecting only the
         # voxels that pass the noise ceiling threshold
-        if roi in ['FFA', 'FFA', 'OFA', 'EBA', 'PPA', 'RSC', 'TOS', 'LOC', 'STS']:
+        if roi in ['FFA', 'FFA', 'OFA', 'EBA', 'PPA', 'RSC', 'TOS', 'LOC']:
             reg = LinearRegression()
             coef_ = reg_param[f'l{roi}']['coef_'][t][idx_nc_lh]
             intercept_ = reg_param[f'l{roi}']['intercept_'][t][idx_nc_lh]

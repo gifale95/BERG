@@ -122,7 +122,7 @@ for ms, msub in enumerate(tqdm(args.meg_subjects)):
 # Loop across ROIs
 rois = ['V1', 'V2', 'V3', 'hV4', 'lFFA', 'rFFA', 'lOFA', 'rOFA', 'lEBA',
     'rEBA', 'lPPA', 'rPPA', 'lRSC', 'rRSC', 'lTOS', 'rTOS', 'lLOC', 'rLOC',
-    'IT', 'lSTS', 'rSTS']
+    'IT']
 reg_param = {}
 for r, roi in enumerate(tqdm(rois)):
 
@@ -141,7 +141,7 @@ for r, roi in enumerate(tqdm(rois)):
     reg_param[roi]['n_features_in_'] = []
 
     # Loop across MEG time points
-    for t in tqdm(range(len(times))):
+    for t in range(len(times)):
 
         # Train the encoding fusion models
         alphas = np.logspace(-6, 10, 17)
