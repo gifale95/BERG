@@ -98,7 +98,20 @@ print(f"Percent noise ceiling shape: {percent_noise_ceiling.shape}")
 # =============================================================================
 # Save the encoding accuracy as part of the encoding models metadata
 # =============================================================================
-metadata = metadata_tvsd.copy()
+# Load the existing metadata file (which contains all splits)
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
+	'train_dataset-tvsd', 'model-vit_b_32', 'metadata')
+if not os.path.isdir(save_dir):
+	os.makedirs(save_dir)
+
+file_name = f'metadata_monkey{args.monkey}.npy'
+metadata_file_path = os.path.join(save_dir, file_name)
+
+# Load existing metadata if it exists, otherwise use the one we loaded earlier
+if os.path.exists(metadata_file_path):
+	metadata = np.load(metadata_file_path, allow_pickle=True).item()
+else:
+	metadata = metadata_tvsd.copy()
 
 # Update the specific split's metadata with encoding results
 metadata['encoding_model'][args.train_split].update({
@@ -106,12 +119,7 @@ metadata['encoding_model'][args.train_split].update({
     'percent_noise_ceiling': percent_noise_ceiling
 })
 
-save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
-	'train_dataset-tvsd', 'model-vit_b_32', 'metadata')
-if not os.path.isdir(save_dir):
-	os.makedirs(save_dir)
+# Save back to the single metadata file
+np.save(metadata_file_path, metadata)
 
-file_name = f'metadata_{args.monkey}_{args.train_split}.npy'
-np.save(os.path.join(save_dir, file_name), metadata)
-
-print(f"Metadata saved to: {os.path.join(save_dir, file_name)}")
+print(f"Metadata saved to: {metadata_file_path}")

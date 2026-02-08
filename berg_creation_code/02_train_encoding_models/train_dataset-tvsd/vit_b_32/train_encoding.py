@@ -24,6 +24,8 @@ berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
 things_dir : str
     Directory of the THINGS images.
+train_chunk_size : int
+    Number of trials per chunk for loading neural data (default: 2000).
 feature_batch_size : int
     Batch size for feature extraction (default: 512).
 n_pca_components : int
@@ -56,6 +58,8 @@ parser.add_argument('--berg_dir', required=True, type=str,
                    help="Directory of the BERG framework.")
 parser.add_argument('--things_dir', required=True, type=str,
                    help="Directory of the things images.")
+parser.add_argument('--train_chunk_size', type=int, default=2000,
+                   help='Number of trials per chunk for loading neural data')
 parser.add_argument('--feature_batch_size', type=int, default=512,
                    help='Batch size for feature extraction')
 parser.add_argument('--n_pca_components', type=int, default=250,
@@ -218,7 +222,7 @@ fmaps_test = fmaps_test.astype(np.float32)
 # =============================================================================
 # Train the encoding models
 # =============================================================================
-# Load neural data
+# Load neural data shape info
 if args.train_split == 'all_training_splits':
     neural_train_path = os.path.join(data_dir, f'tvsd_{args.monkey}_all_training_splits.h5')
 else:
@@ -226,11 +230,25 @@ else:
 
 with h5py.File(neural_train_path, 'r') as f:
     n_trials, n_electrodes, n_times = f['neural_data'].shape
-    neural_train = f['neural_data'][:].reshape(n_trials, -1)
+
+# Load full neural data in chunks to prevent memory overflow
+neural_data = np.empty((n_trials, n_electrodes * n_times), dtype=np.float32)
+
+print(f"Loading neural data in chunks of {args.train_chunk_size} trials...")
+with h5py.File(neural_train_path, 'r') as f:
+    for batch_start in tqdm(range(0, n_trials, args.train_chunk_size), desc="Loading neural data"):
+        batch_end = min(batch_start + args.train_chunk_size, n_trials)
+        
+        # Load batch
+        batch_data = f['neural_data'][batch_start:batch_end, :, :]
+        # Reshape to (batch_size, n_electrodes * n_times)
+        batch_reshaped = batch_data.reshape(batch_data.shape[0], -1)
+        neural_data[batch_start:batch_end] = batch_reshaped
 
 # Fit the linear regression
+print("Fitting linear regression model...")
 reg = LinearRegression()
-reg.fit(fmaps_train, neural_train)
+reg.fit(fmaps_train, neural_data)
 
 # Store the linear regression weights
 reg_param = {
