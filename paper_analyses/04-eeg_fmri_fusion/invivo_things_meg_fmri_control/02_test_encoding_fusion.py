@@ -150,7 +150,7 @@ for r, roi in enumerate(tqdm(rois)):
         (fmri_test_roi.std(0) + eps)
 
     # Loop across MEG time points
-    for t in tqdm(range(len(times))):
+    for t in range(len(times)):
 
         # Instantiate the fusion regression model
         reg = LinearRegression()

@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion-03_test_encoding_fusion
+#SBATCH --job-name=eeg_fmri_fusion-03_test_encoding_fusion_things_meg_1
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
-#SBATCH --time=2-00:00:00
+#SBATCH --mem=20000
+#SBATCH --time=4-00:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion-02_train_encoding_fusion_things_meg_1
+#SBATCH --job-name=eeg_fmri_fusion-03_test_encoding_fusion_things_eeg_2
 #SBATCH --mail-type=end
-#SBATCH --mem=55000
-#SBATCH --time=40:00:00
+#SBATCH --mem=10000
+#SBATCH --time=2-00:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -13,7 +13,7 @@ declare -a source_dataset_all
 index=0
 for fs in `seq 1 8` ; do
     for h in 'lh' 'rh' ; do
-        for d in 'things_meg_1' ; do
+        for d in '_things_eeg_2' ; do
             fmri_subject_all[$index]=$fs
             hemisphere_all[$index]=$h
             source_dataset_all[$index]=$d
@@ -39,4 +39,4 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Run the job
-python 02_train_encoding_fusion.py --fmri_subject $fmri_subject --hemisphere $hemisphere --source_dataset $source_dataset
+python 03_test_encoding_fusion.py --fmri_subject $fmri_subject --hemisphere $hemisphere --source_dataset $source_dataset

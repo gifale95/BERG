@@ -117,13 +117,13 @@ plt.xlim(left=min(times), right=max(times))
 
 # y-axis parameters
 plt.ylabel("Pearson's $r$", fontsize=fontsize)
-yticks = [0, 0.2, 0.4, 0.6, 0.8]
-ylabels = [0, 0.2, 0.4, 0.6, 0.8]
+yticks = [0, 0.1, 0.2, 0.3, 0.4]
+ylabels = [0, 0.1, 0.2, 0.3, 0.4]
 plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylim(bottom=-.1, top=.8)
+plt.ylim(bottom=-.08, top=.4)
 
 # Legend
-plt.legend(fontsize=fontsize, loc=4, ncols=2, frameon=False)
+plt.legend(fontsize=20, loc=0, ncols=4, frameon=False)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'roi_correlation.svg')

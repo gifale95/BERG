@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-04_eeg_fmri_fusion-invivo_things_meg_fmri_control-behavioral_modeling-01_rsa
 #SBATCH --mail-type=end
-#SBATCH --mem=30000
-#SBATCH --time=10:00:00
+#SBATCH --mem=10000
+#SBATCH --time=00:05:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

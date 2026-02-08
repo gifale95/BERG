@@ -121,7 +121,7 @@ plt.ylabel("Pearson's $r$", fontsize=fontsize)
 yticks = [0, 0.1, 0.2, 0.3, 0.4]
 ylabels = [0, 0.1, 0.2, 0.3, 0.4]
 plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylim(bottom=-.03, top=.3)
+plt.ylim(bottom=-.05, top=.25)
 
 # Legend
 plt.legend(fontsize=15, loc=0, ncols=3, frameon=False)
