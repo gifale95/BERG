@@ -7,6 +7,10 @@ monkeys : list
 berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
     https://github.com/gifale95/BERG
+train_split : str
+    Which training split to plot (default: 'all_training_splits').
+plot_noise_ceiling : bool
+    Plot noise ceiling for each ROI.
 """
 
 import argparse
@@ -25,6 +29,9 @@ parser.add_argument('--monkey', nargs='+', default=['monkeyN', 'monkeyF'],
 parser.add_argument('--plot_noise_ceiling', required=True, choices=["True", "False"],
                    help="Plot noise ceiling for each ROI")
 parser.add_argument('--berg_dir', required=True, type=str)
+parser.add_argument('--train_split', type=str, default='all_training_splits',
+                   choices=['all_training_splits', 'single_training_split_1', 'single_training_split_2', 'single_training_split_3', 'single_training_split_4'],
+                   help='Which training split to plot')
 args = parser.parse_args()
 
 args.plot_noise_ceiling = args.plot_noise_ceiling == "True"
@@ -42,14 +49,16 @@ metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_arr
     'train_dataset-tvsd', 'model-vit_b_32', 'metadata')
 
 for monkey in args.monkey:
-    file_name = f'metadata_{monkey}.npy'
+    file_name = f'metadata_{monkey}_{args.train_split}.npy'
     metadata = np.load(os.path.join(metadata_dir, file_name),
         allow_pickle=True).item()
     
-    correlation_results.append(metadata['encoding_model']['correlation_results'])
+    # Access correlation results from the specific split
+    correlation_results.append(metadata['encoding_model'][args.train_split]['correlation_results'])
     times = metadata['utah_array']['times']
     roi_assignments = metadata['roi']['roi_assignments']
     roi_labels = metadata['roi']['roi_labels']
+    # Noise ceiling is at the top level of encoding_model (shared across splits)
     noise_ceiling = metadata['encoding_model']['noise_ceiling']
     roi_data.append((roi_assignments, roi_labels))
     noise_ceiling_data.append(noise_ceiling)
@@ -204,7 +213,7 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-save_name = f'encoding_accuracy'
+save_name = f'encoding_accuracy_{args.train_split}'
 fig.savefig(os.path.join(save_dir, f'{save_name}.jpg'), dpi=300, bbox_inches='tight', format='jpeg')
 
 print(f"Plot saved to: {save_dir}/{save_name}.jpg")

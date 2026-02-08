@@ -28,6 +28,8 @@ feature_batch_size : int
     Batch size for feature extraction (default: 512).
 n_pca_components : int
     Number of PCA components (default: 250).
+train_split : str
+    Which training split to use (default: 'all_training_splits').
 """
 
 import argparse
@@ -58,6 +60,9 @@ parser.add_argument('--feature_batch_size', type=int, default=512,
                    help='Batch size for feature extraction')
 parser.add_argument('--n_pca_components', type=int, default=250,
                    help='Number of PCA components')
+parser.add_argument('--train_split', type=str, default='all_training_splits',
+                   choices=['all_training_splits', 'single_training_split_1', 'single_training_split_2', 'single_training_split_3', 'single_training_split_4'],
+                   help='Which training split to use')
 args = parser.parse_args()
 
 
@@ -73,30 +78,6 @@ torch.manual_seed(seed)
 
 # Check for GPU
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-
-# =============================================================================
-# Helper function to map trial to image
-# =============================================================================
-def map_trial_to_image(trial_idx, metadata, things_dir=None):
-    """Map a training trial index to its corresponding THINGS image information."""
-    if trial_idx < 0 or trial_idx >= len(metadata['encoding_model']['train_stimuli']):
-        raise ValueError(f"Trial index {trial_idx} out of range")
-    
-    image_info = {
-        'trial_idx': trial_idx,
-        'stimulus_id': metadata['encoding_model']['train_img_ids'][trial_idx],
-        'image_file': metadata['encoding_model']['train_stimuli'][trial_idx],
-        'object_category': metadata['encoding_model']['train_concepts'][trial_idx],
-        'recording_day': metadata['encoding_model']['train_days'][trial_idx],
-        'sequence_position': metadata['encoding_model']['train_sequence_pos'][trial_idx]
-    }
-    
-    if things_dir:
-        category = metadata['encoding_model']['train_concepts'][trial_idx]
-        image_info['full_path'] = f"{things_dir}/{category}/{image_info['image_file']}"
-    
-    return image_info
 
 
 # =============================================================================
@@ -138,7 +119,11 @@ metadata = np.load(metadata_path, allow_pickle=True).item()
 # =============================================================================
 # Extract the TVSD training image features
 # =============================================================================
-n_train_images = len(metadata['encoding_model']['train_stimuli'])
+train_img_ids = metadata['encoding_model'][args.train_split]['train_img_ids']
+train_concepts = metadata['encoding_model'][args.train_split]['train_concepts']
+train_stimuli = metadata['encoding_model'][args.train_split]['train_stimuli']
+
+n_train_images = len(train_img_ids)
 fmaps_train = []
 
 for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=False):
@@ -147,8 +132,9 @@ for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=F
     
     # Load batch of training images
     for i in range(start_idx, end_idx):
-        trial_info = map_trial_to_image(i, metadata, args.things_dir)
-        img = Image.open(trial_info['full_path']).convert('RGB')
+        img_path = train_concepts[i] + "/" + train_stimuli[i]
+        full_path = os.path.join(args.things_dir, img_path)
+        img = Image.open(full_path).convert('RGB')
         img_tensor = preprocess(img)
         batch_images.append(img_tensor)
     
@@ -190,10 +176,17 @@ fmaps_train = fmaps_train.astype(np.float32)
 # =============================================================================
 # Extract the TVSD test image features
 # =============================================================================
+# Get unique test images (100 unique images from the 3000 test trials)
+test_img_ids = metadata['encoding_model']['test_img_ids']
+unique_test_ids = np.unique(test_img_ids)
+
 test_images = []
-for i in range(len(metadata['encoding_model']['test_avg_stimuli'])):
-    category = metadata['encoding_model']['test_avg_concepts'][i]
-    image_file = metadata['encoding_model']['test_avg_stimuli'][i]
+for test_id in unique_test_ids:
+    # Find first occurrence of this test image
+    test_idx = np.where(test_img_ids == test_id)[0][0]
+    
+    category = metadata['encoding_model']['test_concepts'][test_idx]
+    image_file = metadata['encoding_model']['test_stimuli'][test_idx]
     full_path = f"{args.things_dir}/{category}/{image_file}"
     
     img = Image.open(full_path).convert('RGB')
@@ -226,7 +219,11 @@ fmaps_test = fmaps_test.astype(np.float32)
 # Train the encoding models
 # =============================================================================
 # Load neural data
-neural_train_path = os.path.join(data_dir, f'tvsd_{args.monkey}_split-train.h5')
+if args.train_split == 'all_training_splits':
+    neural_train_path = os.path.join(data_dir, f'tvsd_{args.monkey}_all_training_splits.h5')
+else:
+    neural_train_path = os.path.join(data_dir, f'tvsd_{args.monkey}_{args.train_split}.h5')
+
 with h5py.File(neural_train_path, 'r') as f:
     n_trials, n_electrodes, n_times = f['neural_data'].shape
     neural_train = f['neural_data'][:].reshape(n_trials, -1)
@@ -252,7 +249,7 @@ save_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-file_name = f'utah_array_test_pred_{args.monkey}.npy'
+file_name = f'utah_array_test_pred_{args.monkey}_{args.train_split}.npy'
 np.save(os.path.join(save_dir, file_name), neural_test_pred)
 
 
@@ -286,5 +283,5 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-file_name = f'weights_{args.monkey}.npy'
+file_name = f'weights_{args.monkey}_{args.train_split}.npy'
 np.save(os.path.join(save_dir, file_name), weights)
