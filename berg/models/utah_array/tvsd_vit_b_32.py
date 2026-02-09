@@ -55,6 +55,7 @@ class UtahArrayEncodingModel(BaseModelInterface):
     MODEL_ID = model_info["model_id"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
+    VALID_TRAIN_SPLITS = model_info["parameters"]["train_splits"]["valid_values"]
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     ELECTRODES_LENGTH = 1024
     TIMEPOINTS_LENGTH = 300
@@ -63,7 +64,8 @@ class UtahArrayEncodingModel(BaseModelInterface):
         self, 
         subject: str, 
         device: str = "auto", 
-        selection: Optional[Dict] = None, 
+        selection: Optional[Dict] = None,
+        train_splits: str = "all",
         berg_dir: Optional[str] = None
     ):
         """
@@ -82,11 +84,15 @@ class UtahArrayEncodingModel(BaseModelInterface):
             - roi: List of brain areas to include (V1, V4, IT)
             - electrodes: Binary one-hot encoded vector for electrode selection
             - timepoints: Binary one-hot encoded vector for timepoint selection
+        train_splits : str, default="all"
+            Training data split specification. Options are "all" (complete training set)
+            or "single" (four independent splits generating 4 repeats per image).
         berg_dir : str, optional
             Root path to the BERG directory containing model files and weights.
         """
         # Assign Parameters
         self.subject = subject
+        self.train_splits = train_splits
         self.berg_dir = berg_dir
         self.model = None
         
@@ -113,6 +119,12 @@ class UtahArrayEncodingModel(BaseModelInterface):
         """
         # Validate subject
         validate_subject(self.subject, self.VALID_SUBJECTS)
+        
+        # Validate train_splits
+        if self.train_splits not in self.VALID_TRAIN_SPLITS:
+            raise InvalidParameterError(
+                f"train_splits must be one of {self.VALID_TRAIN_SPLITS}, got '{self.train_splits}'"
+            )
         
         if self.selection is not None:
             # Validate selection keys
@@ -156,12 +168,12 @@ class UtahArrayEncodingModel(BaseModelInterface):
 
         Loads the vision transformer backbone, preprocessing components 
         (scaler, PCA), and trained regression weights for the specified
-        subject. Sets up all necessary components for generating EEG
-        responses.
+        subject and training split. Only loads weights for selected electrodes
+        and timepoints to optimize memory usage.
         """
 
         try:
-            # Get the EEG channels and time points dimensions
+            # Get the Utah Array electrode and time points dimensions
             metadata_dir = os.path.join(
                 self.berg_dir, 'encoding_models', 'modality-utah_array',
                 'train_dataset-tvsd', 'model-vit_b_32',
@@ -193,9 +205,21 @@ class UtahArrayEncodingModel(BaseModelInterface):
             self.feature_extractor = self._load_feature_extractor(self.device)        
             
             # Load the scaler, PCA, and trained regression weights
-            self.scaler, self.pca, self.reg = self._load_encoding_weights()
-            
-            print(f"Model loaded on {self.device} for monkey {self.subject}")
+            if self.train_splits == "single":
+                # Load weights for all 4 splits
+                self.scalers = []
+                self.pcas = []
+                self.regs = []
+                for split_idx in range(1, 5):
+                    scaler, pca, reg = self._load_encoding_weights(f'single_training_split_{split_idx}')
+                    self.scalers.append(scaler)
+                    self.pcas.append(pca)
+                    self.regs.append(reg)
+                print(f"Model loaded on {self.device} for monkey {self.subject} (4 training splits)")
+            else:
+                # Load weights for all training data
+                self.scaler, self.pca, self.reg = self._load_encoding_weights('all_training_splits')
+                print(f"Model loaded on {self.device} for monkey {self.subject} (all training data)")
             
         except Exception as e:
             raise ModelLoadError(f"Failed to load model: {str(e)}")
@@ -249,10 +273,16 @@ class UtahArrayEncodingModel(BaseModelInterface):
         return feature_extractor
 
 
-    def _load_encoding_weights(self):
+    def _load_encoding_weights(self, split_name='all_training_splits'):
         """
-        Load pretrained scaler, PCA, and regression weights.
+        Load pretrained scaler, PCA, and regression weights for a specific training split.
         Applies electrode/timepoint selection to create model.
+        
+        Parameters
+        ----------
+        split_name : str
+            Name of the training split to load weights from.
+            E.g., 'all_training_splits' or 'single_training_split_1'
         
         Returns
         -------
@@ -270,7 +300,7 @@ class UtahArrayEncodingModel(BaseModelInterface):
             'train_dataset-tvsd', 
             'model-vit_b_32',
             'encoding_models_weights',
-            f'weights_monkey{self.subject}.npy'
+            f'weights_monkey{self.subject}_{split_name}.npy'
         )
         weights = np.load(weights_dir, allow_pickle=True).item()
         
@@ -339,8 +369,9 @@ class UtahArrayEncodingModel(BaseModelInterface):
         Returns
         -------
         insilico_spike_responses : np.ndarray
-            In silico spiking response array of shape (batch_size, n_selected_electrodes,
-            n_selected_timepoints).
+            In silico spiking response array. Shape depends on train_splits parameter:
+            - If train_splits="all": (batch_size, n_selected_electrodes, n_selected_timepoints)
+            - If train_splits="single": (batch_size, 4, n_selected_electrodes, n_selected_timepoints)
         """
         # Validate stimulus
         if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
@@ -386,22 +417,43 @@ class UtahArrayEncodingModel(BaseModelInterface):
                 ft = torch.cat(batch_features, dim=-1)
                 ft = ft.detach().cpu().numpy()
                 
-                # Process features through scaler and PCA
-                ft = self.scaler.transform(ft)
-                ft = self.pca.transform(ft)
-                ft = ft.astype(np.float32)
-                
-                # Generate predictions with model
-                batch_pred = self.reg.predict(ft)
-                
-                # Reshape to (batch, n_selected_electrodes, n_selected_timepoints)
-                n_selected_electrodes = len(self.selected_electrodes)
-                n_selected_timepoints = len(self.selected_timepoints)
-                batch_responses = batch_pred.reshape(
-                    batch_pred.shape[0],
-                    n_selected_electrodes,
-                    n_selected_timepoints
-                ).astype(np.float32)
+                if self.train_splits == "single":
+                    # Generate predictions from all 4 splits
+                    batch_responses_list = []
+                    for split_idx in range(4):
+                        # Process features through scaler and PCA for this split
+                        ft_split = self.scalers[split_idx].transform(ft)
+                        ft_split = self.pcas[split_idx].transform(ft_split)
+                        ft_split = ft_split.astype(np.float32)
+                        
+                        # Generate predictions with this split's model
+                        batch_pred = self.regs[split_idx].predict(ft_split)
+                        
+                        # Reshape to (batch_size, n_electrodes, n_timepoints)
+                        batch_resp = batch_pred.reshape(
+                            batch_pred.shape[0],
+                            len(self.selected_electrodes),
+                            len(self.selected_timepoints)
+                        )
+                        batch_responses_list.append(batch_resp)
+                    
+                    # Stack along repeat dimension: (batch_size, 4, n_electrodes, n_timepoints)
+                    batch_responses = np.stack(batch_responses_list, axis=1).astype(np.float32)
+                else:
+                    # Process features through scaler and PCA
+                    ft = self.scaler.transform(ft)
+                    ft = self.pca.transform(ft)
+                    ft = ft.astype(np.float32)
+                    
+                    # Generate predictions with model
+                    batch_pred = self.reg.predict(ft)
+                    
+                    # Reshape to (batch_size, n_electrodes, n_timepoints)
+                    batch_responses = batch_pred.reshape(
+                        batch_pred.shape[0],
+                        len(self.selected_electrodes),
+                        len(self.selected_timepoints)
+                    ).astype(np.float32)
                 
                 # Combine with previous batches
                 if insilico_spike_responses is None:
@@ -427,7 +479,8 @@ class UtahArrayEncodingModel(BaseModelInterface):
     def get_metadata(
         cls, 
         berg_dir=None, 
-        subject=None, 
+        subject=None,
+        train_splits="all",
         model_instance=None, 
         **kwargs
     ) -> Dict[str, Any]:
@@ -440,6 +493,8 @@ class UtahArrayEncodingModel(BaseModelInterface):
             Path to BERG directory.
         subject : str
             Monkey ID ("N" or "F").
+        train_splits : str
+            Training splits specification ("all" or "single").
         model_instance : BaseModelInterface
             If provided, extract parameters from this model instance.
         **kwargs
@@ -454,11 +509,13 @@ class UtahArrayEncodingModel(BaseModelInterface):
         if model_instance is not None:
             berg_dir = model_instance.berg_dir
             subject = model_instance.subject
+            train_splits = model_instance.train_splits
         
         # If this method is called on an instance (rather than the class)
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             berg_dir = cls.berg_dir
             subject = cls.subject
+            train_splits = cls.train_splits
         
         # Validate required parameters
         missing_params = []
@@ -466,6 +523,8 @@ class UtahArrayEncodingModel(BaseModelInterface):
             missing_params.append('berg_dir')
         if subject is None:
             missing_params.append('subject')
+        if train_splits is None:
+            missing_params.append('train_splits')
         
         if missing_params:
             raise InvalidParameterError(
