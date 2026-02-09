@@ -1,4 +1,3 @@
-
 # Basic metadata
 model_id: utah_array-tvsd-vit_b_32
 modality: Utah arrays
@@ -18,14 +17,17 @@ description: |
   (TVSD) (Papale et al., Neuron 2025), simultaneous intracortical recordings from 1,024 electrodes across
   macaque ventral stream areas (V1, V4, IT) in response to natural images from the THINGS database
   (Hebart et al., 2019).
+  The encoding models are trained on either the full training data, or on four independent training data random splits.
 
   **Neural data**. Encoding models were trained on the preprocessed data preparation provided in the TVSD. Raw broadband signals (30 kHz) were band-pass filtered to extract high-frequency spiking activity, 
   and multi-unit activity (MUA) was obtained using threshold-based spike detection and smoothing, following the official TVSD pipeline. Responses were baseline-corrected and normalized per session, with area-specific time windows aligned to peak latencies (V1: 25–125 ms, V4: 50–150 ms, IT: 75–175 ms).
   The data were epoched from -100 ms to +199 ms relative to stimulus onset, resulting in 300 time points.
   More detailed preprocessing steps are described in the TVSD paper.
 
-  **Model training partition.** Spiking responses to 22,248 unique images from the THINGS database, each
-  presented once during passive fixation.
+  **Model training partition.** Single-trial spiking responses to 22,248 unique images from the THINGS database, each
+  presented once during passive fixation, were used for training. One set of encoding models are trained on the full training data. Another set of encoding
+  models are trained on four independent training data random splits (of 5,562 trials each), therefore generating
+  four different in silico spiking response predictions (i.e., repetitions) per image.
 
   **Model testing partition.** Spiking responses to 100 unique images, each repeated 30 times.
 
@@ -45,25 +47,40 @@ metadata: |
         electrode_order      : (1024,)  - Electrode mapping order (0-based)
         monkey_id            : str      - Monkey identifier
         n_electrodes         : int      - Number of electrodes (1024)
+        
     'roi':
         roi_assignments      : (1024,)  - ROI assignment per electrode (0=V1, 1=V4, 2=IT)
         roi_labels           : (3,)     - ROI label names ['V1', 'V4', 'IT']
+    
     'encoding_model':
-        train_img_ids        : (22248,) - Training stimulus IDs
-        train_stimuli        : (22248,) - Training image filenames
-        train_concepts       : (22248,) - Training object categories
-        train_days           : (22248,) - Recording days for training
-        train_sequence_pos   : (22248,) - Position in 4-image sequence
-        test_img_ids         : (3000,)  - Test stimulus IDs
-        test_stimuli         : (3000,)  - Test image filenames
-        test_concepts        : (3000,)  - Test object categories
+        'all_training_splits':       - Training data and encoding accuracy results for encoding models trained on all training splits
+            train_img_ids        : (22248,) - Training stimulus IDs
+            train_stimuli        : (22248,) - Training image filenames
+            train_concepts       : (22248,) - Training object categories
+            train_days           : (22248,) - Recording days for training
+            train_sequence_pos   : (22248,) - Position in 4-image sequence
+            correlation_results  : (1024, 300) - Prediction accuracy (Pearson's r)
+            percent_noise_ceiling: (1024, 300) - Noise ceiling normalized prediction accuracy (% of noise ceiling)
+        
+        'single_training_split_{N}':  - Training data and encoding accuracy results for encoding models trained on training split N (N=1,2,3,4)
+            train_img_ids        : (5562,)  - Training stimulus IDs
+            train_stimuli        : (5562,)  - Training image filenames
+            train_concepts       : (5562,)  - Training object categories
+            train_days           : (5562,)  - Recording days for training
+            train_sequence_pos   : (5562,)  - Position in 4-image sequence
+            correlation_results  : (1024, 300) - Prediction accuracy (Pearson's r)
+            percent_noise_ceiling: (1024, 300) - Noise ceiling normalized prediction accuracy (% of noise ceiling)
+        
+        test_img_ids         : (3000,)  - Test stimulus IDs (individual trials)
+        test_stimuli         : (3000,)  - Test image filenames (individual)
+        test_concepts        : (3000,)  - Test object categories (individual)
         test_days            : (3000,)  - Recording days for test
         test_sequence_pos    : (3000,)  - Position in sequence for test
+        
         SNR                  : (4, 1024) - Signal-to-noise ratio per day per electrode
         SNR_max              : (1024,)  - Best SNR across all days per electrode
-        ncsnr                : (1024, 300) - Noise ceiling signal-to-noise ratio for each electrode/timepoint (computed on the test data)
-        noise_ceiling        : (1024, 300) - Noise ceiling for each electrode/timepoint (computed on the test data)
-        correlation_results  : (1024, 300) - Encoding model prediction accuracy (Pearson's r) for each electrode/timepoint (computed on the test data)
+        ncsnr                : (1024, 300) - Neural cross-validated signal-to-noise ratio per electrode/timepoint
+        noise_ceiling        : (1024, 300) - Noise ceiling per electrode/timepoint
         
 # Input stimulus information
 input:
@@ -78,8 +95,12 @@ input:
 # Output information
 output:
   description: |
-    The output is a 3D array containing in silico utah-array responses.
-    The second dimension (n_electrodes) corresponds to the number of electrodes in the selected ROI,
+    The output is a 3D or 4D array containing in silico utah-array responses.
+    The second dimension varies based on train_splits parameter:
+      - When train_splits="all": shape is [batch_size, n_electrodes, n_timepoints]
+      - When train_splits="single": shape is [batch_size, repeats, n_electrodes, n_timepoints]
+    
+    The n_electrodes dimension corresponds to the number of electrodes in the selected ROI,
     which varies by ROI and monkey.
     The third dimension corresponds to the timepoints (300).
 
@@ -93,11 +114,13 @@ output:
       - V4: 192
       - IT: 320
   type: "numpy.ndarray"
-  shape: [batch_size, n_electrodes, n_timepoints]
+  shape: "[batch_size, n_electrodes, n_timepoints] or [batch_size, repeats, n_electrodes, n_timepoints]"
 
   dimensions:
     - name: "batch_size"
       description: "Number of stimuli in the batch"
+    - name: "repeats"
+      description: "Number of simulated repetitions of the same stimulus (always 4; only applies when using the encoding models trained on single training data splits)"
     - name: "n_electrodes"
       description: "Number of electrodes in the selection"
     - name: "timepoints"
@@ -122,6 +145,18 @@ parameters:
     valid_values: ["N", "F"]
     example: "N"
     function: "get_encoding_model, get_model_metadata"
+
+  train_splits:
+    description: |
+      Specifies the training data split on which the encoding model is trained.
+      - "all": Use an encoding model trained on all training data splits.
+      - "single": Use encoding models trained on four independent training data random splits, therefore generating four different in silico spiking response predictions (i.e., repetitions) per image.
+    required: false
+    type: str
+    valid_values: ["all", "single"]
+    default: "all"
+    example: "single"
+    function: "get_encoding_model"
 
   # Selection parameter to define specific outputs (ROI, channels, timepoints, etc.)
   selection:
@@ -177,10 +212,10 @@ parameters:
     function: "encode"
 
   return_metadata:
-    description: "Whether to return the encoding model's metadata together with the in silico neural resposnes."
+    description: "Whether to return the encoding model's metadata together with the in silico neural responses."
     required: False
     type: bool
-    default: Fale
+    default: False
     example: True
     function: "encode"
 
