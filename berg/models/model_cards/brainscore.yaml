@@ -56,7 +56,7 @@ parameters:
     type: dict
     function: get_encoding_model
     properties:
-      region:
+      roi:
         type: str
         description: |
           Brain region to record from. Each region corresponds to a specific network layer:
