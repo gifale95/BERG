@@ -104,7 +104,7 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_array',
 if not os.path.isdir(save_dir):
 	os.makedirs(save_dir)
 
-file_name = f'metadata_monkey{args.monkey}.npy'
+file_name = f'metadata_{args.monkey}.npy'
 metadata_file_path = os.path.join(save_dir, file_name)
 
 # Load existing metadata if it exists, otherwise use the one we loaded earlier
