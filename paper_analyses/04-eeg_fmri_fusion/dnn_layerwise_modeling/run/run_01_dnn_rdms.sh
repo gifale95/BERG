@@ -15,7 +15,7 @@ module add CUDA/12.4.0
 declare -a dnn_model_all
 declare -a source_dataset_all
 index=0
-for m in 'alexnet' 'resnet50' ; do
+for m in 'alexnet' ; do
     for d in 'things_meg_1' ; do
         dnn_model_all[$index]=$m
         source_dataset_all[$index]=$d

@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg-04_eeg_fmri_fusion-behavioral_modeling-01_rsa
 #SBATCH --mail-type=end
 #SBATCH --mem=30000
-#SBATCH --time=10:00:00
+#SBATCH --time=15:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -12,7 +12,7 @@ declare -a hemisphere_all
 declare -a source_dataset_all
 index=0
 for fs in `seq 1 8` ; do
-    for h in 'lh' 'rh' ; do
+    for h in 'lh' ; do
         for d in 'things_meg_1' ; do
             fmri_subject_all[$index]=$fs
             hemisphere_all[$index]=$h

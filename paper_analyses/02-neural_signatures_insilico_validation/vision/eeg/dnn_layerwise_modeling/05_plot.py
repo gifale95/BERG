@@ -69,6 +69,30 @@ times = results['times']
 
 
 # =============================================================================
+# Get the DNN layers
+# =============================================================================
+if args.dnn_model == 'alexnet':
+    model_layers = [
+        'features.2',
+        'features.5',
+        'features.7',
+        'features.9',
+        'features.12',
+        'classifier.2',
+        'classifier.5',
+        'classifier.6'
+        ]
+elif args.dnn_model == 'resnet50':
+    model_layers = [
+        'layer1.2.relu_2',
+        'layer2.3.relu_2',
+        'layer3.5.relu_2',
+        'layer4.2.relu_2',
+        'fc'
+        ]
+
+
+# =============================================================================
 # Plot parameters
 # =============================================================================
 fontsize = 25
@@ -140,27 +164,6 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 # =============================================================================
 # Plot the RSA results
 # =============================================================================
-# Get the DNN layers
-if args.dnn_model == 'alexnet':
-    model_layers = [
-        'features.2',
-        'features.5',
-        'features.7',
-        'features.9',
-        'features.12',
-        'classifier.2',
-        'classifier.5',
-        'classifier.6'
-        ]
-elif args.dnn_model == 'resnet50':
-    model_layers = [
-        'layer1.2.relu_2',
-        'layer2.3.relu_2',
-        'layer3.5.relu_2',
-        'layer4.2.relu_2',
-        'fc'
-        ]
-
 # Get the plot colors
 def sample_cmap(N):
     cmap = plt.cm.get_cmap('inferno')
@@ -225,4 +228,45 @@ axs[0].legend(fontsize=15, ncol=1, loc=0, frameon=False)
 # Save the figure
 file_name = os.path.join(save_dir, 'rsa_channels-'+args.channels+'_dnn_model-'+
     args.dnn_model+'.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+
+
+# =============================================================================
+# Plot the layerwise peak latency
+# =============================================================================
+fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
+    figsize=(7.5, 7.5))
+axs = np.reshape(axs, (-1))
+
+# Plot the layerwise peak latency
+layer_nums = np.arange(1, len(rsa_peak_latency)+1)
+peak_latency_vals = np.array([rsa_peak_latency[key] for key in model_layers]) * 1000
+axs[0].plot(layer_nums, peak_latency_vals, color='k', linewidth=2)
+axs[0].scatter(layer_nums, peak_latency_vals, s=25, color='k')
+
+# Plot the confidence intervals
+conf_int = np.array([ci_rsa_peak_latency[key] for key in model_layers]) * 1000
+conf_int[:,0] = peak_latency_vals - conf_int[:,0]
+conf_int[:,1] = conf_int[:,1] - peak_latency_vals
+conf_int = np.transpose(conf_int)
+axs[0].errorbar(layer_nums, peak_latency_vals, yerr=conf_int, fmt="none",
+    ecolor='k', elinewidth=1, capsize=3)
+
+# x-axis parameters
+axs[0].set_xlabel('DNN layer', fontsize=fontsize)
+xticks = layer_nums
+xlabels = layer_nums
+plt.xticks(ticks=xticks, labels=xlabels)
+axs[0].set_xlim(left=layer_nums[0]-0.75, right=layer_nums[-1]+0.75)
+
+# y-axis parameters
+axs[0].set_ylabel("Peak latency (ms)", fontsize=fontsize)
+yticks = [0, 50, 100, 150, 200, 250, 300, 350, 400]
+ylabels = [0, 50, 100, 150, 200, 250, 300, 350, 400]
+plt.yticks(ticks=yticks, labels=ylabels)
+axs[0].set_ylim(bottom=0, top=400)
+
+# Save the figure
+file_name = os.path.join(save_dir, 'layerwise_peak_latency_channels-'+
+    args.channels+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')

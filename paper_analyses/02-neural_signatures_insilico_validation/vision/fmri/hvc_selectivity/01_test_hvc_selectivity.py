@@ -1,5 +1,5 @@
 """Use BERG to generate the in silico fMRI responses to food images, and test
-the contrasts for face, body, food, word, and place selective areas.
+the contrasts for face, body, food, and place selective areas.
 
 Parameters
 ----------

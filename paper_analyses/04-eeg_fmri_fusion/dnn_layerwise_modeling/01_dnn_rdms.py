@@ -76,9 +76,15 @@ def corr_matrix(X):
 berg = BERG(berg_dir=args.berg_dir)
 
 # Load the M/EEG metadata
-metadata = berg.get_model_metadata(
-    f'eeg-{args.source_dataset}-vit_b_32',
-    subject=1
+if args.source_dataset == 'things_eeg_2':
+    metadata = berg.get_model_metadata(
+        'eeg-things_eeg_2-vit_b_32',
+        subject=1
+    )
+elif args.source_dataset == 'things_meg_1':
+    metadata = berg.get_model_metadata(
+        'meg-things_meg_1-vit_b_32',
+        subject=1
     )
 
 # Get the test image file names

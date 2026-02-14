@@ -106,6 +106,12 @@ for key, val in dnn_rdms.items():
 
 
 # =============================================================================
+# Initialize BERG
+# =============================================================================
+berg = BERG(berg_dir=args.berg_dir)
+
+
+# =============================================================================
 # Load and append the in vivo EEG test responses across subjects
 # =============================================================================
 if args.source_dataset == 'things_eeg_2':
@@ -127,7 +133,6 @@ if args.source_dataset == 'things_eeg_2':
         del eeg_test_sub
 
     # Load the EEG time points
-    berg = BERG(berg_dir=args.berg_dir)
     metadata_eeg = berg.get_model_metadata(
         'eeg-things_eeg_2-vit_b_32',
         subject=1

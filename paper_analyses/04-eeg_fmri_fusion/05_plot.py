@@ -193,7 +193,8 @@ plt.ylim(bottom=-.1, top=.8)
 plt.legend(fontsize=fontsize, loc=4, ncols=2, frameon=False)
 
 # Save the figure
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
+    f'source_dataset-{args.source_dataset}')
 file_name = os.path.join(save_dir, 'roi_correlation.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg-04_eeg_fmri_fusion-behavioral_modeling-03_plot
 #SBATCH --mail-type=end
 #SBATCH --mem=7000
-#SBATCH --time=02:00:00
+#SBATCH --time=05:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
