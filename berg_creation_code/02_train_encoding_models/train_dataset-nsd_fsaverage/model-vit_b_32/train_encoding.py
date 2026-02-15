@@ -1,5 +1,5 @@
 """Fit a linear regression to predict fMRI responses using DNN feature maps as
-predictors. The linear regression is trained using the training images EEG data
+predictors. The linear regression is trained using the training image fMRI data
 (Y) and feature maps (X). A separate model is trained for each fMRI vertex.
 
 The feature maps come from a CLIP vision transformer, and are downsampled to 250
