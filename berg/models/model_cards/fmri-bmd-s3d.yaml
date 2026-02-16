@@ -100,7 +100,7 @@ input:
   constraints:
     - "Image values should be integers in range [0, 255]."
     - "Image dimensions (height, width) should be equal (square)."
-    - "Minimum recommended image size: 224×224 pixels."
+    - "Minimum recommended video size: 256×256 pixels."
 
 # Output information
 output:
@@ -157,11 +157,21 @@ parameters:
       voxels:
         type: numpy.ndarray
         description: |
-          Binary one-hot encoded vector with ones indicating the voxels for which the
-          in silico fMRI responses are generated. This vector must have exactly the
-          same length as the number of voxels of each subject. The voxels from the
-          one-hot encoded vector are only selected if the "roi" key is not provided,
-          or has value None.
+          Binary one-hot encoded vector with ones indicating the voxels for which the in
+          silico fMRI responses are generated. This vector must have exactly the same
+          length as the number of voxels, which varies for each subject:
+          - Subject 1:  108,219 voxels
+          - Subject 2:  108,603 voxels
+          - Subject 3:  108,366 voxels
+          - Subject 4:  108,283 voxels
+          - Subject 5:  108,201 voxels
+          - Subject 6:  108,449 voxels
+          - Subject 7:  108,126 voxels
+          - Subject 8:  108,407 voxels
+          - Subject 9:  108,250 voxels
+          - Subject 10: 107,987 voxels
+          The voxels from the one-hot encoded vector are only selected if the "roi" key
+          is not provided, or has value None.
         example:: [0, 0, ..., 1, 1, 0]
     function: "get_encoding_model"
 
@@ -185,7 +195,7 @@ parameters:
     required: true
     type: numpy.ndarray
     shape: [batch_size, video_frames, 3_channels, height, width]
-    example: "An array of shape [100, 90, 3, 224, 224] representing 100 RGB videos, with 90 frames each."
+    example: "An array of shape [100, 90, 3, 256, 256] representing 100 RGB videos, with 90 frames each."
     function: "encode"
 
   return_metadata:

@@ -39,8 +39,6 @@ sub_mask = []
 sub_mask_affine = []
 rois = []
 correlation = []
-r2 = []
-explained_variance = []
 
 model_name = args.model_id.split('-')[-1]
 metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
@@ -56,8 +54,6 @@ for sub in tqdm(args.subjects):
     sub_mask_affine.append(metadata['fmri']['sub_mask_affine'])
     rois.append(metadata['fmri']['rois'])
     correlation.append(metadata['encoding_models']['correlation'])
-    r2.append(metadata['encoding_models']['r2'])
-    explained_variance.append(metadata['encoding_models']['explained_variance'])
 
 
 # =============================================================================

@@ -11,6 +11,15 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
+from sklearn.decomposition import TruncatedSVD
+from torchvision.transforms import Compose, Lambda
+from torchvision.transforms.v2 import (
+    UniformTemporalSubsample,
+    Resize,
+    CenterCrop,
+    Normalize
+)
+from torchvision.io.video import read_video
 from berg.interfaces.base_model import BaseModelInterface
 from berg.core.exceptions import (
     InvalidParameterError,
@@ -27,7 +36,7 @@ from berg.core.parameter_validator import (
 
 # Load model model_info from YAML
 def load_model_info():
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-vit_b_32.yaml")
+    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-bmd-s3d.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -37,52 +46,66 @@ model_info = load_model_info()
 # Register this model with the registry using model_info
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.nsd_fsaverage_vit_b_32",
+    module_path="berg.models.fmri.bmd_s3d",
     class_name="FMRIEncodingModel",
     modality=model_info.get("modality", "fmri"),
-    training_dataset=model_info.get("training_dataset", "nsd_fsaverage"),
-    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-vit_b_32.yaml")
+    training_dataset=model_info.get("training_dataset", "bmd_s3d"),
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-bmd-s3d.yaml")
 )
 
 
 class FMRIEncodingModel(BaseModelInterface):
     """
-    fMRI encoding model using feature-weighted receptive fields (fwrf)
-    for the Natural Scenes Dataset (NSD).
+    fMRI encoding model trained on the BOLD Moments Dataset (BMD).
     """
 
     MODEL_ID = model_info["model_id"]
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
-    VERTICES_LENGTH = 163842
+    VOXELS_LENGTH = [
+        108219, # Subject 1
+        108603, # Subject 2
+        108366, # Subject 3
+        108283, # Subject 4
+        108201, # Subject 5
+        108449, # Subject 6
+        108126, # Subject 7
+        108407, # Subject 8
+        108250, # Subject 9
+        107987, # Subject 10
+    ]
 
     def __init__(self, subject: int, selection: Dict, device:str="auto", berg_dir: Optional[str] = None):
         """
-        Initialize the fMRI encoding model for a specific subject and ROI.
+        Initialize the fMRI encoding model for a specific subject.
 
         Parameters
         ----------
         subject : int
-            Subject number from the NSD dataset (1-8).
+            Subject number from the BMD dataset (1-10).
         device : str, default="auto"
             Target device for computation. Options are "cpu", "cuda", or "auto".
             If "auto", will use GPU if available, otherwise CPU.
         selection : dict, optional
             Specifies for which vertices to generate the in silico fMRI responses.
             - roi: The region-of-interest (ROI) for which the in silico fMRI
-                responses (of both hemispherese) are generated.
-            - lh_vertices: Binary one-hot encoded vector with ones indicating
-                the left hemisphere (LH) vertices for which the in silico fMRI
-                responses are generated. This vector must have exactly the same
-                length as the number of LH fsaverage vertices (163,842). The
-                vertices from the one-hot encoded vector are only selected if
-                the "roi" key is not provided, or has value None.
-            - rh_vertices: Binary one-hot encoded vector with ones indicating
-                the right hemisphere (RH) vertices for which the in silico fMRI
-                responses are generated. This vector must have exactly the same
-                length as the number of RH fsaverage vertices (163,842). The
-                vertices from the one-hot encoded vector are only selected if
+                responses are generated.
+            - voxels: Binary one-hot encoded vector with ones indicating
+                the voxels for which the in silico fMRI responses are
+                generated. This vector must have exactly the same length as the
+                number of voxels, which varies for each subject:
+                - Subject 1:  108,219 voxels
+                - Subject 2:  108,603 voxels
+                - Subject 3:  108,366 voxels
+                - Subject 4:  108,283 voxels
+                - Subject 5:  108,201 voxels
+                - Subject 6:  108,449 voxels
+                - Subject 7:  108,126 voxels
+                - Subject 8:  108,407 voxels
+                - Subject 9:  108,250 voxels
+                - Subject 10: 107,987 voxels
+                The voxels from the one-hot encoded vector are only selected if
                 the "roi" key is not provided, or has value None.
         berg_dir : str, optional
             Path to the BERG directory containing model files and weights.
@@ -95,8 +118,7 @@ class FMRIEncodingModel(BaseModelInterface):
         # Parameters from selection
         self.selection = selection
         self.roi = None
-        self.selected_lh_vertices = None
-        self.selected_rh_vertices = None
+        self.selected_voxels = None
 
         # Validate Parameters
         self._validate_parameters()
@@ -128,28 +150,18 @@ class FMRIEncodingModel(BaseModelInterface):
                     self.selection["roi"], self.VALID_ROIS
                 )
 
-            # Validate LH vertices
-            if "lh_vertices" in self.selection:
-                lh_vertices_array = validate_binary_array(
-                    self.selection["lh_vertices"],
-                    self.VERTICES_LENGTH,
-                    "lh_vertices"
+            # Validate voxels
+            if "voxels" in self.selection:
+                voxels_array = validate_binary_array(
+                    self.selection["voxels"],
+                    self.VOXELS_LENGTH[self.subject-1],
+                    "voxels"
                 )
-                self.selected_lh_vertices = get_selected_indices(lh_vertices_array)
-
-            # Validate RH vertices
-            if "rh_vertices" in self.selection:
-                rh_vertices_array = validate_binary_array(
-                    self.selection["rh_vertices"],
-                    self.VERTICES_LENGTH,
-                    "rh_vertices"
-                )
-                self.selected_rh_vertices = get_selected_indices(rh_vertices_array)
-
+                self.selected_voxels = get_selected_indices(voxels_array)
 
     def load_model(self, device: str = "auto") -> None:
         """
-        Load model weights, preprocessing pipeline, and regression layers.
+        Load model weights, preprocessing pipeline, and regression weights.
 
         Loads the vision transformer backbone, preprocessing components (scaler,
         PCA), and trained regression weights for the specified subject. Sets up
@@ -164,43 +176,110 @@ class FMRIEncodingModel(BaseModelInterface):
 
         try:
 
-            # Select the used vertices
-            # If the ROI is provided, select the LH and RH vertices based on the
-            # chosen ROI
+            # Select the used voxels
+            # If the ROI is provided, select the voxels based on the chosen ROI
             if self.roi is not None:
                 metadata_dir = os.path.join(
                     self.berg_dir, 'encoding_models', 'modality-fmri',
-                    'train_dataset-nsd_fsaverage', 'model-vit_b_32',
-                    'metadata', f'metadata_subject-{self.subject:02d}.npy'
+                    'train_dataset-bmd', 'model-s3d',
+                    'metadata', f'metadata_sub-{self.subject:02d}.npy'
                 )
                 metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
-                self.selected_lh_vertices = metadata_dict['fmri']\
-                    ['lh_fsaverage_rois'][self.roi]
-                self.selected_rh_vertices = metadata_dict['fmri']\
-                    ['rh_fsaverage_rois'][self.roi]
-            # Select vertices based on one-hot encoded vector only if the ROI is
+                self.selected_voxels = metadata_dict['fmri']['rois'][self.roi]
+            # Select voxels based on one-hot encoded vector only if the ROI is
             # not provided
             else:
-                # If selected vertices is not set, use all vertice
-                if self.selected_lh_vertices is None:
-                        self.selected_lh_vertices = range(self.VERTICES_LENGTH)
-                if self.selected_rh_vertices is None:
-                        self.selected_rh_vertices = range(self.VERTICES_LENGTH)
+                # If selected voxels is not set, use all voxels
+                if self.selected_voxels is None:
+                    self.selected_voxels = range(self.VOXELS_LENGTH[self.subject-1])
 
             # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)
 
             # Define the image preprocessing transform
-            self.transform = torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms()
+            self.transform = torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms() # !!!
 
             # Load the scaler, PCA, and trained regression weights
-            self.scaler, self.pca, self.lh_reg, self.rh_reg = \
-                self._load_encoding_weights()
+            self.scaler, self.pca, self.reg = self._load_encoding_weights()
 
             print(f"Model loaded on {self.device} for subject {self.subject}")
 
         except Exception as e:
             raise ModelLoadError(f"Failed to load model: {str(e)}")
+
+
+
+
+
+
+
+
+side_size = 256
+mean = [0.43216, 0.394666, 0.37645]
+std = [0.22803, 0.22145, 0.216989]
+crop_size = 256
+num_frames = 14
+transform =  Compose(
+        [
+# 			UniformTemporalSubsample(num_frames), # this is already taken care of by the 'sample_frames' function in the 'VideoDataset' class
+            Lambda(lambda x: x/255.0),
+            Normalize(mean, std),
+            Resize(size=(side_size, side_size)),
+#			CenterCrop(size=(crop_size, crop_size)), # this is already taken care of by the 'Resize' function
+            Lambda(lambda x: x.permute(1, 0, 2, 3))
+        ]
+)
+
+num_samples = 14
+
+class VideoDataset(Dataset):
+    def __init__(self, video_dir, num_samples, device, transform=None):
+        self.video_dir = video_dir
+        self.video_files = sorted([os.path.join(video_dir, f) for f in os.listdir(video_dir) if f.endswith(('.mp4'))])
+        #self.video_files = videos_first_N
+        self.num_samples = num_samples
+        self.transform = transform
+    def __len__(self):
+        return len(self.video_files)
+    def sample_frames(self, video_frames, num_samples):
+        num_frames = video_frames.shape[0]
+        if num_samples > num_frames:
+            raise ValueError("The number of samples requested is greater than the number of frames in the video.")
+        indices = np.linspace(0, num_frames - 1, num_samples, dtype=int)
+        sampled_frames = video_frames[indices]
+        return sampled_frames
+    def __getitem__(self, idx):
+        video_path = self.video_files[idx]
+        video_frames, _, _ = read_video(video_path, pts_unit='sec',
+            output_format='TCHW')
+        try:
+            sampled_frames = self.sample_frames(video_frames, self.num_samples)
+        except ValueError:
+            last_frame = video_frames[-1].unsqueeze(0).repeat(
+                self.num_samples - video_frames.shape[0], 1, 1, 1)
+            sampled_frames = torch.cat([video_frames, last_frame], dim=0)
+        if self.transform:
+            sampled_frames = self.transform(sampled_frames)
+            sampled_frames = sampled_frames.to(device)
+        return idx, sampled_frames
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     def _load_feature_extractor(self, device):
@@ -218,23 +297,20 @@ class FMRIEncodingModel(BaseModelInterface):
             Torch feature extractor model in eval mode, configured to
             extract representations from 12 transformer layers.
         """
-        model = torchvision.models.vit_b_32(weights='DEFAULT')
+
+        # Load the model architecture
+        model = torchvision.models.video.s3d(weights='KINETICS400_V1')
         
         # Select the used layers for feature extraction
-        model_layers = [
-            'encoder.layers.encoder_layer_0.add_1',
-            'encoder.layers.encoder_layer_1.add_1',
-            'encoder.layers.encoder_layer_2.add_1',
-            'encoder.layers.encoder_layer_3.add_1',
-            'encoder.layers.encoder_layer_4.add_1',
-            'encoder.layers.encoder_layer_5.add_1',
-            'encoder.layers.encoder_layer_6.add_1',
-            'encoder.layers.encoder_layer_7.add_1',
-            'encoder.layers.encoder_layer_8.add_1',
-            'encoder.layers.encoder_layer_9.add_1',
-            'encoder.layers.encoder_layer_10.add_1',
-            'encoder.layers.encoder_layer_11.add_1'
-        ]
+        model_layers = {
+            'features.2': 'layer2',
+            'features.5.cat': 'layer5',
+            'features.7': 'layer7',
+            'features.9.cat': 'layer9',
+            'features.11.cat': 'layer11',
+            'features.13': 'layer13',
+            'avgpool': 'avgpool'
+            }
         feature_extractor = create_feature_extractor(model, return_nodes=model_layers)
         feature_extractor.to(device)
         feature_extractor.eval()
@@ -261,47 +337,42 @@ class FMRIEncodingModel(BaseModelInterface):
         """
 
         # Load the weights
-        weights_dir = os.path.join(
+        reg_weight_dir = os.path.join(
             self.berg_dir, 'encoding_models', 'modality-fmri',
-            'train_dataset-nsd_fsaverage', 'model-vit_b_32',
-            'encoding_models_weights', 'weights_subject-'+
-            format(self.subject, '02')+'.npy'
+            'train_dataset-bmd', 'model-s3d', 'encoding_models_weights',
+            'weights_sub-'+format(self.subject, '02')+'.npy'
         )
-        weights = np.load(weights_dir, allow_pickle=True).item()
+        weights_reg = np.load(reg_weight_dir, allow_pickle=True).item()
+        pca_weight_dir = os.path.join(
+            self.berg_dir, 'encoding_models', 'modality-fmri',
+            'train_dataset-bmd', 'model-s3d', 'encoding_models_weights',
+            'pca_weights.npy'
+        )
+        weights_pca = np.load(pca_weight_dir, allow_pickle=True).item()
 
         # Scaler
         scaler = StandardScaler()
-        scaler.scale_ = weights['scaler_param']['scale_']
-        scaler.mean_ = weights['scaler_param']['mean_']
-        scaler.var_ = weights['scaler_param']['var_']
-        scaler.n_features_in_ = weights['scaler_param']['n_features_in_']
-        scaler.n_samples_seen_ = weights['scaler_param']['n_samples_seen_']
+        scaler.scale_ = weights_pca['scaler_param']['scale_']
+        scaler.mean_ = weights_pca['scaler_param']['mean_']
+        scaler.var_ = weights_pca['scaler_param']['var_']
+        scaler.n_features_in_ = weights_pca['scaler_param']['n_features_in_']
+        scaler.n_samples_seen_ = weights_pca['scaler_param']['n_samples_seen_']
 
         # PCA
-        pca = PCA(n_components=250, random_state=20200220)
-        pca.components_ = weights['pca_param']['components_']
-        pca.explained_variance_ = weights['pca_param']['explained_variance_']
-        pca.explained_variance_ratio_ = weights['pca_param']['explained_variance_ratio_']
-        pca.singular_values_ = weights['pca_param']['singular_values_']
-        pca.mean_ = weights['pca_param']['mean_']
-        pca.n_components_ = weights['pca_param']['n_components_']
-        pca.n_samples_ = weights['pca_param']['n_samples_']
-        pca.noise_variance_ = weights['pca_param']['noise_variance_']
-        pca.n_features_in_ = weights['pca_param']['n_features_in_']
+        pca = TruncatedSVD(n_components=100, random_state=20200220)
+        pca.components_ = weights_pca['pca_param']['components_']
+        pca.explained_variance_ = weights_pca['pca_param']['explained_variance_']
+        pca.explained_variance_ratio_ = weights_pca['pca_param']['explained_variance_ratio_']
+        pca.singular_values_ = weights_pca['pca_param']['singular_values_']
+        pca.n_features_in_ = weights_pca['pca_param']['n_features_in_']
 
         # LH linear regression parameters
-        lh_reg = LinearRegression()
-        lh_reg.coef_ = weights['lh_reg_param']['coef_'][self.selected_lh_vertices]
-        lh_reg.intercept_ = weights['lh_reg_param']['intercept_'][self.selected_lh_vertices]
-        lh_reg.n_features_in_ = weights['lh_reg_param']['n_features_in_']
+        reg = LinearRegression()
+        reg.coef_ = weights_reg['coef_'][self.selected_voxels]
+        reg.intercept_ = weights_reg['intercept_'][self.selected_voxels]
+        reg.n_features_in_ = weights_reg['n_features_in_']
 
-        # RH linear regression parameters
-        rh_reg = LinearRegression()
-        rh_reg.coef_ = weights['rh_reg_param']['coef_'][self.selected_rh_vertices]
-        rh_reg.intercept_ = weights['rh_reg_param']['intercept_'][self.selected_rh_vertices]
-        rh_reg.n_features_in_ = weights['rh_reg_param']['n_features_in_']
-
-        return scaler, pca, lh_reg, rh_reg
+        return scaler, pca, reg
 
 
     def generate_response(
@@ -309,47 +380,45 @@ class FMRIEncodingModel(BaseModelInterface):
             stimulus: np.ndarray,
             show_progress: bool = True) -> np.ndarray:
         """
-        Generate in silico fMRI responses for a batch of images.
+        Generate in silico fMRI responses for a batch of videos.
 
         Parameters
         ----------
         stimulus : np.ndarray
-            Images for which the in silico neural responses are generated. Must be
-            a 4-D numpy array of shape (Batch size x 3 RGB Channels x Width x
-            Height) consisting of integer values in the range [0, 255].
-            Furthermore, the images must be of square size (i.e., equal width and
+            Videos for which the in silico neural responses are generated. Must be
+            a 5-D numpy array of shape (Batch size x N video frames x 3 RGB Channels
+            x Width x Height) consisting of integer values in the range [0, 255].
+            Furthermore, the videos must be of square size (i.e., equal width and
             height).
         show_progress : bool, default=True
             Whether to display a progress bar during encoding.
 
         Returns
         -------
-        (lh_insilico_fmri, rh_insilico_fmri) : tuple of np.ndarray
-            LH and RH in silico fMRI response array, each with with shape
-            (batch_size, n_vertices), where the number of vertices depends on
-            The selection parameter.
+        insilico_fmri : np.ndarray
+            In silico fMRI response array, with shape (batch_size, n_voxels),
+            where the number of voxels depends on the selection parameter.
         """
 
         # Validate stimulus
-        if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 4:
+        if not isinstance(stimulus, np.ndarray) or len(stimulus.shape) != 5:
             raise StimulusError(
-                "Stimulus must be a 4D numpy array (batch, channels, height, width)"
+                "Stimulus must be a 5D numpy array (batch, frames, channels, height, width)"
             )
 
-        # Preprocess the images
-        images = self.transform(torch.from_numpy(stimulus))
+        # Preprocess the videos
+        videos = self.transform(torch.from_numpy(stimulus)) # !!!
 
         # Extract features and generate responses in batches
-        batch_size = 100
-        n_batches = int(np.ceil(len(images) / batch_size))
+        batch_size = 10
+        n_batches = int(np.ceil(len(videos) / batch_size))
 
         if show_progress:
             progress_bar = tqdm(range(n_batches), desc='Encoding fMRI responses')
         else:
             progress_bar = range(n_batches)
 
-        lh_insilico_fmri = None
-        rh_insilico_fmri = None
+        insilico_fmri = None
 
         with torch.no_grad():
             for b in progress_bar:
@@ -358,8 +427,8 @@ class FMRIEncodingModel(BaseModelInterface):
                 idx_end = idx_start + batch_size
 
                 # Extract features
-                img_batch = images[idx_start:idx_end].to(self.device)
-                features = self.feature_extractor(img_batch)
+                video_batch = videos[idx_start:idx_end].to(self.device)
+                features = self.feature_extractor(video_batch)
 
                 # Flatten features
                 features = torch.hstack([torch.flatten(l, start_dim=1) for l in features.values()])
@@ -371,33 +440,26 @@ class FMRIEncodingModel(BaseModelInterface):
                 features = features.astype(np.float32)
 
                 # Generate the in silico fMRI responses
-                lh_insilico_fmri_batch = self.lh_reg.predict(features).astype(np.float32)
-                rh_insilico_fmri_batch = self.rh_reg.predict(features).astype(np.float32)
+                insilico_fmri_batch = self.reg.predict(features).astype(np.float32)
 
                 # Combine with previous batches
-                if lh_insilico_fmri is None:
-                    lh_insilico_fmri = lh_insilico_fmri_batch
-                    rh_insilico_fmri = rh_insilico_fmri_batch
+                if insilico_fmri is None:
+                    insilico_fmri = insilico_fmri_batch
                 else:
-                    lh_insilico_fmri = np.append(
-                        lh_insilico_fmri,
-                        lh_insilico_fmri_batch,
-                        axis=0
-                    )
-                    rh_insilico_fmri = np.append(
-                        rh_insilico_fmri,
-                        rh_insilico_fmri_batch,
+                    insilico_fmri = np.append(
+                        insilico_fmri,
+                        insilico_fmri_batch,
                         axis=0
                     )
 
                 if show_progress and isinstance(progress_bar, tqdm):
-                    encoded_images = min((b + 1) * batch_size, len(images))
+                    encoded_videos = min((b + 1) * batch_size, len(videos))
                     progress_bar.set_postfix({
-                        'Encoded images': encoded_images, 
-                        'Total images': len(images)
+                        'Encoded videos': encoded_videos, 
+                        'Total videos': len(videos)
                     })
 
-        return (lh_insilico_fmri, rh_insilico_fmri)
+        return insilico_fmri
 
 
     @classmethod
@@ -447,10 +509,10 @@ class FMRIEncodingModel(BaseModelInterface):
         file_name = os.path.join(berg_dir,
                             'encoding_models', 
                             'modality-fmri',
-                            'train_dataset-nsd_fsaverage', 
-                            'model-vit_b_32', 
+                            'train_dataset-bmd', 
+                            'model-s3d', 
                             'metadata',
-                            f'metadata_subject-{subject:02d}.npy')
+                            f'metadata_sub-{subject:02d}.npy')
 
         # Load metadata if file exists
         if os.path.exists(file_name):

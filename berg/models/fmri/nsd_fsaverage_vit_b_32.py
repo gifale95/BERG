@@ -47,8 +47,7 @@ register_model(
 
 class FMRIEncodingModel(BaseModelInterface):
     """
-    fMRI encoding model using feature-weighted receptive fields (fwrf)
-    for the Natural Scenes Dataset (NSD).
+    fMRI encoding model trained on the Natural Scenes Dataset (NSD).
     """
 
     MODEL_ID = model_info["model_id"]
@@ -59,7 +58,7 @@ class FMRIEncodingModel(BaseModelInterface):
 
     def __init__(self, subject: int, selection: Dict, device:str="auto", berg_dir: Optional[str] = None):
         """
-        Initialize the fMRI encoding model for a specific subject and ROI.
+        Initialize the fMRI encoding model for a specific subject.
 
         Parameters
         ----------
@@ -149,7 +148,7 @@ class FMRIEncodingModel(BaseModelInterface):
 
     def load_model(self, device: str = "auto") -> None:
         """
-        Load model weights, preprocessing pipeline, and regression layers.
+        Load model weights, preprocessing pipeline, and regression weights.
 
         Loads the vision transformer backbone, preprocessing components (scaler,
         PCA), and trained regression weights for the specified subject. Sets up
@@ -205,7 +204,7 @@ class FMRIEncodingModel(BaseModelInterface):
 
     def _load_feature_extractor(self, device):
         """
-        Load the ViT feature extractor for selected intermediate layers.
+        Load the ViT feature extractor.
         
         Parameters
         ----------
@@ -327,7 +326,7 @@ class FMRIEncodingModel(BaseModelInterface):
         (lh_insilico_fmri, rh_insilico_fmri) : tuple of np.ndarray
             LH and RH in silico fMRI response array, each with with shape
             (batch_size, n_vertices), where the number of vertices depends on
-            The selection parameter.
+            the selection parameter.
         """
 
         # Validate stimulus
