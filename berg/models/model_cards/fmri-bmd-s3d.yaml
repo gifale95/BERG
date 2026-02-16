@@ -27,7 +27,11 @@ description: |
 metadata: |
   'fmri':
       group_mask                         : (62, 77, 61)  - Whole brain group mask (voxels defined for all subjects)
+      group_mask_header                  : object        - Whole brain group mask header
+      group_mask_affine                  : (4, 4)        - Whole brain group mask affine
       sub_mask                           : (62, 77, 61)  - Whole brain subject mask
+      sub_mask_header                    : object        - Whole brain subject mask header
+      sub_mask_affine                    : (4, 4)        - Whole brain subject mask
       rois                               : dict          - ROI vertex indices (l = left hemisphere, r = right hemisphere)
           lV1v                           : tuple         - Visual area 1 ventral (LH)
           rV1v                           : tuple         - Visual area 1 ventral (RH)

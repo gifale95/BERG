@@ -29,9 +29,9 @@ from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
-parser.add_argument('--model', type=str, default='s3d')
-parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--bmd_dir', default='/scratch/giffordale95/projects/eeg_moments/bold_moments_dataset', type=str)
+parser.add_argument('--model', type=str, default='<your_model_name>d')
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
+parser.add_argument('--bmd_dir', default='../bold_moments_dataset', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Test BMD encoding models <<<')
@@ -47,10 +47,16 @@ mask_dir = os.path.join(args.bmd_dir, 'derivatives', 'versionB', 'MNI152',
     'GLM', 'mask')
 
 group_mask = nib.load(os.path.join(mask_dir,
-    'groupMask_space-MNI152.nii')).get_fdata().astype(bool)
+    'groupMask_space-MNI152.nii'))
+group_mask_header = group_mask.header.copy()
+group_mask_affine = group_mask.affine
+group_mask = group_mask.get_fdata().astype(bool)
 
 sub_mask = nib.load(os.path.join(mask_dir,
-    f'sub-{args.subject:02d}_mask-nonans_space-MNI152.nii')).get_fdata().astype(bool)
+    f'sub-{args.subject:02d}_mask-nonans_space-MNI152.nii'))
+sub_mask_header = sub_mask.header.copy()
+sub_mask_affine = sub_mask.affine
+sub_mask = sub_mask.get_fdata().astype(bool)
 
 
 # =============================================================================
@@ -89,25 +95,25 @@ betas_dir = os.path.join(args.bmd_dir, 'derivatives', 'versionB', 'MNI152',
 file = os.path.join(betas_dir,
     f'sub-{args.subject:02d}_noiseceiling_task-train_n-1.pkl')
 with open(file, "rb") as f:
-    noiseceiling_task_train_n_1 = pickle.load(f)[1]
+    noiseceiling_task_train_n_1 = pickle.load(f)[1].astype(np.float32)
 
 # Load the noise ceiling computed on all train data repeats
 file = os.path.join(betas_dir,
     f'sub-{args.subject:02d}_noiseceiling_task-train_n-3.pkl')
 with open(file, "rb") as f:
-    noiseceiling_task_train_n_3 = pickle.load(f)[1]
+    noiseceiling_task_train_n_3 = pickle.load(f)[1].astype(np.float32)
 
 # Load the noise ceiling computed on single test data repeats
 file = os.path.join(betas_dir,
     f'sub-{args.subject:02d}_noiseceiling_task-test_n-1.pkl')
 with open(file, "rb") as f:
-    noiseceiling_task_test_n_1 = pickle.load(f)[1]
+    noiseceiling_task_test_n_1 = pickle.load(f)[1].astype(np.float32)
 
 # Load the noise ceiling computed on all test data repeats
 file = os.path.join(betas_dir,
     f'sub-{args.subject:02d}_noiseceiling_task-test_n-10.pkl')
 with open(file, "rb") as f:
-    noiseceiling_task_test_n_10 = pickle.load(f)[1]
+    noiseceiling_task_test_n_10 = pickle.load(f)[1].astype(np.float32)
 
 
 # =============================================================================
@@ -118,7 +124,7 @@ fmri_file = os.path.join(args.bmd_dir, 'derivatives', 'versionB', 'MNI152',
     'GLM', f'sub-{args.subject:02d}', 'prepared_betas',
     f'sub-{args.subject:02d}_organized_betas_task-test_normalized.pkl')
 with open(fmri_file, "rb") as f:
-    fmri_test = pickle.load(f)[0]
+    fmri_test = pickle.load(f)[0].astype(np.float32)
 
 # Average the responses across repeats
 fmri_test = np.mean(fmri_test, 1)
@@ -131,7 +137,7 @@ betas_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
     'modality-fmri', 'train_dataset-bmd', 'model-'+args.model,
     f'betas_test_pred_sub-{args.subject:02d}.npy')
 
-betas_test_pred = np.load(betas_dir)
+betas_test_pred = np.load(betas_dir).astype(np.float32)
 
 
 # =============================================================================
@@ -139,7 +145,7 @@ betas_test_pred = np.load(betas_dir)
 # =============================================================================
 # Correlate the predicted and actual fMRI responses for the test images,
 # at each vertex
-correlation = np.zeros(fmri_test.shape[1])
+correlation = np.zeros(fmri_test.shape[1], dtype=np.float32)
 for v in range(fmri_test.shape[1]):
     correlation[v] = pearsonr(fmri_test[:,v], betas_test_pred[:,v])[0]
 
@@ -170,7 +176,11 @@ explained_variance[explained_variance>100] = 100
 metadata = {
     'fmri': {
         'group_mask': group_mask,
+        'group_mask_header': group_mask_header,
+        'group_mask_affine': group_mask_affine,
         'sub_mask': sub_mask,
+        'sub_mask_header': sub_mask_header,
+        'sub_mask_affine': sub_mask_affine,
         'rois': rois
         },
     'encoding_models': {

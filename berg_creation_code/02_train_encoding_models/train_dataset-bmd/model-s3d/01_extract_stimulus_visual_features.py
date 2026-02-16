@@ -52,8 +52,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--model_name', default='s3d', type=str)
 parser.add_argument('--batch_size', default=4, type=int)
 parser.add_argument('--n_components', default=100, type=int)
-parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--bmd_dir', default='/scratch/giffordale95/projects/eeg_moments/bold_moments_dataset', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
+parser.add_argument('--bmd_dir', default='../bold_moments_dataset', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Extract video features <<<')
@@ -268,7 +268,6 @@ class VideoDataset(Dataset):
     def __init__(self, video_dir, num_samples, device, transform=None):
         self.video_dir = video_dir
         self.video_files = sorted([os.path.join(video_dir, f) for f in os.listdir(video_dir) if f.endswith(('.mp4'))])
-        assert len(self.video_files) == 1102
         #self.video_files = videos_first_N
         self.num_samples = num_samples
         self.transform = transform
@@ -431,7 +430,7 @@ features_test = pca.transform(features_test)
 
 
 # =============================================================================
-# Apply z-score and PCA weights
+# Save the z-score and PCA weights
 # =============================================================================
 pca_weights = {
     'scaler_param': {
@@ -451,7 +450,7 @@ pca_weights = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-    'train_dataset-bmd', 'model-'+args.model, 'encoding_models_weights')
+    'train_dataset-bmd', 'model-'+args.model_name, 'encoding_models_weights')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'pca_weights.npy'
@@ -463,7 +462,7 @@ np.save(os.path.join(save_dir, file_name), pca_weights)
 # Save the PCA-transformed model features
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'results', 'stimulus_features',
-    'modality-fmri', 'train_dataset-bmd', 'model-'+args.model)
+    'modality-fmri', 'train_dataset-bmd', 'model-'+args.model_name)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name_train = 'pca_stimulus_features_train.npy'
