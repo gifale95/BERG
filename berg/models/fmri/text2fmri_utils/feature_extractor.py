@@ -53,7 +53,7 @@ class FeatureExtractor:
                 self.berg_dir,
                 "encoding_models",
                 "modality-fmri",
-                "train_dataset-cneuromod",
+                "train_dataset-cneuromo_algo2025",
                 "model-text2fmri",
                 "encoding_models_weights"
             )
