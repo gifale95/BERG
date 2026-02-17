@@ -135,6 +135,13 @@ This function loads the encoding model.
        | **Description:** The computing device to use for inference.
        | **Valid Values:** "cpu", "cuda", "auto"
        | **Example:** "auto"
+   * - **model_variant**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** HuggingFace repository ID of a specific pretrained variant to load.
+       | If None (default), loads the default configuration (Qwen-2.5-0.5B).
+       | Use model.get_pretrained_variants() on any loaded model to see all available options.
+       | **Example:** "ShreyDixit/Text2fMRI-Qwen-2.5-0.5B"
    * - **selection**
      - | **Type:** dict
        | **Required:** No
@@ -236,11 +243,15 @@ Example Usage
     model = berg.get_encoding_model(
         "fmri-cneuromod_algo2025-text2fmri",
         subject=1,
+        model_variant="ShreyDixit/Text2fMRI-Qwen-2.5-0.5B",
         selection={
             "roi": ["Vis"],
             "voxel_index": [0, 0, '...', 1, 1, 0]
         }
     )
+
+    # Discover available model variants
+    variants = model.get_pretrained_variants()
     
     # Prepare the stimulus (text/sentences)
     stimulus = ["Hello, are you", "awake? Yes,"]

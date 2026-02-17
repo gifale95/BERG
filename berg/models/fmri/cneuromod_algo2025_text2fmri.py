@@ -71,7 +71,7 @@ class Text2fMRI(BaseModelInterface):
     # Setting it to None so that no calls to hugging face are made during the import
     pretrained_configs_dict = None
 
-    def __init__(self, berg_dir: str = None, selection: dict = None, subject: int = None, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "auto", low_mem_use: bool = False):
+    def __init__(self, berg_dir: str = None, selection: dict = None, subject: int = None, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "auto", low_mem_use: bool = False, model_variant: str = None):
         """
         Initialize the Text2fMRI interface.
 
@@ -89,6 +89,10 @@ class Text2fMRI(BaseModelInterface):
                 If True, use a low-memory usage. The model and the LLMFeatureExtractor will not be loaded at the same time.
                 This will take less memory but it will take longer to generate the responses because it will load the models
                 every time.
+            model_variant (str, optional): HuggingFace repo ID of a specific pretrained
+                variant to load (e.g. "ShreyDixit/Text2fMRI-Qwen-2.5-3B").
+                If None, uses the default configuration (Qwen-2.5-0.5B).
+                Use model.get_pretrained_variants() to see all available options.
         """
         self.model = None
         # Select device
@@ -101,6 +105,7 @@ class Text2fMRI(BaseModelInterface):
         self.berg_dir = berg_dir
         self.selection = selection
         self.subject = subject
+        self.model_variant = model_variant
         
         
         
@@ -148,6 +153,13 @@ class Text2fMRI(BaseModelInterface):
             self.subject, self.VALID_SUBJECTS
         )[0]
 
+        # Validate model_variant if provided
+        if self.model_variant is not None:
+            valid_variants = list(self.pretrained_configs_dict.values())
+            if self.model_variant not in valid_variants:
+                    "Use model.get_pretrained_variants() to see all options."
+                )
+
     @classmethod
     def get_pretrained_configs(cls) -> list[Text2fMRIConfig]:
         """
@@ -167,6 +179,30 @@ class Text2fMRI(BaseModelInterface):
                 cls._collection_slug)
         return list(cls.pretrained_configs_dict.keys())
 
+    @classmethod
+    def get_pretrained_variants(cls) -> list[str]:
+        """
+        Returns the HuggingFace repo IDs of all available pretrained model variants.
+
+        Use this to discover which models are available, then pass the chosen
+        repo ID as model_variant to get_encoding_model().
+
+        Returns
+        -------
+        list[str]
+            A list of HuggingFace repo IDs, e.g.:
+            ["ShreyDixit/Text2fMRI-Qwen-2.5-0.5B", "ShreyDixit/Text2fMRI-Qwen-2.5-3B"]
+
+        Examples
+        --------
+        >>> model = berg.get_encoding_model(model_id, subject=1)
+        >>> variants = model.get_pretrained_variants()
+        >>> model = berg.get_encoding_model(model_id, subject=1, model_variant=variants[1])
+        """
+        if cls.pretrained_configs_dict is None:
+            cls.get_pretrained_configs()
+        return list(cls.pretrained_configs_dict.values())
+
     def load_model(self, load_feature_extractor=True):
         """
         Loads the neural network weights and optionally the LLM backbone.
@@ -179,7 +215,8 @@ class Text2fMRI(BaseModelInterface):
         self.model = Text2fMRIModel(config=self.config, device=self.device, berg_dir=self.berg_dir)
 
         if self.config in self.pretrained_configs_dict:
-            self.model.load_model(self.pretrained_configs_dict)
+            repo_id = self.model_variant if self.model_variant is not None else self.pretrained_configs_dict[self.config]
+            self.model.load_model_from_hub(repo_id)
         self.model.eval()
 
     @torch.no_grad()

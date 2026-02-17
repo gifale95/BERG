@@ -125,16 +125,14 @@ class Text2fMRIModel(nn.Module):
         
         return base + bias
 
-    def load_model_from_hub(self, PRETRAINED_CONFIGS: dict[Text2fMRIConfig, str]):
+    def load_model_from_hub(self, repo_id: str):
         """
         Downloads and loads weights from the Hugging Face Hub if the config matches.
 
         Args:
-            pretrained_configs (Dict[Text2fMRIConfig, str]): A dictionary mapping
-                configuration objects to Hugging Face repository IDs.
+            repo_id (str): HuggingFace repository ID to download weights from
+                (e.g. "ShreyDixit/Text2fMRI-Qwen-2.5-0.5B").
         """
-        model_id = PRETRAINED_CONFIGS[self.config]
-        
         # Construct cache directory path
         cache_dir = None
         if self.berg_dir is not None:
@@ -149,7 +147,7 @@ class Text2fMRIModel(nn.Module):
         
         # Download the weights file (cached automatically)
         weights_path = hf_hub_download(
-            repo_id=model_id, 
+            repo_id=repo_id, 
             filename="model.pt",
             cache_dir=cache_dir
         )
@@ -165,7 +163,7 @@ class Text2fMRIModel(nn.Module):
             pretrained_configs (Dict[Text2fMRIConfig, str]): Registry of valid models.
         """
         if self.config in PRETRAINED_CONFIGS:
-            self.load_model_from_hub(PRETRAINED_CONFIGS)
+            self.load_model_from_hub(PRETRAINED_CONFIGS[self.config])
             logging.info(
                 f"Model loaded from {PRETRAINED_CONFIGS[self.config]}")
 

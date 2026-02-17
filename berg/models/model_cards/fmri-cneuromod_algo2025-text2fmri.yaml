@@ -83,6 +83,17 @@ parameters:
     example: "auto"
     function: "get_encoding_model"
 
+  model_variant:
+    type: str
+    required: false
+    default: null
+    description: |
+      HuggingFace repository ID of a specific pretrained variant to load.
+      If None (default), loads the default configuration (Qwen-2.5-0.5B).
+      Use model.get_pretrained_variants() on any loaded model to see all available options.
+    example: "ShreyDixit/Text2fMRI-Qwen-2.5-0.5B"
+    function: "get_encoding_model"
+
   selection:
     type: dict
     required: false
