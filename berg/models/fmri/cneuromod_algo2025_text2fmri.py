@@ -17,7 +17,7 @@ from berg.models.fmri.text2fmri_utils.model import Text2fMRIModel
 # Load model info from YAML
 def load_model_info():
     yaml_path = os.path.join(os.path.dirname(
-        __file__), "..", "model_cards", "fmri-cneuromod-text2fmri.yaml")
+        __file__), "..", "model_cards", "fmri-cneuromod_algo2025-text2fmri.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -28,13 +28,19 @@ model_info = load_model_info()
 # Register this model with the registry using model_info
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.cneuromod_text2fmri",
+    module_path="berg.models.fmri.cneuromod_algo2025_text2fmri",
     class_name="Text2fMRI",
     modality=model_info.get("modality", "fmri"),
-    training_dataset=model_info.get("training_dataset", "cneuromod"),
+    training_dataset=model_info.get("training_dataset", "cneuromod_algo2025"),
     yaml_path=os.path.join(os.path.dirname(__file__),
-                           "..", "model_cards", "fmri-cneuromod-text2fmri.yaml")
+                           "..", "model_cards", "fmri-cneuromod_algo2025-text2fmri.yaml")
 )
+
+# Algonauts Mapping
+SUBJECT_MAPPING = {1: 0,
+                   2: 1,
+                   3: 2,
+                   5: 3,}
 
 
 class Text2fMRI(BaseModelInterface):
@@ -95,10 +101,14 @@ class Text2fMRI(BaseModelInterface):
         self.berg_dir = berg_dir
         self.selection = selection
         self.subject = subject
+        
+        
+        
         self.voxel_index = None
         if Text2fMRI.pretrained_configs_dict is None:
             Text2fMRI.get_pretrained_configs()
         self._validate_parameters()
+        self.subject = SUBJECT_MAPPING[subject]
         self.roi = self.selection.get(
             "roi", None) if self.selection is not None else None
         self.roi_labels = self._extract_network_names()
@@ -283,7 +293,7 @@ class Text2fMRI(BaseModelInterface):
             berg_dir,
             'encoding_models',
             'modality-fmri',
-            'train_dataset-cneuromod',
+            'train_dataset-cneuromod_algo2025',
             'model-text2fmri',
             'metadata',
             'metadata.npy'

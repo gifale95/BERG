@@ -1,6 +1,6 @@
-========================
-fmri-cneuromod-text2fmri
-========================
+=================================
+fmri-cneuromod_algo2025-text2fmri
+=================================
 
 Model Summary
 ------------
@@ -12,7 +12,7 @@ Model Summary
    * - Modality
      - fMRI
    * - Training Dataset
-     - CNeuroMod
+     - CNeuroMod (Algonauts 2025 challenge preparation)
    * - Species
      - Human
    * - Stimuli
@@ -121,14 +121,14 @@ This function loads the encoding model.
      - | **Type:** str
        | **Required:** Yes
        | **Description:** Unique identifier of the model to load.
-       | **Valid Values:** fmri-cneuromod-text2fmri
-       | **Example:** "fmri-cneuromod-text2fmri"
+       | **Valid Values:** fmri-cneuromod_algo2025-text2fmri
+       | **Example:** "fmri-cneuromod_algo2025-text2fmri"
    * - **subject**
      - | **Type:** int
        | **Required:** Yes
        | **Description:** The ID of the subject to generate predictions for.
-       | **Valid Values:** 0, 1, 2, 3
-       | **Example:** 0
+       | **Valid Values:** 1, 2, 3, 5
+       | **Example:** 1
    * - **device**
      - | **Type:** str
        | **Required:** No
@@ -205,14 +205,14 @@ This function loads the encoding model's metadata without having to load the mod
      - | **Type:** str
        | **Required:** Yes
        | **Description:** Unique identifier of the model to load.
-       | **Valid Values:** fmri-cneuromod-text2fmri
-       | **Example:** "fmri-cneuromod-text2fmri"
+       | **Valid Values:** fmri-cneuromod_algo2025-text2fmri
+       | **Example:** "fmri-cneuromod_algo2025-text2fmri"
    * - **subject**
      - | **Type:** int
        | **Required:** Yes
        | **Description:** The ID of the subject to generate predictions for.
-       | **Valid Values:** 0, 1, 2, 3
-       | **Example:** 0
+       | **Valid Values:** 1, 2, 3, 5
+       | **Example:** 1
 
 Performance
 ----------
@@ -234,8 +234,8 @@ Example Usage
     
     # Load the model
     model = berg.get_encoding_model(
-        "fmri-cneuromod-text2fmri",
-        subject=0,
+        "fmri-cneuromod_algo2025-text2fmri",
+        subject=1,
         selection={
             "roi": ["Vis"],
             "voxel_index": [0, 0, '...', 1, 1, 0]
@@ -267,8 +267,8 @@ Example Usage
     
     # Load the encoding model's metadata without having to load the model itself
     metadata = berg.get_model_metadata(
-        "fmri-cneuromod-text2fmri",
-        subject=0
+        "fmri-cneuromod_algo2025-text2fmri",
+        subject=1
     )
     
 

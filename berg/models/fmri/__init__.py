@@ -5,5 +5,5 @@ import berg.models.fmri.nsd_fsaverage_huze
 import berg.models.fmri.things_fmri_1_vit_b_32
 import berg.models.fmri.mosaic_CNN8_multihead_subNSD_verticesAll
 import berg.models.fmri.mosaic_CNN8_multihead_subAll_verticesVisual
-import berg.models.fmri.cneuromod_text2fmri
+import berg.models.fmri.cneuromod_algo2025_text2fmri
 import berg.models.fmri.tuckute_2024_gpt2_xl

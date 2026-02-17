@@ -79,7 +79,7 @@ The following table shows BERG's most accurate encoding models for each dataset 
 | [utah_array-tvsd-vit_b_32][utah_array-tvsd-vit_b_32] | [TVSD][tvsd] | Utah arrays | Macaque | Images | [Accuracy plots][acc-utah_array-tvsd-vit_b_32] |
 | [calcium_2p-wang_2025-3DCNN][calcium_2p-wang_2025-3DCNN] | [Wang et al., 2025][wang_2025] | two-photon calcium imaging | Mouse | Videos | [Accuracy plots][acc-calcium_2p-wang_2025-3DCNN] |
 | [fmri-tuckute_2024-GPT2_XL][fmri-tuckute_2024-GPT2_XL] | [Tuckute et al., 2024][tuckute_2024] | fMRI | Human | Text | [Accuracy plots][acc-fmri-tuckute_2024-GPT2_XL] |
-| [fmri-cneuromod-text2fmri][fmri-cneuromod-text2fmri] | [CNeuroMod/Algonauts2025][Algonauts] | fMRI | Human | Text | [HF Collection][acc-fmri-cneuromod-text2fmri] |
+| [fmri-cneuromod_algo2025-text2fmri][fmri-cneuromod_algo2025-text2fmri] | [CNeuroMod/Algonauts2025][Algonauts] | fMRI | Human | Text | [HF Collection][acc-fmri-cneuromod_algo2025-text2fmri] |
 
 ### ✨ BERG functions
 
@@ -245,6 +245,6 @@ If you use BERG, please cite:
 [tuckute_2024]: https://www.nature.com/articles/s41562-023-01783-7
 [acc-fmri-tuckute_2024-GPT2_XL]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy/
 
-[fmri-cneuromod-text2fmri]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod-text2fmri.md
+[fmri-cneuromod_algo2025-text2fmri]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod_algo2025-text2fmri.md
 [Algonauts]: https://algonautsproject.com/2025/index.html
-[acc-fmri-cneuromod-text2fmri]: https://huggingface.co/collections/ShreyDixit/text2fmri
+[acc-fmri-cneuromod_algo2025-text2fmri]: https://huggingface.co/collections/ShreyDixit/text2fmri
