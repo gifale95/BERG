@@ -140,7 +140,7 @@ class Text2fMRIModel(nn.Module):
                 self.berg_dir,
                 "encoding_models",
                 "modality-fmri",
-                "train_dataset-cneuromod",
+                "train_dataset-cneuromod_algo2025",
                 "model-text2fmri",
                 "encoding_models_weights"
             )
