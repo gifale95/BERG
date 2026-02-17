@@ -186,7 +186,7 @@ class FMRIEncodingModel(BaseModelInterface):
             # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)
 
-            # Define the image preprocessing transform
+            # Define the image preprocessing transform # !!!
             self.transform = torchvision.models.video.S3D_Weights.KINETICS400_V1.transforms()
 
             # Load the scaler, PCA, and trained regression weights
@@ -282,7 +282,7 @@ class FMRIEncodingModel(BaseModelInterface):
         pca.singular_values_ = weights_pca['pca_param']['singular_values_']
         pca.n_features_in_ = weights_pca['pca_param']['n_features_in_']
 
-        # LH linear regression parameters
+        # Linear regression parameters
         reg = LinearRegression()
         reg.coef_ = weights_reg['coef_'][self.selected_voxels]
         reg.intercept_ = weights_reg['intercept_'][self.selected_voxels]

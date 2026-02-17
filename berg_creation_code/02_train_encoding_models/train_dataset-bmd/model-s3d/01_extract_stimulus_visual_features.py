@@ -34,13 +34,6 @@ import torchvision
 from torchvision.io.video import read_video
 from torch.utils.data import Dataset, DataLoader
 from torchvision.models.feature_extraction import create_feature_extractor
-from torchvision.transforms import Compose, Lambda
-from torchvision.transforms.v2 import (
-    UniformTemporalSubsample,
-    Resize,
-    CenterCrop,
-    Normalize
-)
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import TruncatedSVD
 
@@ -52,8 +45,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--model_name', default='s3d', type=str)
 parser.add_argument('--batch_size', default=4, type=int)
 parser.add_argument('--n_components', default=100, type=int)
-parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
-parser.add_argument('--bmd_dir', default='../bold_moments_dataset', type=str)
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str) # !!!
+parser.add_argument('--bmd_dir', default='/scratch/giffordale95/projects/eeg_moments/bold_moments_dataset', type=str) # !!!
 args, unknown = parser.parse_known_args()
 
 print('>>> Extract video features <<<')
@@ -70,16 +63,9 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
 # =============================================================================
-# Load the chosen video DNN
+# Load the video DNN
 # =============================================================================
-if args.model_name == 's3d':
-
-    model = torchvision.models.video.s3d(weights='KINETICS400_V1')
-
-else:
-
-    model = torch.hub.load('facebookresearch/pytorchvideo', args.model_name,
-        pretrained=True)
+model = torchvision.models.video.s3d(weights='KINETICS400_V1')
 
 
 # =============================================================================
@@ -171,94 +157,9 @@ class Num_frames(Enum):
 
 
 # =============================================================================
-# Video preprocessing for X3D models
+# Video preprocessing
 # =============================================================================
-mean = [0.45, 0.45, 0.45]
-std = [0.225, 0.225, 0.225]
-model_transform_params  = {
-    "x3d_xs": {
-        "side_size": 182,
-        "crop_size": 182,
-        "num_frames": 4,
-        "sampling_rate": 12,
-    },
-    "x3d_s": {
-        "side_size": 182,
-        "crop_size": 182,
-        "num_frames": 13,
-        "sampling_rate": 6,
-    },
-    "x3d_m": {
-        "side_size": 256,
-        "crop_size": 256,
-        "num_frames": 16,
-        "sampling_rate": 5,
-    }
-}
-
-# Get transform parameters based on model
-if args.model_name in ['x3d_xs', 'x3d_s', 'x3d_m']:
-    transform_params = model_transform_params[args.model_name]
-
-    transform = Compose(
-        [
-#			UniformTemporalSubsample(transform_params["num_frames"]), # this is already taken care of by the 'sample_frames' function in the 'VideoDataset' class
-            Lambda(lambda x: x/255.0),
-            Normalize(mean, std),
-            Resize(size=(transform_params["side_size"],
-                transform_params["side_size"])),
-#			CenterCrop(size=(transform_params["crop_size"], # this is already taken care of by the 'Resize' function
-#				transform_params["crop_size"])),
-            Lambda(lambda x: x.permute(1, 0, 2, 3))
-        ]
-    )
-
-
-# =============================================================================
-# Video preprocessing for 3D ResNet
-# =============================================================================
-side_size = 256
-mean = [0.45, 0.45, 0.45]
-std = [0.225, 0.225, 0.225]
-crop_size = 256
-num_frames = 8
-sampling_rate = 8
-
-if args.model_name == 'slow_r50':
-    # Note that this transform is specific to the slow_R50 model.
-    transform =  Compose(
-            [
-    # 			UniformTemporalSubsample(num_frames), # this is already taken care of by the 'sample_frames' function in the 'VideoDataset' class
-                Lambda(lambda x: x/255.0),
-                Normalize(mean, std),
-                Resize(size=(side_size, side_size)),
-    #			CenterCrop(size=(crop_size, crop_size)), # this is already taken care of by the 'Resize' function
-                Lambda(lambda x: x.permute(1, 0, 2, 3))
-            ]
-    )
-
-
-# =============================================================================
-# Video preprocessing for S3D
-# =============================================================================
-side_size = 256
-mean = [0.43216, 0.394666, 0.37645]
-std = [0.22803, 0.22145, 0.216989]
-crop_size = 256
-num_frames = 14
-
-if args.model_name == 's3d':
-    # Note that this transform is specific to the slow_R50 model.
-    transform =  Compose(
-            [
-    # 			UniformTemporalSubsample(num_frames), # this is already taken care of by the 'sample_frames' function in the 'VideoDataset' class
-                Lambda(lambda x: x/255.0),
-                Normalize(mean, std),
-                Resize(size=(side_size, side_size)),
-    #			CenterCrop(size=(crop_size, crop_size)), # this is already taken care of by the 'Resize' function
-                Lambda(lambda x: x.permute(1, 0, 2, 3))
-            ]
-    )
+transform = torchvision.models.video.S3D_Weights.KINETICS400_V1.transforms()
 
 
 # =============================================================================
@@ -328,20 +229,6 @@ elif args.model_name == 'slow_r50':
     num_samples = Num_frames.ResNet_3D.value
     fe_nodes = Nodes_for_FE.ResNet_3D.value
 
-#weights = MViT_V1_B_Weights.DEFAULT
-#model = mvit_v1_b(weights=weights)
-#transform = weights.transforms()
-
-#model = torch.hub.load('facebookresearch/pytorchvideo', model_name, pretrained=True)
-
-# ===
-
-#videos = sorted([os.path.join(VIDEO_DIR, f) for f in os.listdir(VIDEO_DIR) if f.endswith(('.mp4'))])
-#print(len(videos))
-#N = 32
-#videos_first_N = videos[:N]
-#len(videos_first_N)
-#videos_first_N
 
 # =============================================================================
 # Create the feature extractor
