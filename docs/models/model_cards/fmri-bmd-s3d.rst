@@ -180,7 +180,7 @@ Input
    * - Shape
      - ``['batch_size', 'video_frames', '3_channels', 'height', 'width']``
    * - Description
-     - The input should be a batch of RGB video frames. While the model takes an input videos of any duration, we recommend using ~3-second videos to match the duration of the videos used to train the encoding models.
+     - The input should be a batch of RGB video frames. While the model takes an input videos of any duration, we recommend using ~3-second videos to match the duration of the videos used to train the encoding models. The videos should have at least 14 frames.
    * - Constraints
      - * Image values should be integers in range [0, 255].
        * Image dimensions (height, width) should be equal (square).
@@ -289,7 +289,7 @@ This function generates in silico neural responses using the encoding model prev
    * - **stimulus**
      - | **Type:** numpy.ndarray
        | **Required:** Yes
-       | **Description:** A batch of RGB videos to be encoded. Videos should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224).
+       | **Description:** A batch of RGB videos to be encoded. Videos should be in integer format with values in the range [0, 255], of square dimensions (e.g. 256×256), and should have at least 14 frames.
        | **Example:** "An array of shape [100, 90, 3, 256, 256] representing 100 RGB videos, with 90 frames each."
    * - **return_metadata**
      - | **Type:** bool
@@ -349,8 +349,8 @@ Example Usage
     )
     
     # Prepare the stimulus videos
-    # Video shape should be [batch_size, 3 RGB channels, height, width]
-    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
+    # Video shape should be [batch_size, video_frames, 3 RGB channels, height, width]
+    stimulus = np.random.randint(0, 255, (100, 90, 3, 256, 256))
     
     # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(

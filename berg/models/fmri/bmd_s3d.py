@@ -3,23 +3,13 @@ import numpy as np
 import torch
 import torchvision
 import yaml
-from torchvision import transforms as trn
 from typing import Dict, Any, Optional
 from berg.core.model_registry import register_model
-from sklearn.decomposition import PCA
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import StandardScaler
 from torchvision.models.feature_extraction import create_feature_extractor
 from tqdm import tqdm
 from sklearn.decomposition import TruncatedSVD
-from torchvision.transforms import Compose, Lambda
-from torchvision.transforms.v2 import (
-    UniformTemporalSubsample,
-    Resize,
-    CenterCrop,
-    Normalize
-)
-from torchvision.io.video import read_video
 from berg.interfaces.base_model import BaseModelInterface
 from berg.core.exceptions import (
     InvalidParameterError,
@@ -197,7 +187,7 @@ class FMRIEncodingModel(BaseModelInterface):
             self.feature_extractor = self._load_feature_extractor(self.device)
 
             # Define the image preprocessing transform
-            self.transform = torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms() # !!!
+            self.transform = torchvision.models.video.S3D_Weights.KINETICS400_V1.transforms()
 
             # Load the scaler, PCA, and trained regression weights
             self.scaler, self.pca, self.reg = self._load_encoding_weights()
@@ -206,80 +196,6 @@ class FMRIEncodingModel(BaseModelInterface):
 
         except Exception as e:
             raise ModelLoadError(f"Failed to load model: {str(e)}")
-
-
-
-
-
-
-
-
-side_size = 256
-mean = [0.43216, 0.394666, 0.37645]
-std = [0.22803, 0.22145, 0.216989]
-crop_size = 256
-num_frames = 14
-transform =  Compose(
-        [
-# 			UniformTemporalSubsample(num_frames), # this is already taken care of by the 'sample_frames' function in the 'VideoDataset' class
-            Lambda(lambda x: x/255.0),
-            Normalize(mean, std),
-            Resize(size=(side_size, side_size)),
-#			CenterCrop(size=(crop_size, crop_size)), # this is already taken care of by the 'Resize' function
-            Lambda(lambda x: x.permute(1, 0, 2, 3))
-        ]
-)
-
-num_samples = 14
-
-class VideoDataset(Dataset):
-    def __init__(self, video_dir, num_samples, device, transform=None):
-        self.video_dir = video_dir
-        self.video_files = sorted([os.path.join(video_dir, f) for f in os.listdir(video_dir) if f.endswith(('.mp4'))])
-        #self.video_files = videos_first_N
-        self.num_samples = num_samples
-        self.transform = transform
-    def __len__(self):
-        return len(self.video_files)
-    def sample_frames(self, video_frames, num_samples):
-        num_frames = video_frames.shape[0]
-        if num_samples > num_frames:
-            raise ValueError("The number of samples requested is greater than the number of frames in the video.")
-        indices = np.linspace(0, num_frames - 1, num_samples, dtype=int)
-        sampled_frames = video_frames[indices]
-        return sampled_frames
-    def __getitem__(self, idx):
-        video_path = self.video_files[idx]
-        video_frames, _, _ = read_video(video_path, pts_unit='sec',
-            output_format='TCHW')
-        try:
-            sampled_frames = self.sample_frames(video_frames, self.num_samples)
-        except ValueError:
-            last_frame = video_frames[-1].unsqueeze(0).repeat(
-                self.num_samples - video_frames.shape[0], 1, 1, 1)
-            sampled_frames = torch.cat([video_frames, last_frame], dim=0)
-        if self.transform:
-            sampled_frames = self.transform(sampled_frames)
-            sampled_frames = sampled_frames.to(device)
-        return idx, sampled_frames
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     def _load_feature_extractor(self, device):
@@ -406,8 +322,16 @@ class VideoDataset(Dataset):
                 "Stimulus must be a 5D numpy array (batch, frames, channels, height, width)"
             )
 
+        # Select 14 equally spaced frames from the video
+        num_samples = 14
+        num_frames = stimulus.shape[1]
+        if num_samples > num_frames:
+            raise ValueError("The video does not haave at least 14 frames.")
+        indices = np.linspace(0, num_frames - 1, num_samples, dtype=int)
+        videos = stimulus[:,indices]
+
         # Preprocess the videos
-        videos = self.transform(torch.from_numpy(stimulus)) # !!!
+        videos = self.transform(torch.from_numpy(videos).contiguous())
 
         # Extract features and generate responses in batches
         batch_size = 10

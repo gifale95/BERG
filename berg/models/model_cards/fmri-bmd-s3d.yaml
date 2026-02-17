@@ -94,7 +94,7 @@ metadata: |
 input:
   description: "The input should be a batch of RGB video frames. While the model takes an input videos
     of any duration, we recommend using ~3-second videos to match the duration of the videos used to
-    train the encoding models."
+    train the encoding models. The videos should have at least 14 frames."
   type: "numpy.ndarray"
   shape: [batch_size, video_frames, 3_channels, height, width]
   constraints:
@@ -191,7 +191,8 @@ parameters:
     function: "encode"
 
   stimulus:
-    description: "A batch of RGB videos to be encoded. Videos should be in integer format with values in the range [0, 255], and square dimensions (e.g. 224×224)."
+    description: "A batch of RGB videos to be encoded. Videos should be in integer format with values in the range
+      [0, 255], of square dimensions (e.g. 256×256), and should have at least 14 frames."
     required: true
     type: numpy.ndarray
     shape: [batch_size, video_frames, 3_channels, height, width]
