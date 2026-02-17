@@ -9,15 +9,20 @@ creator: Martin Schrimpf
 description: |
   This interface provides access to the BrainScore vision model ecosystem. BrainScore benchmarks neural network models against biological neural recordings from macaque visual cortex (V1, V2, V4, IT), offering 440+ pre-trained models with biologically-constrained representations.
   
-  **Neural data.** BrainScore models are benchmarked against electrophysiological recordings from macaque visual cortex. Each model includes a region-to-layer mapping that specifies which network layer corresponds to which brain region (e.g., early layers → V1, late layers → IT).
+  **Neural prediction workflow.** For each model and brain region combination, the interface:
+  1. Loads the vision model (e.g., AlexNet, ResNet) pre-trained on ImageNet
+  2. Loads benchmark neural recordings from the selected region (V1/V2/V4/IT)
+  3. Trains a PLS regression mapping model activations → neural responses (~3 minutes, one-time)
+  4. Caches the regression weights for fast subsequent predictions
+  5. Uses the cached regression to predict neural responses for your images
   
-  **Model architecture.** The interface supports diverse architectures and custom neurally-constrained models. Each model maps specific network layers to distinct brain regions based on benchmarking results.
+  **Temporal dynamics.** Time bins are automatically set from the benchmark (typically 70-170ms post-stimulus for IT/V4, representing peak stimulus-evoked responses). This ensures consistency between regression training and prediction.
   
-  **Temporal dynamics.** Models provide time-binned responses representing neural activity within specified temporal windows (e.g., 70-170ms post-stimulus). Different time bins capture distinct processing stages: early feedforward processing (50-100ms), peak stimulus-evoked responses (70-170ms), and recurrent processing (100-200ms).
+  **Model architecture.** The interface supports diverse architectures including standard CNNs, Vision Transformers, and custom neurally-constrained models. Each model maps specific network layers to brain regions based on benchmarking results.
   
-  **Accessing models.** Use `berg.list_models()` to see the interface entry, or `berg.list_models(expand_brainscore=True)` to list all 440+ available models. Individual models are accessed via `model_id = "brainscore-{model_name}"` (e.g., `"brainscore-vonegrcnn_47e"`).
+  **Accessing models.** Use `berg.list_models()` to see the interface entry, or `berg.list_models(expand_brainscore=True)` to list all 440+ available models. Individual models are accessed via `model_id = "brainscore-{model_name}"` (e.g., `"brainscore-alexnet"`).
   
-  **External source.** Models are loaded on-demand from the BrainScore API. This is an external model source not hosted by BERG. For detailed model information and benchmarking scores, visit https://www.brain-score.org/
+  **External source.** Models are loaded on-demand from the BrainScore API. Regression weights are cached locally in your BERG directory. For detailed model information and benchmarking scores, visit https://www.brain-score.org/
 
 
 input:
@@ -50,41 +55,28 @@ parameters:
 
   selection:
     description: |
-      Specifies recording target (brain region) and temporal windows.
-      If not provided, responses are generated for all available brain regions.
-    required: false
+      Specifies recording target (brain region).
+      ROI selection is REQUIRED for BrainScore models.
+    required: true
     type: dict
     function: get_encoding_model
     properties:
       roi:
         type: str
+        required: true
         description: |
-          Brain region to record from. Each region corresponds to a specific network layer:
+          Brain region to record from (REQUIRED). Each region corresponds to a specific network layer:
             • V1 (primary visual cortex): Early layers capturing low-level features (edges, orientations, spatial frequencies)
             • V2: Early-to-mid layers for intermediate feature processing
             • V4: Mid-level layers representing shapes, textures, and mid-level object features
             • IT (inferior temporal cortex): Late layers encoding high-level object representations and semantic categories
 
-          When region is not specified, activations from all available regions are returned.
+          The model trains a PLS regression on benchmark neural data for the selected region.
+          Regression weights are cached after first use for fast subsequent predictions.
+          
+          Time bins are automatically set from the benchmark (70-170ms for IT/V4, standard windows for V1/V2).
         valid_values: ["V1", "V2", "V4", "IT"]
-        example: "V1"
-      
-      time_bins:
-        type: list[tuple[int, int]]
-        description: |
-          Temporal windows for neural responses in milliseconds after stimulus onset.
-          Each tuple specifies (start_ms, end_ms) for averaging neural activity within that window.
-          
-          **Default: [(70, 170)]** - Standard 100ms window capturing peak stimulus-evoked activity 
-          in visual cortex, widely used in electrophysiology literature.
-          
-          **Temporal processing stages:**
-          Early (50-100ms): Initial feedforward sweep through visual hierarchy, low-level feature extraction
-          Peak (70-170ms): Maximum stimulus-driven responses, standard measurement window
-          Late (100-200ms): Recurrent processing, feedback modulation, higher-level feature integration
-          
-          If not specified, defaults to [(70, 170)].
-        example: [[100, 200]]
+        example: "IT"
 
   device:
     description: "Device to run the model on"
@@ -96,16 +88,26 @@ parameters:
 
   stimulus:
     description: |
-      Path to directory containing images, or list of image file paths.
+      Input stimuli for neural response prediction. Accepts multiple formats:
       
-      Unlike BERG native models which accept numpy arrays, BrainScore models require 
-      file paths to images. The interface handles conversion to BrainScore's internal 
-      StimulusSet format automatically.
+      1. Directory path (str): Path to directory containing images
+         Example: "/path/to/images"
       
-      Images should be standard formats (JPEG, PNG, etc.). BrainScore handles 
-      preprocessing (resizing, normalization) internally based on each model's requirements.
+      2. List of paths (list[str]): List of image file paths
+         Example: ["img1.jpg", "img2.jpg"]
+      
+      3. Numpy array (np.ndarray): Batch of RGB images
+         Shape: (batch_size, 3, height, width)
+         Values: [0, 255] (uint8)
+         Example: np.array with shape (10, 3, 224, 224)
+      
+      For numpy arrays, images are temporarily saved to disk (BrainScore requirement)
+      and automatically cleaned up after prediction.
+      
+      For file paths, images should be standard formats (JPEG, PNG, etc.).
+      BrainScore handles preprocessing (resizing, normalization) internally.
     required: true
-    type: "str or list[str]"
+    type: "str, list[str], or np.ndarray"
     example: "/path/to/images"
     function: "encode"
 

@@ -93,7 +93,6 @@ class BrainScoreGateway(BaseModelInterface):
         selection : dict
             Selection parameters (roi is required):
                 - roi: str (e.g., "V1", "V4", "IT") - REQUIRED
-                - time_bins: list of tuples (e.g., [(100, 200)])
         """
         self.berg_dir = berg_dir
         self.model_id_full = model_id
@@ -114,7 +113,6 @@ class BrainScoreGateway(BaseModelInterface):
         
         # Parse selection parameters (roi is guaranteed to exist after validation)
         self.roi = selection['roi']
-        self.time_bins = selection.get('time_bins', None)
         
         # Set up paths
         self.model_dir = Path(berg_dir) / "brain-encoding-response-generator" / \
@@ -127,6 +125,7 @@ class BrainScoreGateway(BaseModelInterface):
         # Initialize model and regression
         self.model = None
         self.regression = None
+        self.time_bins = None  # Will be set from benchmark
         self.temp_images_created = False
         
         
@@ -156,30 +155,6 @@ class BrainScoreGateway(BaseModelInterface):
                 f"Invalid roi: '{roi}'. "
                 f"Valid rois are: {self.VALID_ROIS}"
             )
-        
-        # Validate time_bins if provided
-        if "time_bins" in self.selection:
-            time_bins = self.selection["time_bins"]
-            
-            if not isinstance(time_bins, list):
-                raise InvalidParameterError("time_bins must be provided as a list of tuples")
-            
-            for tb in time_bins:
-                if not isinstance(tb, (list, tuple)) or len(tb) != 2:
-                    raise InvalidParameterError(
-                        f"Each time bin must be a tuple of (start_ms, end_ms). Got: {tb}"
-                    )
-                
-                start, end = tb
-                if not isinstance(start, (int, float)) or not isinstance(end, (int, float)):
-                    raise InvalidParameterError(
-                        f"Time bin values must be numeric. Got: {tb}"
-                    )
-                
-                if start >= end:
-                    raise InvalidParameterError(
-                        f"Time bin start must be less than end. Got: {tb}"
-                    )
     
     
     def _get_regression_cache_path(self) -> Path:
@@ -190,17 +165,17 @@ class BrainScoreGateway(BaseModelInterface):
     def _train_and_cache_regression(self):
         """
         Train PLS regression on benchmark data and cache it.
+        Also caches time_bins for later use.
         """
         print(f"Training regression for {self.roi} region...")
-        print("This will take ~1 minute (only done once, then cached)")
+        print("This will take ~3 minutes (only done once, then cached)")
         
         # Load benchmark
         benchmark_id = REGION_BENCHMARKS[self.roi]
         benchmark = load_benchmark(benchmark_id)
         
-        # Use benchmark's time bins if user didn't specify
-        if self.time_bins is None:
-            self.time_bins = benchmark.timebins
+        # Use benchmark's time bins
+        self.time_bins = benchmark.timebins
         
         # Configure model recording
         self.model.start_recording(benchmark.region, time_bins=self.time_bins)
@@ -217,12 +192,17 @@ class BrainScoreGateway(BaseModelInterface):
         regression = pls_regression()
         regression.fit(benchmark_activations, benchmark._assembly)
         
-        # Cache regression
+        # Cache regression AND time_bins together
         self.weights_dir.mkdir(parents=True, exist_ok=True)
         cache_path = self._get_regression_cache_path()
         
+        cache_data = {
+            'regression': regression,
+            'time_bins': self.time_bins
+        }
+        
         with open(cache_path, 'wb') as f:
-            pickle.dump(regression, f)
+            pickle.dump(cache_data, f)
         
         print(f"Regression trained and cached at: {cache_path}")
         
@@ -238,7 +218,20 @@ class BrainScoreGateway(BaseModelInterface):
         if cache_path.exists():
             print(f"Loading cached regression from: {cache_path}")
             with open(cache_path, 'rb') as f:
-                self.regression = pickle.load(f)
+                cache_data = pickle.load(f)
+            
+            # Handle both old format (just regression) and new format (dict with regression + time_bins)
+            if isinstance(cache_data, dict):
+                self.regression = cache_data['regression']
+                self.time_bins = cache_data['time_bins']
+            else:
+                # Old cache format - just the regression
+                self.regression = cache_data
+                # Load time_bins from benchmark
+                benchmark_id = REGION_BENCHMARKS[self.roi]
+                benchmark = load_benchmark(benchmark_id)
+                self.time_bins = benchmark.timebins
+            
             print("Regression loaded from cache")
         else:
             print(f"No cached regression found for {self.brainscore_model_name} + {self.roi}")
@@ -357,10 +350,7 @@ class BrainScoreGateway(BaseModelInterface):
         if show_progress:
             print(f"Extracting activations for {len(image_paths)} images from {self.roi} region...")
         
-        # Configure model if not already configured
-        if self.time_bins is None:
-            self.time_bins = [(70, 170)]  # Default time bin
-        
+        # Configure model recording with the same time bins used during training
         self.model.start_recording(self.roi, time_bins=self.time_bins)
         
         activations = self.model.look_at(stimulus_set)
