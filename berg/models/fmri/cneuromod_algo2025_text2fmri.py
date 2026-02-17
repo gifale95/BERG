@@ -157,6 +157,9 @@ class Text2fMRI(BaseModelInterface):
         if self.model_variant is not None:
             valid_variants = list(self.pretrained_configs_dict.values())
             if self.model_variant not in valid_variants:
+                raise InvalidParameterError(
+                    f"Invalid model_variant: '{self.model_variant}'. "
+                    f"Available variants: {valid_variants}. "
                     "Use model.get_pretrained_variants() to see all options."
                 )
 
