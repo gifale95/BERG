@@ -45,8 +45,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--model_name', default='s3d', type=str)
 parser.add_argument('--batch_size', default=4, type=int)
 parser.add_argument('--n_components', default=100, type=int)
-parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str) # !!!
-parser.add_argument('--bmd_dir', default='/scratch/giffordale95/projects/eeg_moments/bold_moments_dataset', type=str) # !!!
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
+parser.add_argument('--bmd_dir', default='../bold_moments_dataset', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Extract video features <<<')

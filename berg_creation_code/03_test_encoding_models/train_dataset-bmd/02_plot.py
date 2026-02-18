@@ -27,8 +27,8 @@ from tqdm import tqdm
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=ast.literal_eval, default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-parser.add_argument('--model_id', type=str, default='fmri-bmd-s3d') # !!! 'fmri-bmd-<your_model_name>'
-parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str) # !!!
+parser.add_argument('--model_id', type=str, default='fmri-bmd-<your_model_name>')
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
 

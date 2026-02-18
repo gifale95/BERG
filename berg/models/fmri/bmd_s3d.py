@@ -175,7 +175,8 @@ class FMRIEncodingModel(BaseModelInterface):
                     'metadata', f'metadata_sub-{self.subject:02d}.npy'
                 )
                 metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
-                self.selected_voxels = metadata_dict['fmri']['rois'][self.roi]
+                self.selected_voxels = np.squeeze(
+                    metadata_dict['fmri']['rois'][self.roi][1])
             # Select voxels based on one-hot encoded vector only if the ROI is
             # not provided
             else:
@@ -186,7 +187,7 @@ class FMRIEncodingModel(BaseModelInterface):
             # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)
 
-            # Define the image preprocessing transform # !!!
+            # Define the image preprocessing transform
             self.transform = torchvision.models.video.S3D_Weights.KINETICS400_V1.transforms()
 
             # Load the scaler, PCA, and trained regression weights
