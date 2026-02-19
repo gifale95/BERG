@@ -7,23 +7,21 @@ model_type: BrainScore Vision Models (External)
 creator: Martin Schrimpf
 
 description: |
-  This interface provides access to the BrainScore vision model ecosystem. BrainScore benchmarks neural network models against biological neural recordings from macaque visual cortex (V1, V2, V4, IT), offering 440+ pre-trained models with biologically-constrained representations.
+  Access to BrainScore's 440+ vision models benchmarked against macaque electrophysiology recordings.
   
-  **Neural recordings.** The benchmarks use extracellular electrophysiology recordings from macaque monkeys:
-  - **V1/V2 (Freeman & Ziemba 2013):** Single-unit and multi-unit recordings from primary and secondary visual cortex in anesthetized macaques
-  - **V4/IT (Majaj & Hong 2015):** Multi-electrode array recordings from ventral stream areas in awake, behaving macaques during object recognition tasks
-  - **Output format:** Predicted firing rates (spikes/second) for individual neurons
+  **Neural data.** Benchmarks use electrophysiology recordings from macaque visual cortex:
+  - V1/V2: Freeman & Ziemba 2013 (102 & 103 neurons)
+  - V4/IT: Majaj & Hong 2015 (88 & 168 neurons)
+  - Output: Predicted firing rates (spikes/second)
   
-  **Neural prediction workflow.** For each model and brain region combination, the interface:
-  1. Loads the vision model (e.g., AlexNet, ResNet) pre-trained on ImageNet
-  2. Loads benchmark neural recordings from the selected region (V1/V2/V4/IT)
-  3. Trains a PLS regression mapping model activations → neural firing rates (~3 minutes, one-time)
-  4. Caches the regression weights for fast subsequent predictions
-  5. Uses the cached regression to predict neural responses for your images
+  **Workflow.** For each model and region:
+  1. Load vision model (AlexNet, ResNet, ViT, etc.)
+  2. Load benchmark for selected region (each ROI uses different benchmark)
+  3. Train PLS regression: model activations → neural responses (~3 min, cached)
+  4. Predict neural responses for your images using cached regression
   
-  **Model architecture.** The interface supports diverse architectures including standard CNNs, Vision Transformers, and custom neurally-constrained models. Each model maps specific network layers to brain regions based on benchmarking results.
-  
-  **Accessing models.** Use `berg.list_models()` to see the interface entry, or `berg.list_models(expand_brainscore=True)` to list all 440+ available models. Individual models are accessed via `model_id = "brainscore_{model_name}"` (e.g., `"brainscore_alexnet"`).
+  **Usage.** Use `berg.list_models(expand_brainscore_vision=True)` to see all models.
+  Model IDs: `"brainscore-vision-{model_name}"` (e.g., `"brainscore-vision-alexnet"`).
   
 
 
@@ -85,17 +83,19 @@ parameters:
     type: dict
     function: get_encoding_model
     properties:
-      roi:
-        type: str
-        required: true
-        description: |
-          Brain region to record from. Each region corresponds to a specific network layer:
-
-          The model trains a PLS regression on benchmark neural data for the selected region.
-          Regression weights are cached after first use for fast subsequent predictions.
-          
-        valid_values: ["V1", "V2", "V4", "IT"]
-        example: "IT"
+          roi:
+            type: str
+            required: true
+            description: |
+              Brain region to record from. Each region uses a different benchmark:
+                • V1: 102 neurons (FreemanZiemba2013.V1.public-pls)
+                • V2: 103 neurons (FreemanZiemba2013.V2.public-pls)
+                • V4: 88 neurons (MajajHong2015.V4.public-pls)
+                • IT: 168 neurons (MajajHong2015.IT.public-pls)
+              
+              Regression weights are trained on benchmark data and cached after first use.
+            valid_values: ["V1", "V2", "V4", "IT"]
+            example: "IT"
 
   device:
     type: str
