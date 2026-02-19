@@ -13,7 +13,6 @@ description: |
   - **V1/V2 (Freeman & Ziemba 2013):** Single-unit and multi-unit recordings from primary and secondary visual cortex in anesthetized macaques
   - **V4/IT (Majaj & Hong 2015):** Multi-electrode array recordings from ventral stream areas in awake, behaving macaques during object recognition tasks
   - **Output format:** Predicted firing rates (spikes/second) for individual neurons
-  - **Modality:** Electrophysiology (single-unit and multi-unit activity), not fMRI or EEG/MEG
   
   **Neural prediction workflow.** For each model and brain region combination, the interface:
   1. Loads the vision model (e.g., AlexNet, ResNet) pre-trained on ImageNet
@@ -22,30 +21,43 @@ description: |
   4. Caches the regression weights for fast subsequent predictions
   5. Uses the cached regression to predict neural responses for your images
   
-  **Temporal dynamics.** Time bins are automatically set from the benchmark (50-200ms for V1/V2, 70-170ms for V4/IT, representing peak stimulus-evoked responses). This ensures consistency between regression training and prediction.
-  
-  **Neural data specifics.** Each region contains recordings from different numbers of neurons:
-  - V1: Primary visual cortex recordings (early visual features)
-  - V2: Secondary visual cortex recordings (intermediate features)
-  - V4: Ventral stream mid-level recordings (shapes, textures)
-  - IT: Inferior temporal cortex recordings (high-level object representations)
-  
   **Model architecture.** The interface supports diverse architectures including standard CNNs, Vision Transformers, and custom neurally-constrained models. Each model maps specific network layers to brain regions based on benchmarking results.
   
   **Accessing models.** Use `berg.list_models()` to see the interface entry, or `berg.list_models(expand_brainscore=True)` to list all 440+ available models. Individual models are accessed via `model_id = "brainscore_{model_name}"` (e.g., `"brainscore_alexnet"`).
   
-  **External source.** Models are loaded on-demand from the BrainScore API. Regression weights are cached locally in your BERG directory. For detailed model information and benchmarking scores, visit https://www.brain-score.org/
 
 
 input:
-  description: "Path to image directory or list of image file paths"
-  type: "str or list[str]"
+  description: |
+    Input stimuli for neural response prediction. Accepts multiple formats:
+    
+    1. Directory path (str): Path to directory containing images
+        Example: "/path/to/images"
+    
+    2. List of paths (list[str]): List of image file paths
+        Example: ["img1.jpg", "img2.jpg"]
+    
+    3. Numpy array (np.ndarray): Batch of RGB images
+        Shape: (batch_size, 3, height, width)
+        Values: [0, 255] (uint8)
+        Example: np.array with shape (10, 3, 224, 224)
+    
+    For numpy arrays, images are temporarily saved to disk (BrainScore requirement)
+    and automatically cleaned up after prediction.
+    
+    For file paths, images should be standard formats (JPEG, PNG, etc.).
+    BrainScore handles preprocessing (resizing, normalization) internally.
+  type: "str, list[str], or np.ndarray"
   constraints:
-    - "Images must be readable image files (JPEG, PNG, etc.)"
+    - "str: Path to directory containing images"
+    - "list[str]: List of image file paths"
+    - "numpy.ndarray: Batch of RGB images with shape (batch_size, 3, height, width) and values [0, 255]"
+    - "Images must be readable image files (JPEG, PNG, etc.) when using paths"
+    - "For numpy arrays, images are temporarily saved to disk (BrainScore requirement) and automatically cleaned up"
     - "BrainScore handles preprocessing internally"
 
 output:
-  description: "Neural responses for specified recording target and time bins"
+  description: "Neural responses for specified recording target"
   type: "numpy.ndarray"
   shape: [batch_size, n_units]
   dimensions:
@@ -77,26 +89,23 @@ parameters:
         type: str
         required: true
         description: |
-          Brain region to record from (REQUIRED). Each region corresponds to a specific network layer:
-            • V1 (primary visual cortex): Early layers capturing low-level features (edges, orientations, spatial frequencies)
-            • V2: Early-to-mid layers for intermediate feature processing
-            • V4: Mid-level layers representing shapes, textures, and mid-level object features
-            • IT (inferior temporal cortex): Late layers encoding high-level object representations and semantic categories
+          Brain region to record from. Each region corresponds to a specific network layer:
 
           The model trains a PLS regression on benchmark neural data for the selected region.
           Regression weights are cached after first use for fast subsequent predictions.
           
-          Time bins are automatically set from the benchmark (70-170ms for IT/V4, standard windows for V1/V2).
         valid_values: ["V1", "V2", "V4", "IT"]
         example: "IT"
 
   device:
-    description: "Device to run the model on"
-    required: false
     type: str
+    required: false
     valid_values: ["cpu", "cuda", "auto"]
     default: "auto"
-    function: get_encoding_model
+    example: "auto"
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "get_encoding_model"
+
 
   stimulus:
     description: |

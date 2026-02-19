@@ -17,7 +17,6 @@ description: |
   - **Coverage:** 12,155 voxels pooled across subjects (or ~1,350 per subject)
   - **Task:** Subjects read sentences while BOLD responses were recorded
   - **Output format:** Predicted BOLD signal (arbitrary units, z-scored per voxel)
-  - **Modality:** fMRI (BOLD), not electrophysiology or EEG/MEG
 
   **Neural prediction workflow.** For each model and subject combination, the interface:
   1. Loads the language model (e.g., GPT-2) pre-trained on web text
@@ -28,29 +27,10 @@ description: |
   6. Caches the regression weights for fast subsequent predictions
   7. Uses the cached regression to predict responses for your sentences
 
-  **Available models.** 9 GPT-family models with increasing parameter counts:
-    • distilgpt2 (~82M parameters)
-    • openai-gpt (~117M parameters)
-    • gpt2 (~117M parameters)
-    • gpt2-medium (~345M parameters)
-    • gpt2-large (~774M parameters)
-    • gpt2-xl (~1.5B parameters)
-    • gpt-neo-125m (~125M parameters)
-    • gpt-neo-1.3B (~1.3B parameters)
-    • gpt-neo-2.7B (~2.7B parameters)
-
   **Accessing models.** Individual models are accessed via
   `model_id = "brainscore_language-{model_name}"` (e.g., `"brainscore_language-gpt2"`).
   Use `berg.list_models()` to see the interface entry.
 
-  **Subject parameter.** With `subject=None` (default), the regression is trained on
-  all 9 subjects' voxels pooled (12,155 voxels). With a specific subject ID, only that
-  subject's voxels are used (~1,350 voxels), which can yield sharper subject-specific
-  predictions at the cost of fewer output units.
-
-  **External source.** Models are loaded on-demand from the BrainScore API. Regression
-  weights are cached locally in your BERG directory. For more information on the
-  benchmark, see the Pereira 2018 paper: https://doi.org/10.1038/s41467-018-03068-4
 
 
 input:
@@ -68,7 +48,7 @@ output:
     - name: "n_sentences"
       description: "Number of input sentences"
     - name: "n_voxels"
-      description: "Number of voxels: 12,155 (all subjects) or ~1,350 (single subject)"
+      description: "~1,350 voxel per subject"
 
 parameters:
   model_id:
@@ -102,18 +82,20 @@ parameters:
       Separate regressions are trained and cached per subject.
     required: true
     type: str
-    valid_values: ["018", "199", "288", "289", "296", "343", "366", "407", "426", null]
+    valid_values: ["018", "199", "288", "289", "296", "343", "366", "407", "426"]
     default: null
     example: "018"
     function: get_encoding_model
 
   device:
-    description: "Unused. BrainScore language models manage their own device internally."
-    required: false
     type: str
+    required: false
     valid_values: ["cpu", "cuda", "auto"]
     default: "auto"
-    function: get_encoding_model
+    example: "auto"
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    function: "get_encoding_model"
+
 
   stimulus:
     description: |

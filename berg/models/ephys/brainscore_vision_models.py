@@ -11,7 +11,7 @@ import shutil
 
 from berg.interfaces.base_model import BaseModelInterface
 from berg.core.model_registry import register_model, MODEL_REGISTRY
-from berg.core.parameter_validator import validate_selection_keys
+from berg.core.parameter_validator import validate_selection_keys, validate_roi
 from berg.core.exceptions import InvalidParameterError
 
 from brainscore_vision import load_model, load_benchmark
@@ -92,7 +92,7 @@ class BrainScoreGateway(BaseModelInterface):
             Device for computation ("cpu", "cuda", or "auto")
         selection : dict
             Selection parameters (roi is required):
-                - roi: str (e.g., "V1", "V4", "IT") - REQUIRED
+                - roi: str (e.g., "V1", "V4", "IT")
         """
         self.berg_dir = berg_dir
         self.model_id_full = model_id
@@ -124,7 +124,7 @@ class BrainScoreGateway(BaseModelInterface):
         # Initialize model and regression
         self.model = None
         self.regression = None
-        self.time_bins = None  # Will be set from benchmark
+        self.time_bins = None 
         self.temp_images_created = False
         
         
@@ -143,18 +143,11 @@ class BrainScoreGateway(BaseModelInterface):
         # Validate selection keys
         validate_selection_keys(self.selection, self.SELECTION_KEYS)
         
-        # Validate roi
-        roi = self.selection["roi"]
-        
-        if not isinstance(roi, str):
-            raise InvalidParameterError("roi must be provided as a string")
-        
-        if roi not in self.VALID_ROIS:
-            raise InvalidParameterError(
-                f"Invalid roi: '{roi}'. "
-                f"Valid rois are: {self.VALID_ROIS}"
+        # Validate ROI
+        if "roi" in self.selection:
+            self.roi = validate_roi(
+                self.selection["roi"], self.VALID_ROIS
             )
-    
     
     def _get_regression_cache_path(self) -> Path:
         """Get path to cached regression weights for current model and ROI."""
@@ -218,8 +211,7 @@ class BrainScoreGateway(BaseModelInterface):
             print(f"Loading cached regression from: {cache_path}")
             with open(cache_path, 'rb') as f:
                 cache_data = pickle.load(f)
-            
-            # Handle both old format (just regression) and new format (dict with regression + time_bins)
+        
             if isinstance(cache_data, dict):
                 self.regression = cache_data['regression']
                 self.time_bins = cache_data['time_bins']

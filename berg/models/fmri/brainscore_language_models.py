@@ -7,7 +7,7 @@ import pickle
 
 from berg.interfaces.base_model import BaseModelInterface
 from berg.core.model_registry import register_model
-from berg.core.parameter_validator import validate_subjects
+from berg.core.parameter_validator import validate_subject
 from berg.core.exceptions import InvalidParameterError
 
 from brainscore_language import load_model
@@ -73,7 +73,7 @@ class BrainScoreLanguageGateway(BaseModelInterface):
         self,
         berg_dir: str,
         model_id: str,
-        subject: str = None,
+        subject: str,
         device: str = "auto",
     ):
         """
@@ -86,10 +86,9 @@ class BrainScoreLanguageGateway(BaseModelInterface):
         model_id : str
             Model identifier in format "brainscore_language-{model_name}"
             e.g., "brainscore_language-gpt2"
-        subject : str, optional
-            Subject ID (e.g., '018'). If None, uses all 9 subjects pooled
-            (returns 12,155 voxels). If specified, filters to that subject's
-            voxels only (~1,350 voxels).
+        subject : str
+            Subject ID (e.g., '018'). Required — filters to that subject's
+            voxels (~1,350 voxels).
             Valid values: ['018', '199', '288', '289', '296', '343', '366', '407', '426']
         device : str
             Unused (BrainScore language models manage their own device).
@@ -104,14 +103,13 @@ class BrainScoreLanguageGateway(BaseModelInterface):
         self._validate_parameters()
 
         # Parse BrainScore model name from model_id
-        # "brainscore_language-gpt2" → "gpt2"
         prefix = "brainscore_language-"
         if model_id.startswith(prefix):
             self.brainscore_model_name = model_id[len(prefix):]
         else:
             self.brainscore_model_name = model_id
 
-        self.subject_tag = self.subject if self.subject is not None else "all"
+        self.subject_tag = self.subject
 
         # Set up paths 
         self.model_dir = (
@@ -123,63 +121,43 @@ class BrainScoreLanguageGateway(BaseModelInterface):
         )
         self.weights_dir = self.model_dir / "encoding_models_weights"
 
-        # Lazy-loaded in load_model()
         self.model = None
         self.regression = None
 
     def _validate_parameters(self):
         """
-        Validate subject parameter.
-
-        subject=None is valid (uses all subjects pooled).
-        If subject is provided, it must be one of VALID_SUBJECTS.
+        Validate subject parameter. Subject is required.
         """
-        if self.subject is not None:
-            if not isinstance(self.subject, str):
-                raise InvalidParameterError(
-                    f"subject must be a string (e.g., '018'), got {type(self.subject).__name__}"
-                )
-            if self.subject not in self.VALID_SUBJECTS:
-                raise InvalidParameterError(
-                    f"Invalid subject: '{self.subject}'. "
-                    f"Valid subjects are: {self.VALID_SUBJECTS}"
-                )
+            
+        validate_subject(self.subject, self.VALID_SUBJECTS)
+
 
     def _get_regression_cache_path(self) -> Path:
         """
-        Get path to cached regression weights.
-
-        Cache filename encodes both model name and subject, so each
-        (model, subject) combination has its own cache file.
+        Get path to cached regression weights for the current model and subject.
 
         Examples
         --------
         gpt2, subject='018'  → gpt2_018_pereira384_regression.pkl
-        gpt2, subject=None   → gpt2_all_pereira384_regression.pkl
+        gpt2, subject='199'  → gpt2_199_pereira384_regression.pkl
         """
         filename = f"{self.brainscore_model_name}_{self.subject_tag}_pereira384_regression.pkl"
         return self.weights_dir / filename
 
     def _get_benchmark_assembly(self):
         """
-        Load the Pereira2018_384sentences benchmark and optionally filter
-        to a single subject's voxels.
+        Load the Pereira2018_384sentences benchmark filtered to the selected subject.
 
         Returns
         -------
         xarray.DataArray
-            Neural assembly with shape (n_sentences, n_voxels).
-            n_voxels = 12,155 (all subjects) or ~1,350 (single subject).
+            Neural assembly with shape (n_sentences, n_voxels) for the selected subject
+            (~1,350 voxels).
         """
         benchmark = Pereira2018_384sentences()
         assembly = benchmark.data
-
-        if self.subject is not None:
-            # Filter to the requested subject's neuroids (voxels)
-            subject_mask = assembly['subject'] == self.subject
-            assembly = assembly.sel(neuroid=subject_mask)
-
-        return assembly
+        subject_mask = assembly['subject'] == self.subject
+        return assembly.sel(neuroid=subject_mask)
 
     def _train_and_cache_regression(self):
         """
@@ -206,7 +184,7 @@ class BrainScoreLanguageGateway(BaseModelInterface):
               f"(subject={self.subject_tag}, benchmark={BENCHMARK_ID})...")
         print("This will take a few minutes (only done once, then cached)")
 
-        # Load benchmark assembly (subject-filtered if requested)
+        # Load benchmark assembly 
         assembly = self._get_benchmark_assembly()
 
         # Extract the 384 benchmark sentences in stimulus order
@@ -289,7 +267,7 @@ class BrainScoreLanguageGateway(BaseModelInterface):
         -------
         np.ndarray
             Predicted BOLD responses, shape (n_sentences, n_voxels).
-            n_voxels = 12,155 (all subjects) or ~1,350 (single subject).
+            n_voxels ~1,350 for the selected subject.
 
         Notes
         -----
