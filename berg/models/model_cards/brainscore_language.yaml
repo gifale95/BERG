@@ -1,0 +1,146 @@
+model_id: brainscore_language
+modality: fMRI
+training_dataset: BrainScore
+species: Human
+stimuli: Text
+model_type: BrainScore Language Models (External)
+creator: Martin Schrimpf
+
+description: |
+  This interface provides access to BrainScore's language model ecosystem benchmarked
+  against human fMRI recordings. Models are GPT-family transformers evaluated on the
+  Pereira 2018 dataset (384 sentences, 9 subjects), mapping language representations
+  to whole-brain BOLD activity in the language network.
+
+  **Neural recordings.** The benchmark uses fMRI recordings from the Pereira 2018 study:
+  - **Dataset:** 384sentences variant — 384 sentences across 9 subjects
+  - **Coverage:** 12,155 voxels pooled across subjects (or ~1,350 per subject)
+  - **Task:** Subjects read sentences while BOLD responses were recorded
+  - **Output format:** Predicted BOLD signal (arbitrary units, z-scored per voxel)
+  - **Modality:** fMRI (BOLD), not electrophysiology or EEG/MEG
+
+  **Neural prediction workflow.** For each model and subject combination, the interface:
+  1. Loads the language model (e.g., GPT-2) pre-trained on web text
+  2. Loads the Pereira2018_384sentences benchmark
+  3. Optionally filters to a single subject's voxels (subject parameter)
+  4. Runs the model on benchmark sentences to obtain internal representations
+  5. Trains a PLS regression mapping representations → BOLD responses (~few minutes, one-time)
+  6. Caches the regression weights for fast subsequent predictions
+  7. Uses the cached regression to predict responses for your sentences
+
+  **Available models.** 9 GPT-family models with increasing parameter counts:
+    • distilgpt2 (~82M parameters)
+    • openai-gpt (~117M parameters)
+    • gpt2 (~117M parameters)
+    • gpt2-medium (~345M parameters)
+    • gpt2-large (~774M parameters)
+    • gpt2-xl (~1.5B parameters)
+    • gpt-neo-125m (~125M parameters)
+    • gpt-neo-1.3B (~1.3B parameters)
+    • gpt-neo-2.7B (~2.7B parameters)
+
+  **Accessing models.** Individual models are accessed via
+  `model_id = "brainscore_language-{model_name}"` (e.g., `"brainscore_language-gpt2"`).
+  Use `berg.list_models()` to see the interface entry.
+
+  **Subject parameter.** With `subject=None` (default), the regression is trained on
+  all 9 subjects' voxels pooled (12,155 voxels). With a specific subject ID, only that
+  subject's voxels are used (~1,350 voxels), which can yield sharper subject-specific
+  predictions at the cost of fewer output units.
+
+  **External source.** Models are loaded on-demand from the BrainScore API. Regression
+  weights are cached locally in your BERG directory. For more information on the
+  benchmark, see the Pereira 2018 paper: https://doi.org/10.1038/s41467-018-03068-4
+
+
+input:
+  description: "A sentence or list of sentences to encode"
+  type: "str or list[str]"
+  constraints:
+    - "Each input should be a complete natural language sentence"
+    - "BrainScore handles tokenization internally"
+
+output:
+  description: "Predicted BOLD voxel responses for each sentence"
+  type: "numpy.ndarray"
+  shape: [n_sentences, n_voxels]
+  dimensions:
+    - name: "n_sentences"
+      description: "Number of input sentences"
+    - name: "n_voxels"
+      description: "Number of voxels: 12,155 (all subjects) or ~1,350 (single subject)"
+
+parameters:
+  model_id:
+    description: |
+      Model identifier. Format: "brainscore_language-{model_name}"
+      Example: "brainscore_language-gpt2"
+      Available models are discovered dynamically from the BrainScore language
+      model registry. Use berg.list_models(expand_brainscore_language=True) to
+      see all available models.
+    required: true
+    type: str
+    example: "brainscore_language-gpt2"
+    function: get_encoding_model
+
+parameters:
+  subject:
+    description: |
+      Subject identifier for single-subject predictions.
+      
+      Each subject contributes language-selective voxels from left hemisphere language network:
+        • Subject 018: 1,358 voxels
+        • Subject 199: 1,358 voxels
+        • Subject 288: 1,341 voxels
+        • Subject 289: 1,356 voxels
+        • Subject 296: 1,323 voxels
+        • Subject 343: 1,355 voxels
+        • Subject 366: 1,355 voxels
+        • Subject 407: 1,352 voxels
+        • Subject 426: 1,357 voxels
+      
+      Separate regressions are trained and cached per subject.
+    required: true
+    type: str
+    valid_values: ["018", "199", "288", "289", "296", "343", "366", "407", "426", null]
+    default: null
+    example: "018"
+    function: get_encoding_model
+
+  device:
+    description: "Unused. BrainScore language models manage their own device internally."
+    required: false
+    type: str
+    valid_values: ["cpu", "cuda", "auto"]
+    default: "auto"
+    function: get_encoding_model
+
+  stimulus:
+    description: |
+      Input sentences for neural response prediction. Accepts:
+
+      1. Single sentence (str):
+         Example: "The cat sat on the mat."
+
+      2. List of sentences (list[str]):
+         Example: ["Sentence one.", "Sentence two."]
+
+      Single strings are coerced to a list internally.
+      BrainScore handles tokenization and feature extraction.
+    required: true
+    type: "str or list[str]"
+    example: "The cat sat on the mat."
+    function: encode
+
+  show_progress:
+    description: "Whether to print progress messages during encoding"
+    required: false
+    type: bool
+    default: true
+    function: encode
+
+references:
+  - BrainScore Website: https://www.brain-score.org/
+  - BrainScore Language Repository: https://github.com/brain-score/language
+  - Pereira 2018 Paper: https://doi.org/10.1038/s41467-018-03068-4
+  - Schrimpf et al. 2021 (Neural Language Taskonomy): https://arxiv.org/abs/2006.01764

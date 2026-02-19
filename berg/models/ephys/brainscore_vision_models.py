@@ -40,7 +40,7 @@ def load_model_info():
         os.path.dirname(__file__), 
         "..", 
         "model_cards", 
-        "brainscore.yaml"
+        "brainscore_vision.yaml"
     )
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
@@ -51,12 +51,12 @@ model_info = load_model_info()
 
 # Register the gateway model
 register_model(
-    model_id="brainscore",
-    module_path="berg.models.ephys.brainscore",
+    model_id="brainscore_vision",
+    module_path="berg.models.ephys.brainscore_vision_models",
     class_name="BrainScoreGateway",
     modality="ephys",
     training_dataset="BrainScore",
-    yaml_path="berg/models/model_cards/brainscore.yaml"
+    yaml_path="berg/models/model_cards/brainscore_vision.yaml"
 )
 
 
@@ -87,7 +87,7 @@ class BrainScoreGateway(BaseModelInterface):
         berg_dir : str
             Path to BERG directory
         model_id : str
-            Model identifier in format "brainscore-{model_name}"
+            Model identifier in format "brainscore_{model_name}"
         device : str
             Device for computation ("cpu", "cuda", or "auto")
         selection : dict
@@ -103,8 +103,8 @@ class BrainScoreGateway(BaseModelInterface):
         self._validate_parameters()
         
         # Parse BrainScore model name from model_id 
-        if model_id.startswith("brainscore-"):
-            lowercase_name = model_id.replace("brainscore-", "")
+        if model_id.startswith("brainscore_vision-"):
+            lowercase_name = model_id.replace("brainscore_vision-", "")
         else:
             lowercase_name = model_id
         
@@ -115,9 +115,8 @@ class BrainScoreGateway(BaseModelInterface):
         self.roi = selection['roi']
         
         # Set up paths
-        self.model_dir = Path(berg_dir) / "brain-encoding-response-generator" / \
-                         "encoding_models" / "modality-ephys" / \
-                         "train_dataset-brainscore" / f"model-{self.brainscore_model_name}"
+        self.model_dir = Path(berg_dir) / "encoding_models" / "modality-ephys" / \
+                         "train_dataset-brainscore_vision" / f"model-{self.brainscore_model_name}"
         
         self.weights_dir = self.model_dir / "encoding_models_weights"
         self.temp_dir = self.model_dir / "temp"

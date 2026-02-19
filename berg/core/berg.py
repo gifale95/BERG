@@ -80,14 +80,18 @@ class BERG:
         return formatted_catalog
     
 
-    def list_models(self, expand_brainscore: bool = False) -> List[str]:
+    def list_models(self, expand_brainscore_vision: bool = False, expand_brainscore_language: bool = False) -> List[str]:
         """
         List all registered models in the BERG registry.
         
         Parameters
         ----------
-        expand_brainscore : bool, default=False
-            If True, include all individual BrainScore models
+        expand_brainscore_vision : bool, default=False
+            If True, replace the 'brainscore_vision' gateway entry with all 440+
+            individual BrainScore vision model IDs.
+        expand_brainscore_language : bool, default=False
+            If True, replace the 'brainscore_language' gateway entry with all
+            individual BrainScore language model IDs.
         
         Returns
         -------
@@ -96,18 +100,20 @@ class BERG:
         """
         models = get_available_models()
         
-        if expand_brainscore and "brainscore" in models:
-            from berg.models.ephys.brainscore import discover_brainscore_models
-            
-            # Remove gateway entry
-            models = [m for m in models if m != "brainscore"]
-            
-            # Add all BrainScore models with prefix
+        if expand_brainscore_vision and "brainscore_vision" in models:
+            from berg.models.ephys.brainscore_vision_models import discover_brainscore_models
+            models = [m for m in models if m != "brainscore_vision"]
             bs_models = discover_brainscore_models()
-            models.extend([f"brainscore-{m}" for m in bs_models])
-            
-        else:
-            print("If you want to see all brainscore models, enter list_models(expand_brainscore=True)")
+            models.extend([f"brainscore_vision-{m}" for m in bs_models])
+
+        if expand_brainscore_language and "brainscore_language" in models:
+            from berg.models.fmri.brainscore_language_models import discover_brainscore_language_models
+            models = [m for m in models if m != "brainscore_language"]
+            bs_lang_models = discover_brainscore_language_models()
+            models.extend([f"brainscore_language-{m}" for m in bs_lang_models])
+
+        if not expand_brainscore_vision or not expand_brainscore_language:
+            print("To expand BrainScore models, use list_models(expand_brainscore_vision=True, expand_brainscore_language=True)")
             print("")
         
         return sorted(models)
@@ -142,14 +148,26 @@ class BERG:
             Instantiated and loaded encoding model ready for generating
             neural responses.
         """
-        # Handle BrainScore models
-        if model_id.startswith("brainscore-"):
-            model_class = get_model_class("brainscore")
+        # Handle BrainScore language models (check before vision — more specific prefix)
+        if model_id.startswith("brainscore_language-"):
+            model_class = get_model_class("brainscore_language")
             model = model_class(
-                berg_dir=self.berg_dir, 
+                berg_dir=self.berg_dir,
                 model_id=model_id,
-                device=device, 
-                selection=selection, 
+                device=device,
+                **kwargs
+            )
+            model.load_model()
+            return model
+
+        # Handle BrainScore vision models
+        if model_id.startswith("brainscore_vision-"):
+            model_class = get_model_class("brainscore_vision")
+            model = model_class(
+                berg_dir=self.berg_dir,
+                model_id=model_id,
+                device=device,
+                selection=selection,
                 **kwargs
             )
             model.load_model()
@@ -226,9 +244,14 @@ class BERG:
         Dict[str, Any]
             Model metadata dictionary.
         """
-        # Handle BrainScore models
-        if model_id.startswith("brainscore-"):
-            model_class = get_model_class("brainscore")
+        # Handle BrainScore language models (check before vision — more specific prefix)
+        if model_id.startswith("brainscore_language-"):
+            model_class = get_model_class("brainscore_language")
+            return model_class.get_metadata(berg_dir=self.berg_dir, **kwargs)
+
+        # Handle BrainScore vision models
+        if model_id.startswith("brainscore_vision-"):
+            model_class = get_model_class("brainscore_vision")
             return model_class.get_metadata(berg_dir=self.berg_dir, **kwargs)
         
         # Handle regular BERG models

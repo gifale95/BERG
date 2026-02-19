@@ -1,1 +1,1 @@
-import berg.models.ephys.brainscore
+import berg.models.ephys.brainscore_vision_models

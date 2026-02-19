@@ -1,0 +1,379 @@
+import os
+import yaml
+import numpy as np
+from pathlib import Path
+from typing import List, Dict, Any, Union
+import pickle
+
+from berg.interfaces.base_model import BaseModelInterface
+from berg.core.model_registry import register_model
+from berg.core.parameter_validator import validate_subjects
+from berg.core.exceptions import InvalidParameterError
+
+from brainscore_language import load_model
+from brainscore_language.benchmarks.pereira2018 import Pereira2018_384sentences
+from brainscore_vision.metrics.regression_correlation.metric import pls_regression
+
+import warnings
+warnings.filterwarnings('ignore', category=RuntimeWarning)
+warnings.filterwarnings('ignore', category=UserWarning)
+warnings.filterwarnings('ignore', category=FutureWarning)
+
+
+# Single benchmark for all language models
+BENCHMARK_ID = "Pereira2018_384sentences"
+
+
+def load_model_info():
+    yaml_path = os.path.join(
+        os.path.dirname(__file__),
+        "..",
+        "model_cards",
+        "brainscore_language.yaml"
+    )
+    with open(os.path.abspath(yaml_path), "r") as f:
+        return yaml.safe_load(f)
+
+
+# Load model_info once at module level
+model_info = load_model_info()
+
+# Register the gateway
+register_model(
+    model_id="brainscore_language",
+    module_path="berg.models.fmri.brainscore_language_models",
+    class_name="BrainScoreLanguageGateway",
+    modality="fMRI",
+    training_dataset="BrainScore",
+    yaml_path="berg/models/model_cards/brainscore_language.yaml"
+)
+
+
+class BrainScoreLanguageGateway(BaseModelInterface):
+    """
+    Gateway to BrainScore language models.
+
+    Provides access to BrainScore's GPT-family language models trained against
+    human fMRI recordings from the Pereira 2018 dataset (384 sentences,
+    12,155 voxels across 9 subjects).
+
+    Workflow
+    --------
+    1. Load language model (e.g., gpt2) via BrainScore API
+    2. Run model on Pereira2018 benchmark sentences to get representations
+    3. Train PLS regression: model representations → fMRI voxel responses
+    4. Cache regression weights for fast subsequent predictions
+    5. For new sentences: extract representations → predict voxel responses
+    """
+
+    MODEL_ID = model_info["model_id"]
+    VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
+
+    def __init__(
+        self,
+        berg_dir: str,
+        model_id: str,
+        subject: str = None,
+        device: str = "auto",
+    ):
+        """
+        Initialize BrainScore language gateway.
+
+        Parameters
+        ----------
+        berg_dir : str
+            Path to BERG directory
+        model_id : str
+            Model identifier in format "brainscore_language-{model_name}"
+            e.g., "brainscore_language-gpt2"
+        subject : str, optional
+            Subject ID (e.g., '018'). If None, uses all 9 subjects pooled
+            (returns 12,155 voxels). If specified, filters to that subject's
+            voxels only (~1,350 voxels).
+            Valid values: ['018', '199', '288', '289', '296', '343', '366', '407', '426']
+        device : str
+            Unused (BrainScore language models manage their own device).
+            Kept for API consistency with other BERG models.
+        """
+        self.berg_dir = berg_dir
+        self.model_id_full = model_id
+        self.subject = subject
+        self.device = device
+
+        # Validate parameters
+        self._validate_parameters()
+
+        # Parse BrainScore model name from model_id
+        # "brainscore_language-gpt2" → "gpt2"
+        prefix = "brainscore_language-"
+        if model_id.startswith(prefix):
+            self.brainscore_model_name = model_id[len(prefix):]
+        else:
+            self.brainscore_model_name = model_id
+
+        self.subject_tag = self.subject if self.subject is not None else "all"
+
+        # Set up paths 
+        self.model_dir = (
+            Path(berg_dir)
+            / "encoding_models"
+            / "modality-fmri"
+            / "train_dataset-brainscore"
+            / f"model-{self.brainscore_model_name}"
+        )
+        self.weights_dir = self.model_dir / "encoding_models_weights"
+
+        # Lazy-loaded in load_model()
+        self.model = None
+        self.regression = None
+
+    def _validate_parameters(self):
+        """
+        Validate subject parameter.
+
+        subject=None is valid (uses all subjects pooled).
+        If subject is provided, it must be one of VALID_SUBJECTS.
+        """
+        if self.subject is not None:
+            if not isinstance(self.subject, str):
+                raise InvalidParameterError(
+                    f"subject must be a string (e.g., '018'), got {type(self.subject).__name__}"
+                )
+            if self.subject not in self.VALID_SUBJECTS:
+                raise InvalidParameterError(
+                    f"Invalid subject: '{self.subject}'. "
+                    f"Valid subjects are: {self.VALID_SUBJECTS}"
+                )
+
+    def _get_regression_cache_path(self) -> Path:
+        """
+        Get path to cached regression weights.
+
+        Cache filename encodes both model name and subject, so each
+        (model, subject) combination has its own cache file.
+
+        Examples
+        --------
+        gpt2, subject='018'  → gpt2_018_pereira384_regression.pkl
+        gpt2, subject=None   → gpt2_all_pereira384_regression.pkl
+        """
+        filename = f"{self.brainscore_model_name}_{self.subject_tag}_pereira384_regression.pkl"
+        return self.weights_dir / filename
+
+    def _get_benchmark_assembly(self):
+        """
+        Load the Pereira2018_384sentences benchmark and optionally filter
+        to a single subject's voxels.
+
+        Returns
+        -------
+        xarray.DataArray
+            Neural assembly with shape (n_sentences, n_voxels).
+            n_voxels = 12,155 (all subjects) or ~1,350 (single subject).
+        """
+        benchmark = Pereira2018_384sentences()
+        assembly = benchmark.data
+
+        if self.subject is not None:
+            # Filter to the requested subject's neuroids (voxels)
+            subject_mask = assembly['subject'] == self.subject
+            assembly = assembly.sel(neuroid=subject_mask)
+
+        return assembly
+
+    def _train_and_cache_regression(self):
+        """
+        Train PLS regression mapping model representations → fMRI voxels.
+
+        Steps
+        -----
+        1. Load benchmark assembly (optionally filtered by subject)
+        2. Run model on benchmark sentences to get neural representations
+           - Shape: (n_sentences, n_features)
+        3. Assign stimulus_id coordinate so PLS can align presentations
+        4. Fit PLS regression: representations → voxel responses
+        5. Cache the trained regression object to disk
+
+        The stimulus_id values on model_reps are set to match those in
+        benchmark.data so the regression can align training pairs correctly.
+
+        Returns
+        -------
+        PLSRegression
+            Trained regression object.
+        """
+        print(f"Training regression for {self.brainscore_model_name} "
+              f"(subject={self.subject_tag}, benchmark={BENCHMARK_ID})...")
+        print("This will take a few minutes (only done once, then cached)")
+
+        # Load benchmark assembly (subject-filtered if requested)
+        assembly = self._get_benchmark_assembly()
+
+        # Extract the 384 benchmark sentences in stimulus order
+        # assembly has a 'sentence' coordinate on the 'presentation' dimension
+        benchmark_sentences = assembly['sentence'].values
+
+        # Configure model for fMRI recording
+        self.model.start_neural_recording(
+            recording_target=self.model.RecordingTarget.language_system,
+            recording_type=self.model.RecordingType.fMRI
+        )
+
+        # Get model representations for benchmark sentences
+        # Output: dict with key 'neural', value is xarray.DataArray
+        #         shape (n_sentences, n_features)
+        model_output = self.model.digest_text(benchmark_sentences)
+        model_reps = model_output['neural']
+
+        # Attach stimulus_id so PLS regression can align presentations
+        # benchmark.data uses IDs like '384sentences.0', '384sentences.1', ...
+        model_reps['stimulus_id'] = ('presentation', assembly['stimulus_id'].values)
+
+        # Train PLS regression: model_reps → assembly (voxel responses)
+        regression = pls_regression()
+        regression.fit(model_reps, assembly)
+
+        # Cache to disk
+        self.weights_dir.mkdir(parents=True, exist_ok=True)
+        cache_path = self._get_regression_cache_path()
+
+        with open(cache_path, 'wb') as f:
+            pickle.dump(regression, f)
+
+        print(f"Regression trained and cached at: {cache_path}")
+        return regression
+
+    def _load_or_train_regression(self):
+        """
+        Load cached regression if available, otherwise train and cache.
+        """
+        cache_path = self._get_regression_cache_path()
+
+        if cache_path.exists():
+            print(f"Loading cached regression from: {cache_path}")
+            with open(cache_path, 'rb') as f:
+                self.regression = pickle.load(f)
+            print("Regression loaded from cache")
+        else:
+            print(f"No cached regression found for "
+                  f"{self.brainscore_model_name} + subject={self.subject_tag}")
+            self.regression = self._train_and_cache_regression()
+
+    def load_model(self):
+        """Load the BrainScore language model and regression weights."""
+        print(f"Loading BrainScore language model: {self.brainscore_model_name}")
+        self.model = load_model(self.brainscore_model_name)
+        print("Model loaded")
+
+        self._load_or_train_regression()
+
+    def generate_response(
+        self,
+        stimulus: Union[str, List[str]],
+        show_progress: bool = True
+    ) -> np.ndarray:
+        """
+        Generate fMRI voxel responses for input sentences.
+
+        Parameters
+        ----------
+        stimulus : str or list[str]
+            One or more sentences to encode.
+            - Single string: "The cat sat on the mat."
+            - List of strings: ["Sentence one.", "Sentence two."]
+
+        show_progress : bool
+            Whether to print progress messages.
+
+        Returns
+        -------
+        np.ndarray
+            Predicted BOLD responses, shape (n_sentences, n_voxels).
+            n_voxels = 12,155 (all subjects) or ~1,350 (single subject).
+
+        Notes
+        -----
+        The model internally handles tokenization and feature extraction.
+        BrainScore's digest_text() returns representations that are then
+        mapped to voxel space via the cached PLS regression.
+
+        Stimulus IDs assigned here ('pred_0', 'pred_1', ...) are arbitrary
+        labels required by the regression API. They do not correspond to
+        any benchmark stimulus IDs.
+        """
+        # Coerce single string to list
+        sentences = [stimulus] if isinstance(stimulus, str) else list(stimulus)
+
+        if show_progress:
+            print(f"Encoding {len(sentences)} sentence(s)...")
+
+        # Configure model for fMRI recording
+        self.model.start_neural_recording(
+            recording_target=self.model.RecordingTarget.language_system,
+            recording_type=self.model.RecordingType.fMRI
+        )
+
+        # Extract model representations
+        model_output = self.model.digest_text(sentences)
+        model_reps = model_output['neural']
+
+        # Assign stimulus_id (required by regression API)
+        model_reps['stimulus_id'] = (
+            'presentation',
+            [f"pred_{i}" for i in range(len(sentences))]
+        )
+
+        # Predict voxel responses
+        if show_progress:
+            print("Predicting voxel responses...")
+
+        predicted_responses = self.regression.predict(model_reps)
+
+        if show_progress:
+            print(f"Generated responses: {predicted_responses.shape}")
+
+        return predicted_responses.values
+
+    @classmethod
+    def get_model_id(cls) -> str:
+        """Return the model's unique identifier."""
+        return cls.MODEL_ID
+
+    @classmethod
+    def get_metadata(
+        cls,
+        berg_dir: str = None,
+        model_instance: 'BrainScoreLanguageGateway' = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """
+        Get model metadata.
+        """
+        if model_instance:
+            return {
+                "brainscore_model": model_instance.brainscore_model_name,
+                "subject": model_instance.subject,
+                "benchmark": BENCHMARK_ID,
+            }
+        return {}
+
+    def cleanup(self):
+        """Release resources."""
+        self.model = None
+        self.regression = None
+
+
+def discover_brainscore_language_models() -> List[str]:
+    """
+    Discover all available BrainScore language models via the model registry.
+
+    Returns
+    -------
+    List[str]
+        Sorted list of model names usable with 'brainscore_language-{name}'.
+    """
+    from brainscore_language import model_registry
+    # Import this one to trigger registrations
+    import brainscore_language.models.gpt
+    
+    return sorted(model_registry.keys())
