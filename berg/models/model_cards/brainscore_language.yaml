@@ -7,29 +7,23 @@ model_type: BrainScore Language Models (External)
 creator: Martin Schrimpf
 
 description: |
-  This interface provides access to BrainScore's language model ecosystem benchmarked
-  against human fMRI recordings. Models are GPT-family transformers evaluated on the
-  Pereira 2018 dataset (384 sentences, 9 subjects), mapping language representations
-  to whole-brain BOLD activity in the language network.
-
-  **Neural recordings.** The benchmark uses fMRI recordings from the Pereira 2018 study:
-  - **Dataset:** 384sentences variant — 384 sentences across 9 subjects
-  - **Coverage:** 12,155 voxels pooled across subjects (or ~1,350 per subject)
-  - **Task:** Subjects read sentences while BOLD responses were recorded
-  - **Output format:** Predicted BOLD signal (arbitrary units, z-scored per voxel)
-
-  **Neural prediction workflow.** For each model and subject combination, the interface:
-  1. Loads the language model (e.g., GPT-2) pre-trained on web text
-  2. Loads the Pereira2018_384sentences benchmark
-  3. Optionally filters to a single subject's voxels (subject parameter)
-  4. Runs the model on benchmark sentences to obtain internal representations
-  5. Trains a PLS regression mapping representations → BOLD responses (~few minutes, one-time)
-  6. Caches the regression weights for fast subsequent predictions
-  7. Uses the cached regression to predict responses for your sentences
-
-  **Accessing models.** Individual models are accessed via
-  `model_id = "brainscore_language-{model_name}"` (e.g., `"brainscore_language-gpt2"`).
-  Use `berg.list_models()` to see the interface entry.
+  Access to BrainScore's language models benchmarked against human fMRI recordings from the Pereira 2018 study.
+  
+  **Neural data.** Benchmark uses fMRI from 9 subjects reading 384 factual sentences:
+  - Stimuli: Wikipedia-style sentences (7-18 words) across 24 semantic topics (professions, instruments, animals, etc.)
+  - Coverage: 12,155 voxels pooled (or ~1,350 per subject) from language network
+  - Output: Predicted BOLD signal (z-scored per voxel)
+  
+  **Workflow.** For each model and optional subject:
+  1. Load language model (GPT-2, GPT-Neo, etc.)
+  2. Load Pereira2018_384sentences benchmark
+  3. Optionally filter to single subject's voxels
+  4. Extract model representations for benchmark sentences
+  5. Train PLS regression: representations → BOLD responses (~few min, cached)
+  6. Predict BOLD responses for your sentences using cached regression
+  
+  **Usage.** Use `berg.list_models(expand_brainscore_language=True)` to see all models.
+  Model IDs: `"brainscore-language-{model_name}"` (e.g., `"brainscore-language-gpt2"`).
 
 
 
@@ -124,5 +118,5 @@ parameters:
 references:
   - BrainScore Website: https://www.brain-score.org/
   - BrainScore Language Repository: https://github.com/brain-score/language
+  - BrainScore Paper (Schrimpf et al., 2018): https://www.biorxiv.org/content/10.1101/407007v1
   - Pereira 2018 Paper: https://doi.org/10.1038/s41467-018-03068-4
-  - Schrimpf et al. 2021 (Neural Language Taskonomy): https://arxiv.org/abs/2006.01764
