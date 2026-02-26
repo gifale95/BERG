@@ -25,6 +25,12 @@ Model Summary
 Description
 ----------
 
+**Installation.** BrainScore models require a separate installation step and Python 3.11:
+
+*> pip install berg[brainscore]*
+
+For available models and scores, see the `BrainScore vision leaderboard <https://www.brain-score.org/vision/leaderboard/>`_.
+
 Access to BrainScore's 440+ vision models benchmarked against macaque electrophysiology recordings.
 
 **Neural data.** Benchmarks use electrophysiology recordings from macaque visual cortex:

@@ -105,6 +105,13 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Text
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy/>`_
+   * - 
+     - :doc:`model_cards/brainscore_language`
+     - Gateway to 10+ GPT-family language models from BrainScore, mapped to human fMRI responses (9 subjects, 384 sentences) via PLS regression. Model weights hosted by BrainScore — not BERG.
+     - `Pereira et al., 2018 <https://doi.org/10.1038/s41467-018-03068-4>`_
+     - Human
+     - Text
+     - `BrainScore leaderboard <https://www.brain-score.org>`_
 
 
 modality-eeg
@@ -202,6 +209,30 @@ Encoding models trained on neural responses recorded with two-photon calcium ima
      - Mouse
      - Videos
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-calcium_2p/train_dataset-wang_2025/model-3DCNN/encoding_models_accuracy/>`_
+
+modality-ephys
+~~~~~~~~~~~~~~
+Encoding models trained on extracellular electrophysiology recordings from macaque visual cortex.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 3 60 40 20 10 10 10
+   :class: wrap-table
+
+   * - Best model
+     - Model ID
+     - Description
+     - Training dataset
+     - Species
+     - Stimuli
+     - Encoding accuracy
+   * - 
+     - :doc:`model_cards/brainscore_vision`
+     - Gateway to 440+ vision models from BrainScore, mapped to macaque electrophysiology recordings (V1, V2, V4, IT) via PLS regression. Model weights hosted by BrainScore — not BERG.
+     - `Freeman & Ziemba, 2013 <https://doi.org/10.1038/nn.3402>`_ (V1, V2); `Majaj & Hong et al., 2015 <https://doi.org/10.1152/jn.00262.2014>`_ (V4, IT)
+     - Macaque
+     - Images
+     - `BrainScore leaderboard <https://www.brain-score.org/vision/leaderboard/>`_
 
 .. raw:: html
 

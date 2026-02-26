@@ -25,6 +25,12 @@ Model Summary
 Description
 ----------
 
+**Installation.** BrainScore models require a separate installation step and Python 3.11:
+
+*> pip install berg[brainscore]*
+
+For available models and scores, see the `BrainScore language leaderboard <https://www.brain-score.org/language/leaderboard/>`_.
+
 Access to BrainScore's language models benchmarked against human fMRI recordings from the Pereira 2018 study.
 
 **Neural data.** Benchmark uses fMRI from 9 subjects reading 384 factual sentences:
