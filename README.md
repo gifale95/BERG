@@ -111,6 +111,8 @@ The following table shows BERG's most accurate encoding models for each dataset 
 | [utah_array-tvsd-vit_b_32][utah_array-tvsd-vit_b_32] | [TVSD][tvsd] | Utah arrays | Macaque | Images | [Accuracy plots][acc-utah_array-tvsd-vit_b_32] |
 | [calcium_2p-wang_2025-3DCNN][calcium_2p-wang_2025-3DCNN] | [Wang et al., 2025][wang_2025] | two-photon calcium imaging | Mouse | Videos | [Accuracy plots][acc-calcium_2p-wang_2025-3DCNN] |
 | [fmri-tuckute_2024-GPT2_XL][fmri-tuckute_2024-GPT2_XL] | [Tuckute et al., 2024][tuckute_2024] | fMRI | Human | Text | [Accuracy plots][acc-fmri-tuckute_2024-GPT2_XL] |
+| [brainscore_language][brainscore_language] | [Pereira et al., 2018][pereira_2018] | fMRI | Human | Text | [BrainScore leaderboard (language)][bs_leaderboard_language] |
+| [brainscore_vision][brainscore_vision] | [Freeman & Ziemba, 2013][freeman_2013]; [Majaj & Hong et al., 2015][majaj_2015] | Ephys | Macaque | Images | [BrainScore leaderboard (vision)][bs_leaderboard_vision] |
 
 
 ### ✨ BERG functions
@@ -276,3 +278,11 @@ If you use BERG, please cite:
 [fmri-tuckute_2024-GPT2_XL]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-tuckute_2024-GPT2_XL.html
 [tuckute_2024]: https://www.nature.com/articles/s41562-023-01783-7
 [acc-fmri-tuckute_2024-GPT2_XL]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy/
+
+[brainscore_language]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_language.html
+[brainscore_vision]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_vision.html
+[bs_leaderboard_vision]: https://www.brain-score.org/vision/leaderboard/
+[bs_leaderboard_language]: https://www.brain-score.org/language/leaderboard/
+[pereira_2018]: https://doi.org/10.1038/s41467-018-03068-4
+[freeman_2013]: https://doi.org/10.1038/nn.3402
+[majaj_2015]: https://doi.org/10.1152/jn.00262.2014
