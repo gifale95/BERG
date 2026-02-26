@@ -10,14 +10,21 @@ description: |
   Access to BrainScore's 440+ vision models benchmarked against macaque electrophysiology recordings.
   
   **Neural data.** Benchmarks use electrophysiology recordings from macaque visual cortex:
+
   - V1/V2: Freeman & Ziemba 2013 (102 & 103 neurons, synthetic texture patches)
+
   - V4/IT: Majaj & Hong 2015 (88 & 168 neurons, grayscale objects on natural backgrounds)
+
   - Output: Predicted firing rates (spikes/second)
   
   **Workflow.** For each model and region:
+
   1. Load vision model (AlexNet, ResNet, ViT, etc.)
+
   2. Load benchmark for selected region (each ROI uses different benchmark)
+
   3. Train PLS regression: model activations → neural responses (~3 min, cached)
+
   4. Predict neural responses for your images using cached regression
   
   **Usage.** Use `berg.list_models(expand_brainscore_vision=True)` to see all models.
@@ -32,14 +39,17 @@ input:
     1. Directory path (str): Path to directory containing images
         Example: "/path/to/images"
     
+
     2. List of paths (list[str]): List of image file paths
         Example: ["img1.jpg", "img2.jpg"]
     
+
     3. Numpy array (np.ndarray): Batch of RGB images
         Shape: (batch_size, 3, height, width)
         Values: [0, 255] (uint8)
         Example: np.array with shape (10, 3, 224, 224)
     
+
     For numpy arrays, images are temporarily saved to disk (BrainScore requirement)
     and automatically cleaned up after prediction.
     
@@ -106,10 +116,8 @@ parameters:
       
       1. Directory path (str): Path to directory containing images
          Example: "/path/to/images"
-      
       2. List of paths (list[str]): List of image file paths
          Example: ["img1.jpg", "img2.jpg"]
-      
       3. Numpy array (np.ndarray): Batch of RGB images
          Shape: (batch_size, 3, height, width)
          Values: [0, 255] (uint8)

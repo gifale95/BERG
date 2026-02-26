@@ -10,16 +10,25 @@ description: |
   Access to BrainScore's language models benchmarked against human fMRI recordings from the Pereira 2018 study.
   
   **Neural data.** Benchmark uses fMRI from 9 subjects reading 384 factual sentences:
+
   - Stimuli: Wikipedia-style sentences (7-18 words) across 24 semantic topics (professions, instruments, animals, etc.)
+
   - Coverage: 12,155 voxels pooled (or ~1,350 per subject) from language network
+
   - Output: Predicted BOLD signal (z-scored per voxel)
   
   **Workflow.** For each model and optional subject:
+
   1. Load language model (GPT-2, GPT-Neo, etc.)
+
   2. Load Pereira2018_384sentences benchmark
+
   3. Filter to single subject's voxels
+
   4. Extract model representations for benchmark sentences
+
   5. Train PLS regression: representations → BOLD responses (~few min, cached)
+
   6. Predict BOLD responses for your sentences using cached regression
   
   **Usage.** Use `berg.list_models(expand_brainscore_language=True)` to see all models.
@@ -31,7 +40,6 @@ input:
   description: "A sentence or list of sentences to encode"
   type: "str or list[str]"
   constraints:
-    - "Each input should be a complete natural language sentence"
     - "BrainScore handles tokenization internally"
 
 output:
@@ -57,7 +65,6 @@ parameters:
     example: "brainscore_language-gpt2"
     function: get_encoding_model
 
-parameters:
   subject:
     description: |
       Subject identifier for single-subject predictions.
