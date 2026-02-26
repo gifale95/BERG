@@ -166,9 +166,6 @@ class BrainScoreGateway(BaseModelInterface):
         
         # Validate ROI
         if "roi" in self.selection:
-            self.roi = validate_roi(
-                self.selection["roi"], self.VALID_ROIS
-            )
             self.roi = validate_roi(self.selection["roi"], self.VALID_ROIS)
 
     def _get_regression_cache_path(self) -> Path:

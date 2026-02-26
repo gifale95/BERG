@@ -17,7 +17,7 @@ description: |
   **Workflow.** For each model and optional subject:
   1. Load language model (GPT-2, GPT-Neo, etc.)
   2. Load Pereira2018_384sentences benchmark
-  3. Optionally filter to single subject's voxels
+  3. Filter to single subject's voxels
   4. Extract model representations for benchmark sentences
   5. Train PLS regression: representations → BOLD responses (~few min, cached)
   6. Predict BOLD responses for your sentences using cached regression
