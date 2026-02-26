@@ -43,16 +43,9 @@ input:
     For numpy arrays, images are temporarily saved to disk (BrainScore requirement)
     and automatically cleaned up after prediction.
     
-    For file paths, images should be standard formats (JPEG, PNG, etc.).
+    For file paths, images should be in JPEG or PNG.
     BrainScore handles preprocessing (resizing, normalization) internally.
   type: "str, list[str], or np.ndarray"
-  constraints:
-    - "str: Path to directory containing images"
-    - "list[str]: List of image file paths"
-    - "numpy.ndarray: Batch of RGB images with shape (batch_size, 3, height, width) and values [0, 255]"
-    - "Images must be readable image files (JPEG, PNG, etc.) when using paths"
-    - "For numpy arrays, images are temporarily saved to disk (BrainScore requirement) and automatically cleaned up"
-    - "BrainScore handles preprocessing internally"
 
 output:
   description: "Neural responses for specified recording target"

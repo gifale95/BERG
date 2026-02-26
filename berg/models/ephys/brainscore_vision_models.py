@@ -46,7 +46,7 @@ def _check_brainscore_available():
     Called lazily inside methods that need BrainScore, not at module level.
     """
     try:
-        import brainscore_vision  # noqa: F401
+        import brainscore_vision 
     except ImportError:
         raise ImportError(
             BRAINSCORE_INSTALL_MSG.format(
