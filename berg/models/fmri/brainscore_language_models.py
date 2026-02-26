@@ -1,4 +1,5 @@
 import os
+import sys
 import yaml
 import numpy as np
 from pathlib import Path
@@ -10,10 +11,6 @@ from berg.core.model_registry import register_model
 from berg.core.parameter_validator import validate_subject
 from berg.core.exceptions import InvalidParameterError
 
-from brainscore_language import load_model
-from brainscore_language.benchmarks.pereira2018 import Pereira2018_384sentences
-from brainscore_vision.metrics.regression_correlation.metric import pls_regression
-
 import warnings
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
@@ -22,6 +19,33 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 
 # Single benchmark for all language models
 BENCHMARK_ID = "Pereira2018_384sentences"
+
+BRAINSCORE_INSTALL_MSG = """
+BrainScore is not installed. To use BrainScore language models:
+
+    pip install berg[brainscore]
+
+Note: BrainScore requires Python 3.11.
+      You are currently running Python {major}.{minor}.
+
+For more information, see: https://www.brain-score.org
+""".strip()
+
+
+def _check_brainscore_available():
+    """
+    Check if BrainScore language is importable and raise a clear error if not.
+    Called lazily inside methods that need BrainScore, not at module level.
+    """
+    try:
+        import brainscore_language  # noqa: F401
+    except ImportError:
+        raise ImportError(
+            BRAINSCORE_INSTALL_MSG.format(
+                major=sys.version_info.major,
+                minor=sys.version_info.minor
+            )
+        )
 
 
 def load_model_info():
@@ -56,6 +80,9 @@ class BrainScoreLanguageGateway(BaseModelInterface):
     Provides access to BrainScore's GPT-family language models trained against
     human fMRI recordings from the Pereira 2018 dataset (384 sentences,
     12,155 voxels across 9 subjects).
+
+    Requires BrainScore to be installed: pip install berg[brainscore]
+    BrainScore requires Python 3.11.
 
     Workflow
     --------
@@ -110,7 +137,7 @@ class BrainScoreLanguageGateway(BaseModelInterface):
 
         self.subject_tag = self.subject
 
-        # Set up paths 
+        # Set up paths
         self.model_dir = (
             Path(berg_dir)
             / "encoding_models"
@@ -124,11 +151,8 @@ class BrainScoreLanguageGateway(BaseModelInterface):
         self.regression = None
 
     def _validate_parameters(self):
-        """
-        Validate subject parameter. Subject is required.
-        """
+        """Validate subject parameter. Subject is required."""
         validate_subject(self.subject, self.VALID_SUBJECTS)
-
 
     def _get_regression_cache_path(self) -> Path:
         """
@@ -152,6 +176,7 @@ class BrainScoreLanguageGateway(BaseModelInterface):
             Neural assembly with shape (n_sentences, n_voxels) for the selected subject
             (~1,350 voxels).
         """
+        from brainscore_language.benchmarks.pereira2018 import Pereira2018_384sentences
         benchmark = Pereira2018_384sentences()
         assembly = benchmark.data
         subject_mask = assembly['subject'] == self.subject
@@ -170,23 +195,18 @@ class BrainScoreLanguageGateway(BaseModelInterface):
         4. Fit PLS regression: representations → voxel responses
         5. Cache the trained regression object to disk
 
-        The stimulus_id values on model_reps are set to match those in
-        benchmark.data so the regression can align training pairs correctly.
-
         Returns
         -------
         PLSRegression
             Trained regression object.
         """
+        from brainscore_vision.metrics.regression_correlation.metric import pls_regression
+
         print(f"Training regression for {self.brainscore_model_name} "
               f"(subject={self.subject_tag}, benchmark={BENCHMARK_ID})...")
         print("This will take a few minutes (only done once, then cached)")
 
-        # Load benchmark assembly 
         assembly = self._get_benchmark_assembly()
-
-        # Extract the 384 benchmark sentences in stimulus order
-        # assembly has a 'sentence' coordinate on the 'presentation' dimension
         benchmark_sentences = assembly['sentence'].values
 
         # Configure model for fMRI recording
@@ -237,6 +257,10 @@ class BrainScoreLanguageGateway(BaseModelInterface):
 
     def load_model(self):
         """Load the BrainScore language model and regression weights."""
+        _check_brainscore_available()
+
+        from brainscore_language import load_model
+
         print(f"Loading BrainScore language model: {self.brainscore_model_name}")
         self.model = load_model(self.brainscore_model_name)
         print("Model loaded")
@@ -257,7 +281,6 @@ class BrainScoreLanguageGateway(BaseModelInterface):
             One or more sentences to encode.
             - Single string: "The cat sat on the mat."
             - List of strings: ["Sentence one.", "Sentence two."]
-
         show_progress : bool
             Whether to print progress messages.
 
@@ -269,10 +292,6 @@ class BrainScoreLanguageGateway(BaseModelInterface):
 
         Notes
         -----
-        The model internally handles tokenization and feature extraction.
-        BrainScore's digest_text() returns representations that are then
-        mapped to voxel space via the cached PLS regression.
-
         Stimulus IDs assigned here ('pred_0', 'pred_1', ...) are arbitrary
         labels required by the regression API. They do not correspond to
         any benchmark stimulus IDs.
@@ -342,9 +361,15 @@ def discover_brainscore_language_models() -> List[str]:
     -------
     List[str]
         Sorted list of model names usable with 'brainscore_language-{name}'.
+
+    Raises
+    ------
+    ImportError
+        If BrainScore is not installed.
     """
+    _check_brainscore_available()
+
     from brainscore_language import model_registry
-    # Import this one to trigger registrations
-    import brainscore_language.models.gpt
-    
+    import brainscore_language.models.gpt  # trigger registrations
+
     return sorted(model_registry.keys())

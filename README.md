@@ -51,6 +51,18 @@ pip install -U git+https://github.com/gifale95/BERG.git
 
 You will additionally need to install the Python dependencies found in [requirements.txt][requirements].
 
+#### BrainScore models (optional)
+
+BERG integrates with [BrainScore](https://www.brain-score.org), giving you access to 440+ vision models scored against macaque neural recordings (V1, V2, V4, IT), as well as GPT-family language models scored against human fMRI data.
+
+> **BrainScore requires Python 3.11.** If you are on a different Python version, the rest of BERG will work normally — only BrainScore models will be unavailable.
+
+To install BERG with BrainScore support:
+
+```shell
+pip install -U "berg[brainscore] @ git+https://github.com/gifale95/BERG.git"
+```
+
 
 
 ## 🕹️ How to use

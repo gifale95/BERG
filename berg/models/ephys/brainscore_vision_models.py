@@ -1,10 +1,10 @@
 import os
+import sys
 import yaml
 import numpy as np
 from pathlib import Path
 import pandas as pd
 from typing import List, Dict, Any, Union
-import pkgutil
 import pickle
 from PIL import Image
 import shutil
@@ -13,11 +13,6 @@ from berg.interfaces.base_model import BaseModelInterface
 from berg.core.model_registry import register_model, MODEL_REGISTRY
 from berg.core.parameter_validator import validate_selection_keys, validate_roi
 from berg.core.exceptions import InvalidParameterError
-
-from brainscore_vision import load_model, load_benchmark
-from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
-from brainscore_vision.metrics.regression_correlation.metric import pls_regression
-import brainscore_vision.models as bs_models
 
 import warnings
 warnings.filterwarnings('ignore', category=RuntimeWarning)
@@ -33,13 +28,39 @@ REGION_BENCHMARKS = {
     'IT': 'MajajHong2015public.IT-pls'
 }
 
+BRAINSCORE_INSTALL_MSG = """
+BrainScore is not installed. To use BrainScore vision models:
 
-# Load model info from YAML
+    pip install berg[brainscore]
+
+Note: BrainScore requires Python 3.11.
+      You are currently running Python {major}.{minor}.
+
+For more information, see: https://www.brain-score.org
+""".strip()
+
+
+def _check_brainscore_available():
+    """
+    Check if BrainScore vision is importable and raise a clear error if not.
+    Called lazily inside methods that need BrainScore, not at module level.
+    """
+    try:
+        import brainscore_vision  # noqa: F401
+    except ImportError:
+        raise ImportError(
+            BRAINSCORE_INSTALL_MSG.format(
+                major=sys.version_info.major,
+                minor=sys.version_info.minor
+            )
+        )
+
+
 def load_model_info():
     yaml_path = os.path.join(
-        os.path.dirname(__file__), 
-        "..", 
-        "model_cards", 
+        os.path.dirname(__file__),
+        "..",
+        "model_cards",
         "brainscore_vision.yaml"
     )
     with open(os.path.abspath(yaml_path), "r") as f:
@@ -67,11 +88,11 @@ class BrainScoreGateway(BaseModelInterface):
     This class provides a unified interface to access BrainScore's collection
     of neural network models trained on biological neural recordings.
     """
-    
+
     MODEL_ID = model_info["model_id"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
-    
+
     def __init__(
         self,
         berg_dir: str,
@@ -81,7 +102,7 @@ class BrainScoreGateway(BaseModelInterface):
     ):
         """
         Initialize BrainScore gateway.
-        
+
         Parameters
         ----------
         berg_dir : str
@@ -98,7 +119,7 @@ class BrainScoreGateway(BaseModelInterface):
         self.model_id_full = model_id
         self.device = device
         self.selection = selection
-        
+
         # Validate parameters
         self._validate_parameters()
         
@@ -107,24 +128,27 @@ class BrainScoreGateway(BaseModelInterface):
             self.brainscore_model_name = model_id.replace("brainscore_vision-", "")
         else:
             self.brainscore_model_name = model_id
-        
+
         # Parse selection parameters (roi is guaranteed to exist after validation)
         self.roi = selection['roi']
-        
+
         # Set up paths
-        self.model_dir = Path(berg_dir) / "encoding_models" / "modality-ephys" / \
-                         "train_dataset-brainscore_vision" / f"model-{self.brainscore_model_name}"
-        
+        self.model_dir = (
+            Path(berg_dir)
+            / "encoding_models"
+            / "modality-ephys"
+            / "train_dataset-brainscore_vision"
+            / f"model-{self.brainscore_model_name}"
+        )
         self.weights_dir = self.model_dir / "encoding_models_weights"
         self.temp_dir = self.model_dir / "temp"
-        
+
         # Initialize model and regression
         self.model = None
         self.regression = None
-        self.time_bins = None 
+        self.time_bins = None
         self.temp_images_created = False
-        
-        
+
     def _validate_parameters(self):
         """
         Validate user-provided parameters.
@@ -145,17 +169,20 @@ class BrainScoreGateway(BaseModelInterface):
             self.roi = validate_roi(
                 self.selection["roi"], self.VALID_ROIS
             )
-    
+            self.roi = validate_roi(self.selection["roi"], self.VALID_ROIS)
+
     def _get_regression_cache_path(self) -> Path:
         """Get path to cached regression weights for current model and ROI."""
         return self.weights_dir / f"{self.brainscore_model_name}_{self.roi}_regression.pkl"
-    
-    
+
     def _train_and_cache_regression(self):
         """
         Train PLS regression on benchmark data and cache it.
         Also caches time_bins for later use.
         """
+        from brainscore_vision import load_benchmark
+        from brainscore_vision.metrics.regression_correlation.metric import pls_regression
+
         print(f"Training regression for {self.roi} region...")
         print("This will take ~3 minutes (only done once, then cached)")
         
@@ -189,63 +216,60 @@ class BrainScoreGateway(BaseModelInterface):
             'regression': regression,
             'time_bins': self.time_bins
         }
-        
+
         with open(cache_path, 'wb') as f:
             pickle.dump(cache_data, f)
-        
+
         print(f"Regression trained and cached at: {cache_path}")
-        
         return regression
-    
-    
+
     def _load_or_train_regression(self):
-        """
-        Load cached regression if available, otherwise train and cache.
-        """
+        """Load cached regression if available, otherwise train and cache."""
+        from brainscore_vision import load_benchmark
+
         cache_path = self._get_regression_cache_path()
-        
+
         if cache_path.exists():
             print(f"Loading cached regression from: {cache_path}")
             with open(cache_path, 'rb') as f:
                 cache_data = pickle.load(f)
-        
+
             if isinstance(cache_data, dict):
                 self.regression = cache_data['regression']
                 self.time_bins = cache_data['time_bins']
             else:
-                # Old cache format - just the regression
+                # Old cache format — just the regression
                 self.regression = cache_data
-                # Load time_bins from benchmark
                 benchmark_id = REGION_BENCHMARKS[self.roi]
                 benchmark = load_benchmark(benchmark_id)
                 self.time_bins = benchmark.timebins
-            
+
             print("Regression loaded from cache")
         else:
             print(f"No cached regression found for {self.brainscore_model_name} + {self.roi}")
             self.regression = self._train_and_cache_regression()
-    
-    
+
     def load_model(self):
         """Load the BrainScore model and regression weights."""
-        
+        _check_brainscore_available()
+
+        from brainscore_vision import load_model
+
         print(f"Loading BrainScore model: {self.brainscore_model_name}")
         self.model = load_model(self.brainscore_model_name)
         print("Model loaded")
-        
-        # Load or train regression for selected ROI
+
         self._load_or_train_regression()
-    
-    
+
     def _numpy_to_temp_paths(self, images: np.ndarray) -> List[str]:
         """
         Convert numpy array to temporary image files.
-        
+
         Parameters
         ----------
         images : np.ndarray
             Images in shape (batch, 3, H, W) with values [0, 255]
-        
+
         Returns
         -------
         List[str]
@@ -269,16 +293,14 @@ class BrainScoreGateway(BaseModelInterface):
             img_path = self.temp_dir / f"image_{i:05d}.png"
             Image.fromarray(img).save(img_path)
             image_paths.append(str(img_path))
-        
+
         return image_paths
-    
-    
+
     def _cleanup_temp_images(self):
         """Remove temporary image directory."""
         if self.temp_images_created and self.temp_dir.exists():
             shutil.rmtree(self.temp_dir)
             self.temp_images_created = False
-    
 
     def generate_response(
         self,
@@ -287,7 +309,7 @@ class BrainScoreGateway(BaseModelInterface):
     ) -> np.ndarray:
         """
         Generate neural responses for given stimuli.
-        
+
         Parameters
         ----------
         stimulus : str, list[str], or np.ndarray
@@ -297,26 +319,27 @@ class BrainScoreGateway(BaseModelInterface):
             - Numpy array of images (batch, 3, H, W) with values [0, 255]
         show_progress : bool
             Whether to show progress messages
-        
+
         Returns
         -------
         np.ndarray
             Neural responses, shape (n_images, n_neurons)
         """
-        # Handle different input types
+        from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
+
         if isinstance(stimulus, np.ndarray):
             # Convert numpy array to temporary image files
             if show_progress:
                 print(f"Converting {len(stimulus)} numpy images to temporary files...")
             image_paths = self._numpy_to_temp_paths(stimulus)
-        
+
         elif isinstance(stimulus, str):
             # Directory path - glob for images
             image_paths = sorted(Path(stimulus).glob("*.jpg")) + \
                          sorted(Path(stimulus).glob("*.png")) + \
                          sorted(Path(stimulus).glob("*.jpeg"))
             image_paths = [str(p) for p in image_paths]
-        
+
         else:
             # List of paths
             image_paths = [str(Path(p)) for p in stimulus]
@@ -327,10 +350,10 @@ class BrainScoreGateway(BaseModelInterface):
             "stimulus_id": stimulus_ids,
             "filename": [Path(p).name for p in image_paths]
         })
-        
+
         stimulus_set = StimulusSet(stimuli_df)
         stimulus_set.stimulus_paths = {
-            sid: str(Path(path).absolute()) 
+            sid: str(Path(path).absolute())
             for sid, path in zip(stimulus_ids, image_paths)
         }
         
@@ -355,19 +378,17 @@ class BrainScoreGateway(BaseModelInterface):
         
         # Cleanup temp images if we created them
         self._cleanup_temp_images()
-        
+
         if show_progress:
             print(f"Generated responses: {predicted_responses.shape}")
-        
+
         return predicted_responses.values
-    
-    
+
     @classmethod
     def get_model_id(cls) -> str:
         """Return the model's unique identifier."""
         return cls.MODEL_ID
-    
-    
+
     @classmethod
     def get_metadata(
         cls,
@@ -375,13 +396,10 @@ class BrainScoreGateway(BaseModelInterface):
         model_instance: 'BrainScoreGateway' = None,
         **kwargs
     ) -> Dict[str, Any]:
-        """
-        Get model metadata.
-        """
+        """Get model metadata."""
         print("BrainScore does not provide metadata. Please check their website for more model information: https://www.brain-score.org/vision/leaderboard/")
         return {}
-    
-    
+
     def cleanup(self):
         """Release resources and cleanup temp files."""
         self._cleanup_temp_images()
@@ -396,10 +414,20 @@ def discover_brainscore_models() -> List[str]:
     -------
     List[str]
         Sorted list of model names usable with 'brainscore_vision-{name}'.
+
+    Raises
+    ------
+    ImportError
+        If BrainScore is not installed.
     """
+    _check_brainscore_available()
+
+    import pkgutil
+    import brainscore_vision.models as bs_models
+
     models = []
     for importer, modname, ispkg in pkgutil.iter_modules(bs_models.__path__):
         if not modname.startswith('_'):
             models.append(modname)
-    
+
     return sorted(models)

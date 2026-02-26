@@ -98,24 +98,41 @@ class BERG:
         List[str]
             List of model IDs
         """
+        import sys
         models = get_available_models()
-        
+
         if expand_brainscore_vision and "brainscore_vision" in models:
-            from berg.models.ephys.brainscore_vision_models import discover_brainscore_models
-            models = [m for m in models if m != "brainscore_vision"]
-            bs_models = discover_brainscore_models()
-            models.extend([f"brainscore_vision-{m}" for m in bs_models])
+            try:
+                from berg.models.ephys.brainscore_vision_models import discover_brainscore_models
+                models = [m for m in models if m != "brainscore_vision"]
+                bs_models = discover_brainscore_models()
+                models.extend([f"brainscore_vision-{m}" for m in bs_models])
+            except ImportError:
+                print(
+                    f"[BrainScore] Cannot expand brainscore_vision — BrainScore is not installed.\n"
+                    f"  To install: pip install berg[brainscore]\n"
+                    f"  Note: BrainScore requires Python 3.11 "
+                    f"(you are running Python {sys.version_info.major}.{sys.version_info.minor}).\n"
+                )
 
         if expand_brainscore_language and "brainscore_language" in models:
-            from berg.models.fmri.brainscore_language_models import discover_brainscore_language_models
-            models = [m for m in models if m != "brainscore_language"]
-            bs_lang_models = discover_brainscore_language_models()
-            models.extend([f"brainscore_language-{m}" for m in bs_lang_models])
+            try:
+                from berg.models.fmri.brainscore_language_models import discover_brainscore_language_models
+                models = [m for m in models if m != "brainscore_language"]
+                bs_lang_models = discover_brainscore_language_models()
+                models.extend([f"brainscore_language-{m}" for m in bs_lang_models])
+            except ImportError:
+                print(
+                    f"[BrainScore] Cannot expand brainscore_language — BrainScore is not installed.\n"
+                    f"  To install: pip install berg[brainscore]\n"
+                    f"  Note: BrainScore requires Python 3.11 "
+                    f"(you are running Python {sys.version_info.major}.{sys.version_info.minor}).\n"
+                )
 
         if not expand_brainscore_vision or not expand_brainscore_language:
             print("To expand BrainScore models, use list_models(expand_brainscore_vision=True, expand_brainscore_language=True)")
             print("")
-        
+
         return sorted(models)
         
 
