@@ -216,6 +216,9 @@ Example Usage
     
     # Prepare the stimulus (text/sentences)
     stimulus = /path/to/images
+
+    # Or use a numpy array
+    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
     
     # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(
