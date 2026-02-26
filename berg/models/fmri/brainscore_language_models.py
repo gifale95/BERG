@@ -44,7 +44,7 @@ register_model(
     module_path="berg.models.fmri.brainscore_language_models",
     class_name="BrainScoreLanguageGateway",
     modality="fMRI",
-    training_dataset="BrainScore",
+    training_dataset="BrainScore_Language",
     yaml_path="berg/models/model_cards/brainscore_language.yaml"
 )
 
@@ -85,7 +85,6 @@ class BrainScoreLanguageGateway(BaseModelInterface):
             Path to BERG directory
         model_id : str
             Model identifier in format "brainscore_language-{model_name}"
-            e.g., "brainscore_language-gpt2"
         subject : str
             Subject ID (e.g., '018'). Required — filters to that subject's
             voxels (~1,350 voxels).
@@ -128,7 +127,6 @@ class BrainScoreLanguageGateway(BaseModelInterface):
         """
         Validate subject parameter. Subject is required.
         """
-            
         validate_subject(self.subject, self.VALID_SUBJECTS)
 
 
@@ -327,12 +325,7 @@ class BrainScoreLanguageGateway(BaseModelInterface):
         """
         Get model metadata.
         """
-        if model_instance:
-            return {
-                "brainscore_model": model_instance.brainscore_model_name,
-                "subject": model_instance.subject,
-                "benchmark": BENCHMARK_ID,
-            }
+        print("BrainScore does not provide metadata. Please check their website for more model information: https://www.brain-score.org/vision/leaderboard/")
         return {}
 
     def cleanup(self):

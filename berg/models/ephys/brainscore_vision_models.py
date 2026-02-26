@@ -55,7 +55,7 @@ register_model(
     module_path="berg.models.ephys.brainscore_vision_models",
     class_name="BrainScoreGateway",
     modality="ephys",
-    training_dataset="BrainScore",
+    training_dataset="BrainScore_Vision",
     yaml_path="berg/models/model_cards/brainscore_vision.yaml"
 )
 
@@ -87,7 +87,7 @@ class BrainScoreGateway(BaseModelInterface):
         berg_dir : str
             Path to BERG directory
         model_id : str
-            Model identifier in format "brainscore_{model_name}"
+            Model identifier in format "brainscore_vision-{model_name}",
         device : str
             Device for computation ("cpu", "cuda", or "auto")
         selection : dict
@@ -102,14 +102,11 @@ class BrainScoreGateway(BaseModelInterface):
         # Validate parameters
         self._validate_parameters()
         
-        # Parse BrainScore model name from model_id 
+        # Parse BrainScore model name from model_id
         if model_id.startswith("brainscore_vision-"):
-            lowercase_name = model_id.replace("brainscore_vision-", "")
+            self.brainscore_model_name = model_id.replace("brainscore_vision-", "")
         else:
-            lowercase_name = model_id
-        
-        # Get original case for BrainScore API
-        self.brainscore_model_name = get_original_case_model_name(lowercase_name)
+            self.brainscore_model_name = model_id
         
         # Parse selection parameters (roi is guaranteed to exist after validation)
         self.roi = selection['roi']
@@ -380,16 +377,8 @@ class BrainScoreGateway(BaseModelInterface):
     ) -> Dict[str, Any]:
         """
         Get model metadata.
-        
-        BrainScore models provide minimal metadata.
         """
-        if model_instance:
-            return {
-                "brainscore_model": model_instance.brainscore_model_name,
-                "roi": model_instance.roi,
-                "time_bins": model_instance.time_bins,
-                "benchmark": REGION_BENCHMARKS[model_instance.roi]
-            }
+        print("BrainScore does not provide metadata. Please check their website for more model information: https://www.brain-score.org/vision/leaderboard/")
         return {}
     
     
@@ -400,26 +389,17 @@ class BrainScoreGateway(BaseModelInterface):
         self.regression = None
 
 
-# Discovery function
 def discover_brainscore_models() -> List[str]:
     """
     Discover all available BrainScore vision models.
-    
-    Returns lowercase model names for display, and maintains a mapping
-    to original case for API calls.
+    Returns
+    -------
+    List[str]
+        Sorted list of model names usable with 'brainscore_vision-{name}'.
     """
     models = []
     for importer, modname, ispkg in pkgutil.iter_modules(bs_models.__path__):
         if not modname.startswith('_'):
-            models.append(modname.lower())
+            models.append(modname)
     
     return sorted(models)
-
-
-def get_original_case_model_name(lowercase_name: str) -> str:
-    """Map lowercase model name back to original case for BrainScore API."""
-    for importer, modname, ispkg in pkgutil.iter_modules(bs_models.__path__):
-        if modname.lower() == lowercase_name:
-            return modname
-    
-    raise ValueError(f"BrainScore model '{lowercase_name}' not found")
