@@ -1,9 +1,11 @@
 import os
+import shutil
+import tempfile
 import numpy as np
 import yaml
 import torch
 import logging
-from typing import Any, Optional
+from typing import Any
 from nilearn.datasets import fetch_atlas_schaefer_2018
 from berg.core.exceptions import InvalidParameterError
 from berg.core.model_registry import register_model
@@ -222,6 +224,16 @@ class Text2fMRI(BaseModelInterface):
             self.model.load_model_from_hub(repo_id)
         self.model.eval()
 
+    def _get_selected_parcel_indices(self):
+        if self.roi is None and self.voxel_index is None:
+            return None
+        mask = np.zeros(self.N_PARCELS_MODEL, dtype=bool)
+        if self.roi is not None:
+            mask |= np.isin(self.roi_labels, self.roi)
+        if self.voxel_index is not None:
+            mask |= self.voxel_index
+        return np.where(mask)[0]
+
     @torch.no_grad()
     def generate_response(self, stimulus: list[str]) -> torch.Tensor:
         """
@@ -242,23 +254,7 @@ class Text2fMRI(BaseModelInterface):
         if self.model is None:
             self.load_model(load_feature_extractor=not self.low_mem_use)
 
-        # Compute ROI indices if any selection is active
-        roi_indices = None
-        if self.roi is not None or self.voxel_index is not None:
-            # Start with all False
-            combined_mask = np.zeros(self.N_PARCELS_MODEL, dtype=bool)
-            
-            # Apply ROI selection (if present)
-            if self.roi is not None:
-                roi_mask = np.isin(self.roi_labels, self.roi)
-                combined_mask = combined_mask | roi_mask
-            
-            # Apply voxel_index selection (if present)
-            if self.voxel_index is not None:
-                combined_mask = combined_mask | self.voxel_index
-            
-            # Convert to integer indices
-            roi_indices = np.where(combined_mask)[0]
+        roi_indices = self._get_selected_parcel_indices()
 
         with torch.inference_mode():
             responses = self.model(
@@ -271,6 +267,96 @@ class Text2fMRI(BaseModelInterface):
             self.cleanup()
 
         return responses
+
+    def generate_glass_brain_animation(
+        self,
+        responses: torch.Tensor,
+        out_path: str,
+        display_mode: str = "lyrz",
+        cmap: str = "cold_hot",
+        cleanup_frames: bool = True,
+    ) -> str:
+        """
+        Save a glass-brain animation from model responses.
+
+        Args:
+            responses: Tensor of shape [n_trs, n_parcels] from generate_response.
+            out_path: Output path ending with .gif.
+            display_mode: Nilearn display mode (e.g. "lyrz").
+            cmap: Colormap used for plotting.
+            cleanup_frames: If True, temporary PNG frames are removed.
+
+        Returns:
+            str: Absolute path to saved animation.
+        """
+        from nilearn import image, plotting
+        from nilearn.maskers import NiftiLabelsMasker
+        from PIL import Image
+
+        r = responses.detach().cpu().numpy().astype(np.float32)
+        if r.ndim != 2:
+            raise ValueError(f"`responses` must be 2D [time, parcels], got shape {r.shape}.")
+
+        selected_idx = self._get_selected_parcel_indices()
+        if selected_idx is not None:
+            full_r = np.zeros((r.shape[0], self.N_PARCELS_MODEL), dtype=np.float32)
+            full_r[:, selected_idx] = r
+            r = full_r
+
+        atlas = fetch_atlas_schaefer_2018(
+            n_rois=self.N_PARCELS_MODEL, yeo_networks=7, verbose=0
+        )
+        masker = NiftiLabelsMasker(labels_img=atlas["maps"], standardize=False)
+        masker.fit()
+        nii = masker.inverse_transform(r)
+
+        out_path = os.path.abspath(out_path)
+        os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
+        ext = os.path.splitext(out_path)[1].lower()
+        if ext != ".gif":
+            raise ValueError("`out_path` must end with .gif.")
+
+        vmax = float(np.percentile(np.abs(r), 99))
+        vmin = -vmax
+        fps = float(self.config.tr)
+
+        frame_dir = tempfile.mkdtemp(prefix="glass_brain_frames_", dir=os.path.dirname(out_path) or ".")
+        frame_paths = []
+        frames = []
+        try:
+            for i in range(r.shape[0]):
+                disp = plotting.plot_glass_brain(
+                    image.index_img(nii, i),
+                    display_mode=display_mode,
+                    cmap=cmap,
+                    symmetric_cbar=True,
+                    plot_abs=False,
+                    colorbar=True,
+                    vmin=vmin,
+                    vmax=vmax,
+                    title=f"TR {i + 1}/{r.shape[0]}",
+                )
+                frame_path = os.path.join(frame_dir, f"frame_{i:05d}.png")
+                disp.savefig(frame_path, dpi=120)
+                disp.close()
+                frame_paths.append(frame_path)
+
+            frames = [Image.open(p).convert("RGB") for p in frame_paths]
+            duration_ms = int(round(1000.0 / fps))
+            frames[0].save(
+                out_path,
+                save_all=True,
+                append_images=frames[1:],
+                duration=duration_ms,
+                loop=0,
+            )
+        finally:
+            for frame in frames:
+                frame.close()
+            if cleanup_frames:
+                shutil.rmtree(frame_dir, ignore_errors=True)
+
+        return out_path
 
     def cleanup(self):
         """Frees memory by unloading models and clearing CUDA cache."""
