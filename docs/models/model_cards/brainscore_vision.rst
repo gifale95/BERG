@@ -54,6 +54,8 @@ Access to BrainScore's 440+ vision models benchmarked against macaque electrophy
 **Usage.** Use `berg.list_models(expand_brainscore_vision=True)` to see all models.
 Model IDs: `"brainscore-vision-{model_name}"` (e.g., `"brainscore-vision-alexnet"`).
 
+A hands-on tutorial demonstrating how to use BrainScore models within BERG is available as a `Colab notebook <https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17>`_.
+
 Input
 -----
 
@@ -248,3 +250,4 @@ References
 * BrainScore Paper (Schrimpf et al., 2018): https://www.biorxiv.org/content/10.1101/407007v1
 * Freeman & Ziemba 2013 Paper: https://pubmed.ncbi.nlm.nih.gov/23685719/
 * Majaj & Hong 2015 Paper: https://pubmed.ncbi.nlm.nih.gov/26424887/
+* BrainScore Tutorial (Colab): https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17

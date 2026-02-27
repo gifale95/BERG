@@ -40,6 +40,8 @@ description: |
   **Usage.** Use `berg.list_models(expand_brainscore_language=True)` to see all models.
   Model IDs: `"brainscore-language-{model_name}"` (e.g., `"brainscore-language-gpt2"`).
 
+  A hands-on tutorial demonstrating how to use BrainScore models within BERG is available as a `Colab notebook <https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17>`_.
+
 
 
 input:
@@ -133,3 +135,4 @@ references:
   - BrainScore Language Repository: https://github.com/brain-score/language
   - BrainScore Paper (Schrimpf et al., 2018): https://www.biorxiv.org/content/10.1101/407007v1
   - Pereira 2018 Paper: https://doi.org/10.1038/s41467-018-03068-4
+  - BrainScore Tutorial (Colab): https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17  
