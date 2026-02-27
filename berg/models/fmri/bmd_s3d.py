@@ -79,8 +79,8 @@ class FMRIEncodingModel(BaseModelInterface):
             If "auto", will use GPU if available, otherwise CPU.
         selection : dict, optional
             Specifies for which vertices to generate the in silico fMRI responses.
-            - roi: The region-of-interest (ROI) for which the in silico fMRI
-                responses are generated.
+            - roi: A single ROI name or list of ROI names for which the in
+                silico fMRI responses are generated.
             - voxels: Binary one-hot encoded vector with ones indicating
                 the voxels for which the in silico fMRI responses are
                 generated. This vector must have exactly the same length as the
@@ -95,8 +95,8 @@ class FMRIEncodingModel(BaseModelInterface):
                 - Subject 8:  108,407 voxels
                 - Subject 9:  108,250 voxels
                 - Subject 10: 107,987 voxels
-                The voxels from the one-hot encoded vector are only selected if
-                the "roi" key is not provided, or has value None.
+                If both "roi" and "voxels" are provided, the union of all
+                selected voxels is used.
         berg_dir : str, optional
             Path to the BERG directory containing model files and weights.
         """
@@ -134,11 +134,14 @@ class FMRIEncodingModel(BaseModelInterface):
         if self.selection is not None:
             validate_selection_keys(self.selection, self.SELECTION_KEYS)
 
-            # Validate ROI
+            # Validate ROI — accept a single string or a list of strings
             if "roi" in self.selection:
-                self.roi = validate_roi(
-                    self.selection["roi"], self.VALID_ROIS
-                )
+                roi_input = self.selection["roi"]
+                if not isinstance(roi_input, list):
+                    roi_input = [roi_input]
+                for roi in roi_input:
+                    validate_roi(roi, self.VALID_ROIS)
+                self.roi = roi_input
 
             # Validate voxels
             if "voxels" in self.selection:
@@ -166,8 +169,10 @@ class FMRIEncodingModel(BaseModelInterface):
 
         try:
 
-            # Select the used voxels
-            # If the ROI is provided, select the voxels based on the chosen ROI
+            # Select the used voxels — union of all ROI and voxel selections
+            selected = set()
+
+            # Add indices for each selected ROI
             if self.roi is not None:
                 metadata_dir = os.path.join(
                     self.berg_dir, 'encoding_models', 'modality-fmri',
@@ -175,14 +180,19 @@ class FMRIEncodingModel(BaseModelInterface):
                     'metadata', f'metadata_sub-{self.subject:02d}.npy'
                 )
                 metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
-                self.selected_voxels = np.squeeze(
-                    metadata_dict['fmri']['rois'][self.roi][1])
-            # Select voxels based on one-hot encoded vector only if the ROI is
-            # not provided
+                for roi in self.roi:
+                    roi_indices = np.squeeze(metadata_dict['fmri']['rois'][roi][1])
+                    selected.update(roi_indices.tolist())
+
+            # Add voxel indices from binary array selection
+            if self.selected_voxels is not None:
+                selected.update(self.selected_voxels.tolist())
+
+            # If nothing was selected, use all voxels
+            if selected:
+                self.selected_voxels = np.array(sorted(selected))
             else:
-                # If selected voxels is not set, use all voxels
-                if self.selected_voxels is None:
-                    self.selected_voxels = range(self.VOXELS_LENGTH[self.subject-1])
+                self.selected_voxels = np.arange(self.VOXELS_LENGTH[self.subject-1])
 
             # Load the vision transformer
             self.feature_extractor = self._load_feature_extractor(self.device)

@@ -144,7 +144,7 @@ parameters:
       roi:
         type: str
         description: |
-          The region-of-interest (ROI) for which the in silico fMRI responses are generated.
+          A single ROI name or list of ROI names for which the in silico fMRI responses are generated.
         valid_values: [
           "lV1v", "rV1v", "lV1d", "rV1d", "lV2v", "rV2v", "lV2d", "rV2d", "lV3v",
           "rV3v", "lV3d", "rV3d", "lV3ab", "rV3ab", "lhV4", "rhV4",
@@ -170,8 +170,9 @@ parameters:
           - Subject 8:  108,407 voxels
           - Subject 9:  108,250 voxels
           - Subject 10: 107,987 voxels
-          The voxels from the one-hot encoded vector are only selected if the "roi" key
-          is not provided, or has value None.
+          The voxels from the one-hot encoded vector are included in addition to
+          any voxels selected via the "roi" key. If both are provided, the union
+          of all selected voxels is used.
         example:: [0, 0, ..., 1, 1, 0]
     function: "get_encoding_model"
 
