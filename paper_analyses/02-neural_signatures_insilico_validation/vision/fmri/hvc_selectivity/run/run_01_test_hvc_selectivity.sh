@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg_insilico_validation-hvc_selectivity-01_test_hvc_selectivity
 #SBATCH --mail-type=end
 #SBATCH --mem=25000
-#SBATCH --time=00:10:00
+#SBATCH --time=00:30:00
 #SBATCH --qos=hiprio
 #SBATCH --partition=agcichy
 #SBATCH --gres=gpu:1 # number of GPUs
@@ -15,7 +15,7 @@ module add CUDA/12.4.0
 declare -a encoding_model_all
 declare -a subject_all
 index=0
-for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' ; do
+for em in 'fmri-nsd_fsaverage-vit_b_32' ; do
     for s in `seq 1 8` ; do
         encoding_model_all[$index]=$em
         subject_all[$index]=$s
@@ -38,7 +38,7 @@ cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/pap
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
-conda activate general
+conda activate berg
 
 # Run the job
 python 01_test_hvc_selectivity.py --subject $subject --encoding_model $encoding_model

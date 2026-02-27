@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg_insilico_validation-ffa_ppa_effects-01_generate_insilico_fmri
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
-#SBATCH --time=01:00:00
+#SBATCH --time=02:00:00
 #SBATCH --qos=hiprio
 #SBATCH --partition=agcichy
 #SBATCH --gres=gpu:1 # number of GPUs
@@ -14,7 +14,7 @@ module add CUDA/12.4.0
 # Create the parameters combinations
 declare -a encoding_model_all
 index=0
-for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' ; do
+for em in 'fmri-nsd_fsaverage-vit_b_32' ; do
     encoding_model_all[$index]=$em
     ((index=index+1))
 done
@@ -25,11 +25,11 @@ encoding_model=${encoding_model_all[$SLURM_ARRAY_TASK_ID]}
 echo encoding_model: $encoding_model
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neural_signatures_insilico_validation/vision/fmri/ffa_ppa_effects
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/ffa_ppa_effects
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
-conda activate general
+conda activate berg
 
 # Run the job
 python 01_generate_insilico_fmri.py --encoding_model $encoding_model

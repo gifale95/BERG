@@ -39,7 +39,7 @@ cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/neu
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
-conda activate general
+conda activate berg
 
 # Run the job
 python 01_create_stimuli.py --GRID_RES $GRID_RES --PROBE_SIGMA $PROBE_SIGMA --BG_VALUE $BG_VALUE

@@ -37,7 +37,7 @@ from tqdm import tqdm
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2

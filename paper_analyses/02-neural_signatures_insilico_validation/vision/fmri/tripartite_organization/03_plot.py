@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-vit_b_32')
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--images', type=str, default='naturalistic')
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)

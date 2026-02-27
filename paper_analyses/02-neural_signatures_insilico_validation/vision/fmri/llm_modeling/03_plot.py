@@ -1,5 +1,5 @@
-"""Plot the searchlight RSA scores between in silico fMRI responses and
-behavioral embeddings.
+"""Plot the searchlight RSA scores between in silico fMRI responses and LLM
+embeddings.
 
 Parameters
 ----------
@@ -33,10 +33,10 @@ import matplotlib.pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
-parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--encoding_threshold', default=20, type=float)
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
+parser.add_argument('--encoding_threshold', default=20, type=float) # 20
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -45,7 +45,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'behavioral_modeling', 'plots', args.encoding_model)
+    'vision', 'fmri', 'llm_modeling', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -60,7 +60,7 @@ for sub in args.subjects:
 
         results_dir = os.path.join(args.berg_dir,
             'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'behavioral_modeling', 'rsa', args.encoding_model, 'rsa_sub-'+
+            'llm_modeling', 'rsa', args.encoding_model, 'rsa_sub-'+
             format(sub, '02')+'_'+hemi+'.npy')
         results = np.load(results_dir, allow_pickle=True).item()
 
@@ -90,8 +90,8 @@ rh_rsa = np.array(rh_rsa)
 # =============================================================================
 # Load the significance
 # stats_dir = os.path.join(args.berg_dir,
-#     'neural_signatures_insilico_validation', 'vision', 'fmri',
-#     'behavioral_modeling', 'stats', args.encoding_model, 'stats.npy')
+#     'neural_signatures_insilico_validation', 'vision', 'fmri', 'llm_modeling',
+#     'stats', args.encoding_model, 'stats.npy')
 # stats = np.load(stats_dir, allow_pickle=True).item()
 
 # # Set non significant vertices to NaN
@@ -108,7 +108,7 @@ plt.rc('ytick', labelsize=19)
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-subject = 'fsaverage_nsd_sub-01'
+subject = 'fsaverage'
 
 
 # =============================================================================

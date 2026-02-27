@@ -18,7 +18,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-vit_b_32')
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 

@@ -114,10 +114,8 @@ for key, val in dnn_rdms.items():
     dnn_rdm_tril[key] = val[idx_tril]
 
 # Access the precomputed geodesic distances
-data_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'behavioral_modeling', 'vertex_geodesic_distances',
-    'vertex_geodesic_distances_'+args.hemisphere+'.h5')
+data_dir = os.path.join(args.berg_dir, 'geodesic_vertex_distances',
+    'geodesic_vertex_distances_'+args.hemisphere+'.h5')
 geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
 
 # Loop across fMRI vertices

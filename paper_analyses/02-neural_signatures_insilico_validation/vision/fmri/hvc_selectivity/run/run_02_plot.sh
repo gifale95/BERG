@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg_insilico_validation-hvc_selectivity-02_plot
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
-#SBATCH --time=00:40:00
+#SBATCH --time=02:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -24,7 +24,7 @@ cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/pap
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
-conda activate general
+conda activate berg
 
 # Run the job
 python 02_plot.py --encoding_model $encoding_model

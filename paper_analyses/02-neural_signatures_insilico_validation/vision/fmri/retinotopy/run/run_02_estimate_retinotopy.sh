@@ -3,8 +3,8 @@
 #SBATCH --job-name=berg_insilico_validation-retinotopy-02_estimate_retinotopy
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
-#SBATCH --time=20:00:00
-#SBATCH --qos=prio
+#SBATCH --time=04-00:00:00
+#SBATCH --qos=extended
 #SBATCH --partition=agcichy
 #SBATCH --gres=gpu:1 # number of GPUs
 
@@ -18,7 +18,7 @@ declare -a GRID_RES_all
 declare -a PROBE_SIGMA_all
 declare -a BG_VALUE_all
 index=0
-for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' ; do
+for em in 'fmri-nsd_fsaverage-vit_b_32' ; do
     for sub in `seq 1 8` ; do
         for g in '40' ; do
             for s in '0.5' ; do
@@ -53,7 +53,7 @@ cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/pap
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
-conda activate general
+conda activate berg
 
 # Run the job
 python 02_estimate_retinotopy.py --subject $subject --GRID_RES $GRID_RES --PROBE_SIGMA $PROBE_SIGMA --BG_VALUE $BG_VALUE --encoding_model $encoding_model

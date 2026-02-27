@@ -60,7 +60,8 @@ for key, val in vars(args).items():
 berg = BERG(berg_dir=args.berg_dir)
 
 # Load the encoding model
-model = berg.get_encoding_model(args.encoding_model, subject=args.subject)
+model = berg.get_encoding_model(args.encoding_model, subject=args.subject,
+    device='auto')
 
 
 # =============================================================================
@@ -96,8 +97,8 @@ for i, test_img in enumerate(tqdm(test_img_list)):
         lh_response = in_silico_fmri[0]
         rh_response = in_silico_fmri[1]
     else:
-        lh_response += in_silico_fmri[0] # type: ignore
-        rh_response += in_silico_fmri[1] # type: ignore
+        lh_response += in_silico_fmri[0]
+        rh_response += in_silico_fmri[1]
     del in_silico_fmri, probe_imgs
     torch.cuda.empty_cache()
     gc.collect()
@@ -112,8 +113,8 @@ xx, yy = np.meshgrid(coords, coords, indexing="xy")
 centers = np.stack([xx.ravel(), yy.ravel()], axis=1)
 
 # Define the probe location that elicits the maximum in silico fMRI responses
-max_idx_lh = np.argmax(lh_response, axis=0) # type: ignore
-max_idx_rh = np.argmax(rh_response, axis=0) # type: ignore
+max_idx_lh = np.argmax(lh_response, axis=0)
+max_idx_rh = np.argmax(rh_response, axis=0)
 x0s_lh = centers[max_idx_lh, 0]
 y0s_lh = centers[max_idx_lh, 1]
 x0s_rh = centers[max_idx_rh, 0]
@@ -155,4 +156,4 @@ os.makedirs(save_dir, exist_ok=True)
 
 # Save the results
 np.savez_compressed(os.path.join(save_dir, 'retinotopic_maps.npz'),
-    data=results) # type: ignore
+    data=results)
