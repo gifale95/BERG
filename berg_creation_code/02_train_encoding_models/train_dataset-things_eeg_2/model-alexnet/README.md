@@ -1,4 +1,4 @@
-# eeg-things_eeg_2-vit_b_32
+# eeg-things_eeg_2-alexnet
 
 In the `model card` you can find a [description][description] of the model, as well as helpful [references][references] such as the **model building code**.
 

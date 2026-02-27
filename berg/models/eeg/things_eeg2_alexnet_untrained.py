@@ -28,7 +28,7 @@ from berg.interfaces.base_model import BaseModelInterface
 
 # Load model info from YAML
 def load_model_model_info():
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg-things_eeg_2-alexnet.yaml")
+    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg-things_eeg_2-alexnet_untrained.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -37,17 +37,17 @@ model_info = load_model_model_info()
 
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.eeg.things_eeg2_alexnet",
+    module_path="berg.models.eeg.things_eeg2_alexnet_untrained",
     class_name="EEGEncodingModel",
     modality=model_info.get("modality", "eeg"),
     training_dataset=model_info.get("training_dataset", "things_eeg_2"),
-    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg-things_eeg_2-alexnet.yaml")
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "eeg-things_eeg_2-alexnet_untrained.yaml")
 )
 
 
 class EEGEncodingModel(BaseModelInterface):
     """
-    EEG encoding model using an AlexNet backbone to generate
+    EEG encoding model using an untrained AlexNet backbone to generate
     in silico EEG responses for the THINGS-EEG-2 dataset.
     """
     
@@ -138,7 +138,7 @@ class EEGEncodingModel(BaseModelInterface):
             # Get the EEG channels and time points dimensions
             metadata_dir = os.path.join(
                 self.berg_dir, 'encoding_models', 'modality-eeg',
-                'train_dataset-things_eeg_2', 'model-alexnet',
+                'train_dataset-things_eeg_2', 'model-alexnet_untrained',
                 'metadata', f'metadata_subject-{self.subject:02d}.npy'
             )
             metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
@@ -173,7 +173,8 @@ class EEGEncodingModel(BaseModelInterface):
 
     def _load_feature_extractor(self, device):
         """
-        Load the AlexNet feature extractor for selected intermediate layers.
+        Load the untrained AlexNet feature extractor for selected intermediate
+        layers.
         
         Parameters
         ----------
@@ -186,7 +187,20 @@ class EEGEncodingModel(BaseModelInterface):
             Torch feature extractor model in eval mode, configured to
             extract representations from 12 transformer layers.
         """
-        model = torchvision.models.alexnet(weights='DEFAULT')
+        # Set random seed to ensure that the same random weights are initialized
+        seed = 20200220
+
+        # Set all relevant seeds
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+
+        # Ensure deterministic behavior (important for full reproducibility)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+        # Load the model with random weights
+        model = torchvision.models.alexnet(weights=None)
         
         # Select the used layers for feature extraction
         model_layers = [
@@ -230,7 +244,7 @@ class EEGEncodingModel(BaseModelInterface):
         # Load the weights
         weights_dir = os.path.join(
             self.berg_dir, 'encoding_models', 'modality-eeg',
-            'train_dataset-things_eeg_2', 'model-alexnet',
+            'train_dataset-things_eeg_2', 'model-alexnet_untrained',
             'encoding_models_weights', 'weights_subject-'+
             format(self.subject, '02')+'.npy'
         )
@@ -427,7 +441,7 @@ class EEGEncodingModel(BaseModelInterface):
                                 'encoding_models', 
                                 'modality-eeg',
                                 'train_dataset-things_eeg_2', 
-                                'model-alexnet', 
+                                'model-alexnet_untrained', 
                                 'metadata',
                                 f'metadata_subject-{subject:02d}.npy')
 

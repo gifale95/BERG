@@ -1,20 +1,15 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-nsd_fsaverage_alexnet-train_encoding
+#SBATCH --job-name=berg-things_eeg_2_alexnet_untrained-train_encoding_CPU
 #SBATCH --mail-type=end
-#SBATCH --mem=70000
-#SBATCH --time=10:00:00
+#SBATCH --mem=40000
+#SBATCH --time=20:00:00
 #SBATCH --qos=extended
-#SBATCH --partition=agcichy
-#SBATCH --gres=gpu:1 # number of GPUs
-
-# CUDA module
-module add CUDA/12.4.0
 
 # Create the parameters combinations
 declare -a subject_all
 index=0
-for s in `seq 1 8` ; do
+for s in `seq 1 10` ; do
     subject_all[$index]=$s
     ((index=index+1))
 done
@@ -32,7 +27,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/berg_creation_code/02_train_encoding_models/train_dataset-nsd_fsaverage/model-alexnet
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/berg_creation_code/02_train_encoding_models/train_dataset-things_eeg_2/model-alexnet_untrained
 
 # Run the job
 python train_encoding.py --subject $subject

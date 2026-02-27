@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-things_eeg_2_alexnet-train_encoding_CPU
 #SBATCH --mail-type=end
-#SBATCH --mem=70000
+#SBATCH --mem=40000
 #SBATCH --time=20:00:00
 #SBATCH --qos=extended
 
