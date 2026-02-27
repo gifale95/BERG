@@ -70,6 +70,13 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-vit_b_32/encoding_models_accuracy/>`_
+   * - 
+     - :doc:`model_cards/fmri-nsd_fsaverage-alexnet`
+     - Linear mapping of AlexNet image features onto fMRI responses.
+     - Natural Scenes Dataset (surface space)
+     - Human
+     - Images
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-alexnet/encoding_models_accuracy/>`_
    * - ✅
      - :doc:`model_cards/fmri-nsd-fwrf`
      - Feature-weighted receptive fields, convolutional neural networks trained end-to-end to predict fMRI responses from input images.
@@ -137,6 +144,13 @@ Encoding models trained on neural responses recorded with Electroencephalography
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy/>`_
+   * - 
+     - :doc:`model_cards/eeg-things_eeg_2-alexnet`
+     - Linear mapping of AlexNet image features onto EEG responses.
+     - THINGS EEG2
+     - Human
+     - Images
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-eeg/train_dataset-things_eeg_2/model-alexnet/encoding_models_accuracy/>`_
 
 modality-meg
 ~~~~~~~~~~~~

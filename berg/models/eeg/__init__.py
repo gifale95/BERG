@@ -1,1 +1,1 @@
-import berg.models.eeg.things_eeg
+import berg.models.eeg.things_eeg2_vit_b_32

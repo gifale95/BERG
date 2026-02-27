@@ -35,9 +35,9 @@ from berg import BERG
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
-parser.add_argument('--model_id', type=str, default='fmri-nsd_fsaverage-<your_model_name>')
-parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
-parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
+parser.add_argument('--model_id', type=str, default='fmri-nsd_fsaverage-alexnet') # !!!'fmri-nsd_fsaverage-<your_model_name>'
+parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str) # !!!
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str) # !!!
 args = parser.parse_args()
 
 
