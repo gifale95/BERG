@@ -22,7 +22,11 @@ description: |
   
   **Model training partition.** fMRI responses for 1000 videos.
   
-  **Model testing partition.** fMRI responses for 5102 videos.
+  **Model testing partition.** fMRI responses for 102 videos.
+
+  **ROIs.** Each ROI in the metadata consists of a tuple with 3 items: (1) The ROI voxel indices in 3-dimensional brain
+  volume space; (2) The ROI voxel indices in 1-dimensional flattened brain volume space; (3) the NIfTI images of the
+  ROI voxel indices.
 
 metadata: |
   'fmri':
@@ -31,8 +35,8 @@ metadata: |
       group_mask_affine                  : (4, 4)        - Whole brain group mask affine
       sub_mask                           : (62, 77, 61)  - Whole brain subject mask
       sub_mask_header                    : object        - Whole brain subject mask header
-      sub_mask_affine                    : (4, 4)        - Whole brain subject mask
-      rois                               : dict          - ROI vertex indices (l = left hemisphere, r = right hemisphere)
+      sub_mask_affine                    : (4, 4)        - Whole brain subject mask affine
+      rois                               : dict          - ROI voxel indices (l = left hemisphere, r = right hemisphere)
           lV1v                           : tuple         - Visual area 1 ventral (LH)
           rV1v                           : tuple         - Visual area 1 ventral (RH)
           lV1d                           : tuple         - Visual area 1 dorsal (LH)
