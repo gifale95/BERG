@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg-nsd_fsaverage_alexnet-train_encoding_CPU
 #SBATCH --mail-type=end
 #SBATCH --mem=40000
-#SBATCH --time=20:00:00
+#SBATCH --time=04:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
