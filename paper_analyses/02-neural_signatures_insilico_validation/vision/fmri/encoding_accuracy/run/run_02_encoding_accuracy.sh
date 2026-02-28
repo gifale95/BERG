@@ -3,13 +3,13 @@
 #SBATCH --job-name=berg_insilico_validation-fmri-encoding_accuracy-02_encoding_accuracy
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
-#SBATCH --time=02-00:00:00
+#SBATCH --time=15:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a encoding_model_all
 index=0
-for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' ; do
+for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained'; do
     encoding_model_all[$index]=$em
     ((index=index+1))
 done
