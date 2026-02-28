@@ -46,7 +46,8 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 results_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri',
-    'encoding_accuracy', 'encoding_accuracy', 'encoding_accuracy.npy')
+    'encoding_accuracy', 'encoding_accuracy', args.encoding_model,
+    'encoding_accuracy.npy')
 results = np.load(results_dir, allow_pickle=True).item()
 
 correlation_nsdcore = results['correlation_nsdcore']
@@ -68,7 +69,6 @@ p_val_2 = results['p_val_2']
 # Plot the encoding accuracy results on brain surfaces
 # =============================================================================
 # Plot parameters
-fontsize = 40
 plt.rc('xtick', labelsize=19)
 plt.rc('ytick', labelsize=19)
 matplotlib.use("svg")
@@ -178,22 +178,22 @@ corr_ci = []
 corr_ci.append(ci_corr_iv1tr_iv1tr)
 corr_ci.append(ci_corr_iv1tr_iv2tr)
 corr_ci.append(ci_corr_iv1tr_is)
-labels = ['In vivo\nsingle trials', 'In vivo\ntrial average', 'In silico']
+labels = ['In vivo\n(single trials)', 'In vivo\n(trial average)', 'In silico']
 
 # Plot parameters
 n_sub = len(args.subjects)
 x_coord = np.arange(len(corr_avg))
 alpha = 0.2
 marker = 'o'
-s = 500
+s_single = 500
 s_mean = 750
 color = 'k'
 dist = 0.15
 fontsize_sig = 20
-sig_offset = 7
-sig_bar_length = 3
+sig_offset = 0.02
+sig_bar_length = 0.005
 linewidth_sig_bar = 1
-sig_star_offset_top = 2
+sig_star_offset_top = 0.005
 
 # Create the figure
 fig = plt.figure(figsize=(10, 10))
@@ -201,10 +201,17 @@ fig = plt.figure(figsize=(10, 10))
 # Loop across comparisons
 for i in range(len(corr_avg)):
 
+    # Plot lines connecting subjects from different comparisons
+    for s in range(n_sub):
+        if i > 0:
+            plt.plot(
+                [x_coord[i-1], x_coord[i]], [corr_avg[i-1][s], corr_avg[i][s]],
+                color=color, alpha=alpha, linewidth=1)
+
     # Univariate response scores
     x = np.repeat(i, n_sub)
     y = corr_avg[i]
-    plt.scatter(x, y, s=s, color=color, alpha=alpha, edgecolors='none')
+    plt.scatter(x, y, s=s_single, color=color, alpha=alpha, edgecolors='none')
     plt.scatter(x[0], np.mean(y), s=s_mean, color=color, edgecolors='none')
 
     # Confidence intervals
@@ -213,13 +220,6 @@ for i in range(len(corr_avg)):
     ci[1] = corr_ci[i][1] - np.mean(y)
     plt.errorbar(x[0], np.mean(y), yerr=np.reshape(ci, (-1,1)), fmt="none",
         ecolor=color, elinewidth=5, capsize=0)
-    
-    # Plot lines connecting subjects from different comparisons
-    for s in range(n_sub):
-        if i > 0:
-            plt.plot(
-                [x_coord[i-1], x_coord[i]], [corr_avg[i-1][s], corr_avg[i][s]],
-                color=color, alpha=alpha, linewidth=1)
 
 # Significance 1
 if p_val_1 < 0.05:
@@ -255,12 +255,12 @@ plt.xticks(ticks=xticks, labels=labels, rotation=0, ha='center')
 plt.xlim(left=-0.5, right=2.5)
 
 # y-axis parameters
-yticks = [0, 0.2, 0.4, 0.6, 0.8, 1]
-ylabels = [0, 0.2, 0.4, 0.6, 0.8, 1]
+yticks = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+ylabels = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 plt.yticks(ticks=yticks, labels=ylabels)
 ylabel = "Pearson's $r$"
 plt.ylabel(ylabel, fontsize=fontsize)
-plt.ylim(bottom=0, top=1)
+plt.ylim(bottom=0, top=0.4)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'noise_analysis.svg')

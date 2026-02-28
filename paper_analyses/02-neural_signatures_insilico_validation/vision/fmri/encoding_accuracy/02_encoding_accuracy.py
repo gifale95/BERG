@@ -277,7 +277,7 @@ ci_corr_iv1tr_iv2tr[0] = np.percentile(dist_corr_iv1tr_iv2tr, 2.5)
 ci_corr_iv1tr_iv2tr[1] = np.percentile(dist_corr_iv1tr_iv2tr, 97.5)
 
 # Significance testing
-p_val_1 = ttest_rel(corr_iv1tr_iv2tr_avg, corr_iv1tr_is_avg,
+p_val_1 = ttest_rel(corr_iv1tr_iv2tr_avg, corr_iv1tr_iv1tr_avg,
     alternative='greater')[1]
 p_val_2 = ttest_rel(corr_iv1tr_is_avg, corr_iv1tr_iv2tr_avg,
     alternative='greater')[1]
