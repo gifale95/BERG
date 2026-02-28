@@ -1,10 +1,0 @@
-SLURM_ARRAY_JOB_ID: 1
-subject: 2
->>> Train encoding models <<<
-
-Input arguments:
-subject          2
-model            alexnet
-things_eeg_2_dir /scratch/giffordale95/datasets/things_eeg_2
-berg_dir         /scratch/giffordale95/projects/brain-encoding-response-generator
-  0%|          | 0/16540 [00:00<?, ?it/s]  0%|          | 1/16540 [01:09<320:35:29, 69.78s/it]  0%|          | 4/16540 [01:09<60:49:06, 13.24s/it]   0%|          | 7/16540 [01:11<29:27:57,  6.42s/it]  0%|          | 8/16540 [01:11<23:40:22,  5.16s/it]  0%|          | 9/16540 [01:11<18:31:20,  4.03s/it]  0%|          | 10/16540 [01:12<14:08:24,  3.08s/it]  0%|          | 12/16540 [01:12<8:30:56,  1.85s/it]   0%|          | 13/16540 [01:12<6:41:28,  1.46s/it]  0%|          | 14/16540 [01:12<5:12:00,  1.13s/it]  0%|          | 15/16540 [01:12<4:23:17,  1.05it/s]

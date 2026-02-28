@@ -1,3 +1,0 @@
-SLURM_ARRAY_JOB_ID: 7
-subject: 8
-python: can't open file '/home/giffordale95/projects/brain-encoding-response-generator/github/BERG/berg_creation_code/02_train_encoding_models/train_dataset-things_eeg_2/model-alexnet/train_encoding.py': [Errno 2] No such file or directory
