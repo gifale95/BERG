@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-nsd_fsaverage_alexnet_untrained-train_encoding_CPU
 #SBATCH --mail-type=end
-#SBATCH --mem=40000
-#SBATCH --time=04:00:00
+#SBATCH --mem=50000
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
