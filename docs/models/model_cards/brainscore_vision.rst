@@ -35,9 +35,9 @@ Access to BrainScore's 440+ vision models benchmarked against macaque electrophy
 
 **Neural data.** Benchmarks use electrophysiology recordings from macaque visual cortex:
 
-- V1/V2: Freeman & Ziemba 2013 (102 & 103 neurons, synthetic texture patches)
+- V1/V2: Freeman et al., 2013 (102 & 103 neurons, synthetic texture patches)
 
-- V4/IT: Majaj & Hong 2015 (88 & 168 neurons, grayscale objects on natural backgrounds)
+- V4/IT: Majaj et al., (88 & 168 neurons, grayscale objects on natural backgrounds)
 
 - Output: Predicted firing rates (spikes/second)
 
@@ -218,9 +218,6 @@ Example Usage
     
     # Prepare the stimulus (text/sentences)
     stimulus = /path/to/images
-
-    # Or use a numpy array
-    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
     
     # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(
@@ -248,6 +245,6 @@ References
 * BrainScore Website: https://www.brain-score.org/
 * BrainScore Vision Models Repository: https://github.com/brain-score/vision
 * BrainScore Paper (Schrimpf et al., 2018): https://www.biorxiv.org/content/10.1101/407007v1
-* Freeman & Ziemba 2013 Paper: https://pubmed.ncbi.nlm.nih.gov/23685719/
-* Majaj & Hong 2015 Paper: https://pubmed.ncbi.nlm.nih.gov/26424887/
+* Freeman et al., 2013 Paper: https://doi.org/10.1038/nn.3402
+* Majaj et al., 2015 Paper: https://doi.org/10.1523/JNEUROSCI.5181-14.2015
 * BrainScore Tutorial (Colab): https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17

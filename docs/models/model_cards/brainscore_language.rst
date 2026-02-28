@@ -31,13 +31,13 @@ Description
 
 For available models and scores, see the `BrainScore language leaderboard <https://www.brain-score.org/language/leaderboard/>`_.
 
-Access to BrainScore's language models benchmarked against human fMRI recordings from the Pereira 2018 study.
+Access to BrainScore's language models benchmarked against human fMRI recordings from the Pereira et al., 2018.
 
 **Neural data.** Benchmark uses fMRI from 9 subjects reading 384 factual sentences:
 
 - Stimuli: Wikipedia-style sentences (7-18 words) across 24 semantic topics (professions, instruments, animals, etc.)
 
-- Coverage: 12,155 voxels pooled (or ~1,350 per subject) from language network
+- Coverage: 12,155 voxels pooled across subjects (or ~1,350 per subject) from the language network
 
 - Output: Predicted BOLD signal (z-scored per voxel)
 
@@ -49,14 +49,14 @@ Access to BrainScore's language models benchmarked against human fMRI recordings
 
 3. Filter to single subject's voxels
 
-4. Extract model representations for benchmark sentences
+4. Extract model embeddings for benchmark sentences
 
-5. Train PLS regression: representations → BOLD responses (~few min, cached)
+5. Train PLS regression: embeddings → BOLD responses (~few min, cached)
 
 6. Predict BOLD responses for your sentences using cached regression
 
 **Usage.** Use `berg.list_models(expand_brainscore_language=True)` to see all models.
-Model IDs: `"brainscore-language-{model_name}"` (e.g., `"brainscore-language-gpt2"`).
+Model IDs: `"brainscore_language-{model_name}"` (e.g., `"brainscore_language-gpt2"`).
 
 A hands-on tutorial demonstrating how to use BrainScore models within BERG is available as a `Colab notebook <https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17>`_.
 
@@ -227,4 +227,4 @@ References
 * BrainScore Language Repository: https://github.com/brain-score/language
 * BrainScore Paper (Schrimpf et al., 2018): https://www.biorxiv.org/content/10.1101/407007v1
 * Pereira 2018 Paper: https://doi.org/10.1038/s41467-018-03068-4
-* BrainScore Tutorial (Colab): https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17
+* BERG BrainScore Tutorial (Colab): https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17
