@@ -33,13 +33,23 @@ Description
 For available models and scores, see the `BrainScore language leaderboard <https://www.brain-score.org/language/leaderboard/>`_.
 
 **What is BrainScore?**
-BrainScore is an open benchmarking platform where researchers submit computational models and evaluate how well those models predict real neural recordings. A benchmark in BrainScore is a pairing of a neural dataset with an evaluation protocol. There are many benchmarks available on the platform, each targeting a different brain region, species, or recording modality. BERG supports the use of BrainScore language models to generate in silico fMRI responses to text sentences.
+BrainScore is an open benchmarking platform where researchers submit computational models and evaluate how well those models
+predict neural responses to visual of language stimuli against benchmarks. A benchmark consists of a neural dataset on which the
+encoding models are trained and evaluated, together with an evaluation protocol. There are many benchmarks available on BrainScore,
+each targeting a different brain region, species, or recording modality. BERG supports the use of hundreds of BrainScore language models
+to generate in silico fMRI responses to text sentences.
 
 **How it works.**
-For each language model submitted to BrainScore, the submitter has identified which internal layer of the model best predicts neural activity in the human language network. BERG extracts activations from that layer and trains a Partial Least Squares (PLS) regression, which finds a low-dimensional mapping from high-dimensional model representations onto neural responses. This regression is trained on the Pereira et al. (2018) benchmark: human fMRI recordings collected while participants read 384 factual sentences. Once trained, the regression is cached to disk and reused for all future predictions, so the training step (~few minutes) only happens once per model and subject combination.
+For each language model submitted to BrainScore, the submitter has specified which internal layer of the model best predicts neural activity in the human
+language network. BERG extracts activations from that layer and trains a Partial Least Squares (PLS) regression (i.e., a brain encoding model), which finds
+a low-dimensional mapping from high-dimensional model representations onto neural responses. This regression is trained on the Pereira et al. (2018) benchmark:
+human fMRI recordings collected while participants read 384 factual sentences. Once trained, the regression is cached to disk and reused for all future
+predictions, so the training step (~few minutes) only happens once per model and subject combination.
 
 **Neural data.**
-The Pereira et al. (2018) benchmark uses fMRI recordings from 9 subjects reading 384 Wikipedia-style sentences (7 to 18 words) spanning 24 semantic topics (professions, instruments, animals, etc.). Recordings cover language-selective voxels from the left hemisphere language network, yielding approximately 1,350 voxels per subject (12,155 voxels pooled across all subjects). Neural responses are z-scored per voxel. Each subject has a separately trained and cached regression.
+The Pereira et al. (2018) benchmark uses fMRI recordings from 9 subjects reading 384 Wikipedia-style sentences (7 to 18 words) spanning 24 semantic topics
+(professions, instruments, animals, etc.). Recordings cover language-selective voxels from the left hemisphere language network, yielding approximately 1,350 voxels
+per subject (12,155 voxels pooled across all subjects). Neural responses are z-scored per voxel. Each subject has a separately trained and cached regression.
 
 **Workflow.**
 The following steps happen automatically under the hood when you call ``get_encoding_model()`` and ``encode()``:

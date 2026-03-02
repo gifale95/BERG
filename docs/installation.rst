@@ -12,7 +12,7 @@ Install BERG from GitHub using pip:
 
 Install BrainScore Models (Optional)
 -----------------------------
-BERG integrates with `BrainScore <https://www.brain-score.org>`_, giving you access to 440+ vision models scored against macaque electrophysiology recordings (V1, V2, V4, IT), as well as GPT-family language models scored against human fMRI data.
+BERG integrates with `BrainScore <https://www.brain-score.org>`_, giving you access to hundreds of vision models scored against macaque electrophysiology recordings (V1, V2, V4, IT), as well as GPT-family language models scored against human fMRI data.
 
 .. note::
 

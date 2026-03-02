@@ -20,6 +20,24 @@ For example:
 - ``fmri-nsd-fwrf``: An fMRI encoding model trained on the NSD using feature-weighted receptive fields.
 - ``eeg-things_eeg_2-vit_b_32``: An EEG model trained on the THINGS-EEG2 dataset using the ViT-B/32 visual transformer architecture.
 
+Model Naming Convention (BrainScore models)
+----------------------
+BERG additionally contains a special class of encoding models that are trained on `**BrainScore** <https://www.brain-score.org>`_ benchmarks.
+These models have a slightly different naming convention:
+
+``brainscore_{modality}-{model}``
+
+where
+
+* ``modality``: The neural recording modality of the BrainScore benchmark on which the encoding model was trained (i.e. vision, language).
+* ``model``: The specific BrainScore model used (e.g. AlexNet, GPT2-XL).
+
+For example:
+
+- ``brainscore_vision-alexnet``: A vision model trained on the BrainScore vision benchmark using the AlexNet architecture.
+- ``brainscore_language-gpt2``: A language model trained on the BrainScore language benchmark using GPT-2.
+
+
 Get Model Information
 ------------------------
 You can get detailed information about any model using:

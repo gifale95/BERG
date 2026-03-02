@@ -15,19 +15,32 @@ description: |
   For available models and scores, see the `BrainScore vision leaderboard <https://www.brain-score.org/vision/leaderboard/>`_.
 
   **What is BrainScore?**
-  BrainScore is an open benchmarking platform where researchers submit computational models and evaluate how well those models predict real neural recordings. A benchmark in BrainScore is a pairing of a neural dataset with an evaluation protocol. There are many benchmarks available on the platform, each targeting a different brain region, species, or recording modality. BERG supports the use of 440+ BrainScore vision models to generate in silico electrophysiology responses to images.
+  BrainScore is an open benchmarking platform where researchers submit computational models and evaluate how well those models
+  predict neural responses to visual of language stimuli against benchmarks. A benchmark consists of a neural dataset on which the
+  encoding models are trained and evaluated, together with an evaluation protocol. There are many benchmarks available on BrainScore,
+  each targeting a different brain region, species, or recording modality. BERG supports the use of hundreds of BrainScore vision models
+  to generate in silico electrophysiology responses to images, for predifined benchmarks.
 
   **How it works.**
-  For each vision model submitted to BrainScore, the submitter has specified which internal layer of the model best predicts neural activity in each brain region. BERG extracts activations from that layer for the selected region of interest (ROI) and trains a Partial Least Squares (PLS) regression, which finds a low-dimensional mapping from high-dimensional model representations onto neural responses. This regression is trained on the benchmark data for the selected ROI (see Neural data below). Once trained, the regression is cached to disk and reused for all future predictions, so the training step (~few minutes) only happens once per model and ROI combination.
+  For each vision model submitted to BrainScore, the submitter has specified which internal layer of the model best predicts neural activity in
+  each brain region of interest (ROI). BERG extracts activations from that layer for the selected ROI, and trains a Partial Least Squares (PLS) regression
+  (i.e., a brain encoding model), which finds a low-dimensional mapping from high-dimensional model representations onto neural responses. This regression
+  is trained on the benchmark data for the selected ROI (see Neural data below). Once trained, the regression is cached to disk and reused for all future
+  predictions, so the training step (~few minutes) only happens once per model and ROI combination.
 
   **Neural data.**
-  The selcted benchmarks use electrophysiology recordings from macaque visual cortex, drawn from two datasets depending on the selected ROI. For V1 (102 neurons) and V2 (103 neurons), BERG uses the Freeman et al. (2013) benchmark, recorded using synthetic texture patches designed to probe low-level visual processing. For V4 (88 neurons) and IT (168 neurons), BERG uses the Majaj et al. (2015) benchmark, recorded using grayscale images of objects on natural backgrounds, designed to probe mid- and high-level object recognition. Each ROI has a separately trained and cached regression.
+  BrainScore models predict in silico neural responses for visual ROIs V1, V2, V4, and IT. When used in BERG, the benchmark on which the encoding models are
+  trained (and, as a consequence, for which these encoding models generate in silico neural responses to visual stimuli) is determined by the selected ROI.
+  For V1 and V2, BERG uses the Freeman et al. (2013) benchmark (102 and 103 neurons for V1 and V2, respectively), recorded using synthetic texture patches
+  designed to probe low-level visual processing. For V4 and IT, BERG uses the Majaj et al. (2015) benchmark (88 and 168 neurons for V4 and IT, respectively),
+  recorded using grayscale images of objects on natural backgrounds, designed to probe mid- and high-level object recognition. Each ROI has a separately
+  trained and cached regression.
 
   **Workflow.**
   The following steps happen automatically under the hood when you call ``get_encoding_model()`` and ``encode()``:
 
   1. Load the vision model (e.g. AlexNet, ResNet, ViT) via the BrainScore model registry.
-  2. Load the benchmark for the selected ROI. Each region corresponds to a different benchmark dataset.
+  2. Load the benchmark for the selected ROI. Each ROI determined the benchmark dataset.
   3. Extract activations from the model layer pre-selected by the model submitter for that ROI.
   4. Train a PLS regression mapping model activations to neural responses (~few minutes, only done once).
   5. Cache the regression weights to disk in your BERG directory.
