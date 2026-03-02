@@ -1,0 +1,3 @@
+SLURM_ARRAY_JOB_ID: 1
+model: alexnet
+  0%|          | 0/8 [00:00<?, ?it/s]
