@@ -27,32 +27,33 @@ Description
 
 **Installation.** BrainScore models require a separate installation step and Python 3.11:
 
+*> pip install -U git+https://github.com/gifale95/BERG.git*
 *> pip install berg[brainscore]*
 
 For available models and scores, see the `BrainScore vision leaderboard <https://www.brain-score.org/vision/leaderboard/>`_.
 
-Access to BrainScore's 440+ vision models benchmarked against macaque electrophysiology recordings.
+**What is BrainScore?**
+BrainScore is an open benchmarking platform where researchers submit computational models and evaluate how well those models predict real neural recordings. A benchmark in BrainScore is a pairing of a neural dataset with an evaluation protocol. There are many benchmarks available on the platform, each targeting a different brain region, species, or recording modality. BERG supports the use of 440+ BrainScore vision models to generate in silico electrophysiology responses to images.
 
-**Neural data.** Benchmarks use electrophysiology recordings from macaque visual cortex:
+**How it works.**
+For each vision model submitted to BrainScore, the submitter has specified which internal layer of the model best predicts neural activity in each brain region. BERG extracts activations from that layer for the selected region of interest (ROI) and trains a Partial Least Squares (PLS) regression, which finds a low-dimensional mapping from high-dimensional model representations onto neural responses. This regression is trained on the benchmark data for the selected ROI (see Neural data below). Once trained, the regression is cached to disk and reused for all future predictions, so the training step (~few minutes) only happens once per model and ROI combination.
 
-- V1/V2: Freeman et al., 2013 (102 & 103 neurons, synthetic texture patches)
+**Neural data.**
+The selcted benchmarks use electrophysiology recordings from macaque visual cortex, drawn from two datasets depending on the selected ROI. For V1 (102 neurons) and V2 (103 neurons), BERG uses the Freeman et al. (2013) benchmark, recorded using synthetic texture patches designed to probe low-level visual processing. For V4 (88 neurons) and IT (168 neurons), BERG uses the Majaj et al. (2015) benchmark, recorded using grayscale images of objects on natural backgrounds, designed to probe mid- and high-level object recognition. Each ROI has a separately trained and cached regression.
 
-- V4/IT: Majaj et al., (88 & 168 neurons, grayscale objects on natural backgrounds)
+**Workflow.**
+The following steps happen automatically under the hood when you call ``get_encoding_model()`` and ``encode()``:
 
-- Output: Predicted firing rates (spikes/second)
+1. Load the vision model (e.g. AlexNet, ResNet, ViT) via the BrainScore model registry.
+2. Load the benchmark for the selected ROI. Each region corresponds to a different benchmark dataset.
+3. Extract activations from the model layer pre-selected by the model submitter for that ROI.
+4. Train a PLS regression mapping model activations to neural responses (~few minutes, only done once).
+5. Cache the regression weights to disk in your BERG directory.
+6. For your new images: extract activations from the same layer, apply the cached regression, and return predicted neural responses.
 
-**Workflow.** For each model and region:
-
-1. Load vision model (AlexNet, ResNet, ViT, etc.)
-
-2. Load benchmark for selected region (each ROI uses different benchmark)
-
-3. Train PLS regression: model activations → neural responses (~3 min, cached)
-
-4. Predict neural responses for your images using cached regression
-
-**Usage.** Use `berg.list_models(expand_brainscore_vision=True)` to see all models.
-Model IDs: `"brainscore-vision-{model_name}"` (e.g., `"brainscore-vision-alexnet"`).
+**Usage.**
+Use ``berg.list_models(expand_brainscore_vision=True)`` to see all available models.
+Model IDs follow the format ``"brainscore_vision-{model_name}"`` (e.g. ``"brainscore_vision-alexnet"``).
 
 A hands-on tutorial demonstrating how to use BrainScore models within BERG is available as a `Colab notebook <https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17>`_.
 
@@ -216,8 +217,12 @@ Example Usage
         }
     )
     
-    # Prepare the stimulus (text/sentences)
+    # Prepare the stimulus (images)
     stimulus = /path/to/images
+
+    # Or use a numpy array
+    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
+
     
     # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(
