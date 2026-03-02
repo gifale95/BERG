@@ -290,13 +290,9 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         rst_content.append("   * - Description")
         if '\n' in input_desc:
             desc_lines = input_desc.split('\n')
-            rst_content.append(f"     - {desc_lines[0]}")
+            rst_content.append(f"     - | {desc_lines[0]}")
             for line in desc_lines[1:]:
-                line = line.strip()
-                if line:
-                    rst_content.append(f"       {line}")
-                else:
-                    rst_content.append("       ")
+                rst_content.append(f"       | {line.rstrip()}")
         else:
             rst_content.append(f"     - {input_desc}")
     
@@ -351,13 +347,9 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
         rst_content.append("   * - Description")
         if '\n' in output_description:
             desc_lines = output_description.split('\n')
-            rst_content.append(f"     - {desc_lines[0]}")
+            rst_content.append(f"     - | {desc_lines[0]}")
             for line in desc_lines[1:]:
-                line = line.strip()
-                if line:
-                    rst_content.append(f"       {line}")
-                else:
-                    rst_content.append("       ")
+                rst_content.append(f"       | {line.rstrip()}")
         else:
             rst_content.append(f"     - {output_description}")
     
@@ -832,6 +824,8 @@ if __name__ == "__main__":
     print(f"Converted {args.yaml_file} to {output_file}")
     
 
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/brainscore_language.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/brainscore_vision.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-tuckute_2024-GPT2_XL.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/calcium_2p-wang_2025-3DCNN.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/eeg-things_eeg_2-vit_b_32.yaml

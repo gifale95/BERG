@@ -78,18 +78,62 @@ class BERG:
                 print()
         
         return formatted_catalog
-        
-    def list_models(self) -> Dict[str, List[str]]:
+    
+
+    def list_models(self, expand_brainscore_vision: bool = False, expand_brainscore_language: bool = False) -> List[str]:
         """
         List all registered models in the BERG registry.
         
+        Parameters
+        ----------
+        expand_brainscore_vision : bool, default=False
+            If True, replace the 'brainscore_vision' gateway entry with all 440+
+            individual BrainScore vision model IDs.
+        expand_brainscore_language : bool, default=False
+            If True, replace the 'brainscore_language' gateway entry with all
+            individual BrainScore language model IDs.
+        
         Returns
         -------
-        Dict[str, List[str]]
-            Dictionary containing information about all registered models,
-            including their IDs and associated model_info.
+        List[str]
+            List of model IDs
         """
-        return get_available_models()
+        import sys
+        models = get_available_models()
+
+        if expand_brainscore_vision and "brainscore_vision" in models:
+            try:
+                from berg.models.ephys.brainscore_vision_models import discover_brainscore_models
+                models = [m for m in models if m != "brainscore_vision"]
+                bs_models = discover_brainscore_models()
+                models.extend([f"brainscore_vision-{m}" for m in bs_models])
+            except ImportError:
+                print(
+                    f"[BrainScore] Cannot expand brainscore_vision — BrainScore is not installed.\n"
+                    f"  To install: pip install berg[brainscore]\n"
+                    f"  Note: BrainScore requires Python 3.11 "
+                    f"(you are running Python {sys.version_info.major}.{sys.version_info.minor}).\n"
+                )
+
+        if expand_brainscore_language and "brainscore_language" in models:
+            try:
+                from berg.models.fmri.brainscore_language_models import discover_brainscore_language_models
+                models = [m for m in models if m != "brainscore_language"]
+                bs_lang_models = discover_brainscore_language_models()
+                models.extend([f"brainscore_language-{m}" for m in bs_lang_models])
+            except ImportError:
+                print(
+                    f"[BrainScore] Cannot expand brainscore_language — BrainScore is not installed.\n"
+                    f"  To install: pip install berg[brainscore]\n"
+                    f"  Note: BrainScore requires Python 3.11 "
+                    f"(you are running Python {sys.version_info.major}.{sys.version_info.minor}).\n"
+                )
+
+        if not expand_brainscore_vision or not expand_brainscore_language:
+            print("To expand BrainScore models, use list_models(expand_brainscore_vision=True, expand_brainscore_language=True)")
+            print("")
+
+        return sorted(models)
         
 
     def get_encoding_model(self, model_id: str, device: str = "auto", selection: dict = None, **kwargs):
@@ -121,6 +165,32 @@ class BERG:
             Instantiated and loaded encoding model ready for generating
             neural responses.
         """
+        # Handle BrainScore language models (check before vision — more specific prefix)
+        if model_id.startswith("brainscore_language-"):
+            model_class = get_model_class("brainscore_language")
+            model = model_class(
+                berg_dir=self.berg_dir,
+                model_id=model_id,
+                device=device,
+                **kwargs
+            )
+            model.load_model()
+            return model
+
+        # Handle BrainScore vision models
+        if model_id.startswith("brainscore_vision-"):
+            model_class = get_model_class("brainscore_vision")
+            model = model_class(
+                berg_dir=self.berg_dir,
+                model_id=model_id,
+                device=device,
+                selection=selection,
+                **kwargs
+            )
+            model.load_model()
+            return model
+        
+        # Handle regular BERG models
         try:
             model_class = get_model_class(model_id)
             model = model_class(berg_dir=self.berg_dir, device=device, selection=selection, **kwargs)
@@ -128,8 +198,6 @@ class BERG:
             return model
         except ValueError as e:
             raise ModelNotFoundError(str(e))
-        except Exception as e:
-            raise
 
     
     def encode(self, model: BaseModelInterface, stimulus: np.ndarray, return_metadata: bool = False, **kwargs):
@@ -193,6 +261,17 @@ class BERG:
         Dict[str, Any]
             Model metadata dictionary.
         """
+        # Handle BrainScore language models (check before vision — more specific prefix)
+        if model_id.startswith("brainscore_language-"):
+            model_class = get_model_class("brainscore_language")
+            return model_class.get_metadata(berg_dir=self.berg_dir, **kwargs)
+
+        # Handle BrainScore vision models
+        if model_id.startswith("brainscore_vision-"):
+            model_class = get_model_class("brainscore_vision")
+            return model_class.get_metadata(berg_dir=self.berg_dir, **kwargs)
+        
+        # Handle regular BERG models
         if model_id not in MODEL_REGISTRY:
             raise ModelNotFoundError(f"Model '{model_id}' not found in registry.")
             
@@ -224,6 +303,6 @@ class BERG:
             raise ModelNotFoundError(f"Model '{model_id}' not found in registry.")
 
         try:
-            return BaseModelInterface.describe_from_id(model_id)
+            BaseModelInterface.describe_from_id(model_id)
         except Exception as e:
             raise ModelNotFoundError(f"Failed to load model description for '{model_id}': {str(e)}")

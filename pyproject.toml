@@ -43,6 +43,12 @@ dependencies = [
     "fnn @ git+https://github.com/cajal/fnn.git"
 ]
 
+[project.optional-dependencies]
+brainscore = [
+    "brainscore-vision",
+    "brainscore-language",
+]
+
 [project.urls]
 Homepage = "https://github.com/gifale95/BERG"
 Repository = "https://github.com/gifale95/BERG"
