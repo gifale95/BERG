@@ -227,3 +227,30 @@ class BERG:
             return BaseModelInterface.describe_from_id(model_id)
         except Exception as e:
             raise ModelNotFoundError(f"Failed to load model description for '{model_id}': {str(e)}")
+
+    def get_model_variants(self, model_id: str) -> List[str]:
+        """
+        Retrieve available pretrained variants for a specific model without instantiating it.
+        
+        Parameters
+        ----------
+        model_id : str
+            Unique identifier of the model.
+            
+        Returns
+        -------
+        List[str]
+            A list of available pretrained variants (e.g., HuggingFace repo IDs).
+            Returns an empty list if the model does not support variants.
+        """
+        if model_id not in MODEL_REGISTRY:
+            raise ModelNotFoundError(f"Model '{model_id}' not found in registry.")
+            
+        # Dynamically fetch the class via the registry (does not instantiate)
+        model_class = get_model_class(model_id)
+        
+        # Safely check if the class has the variants classmethod
+        if hasattr(model_class, "get_pretrained_variants"):
+            return model_class.get_pretrained_variants()
+        
+        return []
