@@ -17,6 +17,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
 ]
 dependencies = [
+    "av",
     "h5py",
     "joblib",
     "nibabel",
@@ -40,6 +41,12 @@ dependencies = [
     "timm==0.9.2",
     "mosaic-dataset",
     "fnn @ git+https://github.com/cajal/fnn.git"
+]
+
+[project.optional-dependencies]
+brainscore = [
+    "brainscore-vision",
+    "brainscore-language",
 ]
 
 [project.urls]
