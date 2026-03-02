@@ -5,6 +5,10 @@ predictors. The linear regression is trained using the training image fMRI data
 The feature maps come from AlexNet, and are downsampled to 250 principal
 components using PCA.
 
+Additionally, the trained encoding models are used to generate in silico fMRI
+responses for the in-distribution (NSD-core) and out-of-distribution
+(NSD-synthetic) test images.
+
 https://docs.pytorch.org/vision/main/models/generated/torchvision.models.alexnet.html
 
 Parameters
@@ -44,7 +48,7 @@ parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--model', type=str, default='alexnet')
 parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str) # !!!
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str) # !!!
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 
 print('>>> Train encoding models <<<')
 print('\nInput arguments:')
@@ -75,9 +79,19 @@ test_img_num = metadata['test_img_num']
 # =============================================================================
 # Access the NSD images
 # =============================================================================
+# Access the NSD-core images
 sf = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli', 'stimuli', 'nsd',
     'nsd_stimuli.hdf5'), 'r')
 sdataset = sf.get('imgBrick')
+
+# Access the NSD-synthetic images (stimuli)
+stimuli = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli', 'stimuli',
+    'nsdsynthetic', 'nsdsynthetic_stimuli.hdf5'), 'r').get('imgBrick')[:]
+# Access the NSD-synthetic images (colorstimuli)
+colorstimuli = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli',
+    'stimuli', 'nsdsynthetic','nsdsynthetic_colorstimuli_subj0'+
+    str(args.subject)+'.hdf5'), 'r').get('imgBrick')[:]
+images_nsdsynthetic = np.append(stimuli, colorstimuli, 0)
 
 
 # =============================================================================
@@ -130,7 +144,7 @@ with torch.no_grad():
         del ft
 fmaps_train = np.asarray(fmaps_train)
 
-# Test images
+# Test images (NSD-core)
 fmaps_test = []
 with torch.no_grad():
     for i in tqdm(test_img_num, leave=False):
@@ -147,6 +161,23 @@ with torch.no_grad():
         del ft
 fmaps_test = np.asarray(fmaps_test)
 
+# Test images (NSD-synthetic)
+fmaps_test_ood = []
+with torch.no_grad():
+    for img in tqdm(images_nsdsynthetic, leave=False):
+        # Preprocess the images
+        img = (np.sqrt(img/255)*255).astype(np.uint8)
+        img = Image.fromarray(img).convert('RGB')
+        img = transform(img).unsqueeze(0)
+        img = img.to(device)
+        # Extract the features
+        ft = feature_extractor(img)
+        # Flatten the features
+        ft = torch.hstack([torch.flatten(l, start_dim=1) for l in ft.values()])
+        fmaps_test_ood.append(np.squeeze(ft.detach().cpu().numpy()))
+        del ft
+fmaps_test_ood = np.asarray(fmaps_test_ood)
+
 
 # =============================================================================
 # Downsample the features using PCA
@@ -156,6 +187,7 @@ scaler = StandardScaler()
 scaler.fit(fmaps_train)
 fmaps_train = scaler.transform(fmaps_train)
 fmaps_test = scaler.transform(fmaps_test)
+fmaps_test_ood = scaler.transform(fmaps_test_ood)
 
 # Apply PCA
 pca = PCA(n_components=250, random_state=seed)
@@ -164,6 +196,8 @@ fmaps_train = pca.transform(fmaps_train)
 fmaps_train = fmaps_train.astype(np.float32)
 fmaps_test = pca.transform(fmaps_test)
 fmaps_test = fmaps_test.astype(np.float32)
+fmaps_test_ood = pca.transform(fmaps_test_ood)
+fmaps_test_ood = fmaps_test_ood.astype(np.float32)
 
 
 # =============================================================================
@@ -197,16 +231,22 @@ rh_reg = LinearRegression().fit(fmaps_train, rh_betas_train)
 # images
 lh_betas_test_pred = lh_reg.predict(fmaps_test)
 rh_betas_test_pred = rh_reg.predict(fmaps_test)
+lh_betas_test_pred_ood = lh_reg.predict(fmaps_test_ood)
+rh_betas_test_pred_ood = rh_reg.predict(fmaps_test_ood)
 
 # Save the in silico fMRI responses for the test images
 save_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
     'modality-fmri', 'train_dataset-nsd_fsaverage', 'model-'+args.model)
 lh_file_name = 'lh_betas_test_pred_subject-' + str(args.subject) + '.npy'
 rh_file_name = 'rh_betas_test_pred_subject-' + str(args.subject) + '.npy'
+lh_file_name_ood = 'lh_betas_test_pred_ood_subject-' + str(args.subject) + '.npy'
+rh_file_name_ood = 'rh_betas_test_pred_ood_subject-' + str(args.subject) + '.npy'
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 np.save(os.path.join(save_dir, lh_file_name), lh_betas_test_pred)
 np.save(os.path.join(save_dir, rh_file_name), rh_betas_test_pred)
+np.save(os.path.join(save_dir, lh_file_name_ood), lh_betas_test_pred_ood)
+np.save(os.path.join(save_dir, rh_file_name_ood), rh_betas_test_pred_ood)
 
 
 # =============================================================================

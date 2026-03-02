@@ -1,30 +1,30 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-nsd_fsaverage-test_encoding
+#SBATCH --job-name=berg-nsd_fsaverage_vit_b_32-train_encoding_CPU
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
+#SBATCH --mem=100000
 #SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
-declare -a model_all
+declare -a subject_all
 index=0
-for m in 'alexnet_untrained' 'alexnet' 'vit_b_32' ; do
-    model_all[$index]=$m
+for s in `seq 1 8` ; do
+    subject_all[$index]=$s
     ((index=index+1))
 done
 
 # Extract the parameters
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
-model=${model_all[$SLURM_ARRAY_TASK_ID]}
-echo model: $model
+subject=${subject_all[$SLURM_ARRAY_TASK_ID]}
+echo subject: $subject
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/berg_creation_code/03_test_encoding_models/train_dataset-nsd_fsaverage
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/berg_creation_code/02_train_encoding_models/train_dataset-nsd_fsaverage/model-vit_b_32
 
 # Run the job
-python 01_test_encoding.py --model $model
+python train_encoding.py --subject $subject
