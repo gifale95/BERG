@@ -22,7 +22,7 @@ For example:
 
 Model Naming Convention (BrainScore models)
 ----------------------
-BERG additionally contains a special class of encoding models that are trained on `**BrainScore** <https://www.brain-score.org>`_ benchmarks.
+BERG additionally contains a special class of encoding models that are trained on `BrainScore <https://www.brain-score.org>`_ benchmarks.
 These models have a slightly different naming convention:
 
 ``brainscore_{modality}-{model}``
