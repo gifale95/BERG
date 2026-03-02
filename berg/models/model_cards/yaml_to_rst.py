@@ -543,6 +543,58 @@ def yaml_to_rst(yaml_file: str, output_file: Optional[str] = None) -> str:
                         rst_content.append(f"       | **Example:** {example}")
         
         rst_content.append("")
+    # Methods section
+    if "methods" in data:
+        rst_content.extend(["Model-specific utility methods", "------------------------------", ""])
+        methods = list(data["methods"].items())
+        for method_idx, (method_name, method_data) in enumerate(methods):
+            # Function name as subsection header
+            func_title = f"``{method_name}()``"
+            rst_content.append(func_title)
+            rst_content.append("~" * len(func_title))
+            rst_content.append("")
+
+            # Description as plain prose
+            if "description" in method_data:
+                desc = method_data["description"].strip()
+                for line in desc.split("\n"):
+                    rst_content.append(line.strip())
+                rst_content.append("")
+
+            # Parameter table — only if parameters exist
+            if "parameters" in method_data:
+                rst_content.append(".. list-table::")
+                rst_content.append("   :widths: 20 80")
+                rst_content.append("   :header-rows: 0")
+                rst_content.append("")
+                for param_name, param_data in method_data["parameters"].items():
+                    rst_content.append(f"   * - **{param_name}**")
+                    rst_content.append(f"     - | **Type:** ``{param_data.get('type', '')}``")
+                    required = param_data.get("required", False)
+                    rst_content.append(f"       | **Required:** {'Yes' if required else 'No'}")
+                    if "default" in param_data:
+                        rst_content.append(f"       | **Default:** {param_data['default']}")
+                    if "description" in param_data:
+                        desc = param_data.get("description", "").strip()
+                        desc_lines = desc.split("\n")
+                        rst_content.append(f"       | **Description:** {desc_lines[0]}")
+                        for line in desc_lines[1:]:
+                            rst_content.append(f"       | {line}")
+                rst_content.append("")
+
+            # Example code block
+            if "example" in method_data:
+                rst_content.append(".. code-block:: python")
+                rst_content.append("")
+                example = method_data["example"].strip()
+                for line in example.split("\n"):
+                    rst_content.append(f"    {line}")
+                rst_content.append("")
+
+            # Horizontal rule between methods, not after the last one
+            if method_idx < len(methods) - 1:
+                rst_content.append("----")
+                rst_content.append("")
     
     # Performance section
     rst_content.extend(["Performance", "----------", ""])
