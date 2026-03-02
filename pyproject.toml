@@ -17,6 +17,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
 ]
 dependencies = [
+    "av",
     "h5py",
     "joblib",
     "nibabel",

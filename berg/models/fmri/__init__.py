@@ -10,3 +10,4 @@ try:
     import berg.models.fmri.brainscore_language_models
 except ImportError:
     pass
+import berg.models.fmri.bmd_s3d

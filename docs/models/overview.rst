@@ -96,6 +96,13 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy/>`_
    * - ✅
+     - :doc:`model_cards/fmri-bmd-s3d`
+     - Linear mapping of 3D CNN video features onto fMRI responses.
+     - BOLD Moments Dataset (MNI152 volume space)
+     - Human
+     - Videos
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-bmd/model-s3d/encoding_models_accuracy/>`_
+   * - ✅
      - :doc:`model_cards/fmri-things_fmri_1-vit_b_32`
      - Linear mapping of vision transformer image features onto whole-brain fMRI responses.
      - THINGS fMRI1
