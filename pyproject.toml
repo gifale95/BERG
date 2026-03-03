@@ -37,10 +37,13 @@ dependencies = [
     "yacs==0.1.8",
     "yacs-stubgen==0.3.0",
     "python-dotenv==0.21.1",
-    "einops==0.6.0",
+    "einops==0.8.0",
     "timm==0.9.2",
     "mosaic-dataset",
-    "fnn @ git+https://github.com/cajal/fnn.git"
+    "fnn @ git+https://github.com/cajal/fnn.git",
+    "transformers>=4.46.3",
+    "huggingface-hub>=0.36.0",
+    "x-transformers==1.27.0",
 ]
 
 [project.optional-dependencies]
