@@ -1,17 +1,18 @@
 import os
-import sys
-import yaml
-import numpy as np
-from pathlib import Path
-from typing import List, Dict, Any, Union
 import pickle
+import sys
+import warnings
+from pathlib import Path
+from typing import Any, Dict, List, Union
 
-from berg.interfaces.base_model import BaseModelInterface
+import numpy as np
+import yaml
+
+from berg.core.exceptions import InvalidParameterError
 from berg.core.model_registry import register_model
 from berg.core.parameter_validator import validate_subject
-from berg.core.exceptions import InvalidParameterError
+from berg.interfaces.base_model import BaseModelInterface
 
-import warnings
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
 warnings.filterwarnings('ignore', category=FutureWarning)
@@ -69,7 +70,7 @@ register_model(
     class_name="BrainScoreLanguageGateway",
     modality="fMRI",
     training_dataset="BrainScore_Language",
-    yaml_path="berg/models/model_cards/brainscore_language.yaml"
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "brainscore_language.yaml")
 )
 
 
@@ -200,7 +201,9 @@ class BrainScoreLanguageGateway(BaseModelInterface):
         PLSRegression
             Trained regression object.
         """
-        from brainscore_vision.metrics.regression_correlation.metric import pls_regression
+        from brainscore_vision.metrics.regression_correlation.metric import (
+            pls_regression,
+        )
 
         print(f"Training regression for {self.brainscore_model_name} "
               f"(subject={self.subject_tag}, benchmark={BENCHMARK_ID})...")
@@ -369,7 +372,6 @@ def discover_brainscore_language_models() -> List[str]:
     """
     _check_brainscore_available()
 
-    from brainscore_language import model_registry
     import brainscore_language.models.gpt  # trigger registrations
 
     return sorted(model_registry.keys())
