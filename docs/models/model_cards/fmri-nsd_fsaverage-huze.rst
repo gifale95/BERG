@@ -128,6 +128,8 @@ Metadata
 
         **parietal** : ``(5176,)`` - Parietal regions
 
+        **nsdgeneral** : ``(18461,)`` - NSD general visual cortex mask
+
     **rh_fsaverage_rois** : ``dict`` - Right hemisphere ROI definitions on fsaverage surface
         **V1v** : ``(444,)`` - Visual area 1 ventral
 
@@ -190,6 +192,8 @@ Metadata
         **lateral** : ``(10535,)`` - Lateral visual stream
 
         **parietal** : ``(4818,)`` - Parietal regions
+
+        **nsdgeneral** : ``(19523,)`` - NSD general visual cortex mask
 **encoding_models**
 
     **train_img_num** : ``(9000,)`` - Image indices used for training
@@ -198,43 +202,70 @@ Metadata
 
     **test_img_num** : ``(515,)`` - Image indices used for testing
 
-    **lh_correlation** : ``(163842,)`` - Left hemisphere correlation scores
+    **lh_correlation_nsdcore** : ``(163842,)`` - Left hemisphere correlation scores (NSD core)
 
-    **rh_correlation** : ``(163842,)`` - Right hemisphere correlation scores
+    **rh_correlation_nsdcore** : ``(163842,)`` - Right hemisphere correlation scores (NSD core)
 
-    **lh_r2** : ``(163842,)`` - Left hemisphere R² scores
+    **lh_r2_nsdcore** : ``(163842,)`` - Left hemisphere R² scores (NSD core)
 
-    **rh_r2** : ``(163842,)`` - Right hemisphere R² scores
+    **rh_r2_nsdcore** : ``(163842,)`` - Right hemisphere R² scores (NSD core)
 
-    **lh_noise_ceiling** : ``(163842,)`` - Left hemisphere noise ceiling
+    **lh_noise_ceiling_nsdcore** : ``(163842,)`` - Left hemisphere noise ceiling (NSD core)
 
-    **rh_noise_ceiling** : ``(163842,)`` - Right hemisphere noise ceiling
+    **rh_noise_ceiling_nsdcore** : ``(163842,)`` - Right hemisphere noise ceiling (NSD core)
 
-    **lh_explained_variance** : ``(163842,)`` - Left hemisphere % explained variance
+    **lh_explained_variance_nsdcore** : ``(163842,)`` - Left hemisphere % explained variance (NSD core)
 
-    **rh_explained_variance** : ``(163842,)`` - Right hemisphere % explained variance
+    **rh_explained_variance_nsdcore** : ``(163842,)`` - Right hemisphere % explained variance (NSD core)
+
+    **lh_correlation_nsdsynthetic** : ``(163842,)`` - Left hemisphere correlation scores (NSD synthetic)
+
+    **rh_correlation_nsdsynthetic** : ``(163842,)`` - Right hemisphere correlation scores (NSD synthetic)
+
+    **lh_r2_nsdsynthetic** : ``(163842,)`` - Left hemisphere R² scores (NSD synthetic)
+
+    **rh_r2_nsdsynthetic** : ``(163842,)`` - Right hemisphere R² scores (NSD synthetic)
+
+    **lh_noise_ceiling_nsdsynthetic** : ``(163842,)`` - Left hemisphere noise ceiling (NSD synthetic)
+
+    **rh_noise_ceiling_nsdsynthetic** : ``(163842,)`` - Right hemisphere noise ceiling (NSD synthetic)
+
+    **lh_explained_variance_nsdsynthetic** : ``(163842,)`` - Left hemisphere % explained variance (NSD synthetic)
+
+    **rh_explained_variance_nsdsynthetic** : ``(163842,)`` - Right hemisphere % explained variance (NSD synthetic)
 
 Input
 -----
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 3, 'height', 'width']``  
-**Description**: The input should be a batch of RGB images.
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
 
-**Constraints:**
-
-* Image values should be integers in range [0, 255].
-* Image dimensions (height, width) should be equal (square).
-* Minimum recommended image size: 224×224 pixels.
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``['batch_size', 3, 'height', 'width']``
+   * - Description
+     - The input should be a batch of RGB images.
+   * - Constraints
+     - * Image values should be integers in range [0, 255].
+       * Image dimensions (height, width) should be equal (square).
+       * Minimum recommended image size: 224×224 pixels.
 
 Output
 ------
 
-**Type**: ``tuple of numpy.ndarray``  
-**Shape**: ``([batch_size, lh_vertices], [batch_size, rh_vertices])``  
-**Description**:  
-The output is a tuple containing the left hemisphere (LH) and right hemisphere (RH) in silico fMRI
-responses for the batch images.
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
+
+   * - Type
+     - ``tuple of numpy.ndarray``
+   * - Shape
+     - ``([batch_size, lh_vertices], [batch_size, rh_vertices])``
+   * - Description
+     - The output is a tuple containing the left hemisphere (LH) and right hemisphere (RH) in silico fMRI
+       responses for the batch images.
 
 **Dimensions:**
 
@@ -387,12 +418,12 @@ Example Usage
     
     # Prepare the stimulus images
     # Image shape should be [batch_size, 3 RGB channels, height, width]
-    images = np.random.randint(0, 255, (100, 3, 256, 256))
+    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
     
-    # Generates the in silico neural responses to images using the encoding model previously loaded
+    # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(
         model,
-        images,
+        stimulus,
         show_progress=True
     )
     
@@ -407,7 +438,7 @@ Example Usage
     # Generate in silico neural responses with metadata
     responses, metadata = berg.encode(
         model,
-        images,
+        stimulus,
         return_metadata=True
     )
     

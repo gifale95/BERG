@@ -5,11 +5,13 @@ Welcome to BERG's Documentation
    :width: 300
    :alt: BERG Logo
 
-The `**Brain Encoding Response Generator (BERG)** <https://gifale95.github.io/BERG/>`_ is a resource consisting of multiple pre-trained encoding models of the brain and an accompanying `Python package <https://github.com/gifale95/BERG>`_ to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.
+The `Brain Encoding Response Generator (BERG) <https://gifale95.github.io/BERG/>`_ is a resource consisting of multiple pre-trained encoding models of the brain and an accompanying `Python package <https://github.com/gifale95/BERG>`_ to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.
 
 In silico neural responses generated from encoding models increasingly resemble in vivo responses recorded from real brains, enabling the novel research paradigm of in silico neuroscience. These simulated responses are fast and cost-effective to generate, allowing researchers to explore and test scientific hypotheses across vastly larger solution spaces than possible in vivo. Novel findings from large-scale in silico experimentation can then be validated through targeted small-scale in vivo data collection, in this way optimizing research resources. Thus, in silico neuroscience scales beyond what is possible with in vivo data, and democratizes research across groups with diverse data collection infrastructure and resources.
 
 BERG includes a growing, well-documented library of encoding models trained on different neural data acquisition modalities, datasets, subjects, stimulation types, and brain areas, offering broad versatility for addressing a wide range of research questions through in silico neuroscience.
+
+Furthermore, Beyond BERG's native models, BERG is also integrated with `**BrainScore** <https://www.brain-score.org>`_, giving you access to hundreds of vision models scored against macaque neural recordings (V1, V2, V4, IT), as well as GPT-family language models scored against human fMRI data.
 
 If anything in this manual is not clear, or if you think some information is missing, please get in touch with us at brain.berg.info@gmail.com.
 
@@ -72,7 +74,7 @@ Generate in silico fMRI responses:
    berg = BERG("/path/to/brain-encoding-response-generator")
    
    # Get an encoding model
-   model = berg.get_encoding_model("fmri-nsd-fwrf", subject=1, selection={"roi": "V1"})
+   model = berg.get_encoding_model("fmri-nsd_fsaverage-huze", subject=1)
    
    # Generate responses to stimuli
    stimuli = np.random.randint(0, 255, (10, 3, 224, 224), dtype=np.uint8)

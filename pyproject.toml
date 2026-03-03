@@ -17,6 +17,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
 ]
 dependencies = [
+    "av",
     "h5py",
     "joblib",
     "nibabel",
@@ -43,6 +44,12 @@ dependencies = [
     "transformers>=4.46.3",
     "huggingface-hub>=0.36.0",
     "x-transformers==1.27.0",
+]
+
+[project.optional-dependencies]
+brainscore = [
+    "brainscore-vision",
+    "brainscore-language",
 ]
 
 [project.urls]

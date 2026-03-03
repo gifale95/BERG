@@ -14,13 +14,15 @@ import scipy.io
 # while test data contains 30 repetitions of 100 images for noise ceiling estimation.
 
 
-def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
+def split_tvsd_data(filepath, output_dir, monkey_id, batch_size, create_splits=True):
     """Split TVSD neural data into training and test partitions.
     
     Load raw neural recordings (25,248 trials) and separate based on stimulus type.
     Training trials (test_idx=0) contain single presentations of THINGS images,
     while test trials (test_idx≠0) contain 30 repetitions of 100 images for 
     noise ceiling estimation. Uses chunked processing for memory efficiency.
+    
+    Optionally creates 4 random training splits by shuffling training indices.
     
     Parameters
     ----------
@@ -32,12 +34,25 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         Monkey identifier for file naming.
     batch_size : int
         Batch size for chunked processing.
+    create_splits : bool, optional
+        Whether to create 4 random training splits (default: True).
+        
+    Returns
+    -------
+    shuffled_indices : ndarray or None
+        Shuffled training indices if create_splits=True, otherwise None.
         
     Output Files
     ------------
-    tvsd_{monkey}_split-train.h5 : (22,248, 1024, 300)
+    tvsd_{monkey}_all_training_splits.h5 : (22,248, 1024, 300)
     tvsd_{monkey}_split-test.h5  : (3,000, 1024, 300)
     tvsd_{monkey}_split-test_averaged.h5   : (100, 1024, 300)
+    
+    If create_splits=True, additionally:
+    tvsd_{monkey}_single_training_split_1.h5 : (5,562, 1024, 300)
+    tvsd_{monkey}_single_training_split_2.h5 : (5,562, 1024, 300)
+    tvsd_{monkey}_single_training_split_3.h5 : (5,562, 1024, 300)
+    tvsd_{monkey}_single_training_split_4.h5 : (5,562, 1024, 300)
     """
     with h5py.File(filepath, 'r') as f:
         ALLMAT = f['ALLMAT'][:]
@@ -57,7 +72,7 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         
         # Process training data
         print("Processing training data...")
-        train_file = os.path.join(output_dir, f'tvsd_{monkey_id}_split-train.h5')
+        train_file = os.path.join(output_dir, f'tvsd_{monkey_id}_all_training_splits.h5')
         
         with h5py.File(train_file, 'w') as train_h5:
             train_dataset = train_h5.create_dataset('neural_data', 
@@ -104,6 +119,42 @@ def split_tvsd_data(filepath, output_dir, monkey_id, batch_size):
         print(f"Training shape: ({n_train}, 1024, 300)")
         print(f"Test shape: {test_data.shape}")
         print(f"Averaged test shape: {test_averaged.shape}")
+        
+        if create_splits:
+            print("")
+            print("Creating 4 random training splits...")
+            
+            # Set random seed for reproducibility
+            seed = 20200220
+            np.random.seed(seed)
+            
+            # Shuffle training indices
+            shuffled_indices = np.random.permutation(n_train)
+            
+            split_size = n_train // 4
+            
+            # Load all training data
+            with h5py.File(train_file, 'r') as f_train:
+                train_data = f_train['neural_data'][:]
+            
+            # Create 4 individual split files
+            for split_idx in range(1, 5):
+                start_idx = (split_idx - 1) * split_size
+                end_idx = split_idx * split_size
+                
+                split_indices = shuffled_indices[start_idx:end_idx]
+                split_data = train_data[split_indices]
+                
+                split_file = os.path.join(output_dir, f'tvsd_{monkey_id}_single_training_split_{split_idx}.h5')
+                
+                with h5py.File(split_file, 'w') as f_split:
+                    f_split.create_dataset('neural_data', data=split_data)
+                
+                print(f"Split {split_idx} shape: {split_data.shape}")
+            
+            return shuffled_indices
+        else:
+            return None
         
         
         
@@ -240,7 +291,7 @@ def load_things_mapping(mat_file_path):
     return train_df, test_df
 
 
-def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, monkey_id):
+def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, monkey_id, create_splits=True, shuffled_indices=None):
     """Create comprehensive metadata file for TVSD dataset.
     
     Generate metadata linking neural responses to THINGS database images through
@@ -248,6 +299,8 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
     to map trial-by-trial neural responses to specific image files and categories.
     Includes experimental conditions, electrode
     quality metrics, and electrode-to-ROI mapping information.
+    
+    Optionally creates metadata for 4 random training splits using provided shuffled indices.
     
     Mapping Process: Extract stimulus IDs from ALLMAT → Convert to 0-based indices
     → Lookup image info in THINGS DataFrames → Create aligned metadata arrays
@@ -264,6 +317,10 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
         Output directory for processed data files.
     monkey_id : str
         Monkey identifier for file naming.
+    create_splits : bool, optional
+        Whether to create metadata for 4 random training splits (default: True).
+    shuffled_indices : ndarray or None
+        Shuffled training indices from split_tvsd_data. Required if create_splits=True.
         
     Output Files
     ------------
@@ -363,11 +420,13 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
             'roi_assignments': roi_assignments,
             'roi_labels': roi_labels},
         'encoding_model': {
-            'train_img_ids': train_stimulus_ids,
-            'train_stimuli': np.array(train_img_files),
-            'train_concepts': np.array(train_img_concepts),
-            'train_days': train_days,
-            'train_sequence_pos': train_sequence_pos,
+            'all_training_splits': {
+                'train_img_ids': train_stimulus_ids,
+                'train_stimuli': np.array(train_img_files),
+                'train_concepts': np.array(train_img_concepts),
+                'train_days': train_days,
+                'train_sequence_pos': train_sequence_pos
+            },
             
             'test_img_ids': test_stimulus_ids,
             'test_stimuli': np.array(test_img_files),
@@ -381,5 +440,26 @@ def create_tvsd_metadata(original_filepath, things_mapping_file, output_dir, mon
             'noise_ceiling': noise_ceiling}
     }
     
-    metadata_file = os.path.join(output_dir, f'tvsd_{monkey_id}_metadata.npy')  # Changed .npz to .npy
+    if create_splits:
+        if shuffled_indices is None:
+            raise ValueError("shuffled_indices must be provided when create_splits=True")
+        
+        n_train = len(train_stimulus_ids)
+        split_size = n_train // 4
+        
+        for split_idx in range(1, 5):
+            start_idx = (split_idx - 1) * split_size
+            end_idx = split_idx * split_size
+            
+            split_indices = shuffled_indices[start_idx:end_idx]
+            
+            metadata['encoding_model'][f'single_training_split_{split_idx}'] = {
+                'train_img_ids': train_stimulus_ids[split_indices],
+                'train_stimuli': np.array(train_img_files)[split_indices],
+                'train_concepts': np.array(train_img_concepts)[split_indices],
+                'train_days': train_days[split_indices],
+                'train_sequence_pos': train_sequence_pos[split_indices]
+            }
+    
+    metadata_file = os.path.join(output_dir, f'tvsd_{monkey_id}_metadata.npy')
     np.save(metadata_file, metadata, allow_pickle=True)

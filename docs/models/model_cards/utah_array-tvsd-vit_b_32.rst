@@ -33,14 +33,17 @@ principal component analysis. The encoding models were trained on the THINGS Ven
 (TVSD) (Papale et al., Neuron 2025), simultaneous intracortical recordings from 1,024 electrodes across
 macaque ventral stream areas (V1, V4, IT) in response to natural images from the THINGS database
 (Hebart et al., 2019).
+The encoding models are trained on either the full training data, or on four independent training data random splits.
 
 **Neural data**. Encoding models were trained on the preprocessed data preparation provided in the TVSD. Raw broadband signals (30 kHz) were band-pass filtered to extract high-frequency spiking activity, 
 and multi-unit activity (MUA) was obtained using threshold-based spike detection and smoothing, following the official TVSD pipeline. Responses were baseline-corrected and normalized per session, with area-specific time windows aligned to peak latencies (V1: 25–125 ms, V4: 50–150 ms, IT: 75–175 ms).
 The data were epoched from -100 ms to +199 ms relative to stimulus onset, resulting in 300 time points.
 More detailed preprocessing steps are described in the TVSD paper.
 
-**Model training partition.** Spiking responses to 22,248 unique images from the THINGS database, each
-presented once during passive fixation.
+**Model training partition.** Single-trial spiking responses to 22,248 unique images from the THINGS database, each
+presented once during passive fixation, were used for training. One set of encoding models are trained on the full training data. Another set of encoding
+models are trained on four independent training data random splits (of 5,562 trials each), therefore generating
+four different in silico spiking response predictions (i.e., repetitions) per image.
 
 **Model testing partition.** Spiking responses to 100 unique images, each repeated 30 times.
 
@@ -71,6 +74,10 @@ Metadata
     **roi_labels** : ``(3,)`` - ROI label names ['V1', 'V4', 'IT']
 **encoding_model**
 
+
+    **all_training_splits**: *Training data and encoding accuracy results for encoding models trained on all training splits*
+
+
     **train_img_ids** : ``(22248,)`` - Training stimulus IDs
 
     **train_stimuli** : ``(22248,)`` - Training image filenames
@@ -81,11 +88,32 @@ Metadata
 
     **train_sequence_pos** : ``(22248,)`` - Position in 4-image sequence
 
-    **test_img_ids** : ``(3000,)`` - Test stimulus IDs
+    **correlation_results** : ``(1024, 300)`` - Prediction accuracy (Pearson's r)
 
-    **test_stimuli** : ``(3000,)`` - Test image filenames
+    **percent_noise_ceiling** : ``(1024, 300)`` - Noise ceiling normalized prediction accuracy (% of noise ceiling)
 
-    **test_concepts** : ``(3000,)`` - Test object categories
+    **single_training_split_{N}**: *Training data and encoding accuracy results for encoding models trained on training split N (N=1,2,3,4)*
+
+
+    **train_img_ids** : ``(5562,)`` - Training stimulus IDs
+
+    **train_stimuli** : ``(5562,)`` - Training image filenames
+
+    **train_concepts** : ``(5562,)`` - Training object categories
+
+    **train_days** : ``(5562,)`` - Recording days for training
+
+    **train_sequence_pos** : ``(5562,)`` - Position in 4-image sequence
+
+    **correlation_results** : ``(1024, 300)`` - Prediction accuracy (Pearson's r)
+
+    **percent_noise_ceiling** : ``(1024, 300)`` - Noise ceiling normalized prediction accuracy (% of noise ceiling)
+
+    **test_img_ids** : ``(3000,)`` - Test stimulus IDs (individual trials)
+
+    **test_stimuli** : ``(3000,)`` - Test image filenames (individual)
+
+    **test_concepts** : ``(3000,)`` - Test object categories (individual)
 
     **test_days** : ``(3000,)`` - Recording days for test
 
@@ -95,45 +123,58 @@ Metadata
 
     **SNR_max** : ``(1024,)`` - Best SNR across all days per electrode
 
-    **ncsnr** : ``(1024, 300)`` - Noise ceiling signal-to-noise ratio for each electrode/timepoint (computed on the test data)
+    **ncsnr** : ``(1024, 300)`` - Neural cross-validated signal-to-noise ratio per electrode/timepoint
 
-    **noise_ceiling** : ``(1024, 300)`` - Noise ceiling for each electrode/timepoint (computed on the test data)
-
-    **correlation_results** : ``(1024, 300)`` - Encoding model prediction accuracy (Pearson's r) for each electrode/timepoint (computed on the test data)
+    **noise_ceiling** : ``(1024, 300)`` - Noise ceiling per electrode/timepoint
 
 Input
 -----
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 3, 'height', 'width']``  
-**Description**: The input should be a batch of RGB images.
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
 
-**Constraints:**
-
-* Image values should be integers in range [0, 255].
-* Image dimensions (height, width) should be equal (square).
-* Minimum recommended image size: 224×224 pixels.
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``['batch_size', 3, 'height', 'width']``
+   * - Description
+     - The input should be a batch of RGB images.
+   * - Constraints
+     - * Image values should be integers in range [0, 255].
+       * Image dimensions (height, width) should be equal (square).
+       * Minimum recommended image size: 224×224 pixels.
 
 Output
 ------
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 'n_electrodes', 'n_timepoints']``  
-**Description**:  
-The output is a 3D array containing in silico utah-array responses.
-The second dimension (n_electrodes) corresponds to the number of electrodes in the selected ROI,
-which varies by ROI and monkey.
-The third dimension corresponds to the timepoints (300).
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
 
-Monkey N electrode count:
-* V1: 448
-* V4: 256
-* IT: 256
-
-Monkey F electrode count:
-* V1: 512
-* V4: 192
-* IT: 320
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``[batch_size, n_electrodes, n_timepoints] or [batch_size, repeats, n_electrodes, n_timepoints]``
+   * - Description
+     - The output is a 3D or 4D array containing in silico utah-array responses.
+       The second dimension varies based on train_splits parameter:
+       - When train_splits="all": shape is [batch_size, n_electrodes, n_timepoints]
+       - When train_splits="single": shape is [batch_size, repeats, n_electrodes, n_timepoints]
+       
+       The n_electrodes dimension corresponds to the number of electrodes in the selected ROI,
+       which varies by ROI and monkey.
+       The third dimension corresponds to the timepoints (300).
+       
+       Monkey N electrode count:
+       - V1: 448
+       - V4: 256
+       - IT: 256
+       
+       Monkey F electrode count:
+       - V1: 512
+       - V4: 192
+       - IT: 320
 
 **Dimensions:**
 
@@ -145,6 +186,8 @@ Monkey F electrode count:
      - Description
    * - batch_size
      - Number of stimuli in the batch
+   * - repeats
+     - Number of simulated repetitions of the same stimulus (always 4; only applies when using the encoding models trained on single training data splits)
    * - n_electrodes
      - Number of electrodes in the selection
    * - timepoints
@@ -174,6 +217,14 @@ This function loads the encoding model.
        | **Description:** Monkey ID
        | **Valid Values:** "N", "F"
        | **Example:** "N"
+   * - **train_splits**
+     - | **Type:** str
+       | **Required:** No
+       | **Description:** Specifies the training data split on which the encoding model is trained.
+       | - "all": Use an encoding model trained on all training data splits.
+       | - "single": Use encoding models trained on four independent training data random splits, therefore generating four different in silico spiking response predictions (i.e., repetitions) per image.
+       | **Valid Values:** "all", "single"
+       | **Example:** "single"
    * - **selection**
      - | **Type:** dict
        | **Required:** No
@@ -230,7 +281,7 @@ This function generates in silico neural responses using the encoding model prev
    * - **return_metadata**
      - | **Type:** bool
        | **Required:** No
-       | **Description:** Whether to return the encoding model's metadata together with the in silico neural resposnes.
+       | **Description:** Whether to return the encoding model's metadata together with the in silico neural responses.
        | **Example:** True
    * - **show_progress**
      - | **Type:** bool
@@ -282,6 +333,7 @@ Example Usage
     model = berg.get_encoding_model(
         "utah_array-tvsd-vit_b_32",
         subject="N",
+        train_splits="single",
         selection={
             "roi": ["V1", "IT"],
             "electrodes": [0, 0, '...', 1, 1, 0],
@@ -291,25 +343,26 @@ Example Usage
     
     # Prepare the stimulus images
     # Image shape should be [batch_size, 3 RGB channels, height, width]
-    images = np.random.randint(0, 255, (100, 3, 256, 256))
+    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
     
-    # Generates the in silico neural responses to images using the encoding model previously loaded
+    # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(
         model,
-        images,
+        stimulus,
         show_progress=True
     )
     
     # The in silico fMRI responses will be a numpy.ndarray of shape:
-    # ['batch_size', 'n_electrodes', 'n_timepoints']
+    # [batch_size, n_electrodes, n_timepoints] or [batch_size, repeats, n_electrodes, n_timepoints]
     # where:
+    # - repeats: Number of simulated repetitions of the same stimulus (always 4; only applies when using the encoding models trained on single training data splits)
     # - n_electrodes: Number of electrodes in the selection
     # - timepoints: Timepoints of recording
     
     # Generate in silico neural responses with metadata
     responses, metadata = berg.encode(
         model,
-        images,
+        stimulus,
         return_metadata=True
     )
     
