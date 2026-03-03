@@ -27,30 +27,28 @@ Description
 
 Text2fMRI offers a suite of lightweight encoding models, available through the Hugging Face 
 collection 'ShreyDixit/Text2fMRI', designed to predict whole-brain fMRI responses 
-solely from video transcripts.
-
-Multiple configurations are available to suit different resource constraints. 
-The smallest and most lightweight configuration consists of approximately 52M 
-trainable parameters, leveraging a frozen 500M parameter LLM (Qwen-2.5-0.5B) 
-for feature extraction. 
+solely from movie language transcripts.
 
 Trained on the CNeuroMods dataset (Friends and Movie10)—the same data used for 
 the Algonauts 2025 Challenge—this model generates in silico neural responses 
-without requiring visual or audio inputs. Despite its efficiency, even the 
-smallest model outperforms standard baselines and achieves near-SOTA performance 
-in auditory and language-selective cortices.
+to movies without requiring visual or audio input.
+
+Multiple model configurations are available to suit different resource constraints. 
+The smallest and most lightweight model configuration consists of approximately 52M 
+trainable parameters, leveraging a frozen 500M parameter LLM (Qwen-2.5-0.5B) 
+for feature extraction.
 
 Additionally, this model includes specific utility functions to query available 
 Hugging Face model variants prior to instantiation (`berg.get_model_variants()`) 
 and to render animated spatial visualizations of predicted activity 
-(`model.generate_glass_brain_animation()`).
+(`model.generate_glass_brain_animation()`). The atlas files required for glass brain visualization are provided separately in the BERG directory.
 
 Metadata
 --------
 
 .. note::
 
-   Metadata contains ROI masks for the Schaefer 1000-parcel 7-network atlas
+   Atlas files for glass brain visualization (Schaefer 1000-parcel MNI coordinates) are provided separately in the BERG directory and are not part of the per-subject metadata files.
 
 **roi_masks**
 
@@ -78,8 +76,8 @@ Input
    * - Type
      - ``list[str]``
    * - Description
-     - A list of strings where each string corresponds to the text spoken during a 
-       single fMRI Time Repetition (TR).
+     - | A list of strings where each string corresponds to the text spoken during a 
+       | single fMRI Time Repetition (TR).
    * - Example
      - ``["Hello, are you", "awake? Yes,"]``
 
