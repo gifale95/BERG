@@ -59,7 +59,7 @@ Available models
 Following is a list of all available models, grouped by ``modality``. The ✅ icon indicates the best model for each ``dataset``.
 
 modality-fmri
-~~~~~~~~~~
+~~~~~~~~~~~~~
 Encoding models trained on neural responses recorded with functional Magnetic Resonance Imaging (fMRI).
 
 .. list-table::
@@ -125,12 +125,12 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subNSD_verticesAll/encoding_models_accuracy/>`_
    * - 
      - :doc:`model_cards/fmri-tuckute_2024-GPT2_XL`
-     - GPT2-XL–based linear encoding model (LLM embeddings + ridge regression) predicting CNN predicting
+     - GPT2-XL–based linear encoding model (LLM embeddings + ridge regression) predicting brain responses to sentences.
      - `Tuckute et al., 2024 <https://www.nature.com/articles/s41562-023-01783-7>`_
      - Human
      - Text
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy/>`_
-* - 
+   * - 
      - :doc:`model_cards/fmri-cneuromod_algo2025-text2fmri`
      - Transformer-based encoding model predicting whole-brain fMRI from video transcripts using LLM features
      - `Dixit, 2026 <https://doi.org/10.5281/zenodo.18369862>`_
