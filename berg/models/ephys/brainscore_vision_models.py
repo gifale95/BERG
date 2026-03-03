@@ -1,20 +1,21 @@
 import os
-import sys
-import yaml
-import numpy as np
-from pathlib import Path
-import pandas as pd
-from typing import List, Dict, Any, Union
 import pickle
-from PIL import Image
 import shutil
-
-from berg.interfaces.base_model import BaseModelInterface
-from berg.core.model_registry import register_model, MODEL_REGISTRY
-from berg.core.parameter_validator import validate_selection_keys, validate_roi
-from berg.core.exceptions import InvalidParameterError
-
+import sys
 import warnings
+from pathlib import Path
+from typing import Any, Dict, List, Union
+
+import numpy as np
+import pandas as pd
+import yaml
+from PIL import Image
+
+from berg.core.exceptions import InvalidParameterError
+from berg.core.model_registry import MODEL_REGISTRY, register_model
+from berg.core.parameter_validator import validate_roi, validate_selection_keys
+from berg.interfaces.base_model import BaseModelInterface
+
 warnings.filterwarnings('ignore', category=RuntimeWarning)
 warnings.filterwarnings('ignore', category=UserWarning)
 warnings.filterwarnings('ignore', category=FutureWarning)
@@ -77,7 +78,7 @@ register_model(
     class_name="BrainScoreGateway",
     modality="ephys",
     training_dataset="BrainScore_Vision",
-    yaml_path="berg/models/model_cards/brainscore_vision.yaml"
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "brainscore_vision.yaml")
 )
 
 
@@ -178,7 +179,9 @@ class BrainScoreGateway(BaseModelInterface):
         Also caches time_bins for later use.
         """
         from brainscore_vision import load_benchmark
-        from brainscore_vision.metrics.regression_correlation.metric import pls_regression
+        from brainscore_vision.metrics.regression_correlation.metric import (
+            pls_regression,
+        )
 
         print(f"Training regression for {self.roi} region...")
         print("This will take ~3 minutes (only done once, then cached)")
@@ -420,6 +423,7 @@ def discover_brainscore_models() -> List[str]:
     _check_brainscore_available()
 
     import pkgutil
+
     import brainscore_vision.models as bs_models
 
     models = []
