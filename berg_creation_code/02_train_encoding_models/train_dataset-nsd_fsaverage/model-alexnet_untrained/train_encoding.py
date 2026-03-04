@@ -2,14 +2,14 @@
 predictors. The linear regression is trained using the training image fMRI data
 (Y) and feature maps (X). A separate model is trained for each fMRI vertex.
 
-The feature maps come from a CLIP vision transformer, and are downsampled to 250
+The feature maps come from an untrained AlexNet, and are downsampled to 250
 principal components using PCA.
 
 Additionally, the trained encoding models are used to generate in silico fMRI
 responses for the in-distribution (NSD-core) and out-of-distribution
 (NSD-synthetic) test images.
 
-https://pytorch.org/vision/main/models/generated/torchvision.models.vit_b_32.html
+https://docs.pytorch.org/vision/main/models/generated/torchvision.models.alexnet.html
 
 Parameters
 ----------
@@ -30,7 +30,6 @@ import argparse
 import numpy as np
 import torch
 import torchvision
-from torchvision import transforms as trn
 from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 import os
 import h5py
@@ -46,10 +45,10 @@ from sklearn.linear_model import LinearRegression
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
-parser.add_argument('--model', type=str, default='vit_b_32')
+parser.add_argument('--model', type=str, default='alexnet_untrained')
 parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str) # !!!
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str) # !!!
-args, unknown = parser.parse_known_args()
+args = parser.parse_args()
 
 print('>>> Train encoding models <<<')
 print('\nInput arguments:')
@@ -98,24 +97,32 @@ images_nsdsynthetic = np.append(stimuli, colorstimuli, 0)
 # =============================================================================
 # Vision model
 # =============================================================================
-# Load the model
-model = torchvision.models.vit_b_32(weights='DEFAULT')
+# Set random seed to ensure that the same random weights are initialized
+seed = 20200220
+
+# Set all relevant seeds
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+torch.cuda.manual_seed_all(seed)
+
+# Ensure deterministic behavior (important for full reproducibility)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+
+# Load the model with random weights
+model = torchvision.models.alexnet(weights=None)
 
 # Select the used layers for feature extraction
 #nodes, _ = get_graph_node_names(model)
 model_layers = [
-    'encoder.layers.encoder_layer_0.add_1',
-    'encoder.layers.encoder_layer_1.add_1',
-    'encoder.layers.encoder_layer_2.add_1',
-    'encoder.layers.encoder_layer_3.add_1',
-    'encoder.layers.encoder_layer_4.add_1',
-    'encoder.layers.encoder_layer_5.add_1',
-    'encoder.layers.encoder_layer_6.add_1',
-    'encoder.layers.encoder_layer_7.add_1',
-    'encoder.layers.encoder_layer_8.add_1',
-    'encoder.layers.encoder_layer_9.add_1',
-    'encoder.layers.encoder_layer_10.add_1',
-    'encoder.layers.encoder_layer_11.add_1'
+    'features.2',
+    'features.5',
+    'features.7',
+    'features.9',
+    'features.12',
+    'classifier.2',
+    'classifier.5',
+    'classifier.6'
     ]
 
 feature_extractor = create_feature_extractor(model, return_nodes=model_layers)
@@ -126,12 +133,7 @@ feature_extractor.eval()
 # =============================================================================
 # Define the image preprocessing
 # =============================================================================
-transform = trn.Compose([
-    trn.Lambda(lambda img: trn.CenterCrop(min(img.size))(img)),
-    trn.Resize((224,224)),
-    trn.ToTensor(),
-    trn.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-])
+transform = torchvision.models.AlexNet_Weights.IMAGENET1K_V1.transforms()
 
 
 # =============================================================================

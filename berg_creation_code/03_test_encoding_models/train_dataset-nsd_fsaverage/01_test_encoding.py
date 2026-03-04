@@ -1,4 +1,4 @@
-"""Test the trained encoding models' predictions in-distribution (ID) on the
+"""Test the trained encoding model predictions in-distribution (ID) on the
 515 test images from NSD-core, and out-of-distribution (OOD) on the 286 images
 from NSD-synthetic. Then save the encoding accuracy as part of the trained
 encoding models' metadata.
@@ -27,7 +27,6 @@ from scipy.stats import zscore
 import h5py
 from scipy.stats import pearsonr
 from tqdm import tqdm
-from berg import BERG
 
 
 # =============================================================================
@@ -36,16 +35,14 @@ from berg import BERG
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
 parser.add_argument('--model_id', type=str, default='fmri-nsd_fsaverage-<your_model_name>')
-parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
-parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
-args = parser.parse_args()
+parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str) # !!!
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str) # !!!
+args, unknown = parser.parse_known_args()
 
 
 # =============================================================================
 # Load the fMRI metadata
 # =============================================================================
-berg = BERG(berg_dir=args.berg_dir)
-
 for s, sub in enumerate(tqdm(args.subjects)):
 	data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
 		'train_dataset-nsd_fsaverage')
@@ -155,43 +152,23 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
 
 # =============================================================================
-# # Load the encoding model
+# Load the in silico test fMRI responses
 # =============================================================================
-	model = berg.get_encoding_model(args.model_id, subject=sub, device='auto')
+	# In silico fMRI data directories
+	pred_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
+		'modality-fmri', 'train_dataset-nsd_fsaverage', 'model-'+args.model_id)
+	lh_file_name = 'lh_betas_test_pred_subject-' + str(sub) + '.npy'
+	rh_file_name = 'rh_betas_test_pred_subject-' + str(sub) + '.npy'
+	lh_file_name_ood = 'lh_betas_test_pred_ood_subject-' + str(sub) + '.npy'
+	rh_file_name_ood = 'rh_betas_test_pred_ood_subject-' + str(sub) + '.npy'
 
-
-# =============================================================================
-# Generate the in silico fMRI responses for the 515 NSD-core test images
-# =============================================================================
-	# Access the NSD-core test images
-	sf = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli', 'stimuli',
-		'nsd', 'nsd_stimuli.hdf5'), 'r')
-	sdataset = sf.get('imgBrick')
-	test_img_num = metadata_nsd['test_img_num']
-	images = sdataset[test_img_num]
-	images = np.transpose(images, (0, 3, 1, 2))
-
-	# Generate the in silico fMRI responses
-	lh_betas_test_pred_nsdcore, rh_betas_test_pred_nsdcore = berg.encode(model,
-		images)
-
-
-# =============================================================================
-# Generate the in silico fMRI responses for the 286 NSD-synthetic images
-# =============================================================================
-	# Access the NSD-synthetic images (stimuli)
-	stimuli = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli', 'stimuli',
-		'nsdsynthetic', 'nsdsynthetic_stimuli.hdf5'), 'r').get('imgBrick')[:]
-	# Access the NSD-synthetic images (colorstimuli)
-	colorstimuli = h5py.File(os.path.join(args.nsd_dir, 'nsddata_stimuli',
-		'stimuli', 'nsdsynthetic','nsdsynthetic_colorstimuli_subj0'+str(sub)+
-		'.hdf5'), 'r').get('imgBrick')[:]
-	images = np.append(stimuli, colorstimuli, 0)
-	images = np.transpose(images, (0, 3, 1, 2))
-
-	# Generate the in silico fMRI responses
-	lh_betas_test_pred_nsdsynthetic, rh_betas_test_pred_nsdsynthetic = \
-		berg.encode(model, images)
+	# Load the in silico fMRI responses
+	lh_betas_test_pred_nsdcore = np.load(os.path.join(pred_dir, lh_file_name))
+	rh_betas_test_pred_nsdcore = np.load(os.path.join(pred_dir, rh_file_name))
+	lh_betas_test_pred_nsdsynthetic = np.load(os.path.join(pred_dir,
+		lh_file_name_ood))
+	rh_betas_test_pred_nsdsynthetic = np.load(os.path.join(pred_dir,
+		rh_file_name_ood))
 
 
 # =============================================================================

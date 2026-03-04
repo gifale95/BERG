@@ -23,7 +23,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--model', type=str, default='vit_b_32')
 parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
-args = parser.parse_args()
+args, unknown = parser.parse_known_args()
 
 print('>>> Test encoding models <<<')
 print('\nInput parameters:')

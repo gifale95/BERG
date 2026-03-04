@@ -1,5 +1,5 @@
 =========================
-eeg-things_eeg_2-vit_b_32
+eeg-things_eeg_2-alexnet_untrained
 =========================
 
 Model Summary
@@ -18,15 +18,15 @@ Model Summary
    * - Stimuli
      - Images
    * - Model Type
-     - Vision transformer (ViT-B/32)
+     - AlexNet (untrained)
    * - Creator
      - Alessandro Gifford
 
 Description
 ----------
 
-These encoding models consist in a linear mapping (through linear regression) of vision transformer
-(Dosovitskiy et al., 2020) image features onto EEG responses. Prior to mapping onto EEG responses, the
+These encoding models consist in a linear mapping (through linear regression) of an untrained AlexNet
+(Krizhevsky et al., 2012) image features onto EEG responses. Prior to mapping onto EEG responses, the
 image features have been downsampled to 250 principal components using principal component analysis.
 
 The encoding models were trained on THINGS EEG2 (Gifford et al., 2022), 63-channel EEG responses of 10 subjects to
@@ -129,8 +129,8 @@ This function loads the encoding model.
      - | **Type:** str
        | **Required:** Yes
        | **Description:** Unique identifier of the model to load.
-       | **Valid Values:** eeg-things_eeg_2-vit_b_32
-       | **Example:** "eeg-things_eeg_2-vit_b_32"
+       | **Valid Values:** eeg-things_eeg_2-alexnet_untrained
+       | **Example:** "eeg-things_eeg_2-alexnet_untrained"
    * - **subject**
      - | **Type:** int
        | **Required:** Yes
@@ -207,8 +207,8 @@ This function loads the encoding model's metadata without having to load the mod
      - | **Type:** str
        | **Required:** Yes
        | **Description:** Unique identifier of the model to load.
-       | **Valid Values:** eeg-things_eeg_2-vit_b_32
-       | **Example:** "eeg-things_eeg_2-vit_b_32"
+       | **Valid Values:** eeg-things_eeg_2-alexnet_untrained
+       | **Example:** "eeg-things_eeg_2-alexnet_untrained"
    * - **subject**
      - | **Type:** int
        | **Required:** Yes
@@ -221,7 +221,7 @@ Performance
 
 **Accuracy Plots (AWS directory):**
 
-* ``brain-encoding-response-generator/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy``
+* ``brain-encoding-response-generator/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-alexnet_untrained/encoding_models_accuracy``
 
 Example Usage
 ------------
@@ -236,7 +236,7 @@ Example Usage
     
     # Load the model
     model = berg.get_encoding_model(
-        "eeg-things_eeg_2-vit_b_32",
+        "eeg-things_eeg_2-alexnet_untrained",
         subject=1,
         selection={
             "channels": ["Oz", "Cz", "Fp1"],
@@ -271,7 +271,7 @@ Example Usage
     
     # Load the encoding model's metadata without having to load the model itself
     metadata = berg.get_model_metadata(
-        "eeg-things_eeg_2-vit_b_32",
+        "eeg-things_eeg_2-alexnet_untrained",
         subject=1
     )
     
@@ -282,4 +282,4 @@ References
 * Model building code: https://github.com/gifale95/BERG/tree/main/berg_creation_code
 * THINGS EEG2 (Gifford et al., 2022): https://doi.org/10.1016/j.neuroimage.2022.119754
 * THINGS initiative (Hebart et al., 2019): https://things-initiative.org/
-* ViT-B/32 (Dosovitskiy et al., 2020): https://arxiv.org/abs/2010.11929
+* AlexNet (Krizhevsky et al., 2012): https://papers.nips.cc/paper/2012/file/c39986001e04c7c8f8f5b5b7c7c8f8f5-Paper.pdf

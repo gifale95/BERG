@@ -26,10 +26,10 @@ from matplotlib import pyplot as plt
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-parser.add_argument('--channels', type=str, default='all') # ['O', 'P', 'T', 'C', 'F', 'all']
+parser.add_argument('--channels', type=str, default='O') # ['O', 'P', 'T', 'C', 'F', 'all']
 parser.add_argument('--model', type=str, default='vit_b_32')
-parser.add_argument('--berg_dir', default='../brain-encoding-response-generator/', type=str)
-args = parser.parse_args()
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
+args, unknown = parser.parse_known_args()
 
 
 # =============================================================================
@@ -130,7 +130,8 @@ color_noise_ceiling = (150/255, 150/255, 150/255)
 # =============================================================================
 # Plot the encoding accuracy results
 # =============================================================================
-fig, axs = plt.subplots(nrows=2, ncols=5, sharex=True, sharey=True)
+fig, axs = plt.subplots(nrows=2, ncols=5, sharex=True, sharey=True,
+	figsize=(25, 10))
 axs = np.reshape(axs, (-1))
 
 for s, sub in enumerate(args.subjects):
@@ -179,7 +180,13 @@ for s, sub in enumerate(args.subjects):
 			bbox_to_anchor=(1.5, -1.35))
 
 # Save the figure
-fig.savefig('encoding_accuracy_channels-' + args.channels + '.svg',
-	bbox_inches='tight', transparent=False, format='svg')
-fig.savefig('encoding_accuracy_channels-' + args.channels + '.png',
-	dpi=300, bbox_inches='tight', transparent=False, format='png')
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
+	'train_dataset-things_eeg_2', 'model-'+args.model,
+	'encoding_models_accuracy')
+if os.path.isdir(save_dir) == False:
+	os.makedirs(save_dir)
+fig.savefig(os.path.join(save_dir, 'encoding_accuracy_channels-'+
+	args.channels+'.svg'), bbox_inches='tight', transparent=False, format='svg')
+fig.savefig(os.path.join(save_dir, 'encoding_accuracy_channels-'+
+	args.channels+'.png'), dpi=300, bbox_inches='tight', transparent=False,
+	format='png')
