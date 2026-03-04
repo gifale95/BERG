@@ -29,9 +29,19 @@ import ast
 # =============================================================================
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=ast.literal_eval, default=[1, 2, 3, 4, 5, 6, 7, 8])
-parser.add_argument('--model_id', type=str, default='fmri-nsd_fsaverage-alexnet') # !!! 'fmri-nsd_fsaverage-<your_model_name>'
-parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str) # !!!
-args = parser.parse_args()
+parser.add_argument('--model_id', type=str, default='<your_model_name>')
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
+args, unknown = parser.parse_known_args()
+
+
+# =============================================================================
+# Create the plot saving dsirectory
+# =============================================================================
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
+	'train_dataset-nsd_fsaverage', 'model-'+args.model_id,
+	'encoding_models_accuracy')
+if os.path.isdir(save_dir) == False:
+	os.makedirs(save_dir)
 
 
 # =============================================================================
@@ -103,11 +113,10 @@ fig = cortex.quickshow(vertex_data,
 	)
 plt.title("$r²$, in-distribution generalization (NSD-core) | Subject average",
 	fontsize=30)
-plt.show()
-fig.savefig('r2_nsdcore_subject-average.svg', bbox_inches='tight',
-	transparent=False, format='svg')
-fig.savefig('r2_nsdcore_subject-average.png', dpi=300, bbox_inches='tight',
-	transparent=False, format='png')
+fig.savefig(os.path.join(save_dir, 'r2_nsdcore_subject-average.svg'),
+	bbox_inches='tight', transparent=False, format='svg')
+fig.savefig(os.path.join(save_dir, 'r2_nsdcore_subject-average.png'), dpi=300,
+	bbox_inches='tight', transparent=False, format='png')
 plt.close()
 
 # Noise ceiling scores
@@ -126,11 +135,10 @@ fig = cortex.quickshow(vertex_data,
 	)
 plt.title("Noise ceiling ($r²$), in-distribution stimuli (NSD-core) | Subject average",
 	fontsize=30)
-plt.show()
-fig.savefig('noise_ceiling_nsdcore_subject-average.svg', bbox_inches='tight',
-	transparent=False, format='svg')
-fig.savefig('noise_ceiling_nsdcore_subject-average.png', dpi=300,
-	bbox_inches='tight', transparent=False, format='png')
+fig.savefig(os.path.join(save_dir, 'noise_ceiling_nsdcore_subject-average.svg'),
+	bbox_inches='tight', transparent=False, format='svg')
+fig.savefig(os.path.join(save_dir, 'noise_ceiling_nsdcore_subject-average.png'),
+	dpi=300, bbox_inches='tight', transparent=False, format='png')
 plt.close()
 
 # Noise-ceiling-normalized explained variance scores
@@ -157,10 +165,11 @@ fig = cortex.quickshow(vertex_data,
 	)
 plt.title("Noise-ceiling-normalized explained variance (%),\nin-distribution generalization (NSD-core) | Subject average",
 	fontsize=30)
-plt.show()
-fig.savefig('noise_ceiling_normalized_explained_variance_nsdcore_subject-average.svg',
+fig.savefig(os.path.join(save_dir,
+	'noise_ceiling_normalized_explained_variance_nsdcore_subject-average.svg'),
 	bbox_inches='tight', transparent=False, format='svg')
-fig.savefig('noise_ceiling_normalized_explained_variance_nsdcore_subject-average.png',
+fig.savefig(os.path.join(save_dir,
+	'noise_ceiling_normalized_explained_variance_nsdcore_subject-average.png'),
 	dpi=300, bbox_inches='tight', transparent=False, format='png')
 plt.close()
 
@@ -184,11 +193,10 @@ fig = cortex.quickshow(vertex_data,
 	)
 plt.title("$r²$, out-of-distribution generalization (NSD-synthetic) | Subject average",
 	fontsize=30)
-plt.show()
-fig.savefig('r2_nsdsynthetic_subject-average.svg', bbox_inches='tight',
-	transparent=False, format='svg')
-fig.savefig('r2_nsdsynthetic_subject-average.png', dpi=300, bbox_inches='tight',
-	transparent=False, format='png')
+fig.savefig(os.path.join(save_dir, 'r2_nsdsynthetic_subject-average.svg'),
+	bbox_inches='tight', transparent=False, format='svg')
+fig.savefig(os.path.join(save_dir, 'r2_nsdsynthetic_subject-average.png'),
+	dpi=300, bbox_inches='tight', transparent=False, format='png')
 plt.close()
 
 # Noise ceiling scores
@@ -207,10 +215,11 @@ fig = cortex.quickshow(vertex_data,
 	)
 plt.title("Noise ceiling ($r²$), out-of-distribution stimuli (NSD-synthetic) | Subject average",
 	fontsize=30)
-plt.show()
-fig.savefig('noise_ceiling_nsdsynthetic_subject-average.svg',
-	bbox_inches='tight', transparent=False, format='svg')
-fig.savefig('noise_ceiling_nsdsynthetic_subject-average.png', dpi=300,
+fig.savefig(os.path.join(save_dir,
+	'noise_ceiling_nsdsynthetic_subject-average.svg'), bbox_inches='tight',
+	transparent=False, format='svg')
+fig.savefig(os.path.join(save_dir,
+	'noise_ceiling_nsdsynthetic_subject-average.png'), dpi=300,
 	bbox_inches='tight', transparent=False, format='png')
 plt.close()
 
@@ -238,10 +247,11 @@ fig = cortex.quickshow(vertex_data,
 	)
 plt.title("Noise-ceiling-normalized explained variance (%),\nout-of-distribution generalization (NSD-synthetic) | Subject average",
 	fontsize=30)
-plt.show()
-fig.savefig('noise_ceiling_normalized_explained_variance_nsdsynthetic_subject-average.svg',
+fig.savefig(os.path.join(save_dir,
+	'noise_ceiling_normalized_explained_variance_nsdsynthetic_subject-average.svg'),
 	bbox_inches='tight', transparent=False, format='svg')
-fig.savefig('noise_ceiling_normalized_explained_variance_nsdsynthetic_subject-average.png',
+fig.savefig(os.path.join(save_dir,
+	'noise_ceiling_normalized_explained_variance_nsdsynthetic_subject-average.png'),
 	dpi=300, bbox_inches='tight', transparent=False, format='png')
 plt.close()
 
@@ -249,171 +259,178 @@ plt.close()
 # =============================================================================
 # Plot the in-distribution prediction accuracy (for single subjects)
 # =============================================================================
-# r2 scores
-for s, sub in enumerate(args.subjects):
-	vertex_data = cortex.Vertex(r2_nsdcore[s], subject, cmap='hot', vmin=0,
-		vmax=1, with_colorbar=True)
-	fig = cortex.quickshow(vertex_data,
-	#	height=500, # Increase resolution of map and ROI contours
-		with_curvature=True,
-		curvature_brightness=0.5,
-		with_rois=True,
-		with_labels=True,
-		labelsize=20,
-		linewidth=5,
-		linecolor=(1, 1, 1),
-		with_colorbar=True
-		)
-	plt.title("$r²$, in-distribution generalization (NSD-core) | Subject "+str(sub),
-		fontsize=30)
-	plt.show()
-	fig.savefig('r2_nsdcore_subject-'+str(sub)+'.svg', bbox_inches='tight',
-		transparent=False, format='svg')
-	fig.savefig('r2_nsdcore_subject-'+str(sub)+'.png', dpi=300,
-		bbox_inches='tight', transparent=False, format='png')
-	plt.close()
+# # r2 scores
+# for s, sub in enumerate(args.subjects):
+# 	vertex_data = cortex.Vertex(r2_nsdcore[s], subject, cmap='hot', vmin=0,
+# 		vmax=1, with_colorbar=True)
+# 	fig = cortex.quickshow(vertex_data,
+# 	#	height=500, # Increase resolution of map and ROI contours
+# 		with_curvature=True,
+# 		curvature_brightness=0.5,
+# 		with_rois=True,
+# 		with_labels=True,
+# 		labelsize=20,
+# 		linewidth=5,
+# 		linecolor=(1, 1, 1),
+# 		with_colorbar=True
+# 		)
+# 	plt.title("$r²$, in-distribution generalization (NSD-core) | Subject "+str(sub),
+# 		fontsize=30)
+# 	plt.show()
+# 	fig.savefig(os.path.join(save_dir, 'r2_nsdcore_subject-'+str(sub)+'.svg'),
+# 		bbox_inches='tight', transparent=False, format='svg')
+# 	fig.savefig(os.path.join(save_dir, 'r2_nsdcore_subject-'+str(sub)+'.png'),
+# 		dpi=300, bbox_inches='tight', transparent=False, format='png')
+# 	plt.close()
 
-# Noise ceiling scores
-for s, sub in enumerate(args.subjects):
-	vertex_data = cortex.Vertex(noise_ceiling_nsdcore[s], subject, cmap='hot',
-		vmin=0, vmax=1, with_colorbar=True)
-	fig = cortex.quickshow(vertex_data,
-	#	height=500, # Increase resolution of map and ROI contours
-		with_curvature=True,
-		curvature_brightness=0.5,
-		with_rois=True,
-		with_labels=True,
-		labelsize=20,
-		linewidth=5,
-		linecolor=(1, 1, 1),
-		with_colorbar=True
-		)
-	plt.title("Noise ceiling ($r²$), in-distribution stimuli (NSD-core) | Subject "+
-		str(sub), fontsize=30)
-	plt.show()
-	fig.savefig('noise_ceiling_nsdcore_subject-'+str(sub)+'.svg',
-		bbox_inches='tight', transparent=False, format='svg')
-	fig.savefig('noise_ceiling_nsdcore_subject-'+str(sub)+'.png', dpi=300,
-		bbox_inches='tight', transparent=False, format='png')
-	plt.close()
+# # Noise ceiling scores
+# for s, sub in enumerate(args.subjects):
+# 	vertex_data = cortex.Vertex(noise_ceiling_nsdcore[s], subject, cmap='hot',
+# 		vmin=0, vmax=1, with_colorbar=True)
+# 	fig = cortex.quickshow(vertex_data,
+# 	#	height=500, # Increase resolution of map and ROI contours
+# 		with_curvature=True,
+# 		curvature_brightness=0.5,
+# 		with_rois=True,
+# 		with_labels=True,
+# 		labelsize=20,
+# 		linewidth=5,
+# 		linecolor=(1, 1, 1),
+# 		with_colorbar=True
+# 		)
+# 	plt.title("Noise ceiling ($r²$), in-distribution stimuli (NSD-core) | Subject "+
+# 		str(sub), fontsize=30)
+# 	plt.show()
+# 	fig.savefig(os.path.join(save_dir, 'noise_ceiling_nsdcore_subject-'+
+# 		str(sub)+'.svg'), bbox_inches='tight', transparent=False, format='svg')
+# 	fig.savefig(os.path.join(save_dir, 'noise_ceiling_nsdcore_subject-'+
+# 		str(sub)+'.png'), dpi=300, bbox_inches='tight', transparent=False,
+# 		format='png')
+# 	plt.close()
 
-# Noise-ceiling-normalized explained variance scores
-# Remove vertices with noise ceiling values below a certain threshold, since
-# they cannot be interpreted in terms of modeling
-expl_var_threshold = []
-for s in range(len(explained_variance_nsdcore)):
-	expl_var = copy(explained_variance_nsdcore[s])
-	idx = noise_ceiling_nsdcore[s] < 0.1
-	expl_var[idx] = np.nan
-	expl_var_threshold.append(expl_var)
-for s, sub in enumerate(args.subjects):
-	vertex_data = cortex.Vertex(expl_var_threshold[s], subject, cmap='hot',
-		vmin=0, vmax=100, with_colorbar=True)
-	fig = cortex.quickshow(vertex_data,
-	#	height=500, # Increase resolution of map and ROI contours
-		with_curvature=True,
-		curvature_brightness=0.5,
-		with_rois=True,
-		with_labels=True,
-		labelsize=20,
-		linewidth=5,
-		linecolor=(1, 1, 1),
-		with_colorbar=True
-		)
-	plt.title("Noise-ceiling-normalized explained variance (%),\nin-distribution generalization (NSD-core) | Subject "+
-		str(sub), fontsize=30)
-	plt.show()
-	fig.savefig('noise_ceiling_normalized_explained_variance_nsdcore_subject-'+
-		str(sub)+ '.svg', bbox_inches='tight', transparent=False, format='svg')
-	fig.savefig('noise_ceiling_normalized_explained_variance_nsdcore_subject-'+
-		str(sub)+ '.png', dpi=300, bbox_inches='tight', transparent=False,
-		format='png')
-	plt.close()
+# # Noise-ceiling-normalized explained variance scores
+# # Remove vertices with noise ceiling values below a certain threshold, since
+# # they cannot be interpreted in terms of modeling
+# expl_var_threshold = []
+# for s in range(len(explained_variance_nsdcore)):
+# 	expl_var = copy(explained_variance_nsdcore[s])
+# 	idx = noise_ceiling_nsdcore[s] < 0.1
+# 	expl_var[idx] = np.nan
+# 	expl_var_threshold.append(expl_var)
+# for s, sub in enumerate(args.subjects):
+# 	vertex_data = cortex.Vertex(expl_var_threshold[s], subject, cmap='hot',
+# 		vmin=0, vmax=100, with_colorbar=True)
+# 	fig = cortex.quickshow(vertex_data,
+# 	#	height=500, # Increase resolution of map and ROI contours
+# 		with_curvature=True,
+# 		curvature_brightness=0.5,
+# 		with_rois=True,
+# 		with_labels=True,
+# 		labelsize=20,
+# 		linewidth=5,
+# 		linecolor=(1, 1, 1),
+# 		with_colorbar=True
+# 		)
+# 	plt.title("Noise-ceiling-normalized explained variance (%),\nin-distribution generalization (NSD-core) | Subject "+
+# 		str(sub), fontsize=30)
+# 	plt.show()
+# 	fig.savefig(os.path.join(save_dir,
+# 		'noise_ceiling_normalized_explained_variance_nsdcore_subject-'+
+# 		str(sub)+ '.svg'), bbox_inches='tight', transparent=False, format='svg')
+# 	fig.savefig(os.path.join(save_dir,
+# 		'noise_ceiling_normalized_explained_variance_nsdcore_subject-'+
+# 		str(sub)+ '.png'), dpi=300, bbox_inches='tight', transparent=False,
+# 		format='png')
+# 	plt.close()
 
 
 # =============================================================================
 # Plot the out-of-distribution prediction accuracy (for single subjects)
 # =============================================================================
-# r2 scores
-for s, sub in enumerate(args.subjects):
-	vertex_data = cortex.Vertex(r2_nsdsynthetic[s], subject, cmap='hot', vmin=0,
-		vmax=1, with_colorbar=True)
-	fig = cortex.quickshow(vertex_data,
-	#	height=500, # Increase resolution of map and ROI contours
-		with_curvature=True,
-		curvature_brightness=0.5,
-		with_rois=True,
-		with_labels=True,
-		labelsize=20,
-		linewidth=5,
-		linecolor=(1, 1, 1),
-		with_colorbar=True
-		)
-	plt.title("$r²$, out-of-distribution generalization (NSD-synthetic) | Subject "+str(sub),
-		fontsize=30)
-	plt.show()
-	fig.savefig('r2_nsdsynthetic_subject-'+str(sub)+'.svg', bbox_inches='tight',
-		transparent=False, format='svg')
-	fig.savefig('r2_nsdsynthetic_subject-'+str(sub)+'.png', dpi=300,
-		bbox_inches='tight', transparent=False, format='png')
-	plt.close()
+# # r2 scores
+# for s, sub in enumerate(args.subjects):
+# 	vertex_data = cortex.Vertex(r2_nsdsynthetic[s], subject, cmap='hot', vmin=0,
+# 		vmax=1, with_colorbar=True)
+# 	fig = cortex.quickshow(vertex_data,
+# 	#	height=500, # Increase resolution of map and ROI contours
+# 		with_curvature=True,
+# 		curvature_brightness=0.5,
+# 		with_rois=True,
+# 		with_labels=True,
+# 		labelsize=20,
+# 		linewidth=5,
+# 		linecolor=(1, 1, 1),
+# 		with_colorbar=True
+# 		)
+# 	plt.title("$r²$, out-of-distribution generalization (NSD-synthetic) | Subject "+str(sub),
+# 		fontsize=30)
+# 	plt.show()
+# 	fig.savefig(os.path.join(save_dir, 'r2_nsdsynthetic_subject-'+str(sub)+'.svg'),
+# 		bbox_inches='tight',
+# 		transparent=False, format='svg')
+# 	fig.savefig(os.path.join(save_dir, 'r2_nsdsynthetic_subject-'+str(sub)+'.png'),
+# 		dpi=300, bbox_inches='tight', transparent=False, format='png')
+# 	plt.close()
 
-# Noise ceiling scores
-for s, sub in enumerate(args.subjects):
-	vertex_data = cortex.Vertex(noise_ceiling_nsdsynthetic[s], subject,
-		cmap='hot', vmin=0, vmax=1, with_colorbar=True)
-	fig = cortex.quickshow(vertex_data,
-	#	height=500, # Increase resolution of map and ROI contours
-		with_curvature=True,
-		curvature_brightness=0.5,
-		with_rois=True,
-		with_labels=True,
-		labelsize=20,
-		linewidth=5,
-		linecolor=(1, 1, 1),
-		with_colorbar=True
-		)
-	plt.title("Noise ceiling ($r²$), out-of-distribution stimuli (NSD-synthetic) | Subject "+
-		str(sub), fontsize=30)
-	plt.show()
-	fig.savefig('noise_ceiling_nsdsynthetic_subject-'+str(sub)+'.svg',
-		bbox_inches='tight', transparent=False, format='svg')
-	fig.savefig('noise_ceiling_nsdsynthetic_subject-'+str(sub)+'.png', dpi=300,
-		bbox_inches='tight', transparent=False, format='png')
-	plt.close()
+# # Noise ceiling scores
+# for s, sub in enumerate(args.subjects):
+# 	vertex_data = cortex.Vertex(noise_ceiling_nsdsynthetic[s], subject,
+# 		cmap='hot', vmin=0, vmax=1, with_colorbar=True)
+# 	fig = cortex.quickshow(vertex_data,
+# 	#	height=500, # Increase resolution of map and ROI contours
+# 		with_curvature=True,
+# 		curvature_brightness=0.5,
+# 		with_rois=True,
+# 		with_labels=True,
+# 		labelsize=20,
+# 		linewidth=5,
+# 		linecolor=(1, 1, 1),
+# 		with_colorbar=True
+# 		)
+# 	plt.title("Noise ceiling ($r²$), out-of-distribution stimuli (NSD-synthetic) | Subject "+
+# 		str(sub), fontsize=30)
+# 	plt.show()
+# 	fig.savefig(os.path.join(save_dir, 'noise_ceiling_nsdsynthetic_subject-'+
+# 		str(sub)+'.svg'), bbox_inches='tight', transparent=False, format='svg')
+# 	fig.savefig(os.path.join(save_dir, 'noise_ceiling_nsdsynthetic_subject-'+
+# 		str(sub)+'.png'), dpi=300, bbox_inches='tight', transparent=False, 
+# 		format='png')
+# 	plt.close()
 
-# Noise-ceiling-normalized explained variance scores
-# Remove vertices with noise ceiling values below a certain threshold, since
-# they cannot be interpreted in terms of modeling
-expl_var_threshold = []
-for s in range(len(explained_variance_nsdsynthetic)):
-	expl_var = copy(explained_variance_nsdsynthetic[s])
-	idx = noise_ceiling_nsdsynthetic[s] < 0.3
-	expl_var[idx] = np.nan
-	expl_var_threshold.append(expl_var)
-for s, sub in enumerate(args.subjects):
-	vertex_data = cortex.Vertex(expl_var_threshold[s], subject, cmap='hot',
-		vmin=0, vmax=100, with_colorbar=True)
-	fig = cortex.quickshow(vertex_data,
-	#	height=500, # Increase resolution of map and ROI contours
-		with_curvature=True,
-		curvature_brightness=0.5,
-		with_rois=True,
-		with_labels=True,
-		labelsize=20,
-		linewidth=5,
-		linecolor=(1, 1, 1),
-		with_colorbar=True
-		)
-	plt.title("Noise-ceiling-normalized explained variance (%),\nout-of-distribution generalization (NSD-synthetic) | Subject "+
-		str(sub), fontsize=30)
-	plt.show()
-	fig.savefig('noise_ceiling_normalized_explained_variance_nsdsynthetic_subject-'+
-		str(sub)+ '.svg', bbox_inches='tight', transparent=False, format='svg')
-	fig.savefig('noise_ceiling_normalized_explained_variance_nsdsynthetic_subject-'+
-		str(sub)+ '.png', dpi=300, bbox_inches='tight', transparent=False,
-		format='png')
-	plt.close()
+# # Noise-ceiling-normalized explained variance scores
+# # Remove vertices with noise ceiling values below a certain threshold, since
+# # they cannot be interpreted in terms of modeling
+# expl_var_threshold = []
+# for s in range(len(explained_variance_nsdsynthetic)):
+# 	expl_var = copy(explained_variance_nsdsynthetic[s])
+# 	idx = noise_ceiling_nsdsynthetic[s] < 0.3
+# 	expl_var[idx] = np.nan
+# 	expl_var_threshold.append(expl_var)
+# for s, sub in enumerate(args.subjects):
+# 	vertex_data = cortex.Vertex(expl_var_threshold[s], subject, cmap='hot',
+# 		vmin=0, vmax=100, with_colorbar=True)
+# 	fig = cortex.quickshow(vertex_data,
+# 	#	height=500, # Increase resolution of map and ROI contours
+# 		with_curvature=True,
+# 		curvature_brightness=0.5,
+# 		with_rois=True,
+# 		with_labels=True,
+# 		labelsize=20,
+# 		linewidth=5,
+# 		linecolor=(1, 1, 1),
+# 		with_colorbar=True
+# 		)
+# 	plt.title("Noise-ceiling-normalized explained variance (%),\nout-of-distribution generalization (NSD-synthetic) | Subject "+
+# 		str(sub), fontsize=30)
+# 	plt.show()
+# 	fig.savefig(os.path.join(save_dir,
+# 		'noise_ceiling_normalized_explained_variance_nsdsynthetic_subject-'+
+# 		str(sub)+ '.svg'), bbox_inches='tight', transparent=False, format='svg')
+# 	fig.savefig(os.path.join(save_dir,
+# 		'noise_ceiling_normalized_explained_variance_nsdsynthetic_subject-'+
+# 		str(sub)+ '.png'), dpi=300, bbox_inches='tight', transparent=False,
+# 		format='png')
+# 	plt.close()
 
 
 # =============================================================================
@@ -552,12 +569,14 @@ for r, roi in enumerate(rois):
 	axs[r].set_title(roi, fontsize=fontsize)
 
 # Legend
-axs[0].legend(ncol=4, fontsize=fontsize, bbox_to_anchor=(8.05, -4.5),
+axs[0].legend(ncol=4, fontsize=fontsize, bbox_to_anchor=(7.5, -4.5),
 	frameon=False, markerscale=2)
 
 # Save the figure
-fig.savefig('noise_ceiling_normalized_explained_variance_roi_barplot.svg',
+fig.savefig(os.path.join(save_dir,
+	'noise_ceiling_normalized_explained_variance_roi_barplot.svg'),
 	bbox_inches='tight', transparent=False, format='svg')
-fig.savefig('noise_ceiling_normalized_explained_variance_roi_barplot.png',
+fig.savefig(os.path.join(save_dir,
+	'noise_ceiling_normalized_explained_variance_roi_barplot.png'),
 	dpi=300, bbox_inches='tight', transparent=False, format='png')
 plt.close()
