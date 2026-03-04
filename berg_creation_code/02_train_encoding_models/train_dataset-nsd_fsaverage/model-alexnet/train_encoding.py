@@ -46,8 +46,8 @@ from sklearn.linear_model import LinearRegression
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--model', type=str, default='alexnet')
-parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str) # !!!
-parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str) # !!!
+parser.add_argument('--nsd_dir', default='../natural-scenes-dataset', type=str)
+parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Train encoding models <<<')
