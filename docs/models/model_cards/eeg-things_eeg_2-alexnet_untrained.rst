@@ -53,8 +53,11 @@ Metadata
 **eeg**
 
     **ch_names** : ``(63,)`` - EEG channel names
+
     **times** : ``(140,)`` - Time points relative to stimulus onset
+
     **ncsnr** : ``(63, 140)`` - Noise ceiling signal-to-noise ratio
+
     **noise_ceiling** : ``(63, 140)`` - Noise ceiling
 
 **encoding_models**
