@@ -127,7 +127,7 @@ Metadata
 
     **test_img_files** : ``(2400,)`` - Full image paths for test images
 
-    **ncsnr** : ``(271, 281)`` - Neural cross-validated signal-to-noise ratio
+    **ncsnr** : ``(271, 281)`` - Noise ceiling signal-to-noise ratio
 
     **noise_ceiling** : ``(271, 281)`` - Noise ceiling
 
