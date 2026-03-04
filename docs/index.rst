@@ -11,6 +11,8 @@ In silico neural responses generated from encoding models increasingly resemble 
 
 BERG includes a growing, well-documented library of encoding models trained on different neural data acquisition modalities, datasets, subjects, stimulation types, and brain areas, offering broad versatility for addressing a wide range of research questions through in silico neuroscience.
 
+Furthermore, Beyond BERG's native models, BERG is also integrated with `**BrainScore** <https://www.brain-score.org>`_, giving you access to hundreds of vision models scored against macaque neural recordings (V1, V2, V4, IT), as well as GPT-family language models scored against human fMRI data.
+
 If anything in this manual is not clear, or if you think some information is missing, please get in touch with us at brain.berg.info@gmail.com.
 
 

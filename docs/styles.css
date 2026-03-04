@@ -377,6 +377,18 @@ html {
     text-align: justify;
 }
 
+.landing-about-link {
+    color: #8055bd;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.landing-about-link:hover {
+    color: #6b46c1;
+    text-decoration: underline;
+}
+
 /* ==========================================================================
    RESOURCES SECTION (Projects Grid)
    ========================================================================== */
