@@ -14,7 +14,7 @@ module add CUDA/12.4.0
 # Create the parameters combinations
 declare -a encoding_model_all
 index=0
-for em in 'fmri-nsd_fsaverage-vit_b_32' ; do
+for em in 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
     encoding_model_all[$index]=$em
     ((index=index+1))
 done

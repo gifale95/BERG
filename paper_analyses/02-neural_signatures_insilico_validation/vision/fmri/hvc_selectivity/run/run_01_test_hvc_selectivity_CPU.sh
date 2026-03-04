@@ -3,13 +3,8 @@
 #SBATCH --job-name=berg_insilico_validation-hvc_selectivity-01_test_hvc_selectivity
 #SBATCH --mail-type=end
 #SBATCH --mem=25000
-#SBATCH --time=00:30:00
-#SBATCH --qos=hiprio
-#SBATCH --partition=agcichy
-#SBATCH --gres=gpu:1 # number of GPUs
-
-# CUDA module
-module add CUDA/12.4.0
+#SBATCH --time=02:00:00
+#SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a encoding_model_all

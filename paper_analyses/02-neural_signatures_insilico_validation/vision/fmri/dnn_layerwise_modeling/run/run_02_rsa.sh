@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-fmri-dnn_layerwise_modeling-03_rsa
+#SBATCH --job-name=berg_insilico_validation-fmri-dnn_layerwise_modeling-02_rsa
 #SBATCH --mail-type=end
 #SBATCH --mem=4000
 #SBATCH --time=04:00:00
@@ -15,7 +15,7 @@ index=0
 for s in `seq 1 8` ; do
     for h in 'lh' 'rh' ; do
         for m in 'alexnet' 'resnet50' ; do
-            for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' ; do
+            for em in 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
                 subject_all[$index]=$s
                 hemisphere_all[$index]=$h
                 model_all[$index]=$m
@@ -48,4 +48,4 @@ conda activate berg
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/dnn_layerwise_modeling
 
 # Run the job
-python 03_rsa.py --subject $subject --hemisphere $hemisphere --model $model --encoding_model $encoding_model
+python 02_rsa.py --subject $subject --hemisphere $hemisphere --model $model --encoding_model $encoding_model

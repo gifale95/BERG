@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-fmri-dnn_layerwise_modeling-02_dnn_rdms
+#SBATCH --job-name=berg_insilico_validation-fmri-dnn_layerwise_modeling-01_dnn_rdms
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
 #SBATCH --time=01:00:00
@@ -22,4 +22,4 @@ conda activate berg
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/dnn_layerwise_modeling
 
 # Run the job
-python 02_dnn_rdms.py
+python 01_dnn_rdms.py

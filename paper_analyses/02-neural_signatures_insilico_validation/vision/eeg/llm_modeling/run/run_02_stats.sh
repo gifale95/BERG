@@ -8,26 +8,29 @@
 
 # Create the parameters combinations
 declare -a channels_all
+declare -a encoding_model_all
 index=0
 for c in 'O,P' ; do
-    channels_all[$index]=$c
-    ((index=index+1))
+    for em in 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
+        channels_all[$index]=$c
+        encoding_model_all[$index]=$em
+        ((index=index+1))
+    done
 done
 
 # Extract the parameters
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
 channels=${channels_all[$SLURM_ARRAY_TASK_ID]}
 echo channels: $channels
-
-# Wait a bit so it doesn't crash
-sleep 8
+encoding_model=${encoding_model_all[$SLURM_ARRAY_TASK_ID]}
+echo encoding_model: $encoding_model
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
-conda activate general
+conda activate berg
 
 # Change to the .py script directory
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/eeg/llm_modeling
 
 # Run the job
-python 02_stats.py --channels $channels
+python 02_stats.py --channels $channels --encoding_model $encoding_model

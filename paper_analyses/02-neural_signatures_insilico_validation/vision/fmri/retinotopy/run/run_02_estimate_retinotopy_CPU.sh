@@ -1,15 +1,10 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-retinotopy-02_estimate_retinotopy
+#SBATCH --job-name=berg_insilico_validation-retinotopy-02_estimate_retinotopy_CPU
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
 #SBATCH --time=04-00:00:00
 #SBATCH --qos=extended
-#SBATCH --partition=agcichy
-#SBATCH --gres=gpu:1 # number of GPUs
-
-# CUDA module
-module add CUDA/12.4.0
 
 # Create the parameters combinations
 declare -a encoding_model_all

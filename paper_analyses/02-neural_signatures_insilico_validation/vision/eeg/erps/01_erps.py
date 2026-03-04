@@ -34,7 +34,7 @@ from scipy.stats import ttest_1samp
 from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-alexnet')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)

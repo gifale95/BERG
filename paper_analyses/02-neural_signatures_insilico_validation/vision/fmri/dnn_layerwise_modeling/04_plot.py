@@ -146,43 +146,43 @@ subject = 'fsaverage_nsd_sub-01'
 # =============================================================================
 # Plot the RSA results
 # =============================================================================
-# Loop across model layers
-for key in tqdm(lh_rsa.keys()):
+# # Loop across model layers
+# for key in tqdm(lh_rsa.keys()):
 
-    # Average the results across subjects, and append them across left and
-    # right hemishperes
-    data = np.append(np.nanmean(lh_rsa[key], 0), np.nanmean(rh_rsa[key], 0))
+#     # Average the results across subjects, and append them across left and
+#     # right hemishperes
+#     data = np.append(np.nanmean(lh_rsa[key], 0), np.nanmean(rh_rsa[key], 0))
 
-    # Create the flat brain surface
-    vertex_data = cortex.Vertex(
-        data,
-        subject=subject,
-        cmap='afmhot',
-        vmin=0,
-        vmax=0.5,
-        with_colorbar=True
-        )
+#     # Create the flat brain surface
+#     vertex_data = cortex.Vertex(
+#         data,
+#         subject=subject,
+#         cmap='afmhot',
+#         vmin=0,
+#         vmax=0.5,
+#         with_colorbar=True
+#         )
 
-    # Plot the flat brain surface
-    fig = cortex.quickshow(
-        vertex_data,
-        height=2000, # Increase resolution of map and ROI contours
-        with_curvature=True,
-        with_rois=True,
-        roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-        linewidth=3,
-        linecolor=(1, 1, 1),
-        with_labels=True,
-        labelsize=25,
-        curvature_brightness=0.4,
-        with_colorbar=True
-        )
+#     # Plot the flat brain surface
+#     fig = cortex.quickshow(
+#         vertex_data,
+#         height=2000, # Increase resolution of map and ROI contours
+#         with_curvature=True,
+#         with_rois=True,
+#         roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
+#         linewidth=3,
+#         linecolor=(1, 1, 1),
+#         with_labels=True,
+#         labelsize=25,
+#         curvature_brightness=0.4,
+#         with_colorbar=True
+#         )
 
-    # Save the figure
-    file_name = os.path.join(save_dir, 'rsa_model-'+args.model+'_layer-'+key+
-        '.svg')
-    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-    plt.close()
+#     # Save the figure
+#     file_name = os.path.join(save_dir, 'rsa_model-'+args.model+'_layer-'+key+
+#         '.svg')
+#     fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+#     plt.close()
 
 
 # =============================================================================
