@@ -125,7 +125,7 @@ class FMRIEncodingModel(BaseModelInterface):
             if "roi" in self.selection:
                 self.roi = validate_roi(
                     self.selection["roi"], self.VALID_ROIS
-                )
+                )[0]
 
             # Validate LH vertices
             if "lh_vertices" in self.selection:
