@@ -209,7 +209,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
         'neural_signatures_insilico_validation', 'vision', 'eeg',
         'object_categorization', 'plots', args.encoding_model, 'mds',
         f'sub-{sub:02d}')
-    os.makedirs(save_dir, exist_ok=True)
+    os.makedirs(save_dir_mds, exist_ok=True)
 
     # Loop across time points
     for t in range(len(times)):

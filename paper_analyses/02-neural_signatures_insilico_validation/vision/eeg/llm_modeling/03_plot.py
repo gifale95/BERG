@@ -7,8 +7,8 @@ encoding_model : str
     responses.
 subjects : list
     List of EEG subject identifiers.
-channels : list
-    List containing the EEG channel type(s) retained for the analyses.
+channels : str
+    String containing the EEG channel type retained for the analyses.
     Possible values are: 'O' (occipital), 'P' (posterior), 'T' (temporal),
     'C' (central), 'F' (frontal). Alternatively, the list can also contain the
     names of the individual channels used.
@@ -30,7 +30,7 @@ from matplotlib import pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=int)
-parser.add_argument('--channels', default=['O-P'], type=list)
+parser.add_argument('--channels', default='O-P', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -46,33 +46,21 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 # Load the results
 # =============================================================================
-rsa = {}
-ci_rsa = {}
-ci_peak_latency_ci_rsa = {}
-sig_rsa = {}
-decoding = {}
-ci_decoding = {}
-ci_peak_latency_ci_decoding = {}
-sig_decoding = {}
+results_dir = os.path.join(args.berg_dir,
+    'neural_signatures_insilico_validation', 'vision', 'eeg', 'llm_modeling',
+    'stats', args.encoding_model, 'stats_channels-'+args.channels+'.npy')
 
-for chan in args.channels:
+results = np.load(results_dir, allow_pickle=True).item()
 
-    results_dir = os.path.join(args.berg_dir,
-        'neural_signatures_insilico_validation', 'vision', 'eeg',
-        'llm_modeling', 'stats', args.encoding_model, 'stats_channels-'+chan+
-        '.npy')
-
-    results = np.load(results_dir, allow_pickle=True).item()
-
-    rsa[chan] = results['rsa']
-    ci_rsa[chan] = results['ci_rsa']
-    ci_peak_latency_ci_rsa[chan] = results['ci_peak_latency_ci_rsa']
-    sig_rsa[chan] = results['sig_rsa']
-    decoding[chan] = results['decoding']
-    ci_decoding[chan] = results['ci_decoding']
-    ci_peak_latency_ci_decoding[chan] = results['ci_peak_latency_ci_decoding']
-    sig_decoding[chan] = results['sig_decoding']
-    times = results['times']
+rsa = results['rsa']
+ci_rsa = results['ci_rsa']
+ci_peak_latency_ci_rsa = results['ci_peak_latency_ci_rsa']
+sig_rsa = results['sig_rsa']
+decoding = results['decoding']
+ci_decoding = results['ci_decoding']
+ci_peak_latency_ci_decoding = results['ci_peak_latency_ci_decoding']
+sig_decoding = results['sig_decoding']
+times = results['times']
 
 
 # =============================================================================
@@ -112,32 +100,22 @@ axs = np.reshape(axs, (-1))
 axs[0].plot([-10, 10], [50, 50], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=2, alpha=.25, label='_nolegend_')
 
-# Loop across channel groups
-for c, chan in enumerate(args.channels):
+# Plot the RSA subject-average results
+axs[0].plot(times, np.mean(decoding, 0), color='k', linewidth=2)
 
-    # Plot the RSA subject-average results
-    axs[0].plot(times, np.mean(decoding[chan], 0), color='k', linewidth=2)
+# Plot the peak time point
+peak = times[np.argmax(np.mean(decoding, 0))]
+max_dec = max(np.mean(decoding, 0))
+axs[0].scatter(peak, max_dec, color='k', s=200, marker='o', edgecolors='k',
+    linewidths=1, zorder=3)
+ci_low = peak - ci_peak_latency_ci_decoding[0]
+ci_up = ci_peak_latency_ci_decoding[1] - peak
+conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
+axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
+    elinewidth=1, capsize=3)
 
-    # Plot the peak time point
-    peak = times[np.argmax(np.mean(decoding[chan], 0))]
-    max_dec = max(np.mean(decoding[chan], 0))
-    axs[0].scatter(peak, max_dec, color='k', s=200, marker='o', edgecolors='k',
-        linewidths=1, zorder=3)
-    ci_low = peak - ci_peak_latency_ci_decoding[chan][0]
-    ci_up = ci_peak_latency_ci_decoding[chan][1] - peak
-    conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-    axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
-        elinewidth=1, capsize=3)
-
-    # Plot the confidence intervals
-    axs[0].fill_between(times, ci_decoding[chan][1], ci_decoding[chan][0],
-        color='k', alpha=.1)
-
-    # Plot the significance time points
-    # sig = np.empty(len(times))
-    # sig[:] = np.nan
-    # sig[sig_decoding[chan]] = 48
-    # plt.scatter(times, sig, s=100, color=colors[c])
+# Plot the confidence intervals
+axs[0].fill_between(times, ci_decoding[1], ci_decoding[0], color='k', alpha=.1)
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
@@ -154,8 +132,7 @@ plt.yticks(ticks=yticks, labels=ylabels)
 axs[0].set_ylim(bottom=47, top=100)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'decoding_channels-'+
-    '-'.join(args.channels)+'.svg')
+file_name = os.path.join(save_dir, 'decoding_channels-'+args.channels+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 
 
@@ -170,32 +147,22 @@ axs = np.reshape(axs, (-1))
 axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=2, alpha=.25, label='_nolegend_')
 
-# Loop across channel groups
-for c, chan in enumerate(args.channels):
+# Plot the RSA subject-average results
+axs[0].plot(times, np.mean(rsa, 0), color='k', linewidth=2)
 
-    # Plot the RSA subject-average results
-    axs[0].plot(times, np.mean(rsa[chan], 0), color='k', linewidth=2)
+# Plot the peak time point
+peak = times[np.argmax(np.mean(rsa, 0))]
+max_rsa = max(np.mean(rsa, 0))
+axs[0].scatter(peak, max_rsa, color='k', s=200, marker='o', edgecolors='k',
+    linewidths=1, zorder=3)
+ci_low = peak - ci_peak_latency_ci_rsa[0]
+ci_up = ci_peak_latency_ci_rsa[1] - peak
+conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
+axs[0].errorbar(peak, max_rsa, xerr=conf_int, fmt="none", ecolor='k',
+    elinewidth=1, capsize=3)
 
-    # Plot the peak time point
-    peak = times[np.argmax(np.mean(rsa[chan], 0))]
-    max_rsa = max(np.mean(rsa[chan], 0))
-    axs[0].scatter(peak, max_rsa, color='k', s=200, marker='o', edgecolors='k',
-        linewidths=1, zorder=3)
-    ci_low = peak - ci_peak_latency_ci_rsa[chan][0]
-    ci_up = ci_peak_latency_ci_rsa[chan][1] - peak
-    conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-    axs[0].errorbar(peak, max_rsa, xerr=conf_int, fmt="none", ecolor='k',
-        elinewidth=1, capsize=3)
-
-    # Plot the confidence intervals
-    axs[0].fill_between(times, ci_rsa[chan][1], ci_rsa[chan][0], color='k',
-        alpha=.1)
-
-    # Plot the significance time points
-    # sig = np.empty(len(times))
-    # sig[:] = np.nan
-    # sig[sig_rsa[chan]] = -.015
-    # plt.scatter(times, sig, s=100, color=colors[c])
+# Plot the confidence intervals
+axs[0].fill_between(times, ci_rsa[1], ci_rsa[0], color='k', alpha=.1)
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
@@ -212,6 +179,5 @@ plt.yticks(ticks=yticks, labels=ylabels)
 axs[0].set_ylim(bottom=-.02, top=.16)
 
 # Save the figure
-file_name = os.path.join(save_dir, 'rsa_channels-'+'-'.join(args.channels)+
-    '.svg')
+file_name = os.path.join(save_dir, 'rsa_channels-'+args.channels+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')

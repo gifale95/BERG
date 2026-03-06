@@ -5,34 +5,12 @@ This code additionally compares the noise of the in silico EEG responses (i.e.,
 the EEG responses generated from encoding models) with the noise of the in vivo
 (i.e., target) responses from the THINGS EEG2 experiment, by comparing how much
 variance can these two data types explain for a third, independent split of 
-THINGS EEG2 responses.
+THINGS EEG2 in vivo responses.
 
 Because the in silico neural responses did not capture all signal variance for
 the in vivo THINGS EEG2 responses, the in silico neural responses explaining
 more variance than THINGS EEG2's in vivo responses would be indicative of the
 former being less affected by noise.
-
-# !!!
-The comparison is carried out through three predictions, using the in silico
-and in vivo fMRI responses for the 515 test images. Each prediction involves
-explaining single NSD in vivo response trials with a different predictor.
-The first predictor consists of the two remaining NSD in vivo response trials,
-each used independently. The evaluation is repeated until each of the three
-trials is used as the target to be explained and the remaining two trials as
-separate predictors, and the explained variance scores from the different
-evaluations (N = 6 evaluations) are then averaged.
-The second predictor consists of the average of the two remaining NSD in vivo
-response trials. The evaluation is repeated until each of the three trials is
-used as the target to be explained and the average of the remaining two trials
-as predictor, and the explained variance scores from the different evaluations
-(N = 3 evaluations) are then averaged.
-The third predictor consists of the in silico responses from the trained
-encoding models. The evaluation is repeated until each of the three trials is
-used as the target to be explained by the same in silico responses, and the
-explained variance scores from the different evaluations (N = 3 evaluations) is
-then averaged.
-These comparisons are carried out independently for each vertex and subject.
-# !!!
 
 Parameters
 ----------
@@ -56,16 +34,13 @@ import numpy as np
 from tqdm import tqdm
 from berg import BERG
 import h5py
-from scipy.stats import pearsonr
 import random
 from sklearn.utils import resample
-from scipy.stats import ttest_rel
-from statsmodels.stats.multitest import multipletests
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
-parser.add_argument('--n_iter', default=100000, type=int)
+parser.add_argument('--n_iter', default=10000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -153,38 +128,64 @@ for s, sub in enumerate(tqdm(args.subjects)):
     # pseudo-trials, and with in silico EEG responses
     # iv => in vivo
     # is => in silico
+
+    # Parameters
     iter = 100
     tot_reps = eeg_invivo.shape[1]
     target_reps = 20
     probe_reps = tot_reps - target_reps
     n_chans = eeg_invivo.shape[2]
     n_times = eeg_invivo.shape[3]
+    n_features = n_chans * n_times
+    eps = 1e-8
 
-    corr_iv_iv_sub = np.zeros((iter, probe_reps, n_chans, n_times))
-    corr_iv_is_sub = np.zeros((iter, n_chans, n_times))
+    # Reshape the EEG responses to (n_images, n_reps, n_features)
+    eeg_invivo = np.reshape(eeg_invivo, (eeg_invivo.shape[0], tot_reps, -1))
+    eeg_insilico = np.reshape(eeg_insilico, (eeg_insilico.shape[0], -1))
+
+    # Empty result arrays
+    corr_iv_iv_sub = np.zeros((iter, probe_reps, n_features), dtype=np.float32)
+    corr_iv_is_sub = np.zeros((iter, n_features), dtype=np.float32)
+
+    # Z-score the in silico EEG responses
+    is_eeg = (eeg_insilico - eeg_insilico.mean(0)) /  (eeg_insilico.std(0) + eps)
 
     # Loop across analysis iterations
-    for i in tqdm(range(iter)): # !!! Vectorize correlations and Remove tqdm # !!!
+    for i in range(iter):
 
         # Randomly select the target repetitions and the probe repetitions
         target_idx = np.random.choice(tot_reps, target_reps, replace=False)
         probe_idx = np.setdiff1d(np.arange(tot_reps), target_idx)
 
-        # Correlate in vivo target EEG pseudo-trials with other in vivo
-        # pseudo-trials, and with in silico EEG responses
-        for c in range(n_chans):
-            for t in range(n_times):
-                corr_iv_is_sub[i,c,t] = pearsonr(
-                    eeg_invivo[:,target_idx,c,t].mean(1),
-                    eeg_insilico[:,c,t])[0]
-                for p in range(probe_reps):
-                    corr_iv_iv_sub[i,p,c,t] = pearsonr(
-                        eeg_invivo[:,target_idx,c,t].mean(1),
-                        eeg_invivo[:,probe_idx[:p+1],c,t].mean(1))[0]
+        # Z-score the target in vivo EEG responses
+        iv_eeg_target = np.mean(eeg_invivo[:,target_idx], 1)
+        iv_eeg_target = (iv_eeg_target - iv_eeg_target.mean(0)) /  \
+            (iv_eeg_target.std(0) + eps)
+
+        # Correlate the in vivo target EEG pseudo-trials with the in silico EEG
+        # responses
+        corr_iv_is_sub[i] = np.diag(iv_eeg_target.T @ is_eeg) / len(iv_eeg_target)
+
+        # Loop across probe repetitions
+        for p in range(probe_reps):
+
+            # Z-score the probe in vivo EEG responses
+            iv_eeg_probe = np.mean(eeg_invivo[:,probe_idx[:p+1]], 1)
+            iv_eeg_probe = (iv_eeg_probe - iv_eeg_probe.mean(0)) /  \
+                (iv_eeg_probe.std(0) + eps)
+
+            # Correlate the in vivo target EEG pseudo-trials with the in vivo
+            # probe pseudo-trials
+            corr_iv_iv_sub[i,p] = np.diag(iv_eeg_target.T @ iv_eeg_probe) / \
+                len(iv_eeg_target)
 
     # Average the correlations across iterations
     corr_iv_iv_sub = np.mean(corr_iv_iv_sub, 0)
     corr_iv_is_sub = np.mean(corr_iv_is_sub, 0)
+
+    # Reshape the correlation scores to (n_chans, n_times)
+    corr_iv_iv_sub = np.reshape(corr_iv_iv_sub, (probe_reps, n_chans, n_times))
+    corr_iv_is_sub = np.reshape(corr_iv_is_sub, (n_chans, n_times))
 
     # Store the correlations
     corr_iv_iv.append(corr_iv_iv_sub)
@@ -199,10 +200,11 @@ corr_iv_is = np.array(corr_iv_is)
 # =============================================================================
 # Compute the confidence intervals
 # =============================================================================
-ci_corr_iv_is = np.zeros((2, n_chans, n_times))
-ci_corr_iv_iv = np.zeros((2, target_reps, n_chans, n_times))
-dist_corr_iv_is = np.zeros((args.n_iter, n_chans, n_times))
-dist_corr_iv_iv = np.zeros((args.n_iter, target_reps, n_chans, n_times))
+ci_corr_iv_is = np.zeros((2, n_chans, n_times), dtype=np.float32)
+ci_corr_iv_iv = np.zeros((2, probe_reps, n_chans, n_times), dtype=np.float32)
+dist_corr_iv_is = np.zeros((args.n_iter, n_chans, n_times), dtype=np.float32)
+dist_corr_iv_iv = np.zeros((args.n_iter, probe_reps, n_chans, n_times),
+    dtype=np.float32)
 
 for i in tqdm(range(args.n_iter)):
 

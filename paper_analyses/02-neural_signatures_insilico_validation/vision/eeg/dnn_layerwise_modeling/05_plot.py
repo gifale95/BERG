@@ -268,5 +268,5 @@ axs[0].set_ylim(bottom=0, top=400)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'layerwise_peak_latency_channels-'+
-    args.channels+'.svg')
+    args.channels+'_dnn_model-'+args.dnn_model+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')

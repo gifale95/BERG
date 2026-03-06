@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg_insilico_validation-eeg-llm_modeling-01_rsa
 #SBATCH --mail-type=end
 #SBATCH --mem=4000
-#SBATCH --time=15:00:00
+#SBATCH --time=30:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

@@ -11,7 +11,7 @@ declare -a model_all
 declare -a encoding_model_all
 index=0
 for m in 'alexnet' 'resnet50' ; do
-    for em in 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
+    for em in 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' 'fmri-nsd_fsaverage-vit_b_32' 'fmri-nsd_fsaverage-huze' ; do
         model_all[$index]=$m
         encoding_model_all[$index]=$em
         ((index=index+1))

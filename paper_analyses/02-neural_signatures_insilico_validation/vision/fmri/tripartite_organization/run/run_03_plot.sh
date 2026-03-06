@@ -10,7 +10,7 @@
 declare -a encoding_model_all
 declare -a images_all
 index=0
-for em in 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
+for em in 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' 'fmri-nsd_fsaverage-vit_b_32' 'fmri-nsd_fsaverage-huze' ; do
     for i in 'naturalistic' ; do
         encoding_model_all[$index]=$em
         images_all[$index]=$i

@@ -74,7 +74,7 @@ parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-hu
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
-parser.add_argument('--encoding_threshold', default=20, type=float) # 20
+parser.add_argument('--encoding_threshold', default=0, type=float) # 0
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()

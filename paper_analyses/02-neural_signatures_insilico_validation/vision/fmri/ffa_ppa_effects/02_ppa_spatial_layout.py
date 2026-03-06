@@ -32,7 +32,7 @@ from scipy.stats import ttest_rel
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-vit_b_32')
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--encoding_threshold', default=20, type=float)
+parser.add_argument('--encoding_threshold', default=0, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
