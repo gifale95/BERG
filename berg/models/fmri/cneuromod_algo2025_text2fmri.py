@@ -86,6 +86,7 @@ class Text2fMRI(BaseModelInterface):
                 'Limbic', 'Cont', or 'Default'.
             subject (int): The subject ID (index) to generate predictions for.
             config (Text2fMRIConfig): Configuration object for the model architecture.
+                Ignored if `model_variant` is provided.
             device (str): Computation device ('cpu', 'cuda', 'auto').
             low_mem_use : bool
                 If True, use a low-memory usage. The model and the LLMFeatureExtractor will not be loaded at the same time.
@@ -93,6 +94,7 @@ class Text2fMRI(BaseModelInterface):
                 every time.
             model_variant (str, optional): HuggingFace repo ID of a specific pretrained
                 variant to load (e.g. "ShreyDixit/Text2fMRI-Qwen-2.5-3B").
+                If provided, the config tied to this variant is used and the `config` argument is ignored.
                 If None, uses the default configuration (Qwen-2.5-0.5B).
                 Use model.get_pretrained_variants() to see all available options.
         """
@@ -101,19 +103,32 @@ class Text2fMRI(BaseModelInterface):
         if device == "auto":
             device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = device
-        self.feature_extractor: FeatureExtractor = FeatureExtractor(
-            config=config, device=device, berg_dir=berg_dir)
-        self.config: Text2fMRIConfig = config
         self.berg_dir = berg_dir
         self.selection = selection
         self.subject = subject
         self.model_variant = model_variant
-        
-        
-        
+
         self.voxel_index = None
         if Text2fMRI.pretrained_configs_dict is None:
             Text2fMRI.get_pretrained_configs()
+
+        if self.model_variant is not None:
+            variant_to_config = {
+                repo_id: cfg for cfg, repo_id in self.pretrained_configs_dict.items()
+            }
+            if self.model_variant not in variant_to_config:
+                valid_variants = list(self.pretrained_configs_dict.values())
+                raise InvalidParameterError(
+                    f"Invalid model_variant: '{self.model_variant}'. "
+                    f"Available variants: {valid_variants}. "
+                    "Use model.get_pretrained_variants() to see all options."
+                )
+            config = variant_to_config[self.model_variant]
+
+        self.config: Text2fMRIConfig = config
+        self.feature_extractor: FeatureExtractor = FeatureExtractor(
+            config=self.config, device=device, berg_dir=berg_dir)
+
         self._validate_parameters()
         self.subject = SUBJECT_MAPPING[subject]
         self.roi = self.selection.get(
