@@ -62,6 +62,9 @@ parser.add_argument('--feature_batch_size', type=int, default=512,
                    help='Batch size for feature extraction')
 parser.add_argument('--n_pca_components', type=int, default=250,
                    help='Number of PCA components')
+parser.add_argument('--train_split', type=str, default='all_training_splits',
+                   choices=['all_training_splits', 'single_training_split_1', 'single_training_split_2', 'single_training_split_3', 'single_training_split_4'],
+                   help='Which training split to use')
 args = parser.parse_args()
 
 
@@ -118,7 +121,11 @@ metadata = np.load(metadata_path, allow_pickle=True).item()
 # =============================================================================
 # Extract the THINGS MEG1 training image features
 # =============================================================================
-n_train_images = len(metadata['encoding_model']['train_img_ids'])
+train_img_ids = metadata['encoding_model'][args.train_split]['train_img_ids']
+train_concepts = metadata['encoding_model'][args.train_split]['train_concepts']
+train_stimuli = metadata['encoding_model'][args.train_split]['train_stimuli']
+
+n_train_images = len(train_img_ids)
 fmaps_train = []
 
 for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=False):
@@ -127,7 +134,7 @@ for start_idx in tqdm(range(0, n_train_images, args.feature_batch_size), leave=F
     
     # Load batch of training images
     for i in range(start_idx, end_idx):
-        img_path = metadata['encoding_model']['train_concepts'][i] + "/" + metadata['encoding_model']['train_stimuli'][i]
+        img_path = train_concepts[i] + "/" + train_stimuli[i]
         full_path = os.path.join(args.things_dir, img_path)
         img = Image.open(full_path).convert('RGB')
         img_tensor = preprocess(img)
@@ -172,8 +179,13 @@ fmaps_train = fmaps_train.astype(np.float32)
 # Extract the THINGS MEG1 test image features
 # =============================================================================
 test_images = []
-for i in range(len(metadata['encoding_model']['test_avg_things_img_ids'])):
-    img_path = metadata['encoding_model']['test_avg_concepts'][i] + "/" + metadata['encoding_model']['test_avg_stimuli'][i]
+unique_test_image_nrs = np.unique(metadata['encoding_model']['test_image_nr'])
+
+for img_nr in unique_test_image_nrs:
+    test_mask = metadata['encoding_model']['test_image_nr'] == img_nr
+    test_idx = np.where(test_mask)[0][0]
+    
+    img_path = metadata['encoding_model']['test_concepts'][test_idx] + "/" + metadata['encoding_model']['test_stimuli'][test_idx]
     full_path = os.path.join(args.things_dir, img_path)
     
     img = Image.open(full_path).convert('RGB')
@@ -206,7 +218,11 @@ fmaps_test = fmaps_test.astype(np.float32)
 # Train the encoding model
 # =============================================================================
 # Load neural data shape info
-neural_train_path = os.path.join(data_dir, f'meg_{args.subject}_split-train.h5')
+if args.train_split == 'all_training_splits':
+    neural_train_path = os.path.join(data_dir, f'meg_{args.subject}_all_training_splits.h5')
+else:
+    neural_train_path = os.path.join(data_dir, f'meg_{args.subject}_{args.train_split}.h5')
+
 with h5py.File(neural_train_path, 'r') as f:
     n_trials, n_channels, n_times = f['neural_data'].shape
 
@@ -244,7 +260,7 @@ save_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-file_name = f'meg_test_pred_{args.subject}.npy'
+file_name = f'meg_test_pred_{args.subject}_{args.train_split}.npy'
 np.save(os.path.join(save_dir, file_name), neural_test_pred)
 
 
@@ -278,5 +294,5 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-meg',
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 
-file_name = f'weights_{args.subject}.npy'
+file_name = f'weights_{args.subject}_{args.train_split}.npy'
 np.save(os.path.join(save_dir, file_name), weights)

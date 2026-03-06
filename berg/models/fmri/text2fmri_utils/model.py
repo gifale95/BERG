@@ -4,6 +4,7 @@ from x_transformers import Encoder
 
 import torch
 import torch.nn as nn
+import os
 
 from berg.models.fmri.text2fmri_utils.config import Text2fMRIConfig
 
@@ -25,16 +26,18 @@ class Text2fMRIModel(nn.Module):
         out_bias (nn.Embedding): Learnable subject-specific bias per output ROI.
     """
 
-    def __init__(self, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "cpu"):
+    def __init__(self, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "cpu", berg_dir: str = None):
         """
         Initialize the Text2fMRI model.
 
         Args:
             config (Text2fMRIConfig): Model hyperparameters.
             device (str): Device to initialize on ('cpu' or 'cuda').
+            berg_dir (str, optional): Path to the BERG cache directory.
         """
         super().__init__()
         self.config = config
+        self.berg_dir = berg_dir
         self.subj_emb = nn.Embedding(
             config.num_subjects, config.subject_embedding_dim)
         self.device = device
@@ -74,16 +77,20 @@ class Text2fMRIModel(nn.Module):
         with torch.no_grad():
             nn.init.zeros_(self.out_bias.weight)
 
-    def forward(self, x: torch.Tensor, subject_ids: torch.Tensor):
+    def forward(self, x: torch.Tensor, subject_ids: torch.Tensor, roi_indices=None):
         """
         Forward pass to predict brain activity from text features.
 
         Args:
             x (torch.Tensor): Input features of shape [B, T, extractor_LLM_feature_size].
             subject_ids (torch.Tensor): Subject indices of shape [B].
+            roi_indices (numpy.ndarray, optional): Integer indices of ROIs to compute.
+                If None, computes all ROIs. If provided, only computes selected ROIs
+                for efficiency (mathematically equivalent to computing all and slicing).
 
         Returns:
-            torch.Tensor: Predicted brain activity of shape [B, T, num_rois].
+            torch.Tensor: Predicted brain activity of shape [B, T, num_rois] or 
+                [B, T, num_selected_rois] if roi_indices is provided.
         """
         # Minimal sanity checks that fail fast with a clear message
         assert x.dim(
@@ -105,21 +112,45 @@ class Text2fMRIModel(nn.Module):
         # past-only context, you’d switch to a causal mask.
         h = self.encoder(x)          # [B, T, d_model]
 
-        base = self.out(h)                      # [B, T, num_rois]
-        bias = self.out_bias(subject_ids).unsqueeze(1)  # [B, 1, num_rois]]
-        return base + bias                      # [B, T, num_rois]
+        # Efficient ROI slicing: only compute selected ROIs if indices provided
+        if roi_indices is not None:
+            roi_indices_tensor = torch.as_tensor(roi_indices, device=self.device)
+            # Slice output layer weights to only compute selected ROIs
+            base = torch.nn.functional.linear(h, self.out.weight[roi_indices_tensor])  # [B, T, num_selected_rois]
+            bias = self.out_bias.weight[subject_ids][:, roi_indices_tensor].unsqueeze(1)  # [B, 1, num_selected_rois]
+        else:
+            # Compute all ROIs
+            base = self.out(h)                      # [B, T, num_rois]
+            bias = self.out_bias(subject_ids).unsqueeze(1)  # [B, 1, num_rois]
+        
+        return base + bias
 
-    def load_model_from_hub(self, PRETRAINED_CONFIGS: dict[Text2fMRIConfig, str]):
+    def load_model_from_hub(self, repo_id: str):
         """
         Downloads and loads weights from the Hugging Face Hub if the config matches.
 
         Args:
-            pretrained_configs (Dict[Text2fMRIConfig, str]): A dictionary mapping
-                configuration objects to Hugging Face repository IDs.
+            repo_id (str): HuggingFace repository ID to download weights from
+                (e.g. "ShreyDixit/Text2fMRI-Qwen-2.5-0.5B").
         """
-        model_id = PRETRAINED_CONFIGS[self.config]
+        # Construct cache directory path
+        cache_dir = None
+        if self.berg_dir is not None:
+            cache_dir = os.path.join(
+                self.berg_dir,
+                "encoding_models",
+                "modality-fmri",
+                "train_dataset-cneuromod_algo2025",
+                "model-text2fmri",
+                "encoding_models_weights"
+            )
+        
         # Download the weights file (cached automatically)
-        weights_path = hf_hub_download(repo_id=model_id, filename="model.pt")
+        weights_path = hf_hub_download(
+            repo_id=repo_id, 
+            filename="model.pt",
+            cache_dir=cache_dir
+        )
         state_dict = torch.load(weights_path, map_location=self.device)
         self.load_state_dict(state_dict)
         self.to(self.device)
@@ -132,7 +163,7 @@ class Text2fMRIModel(nn.Module):
             pretrained_configs (Dict[Text2fMRIConfig, str]): Registry of valid models.
         """
         if self.config in PRETRAINED_CONFIGS:
-            self.load_model_from_hub(PRETRAINED_CONFIGS)
+            self.load_model_from_hub(PRETRAINED_CONFIGS[self.config])
             logging.info(
                 f"Model loaded from {PRETRAINED_CONFIGS[self.config]}")
 

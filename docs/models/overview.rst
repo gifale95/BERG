@@ -20,6 +20,24 @@ For example:
 - ``fmri-nsd-fwrf``: An fMRI encoding model trained on the NSD using feature-weighted receptive fields.
 - ``eeg-things_eeg_2-vit_b_32``: An EEG model trained on the THINGS-EEG2 dataset using the ViT-B/32 visual transformer architecture.
 
+Model Naming Convention (BrainScore models)
+----------------------
+BERG additionally contains a special class of encoding models that are trained on `BrainScore <https://www.brain-score.org>`_ benchmarks.
+These models have a slightly different naming convention:
+
+``brainscore_{modality}-{model}``
+
+where
+
+* ``modality``: The neural recording modality of the BrainScore benchmark on which the encoding model was trained (i.e. vision, language).
+* ``model``: The specific BrainScore model used (e.g. AlexNet, GPT2-XL).
+
+For example:
+
+- ``brainscore_vision-alexnet``: A vision model trained on the BrainScore vision benchmark using the AlexNet architecture.
+- ``brainscore_language-gpt2``: A language model trained on the BrainScore language benchmark using GPT-2.
+
+
 Get Model Information
 ------------------------
 You can get detailed information about any model using:
@@ -77,27 +95,56 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy/>`_
-   * - 
+   * - ✅
+     - :doc:`model_cards/fmri-bmd-s3d`
+     - Linear mapping of 3D CNN video features onto fMRI responses.
+     - BOLD Moments Dataset (MNI152 volume space)
+     - Human
+     - Videos
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-bmd/model-s3d/encoding_models_accuracy/>`_
+   * - ✅
      - :doc:`model_cards/fmri-things_fmri_1-vit_b_32`
      - Linear mapping of vision transformer image features onto whole-brain fMRI responses.
      - THINGS fMRI1
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32/encoding_models_accuracy/>`_
-   * - 
+   * - ✅
      - :doc:`model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual`
      - CNN predicting visual cortex responses (7,831 vertices) for 93 subjects across 8 datasets.
      - MOSAIC (all datasets)
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subAll_verticesVisual/encoding_models_accuracy/>`_
-   * - 
+   * - ✅
      - :doc:`model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll`
      - CNN predicting whole-cortex responses (57,051 vertices) for 8 NSD subjects.
      - MOSAIC (NSD)
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subNSD_verticesAll/encoding_models_accuracy/>`_
+   * - 
+     - :doc:`model_cards/fmri-tuckute_2024-GPT2_XL`
+     - GPT2-XL–based linear encoding model (LLM embeddings + ridge regression) predicting CNN predicting
+     - `Tuckute et al., 2024 <https://www.nature.com/articles/s41562-023-01783-7>`_
+     - Human
+     - Text
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy/>`_
+* - 
+     - :doc:`model_cards/fmri-cneuromod_algo2025-text2fmri`
+     - Transformer-based encoding model predicting whole-brain fMRI from video transcripts using LLM features
+     - `Dixit, 2026 <https://doi.org/10.5281/zenodo.18369862>`_
+     - Human
+     - Text
+     - `Hugging Face Collection <https://huggingface.co/collections/ShreyDixit/text2fmri>`_
+   * - ✅
+     - :doc:`model_cards/brainscore_language`
+     - Gateway to 10+ GPT-family language models from BrainScore, mapped to human fMRI responses (9 subjects, 384 sentences) via PLS regression. Model weights hosted by BrainScore — not BERG.
+     - `Pereira et al., 2018 <https://doi.org/10.1038/s41467-018-03068-4>`_
+     - Human
+     - Text
+     - `BrainScore leaderboard <https://www.brain-score.org>`_
+
 
 modality-eeg
 ~~~~~~~~~~~~
@@ -194,6 +241,30 @@ Encoding models trained on neural responses recorded with two-photon calcium ima
      - Mouse
      - Videos
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-calcium_2p/train_dataset-wang_2025/model-3DCNN/encoding_models_accuracy/>`_
+
+modality-ephys
+~~~~~~~~~~~~~~
+Encoding models trained on extracellular electrophysiology recordings from macaque visual cortex.
+
+.. list-table::
+   :header-rows: 1
+   :widths: 3 60 40 20 10 10 10
+   :class: wrap-table
+
+   * - Best model
+     - Model ID
+     - Description
+     - Training dataset
+     - Species
+     - Stimuli
+     - Encoding accuracy
+   * - ✅
+     - :doc:`model_cards/brainscore_vision`
+     - Gateway to 440+ vision models from BrainScore, mapped to macaque electrophysiology recordings (V1, V2, V4, IT) via PLS regression. Model weights hosted by BrainScore — not BERG.
+     - `Freeman et al., 2013 <https://doi.org/10.1038/nn.3402>`_ (V1, V2); `Majaj et al., 2015 <https://doi.org/10.1152/jn.00262.2014>`_ (V4, IT)
+     - Macaque
+     - Images
+     - `BrainScore leaderboard <https://www.brain-score.org/vision/leaderboard/>`_
 
 .. raw:: html
 

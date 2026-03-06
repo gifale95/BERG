@@ -17,6 +17,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
 ]
 dependencies = [
+    "av",
     "h5py",
     "joblib",
     "nibabel",
@@ -46,6 +47,12 @@ dependencies = [
     "decord>=0.6.0",
     "ipykernel",
     "safetensors>=0.5.3",
+]
+
+[project.optional-dependencies]
+brainscore = [
+    "brainscore-vision",
+    "brainscore-language",
 ]
 
 [project.urls]

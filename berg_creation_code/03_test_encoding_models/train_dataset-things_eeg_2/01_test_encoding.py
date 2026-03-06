@@ -4,7 +4,7 @@ the encoding accuracy as part of the trained encoding models' metadata.
 Parameters
 ----------
 subject : int
-	Number of the used NSD subject.
+	Number of the used THINGS EEG2 subject.
 model : str
 	Name of the used encoding model.
 berg_dir : str

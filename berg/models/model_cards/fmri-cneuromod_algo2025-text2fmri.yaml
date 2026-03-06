@@ -1,0 +1,203 @@
+model_id: fmri-cneuromod_algo2025-text2fmri
+modality: fMRI
+training_dataset: CNeuroMod (Algonauts 2025 challenge preparation)
+species: Human
+stimuli: Text
+model_type: Transformers
+creator: Shrey Dixit
+
+# General description of the model
+description: |
+  Text2fMRI offers a suite of lightweight encoding models, available through the Hugging Face 
+  collection 'ShreyDixit/Text2fMRI', designed to predict whole-brain fMRI responses 
+  solely from movie language transcripts.
+
+  Trained on the CNeuroMods dataset (Friends and Movie10)—the same data used for 
+  the Algonauts 2025 Challenge—this model generates in silico neural responses 
+  to movies without requiring visual or audio input.
+  
+  Multiple model configurations are available to suit different resource constraints. 
+  The smallest and most lightweight model configuration consists of approximately 52M 
+  trainable parameters, leveraging a frozen 500M parameter LLM (Qwen-2.5-0.5B) 
+  for feature extraction.
+  
+  Additionally, this model includes specific utility functions to query available 
+  Hugging Face model variants prior to instantiation (`berg.get_model_variants()`) 
+  and to render animated spatial visualizations of predicted activity 
+  (`model.generate_glass_brain_animation()`). The atlas files required for glass brain visualization are provided separately in the BERG directory.
+
+metadata: |
+  NOTE: Atlas files for glass brain visualization (Schaefer 1000-parcel MNI coordinates) are provided separately in the BERG directory and are not part of the per-subject metadata files.
+  'roi_masks':
+      cont                               : (1000,) - Binary mask for Control/Frontoparietal network parcels
+      default                            : (1000,) - Binary mask for Default Mode network parcels
+      dorsattn                           : (1000,) - Binary mask for Dorsal Attention network parcels
+      limbic                             : (1000,) - Binary mask for Limbic network parcels
+      salventattn                        : (1000,) - Binary mask for Salience/Ventral Attention network parcels
+      sommot                             : (1000,) - Binary mask for Somatomotor network parcels
+      vis                                : (1000,) - Binary mask for Visual network parcels
+
+# Input stimulus information
+input:
+  type: "list[str]"
+  description: |
+    A list of strings where each string corresponds to the text spoken during a 
+    single fMRI Time Repetition (TR).
+  example: |
+    ["Hello, are you", "awake? Yes,"]
+
+# Output information
+output:
+  type: "torch.Tensor"
+  shape: [num_timepoints, num_rois]
+  description: "The predicted fMRI activity for the given stimulus."
+  dimensions:
+    - name: "num_timepoints"
+      description: "Number of TRs (timepoints) in the input stimulus."
+    - name: "num_rois"
+      description: "Number of Regions of Interest (1000 parcels from Schaefer 2018 atlas)."
+
+# Model parameters and their usage
+parameters:
+
+  model_id:
+    description: Unique identifier of the model to load.
+    required: true
+    type: "str"
+    valid_values: "fmri-cneuromod_algo2025-text2fmri"
+    example: "fmri-cneuromod_algo2025-text2fmri"
+    function: "get_encoding_model, get_model_metadata"
+
+  subject:
+    type: int
+    required: true
+    valid_values: [1, 2, 3, 5] # Adjust based on your config.num_subjects
+    description: "The ID of the subject to generate predictions for."
+    example: 1
+    function: "get_encoding_model, get_model_metadata"
+
+  device:
+    type: str
+    required: false
+    default: "auto"
+    valid_values: ["cpu", "cuda", "auto"]
+    description: "The computing device to use for inference."
+    example: "auto"
+    function: "get_encoding_model"
+
+  model_variant:
+    type: str
+    required: false
+    default: null
+    description: |
+      HuggingFace repository ID of a specific pretrained variant to load.
+      If provided, the model config associated with this variant is used and any
+      user-passed `config` argument is ignored.
+      If None (default), loads the default configuration (Qwen-2.5-0.5B).
+      Use model.get_pretrained_variants() on any loaded model to see all available options.
+    example: "ShreyDixit/Text2fMRI-Qwen-2.5-0.5B"
+    function: "get_encoding_model"
+
+  selection:
+    type: dict
+    required: false
+    description: |
+      Optional filter to restrict the output to specific brain networks.
+    function: get_encoding_model
+    properties:
+      roi:
+        type: list[str]
+        description: "Filter output by Schaefer 2018 (7-network) atlas labels."
+        valid_values: ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']
+        example: ['Vis']
+      voxel_index:
+        type: numpy.ndarray
+        description: |
+          Binary one-hot encoded vector indicating which voxels to include.
+          Must have exactly the same length as the number of available voxels (1000).
+          Each position set to 1 indicates that voxel should be included.
+        example: [0, 0, ..., 1, 1, 0]
+
+  model:
+    description: An instantiated and loaded encoding model.
+    required: true
+    type: BaseModelInterface
+    function: "encode"
+
+  stimulus:
+    type: "list[str]"
+    required: true
+    description: |
+      A list of strings where each string corresponds to the text spoken during a 
+      single fMRI Time Repetition (TR).
+    example: |
+      ["Hello, are you", "awake? Yes,"]
+    function: "encode"
+
+  low_mem_use:
+    type: bool
+    required: false
+    default: false
+    description: |
+      If True, sequentially loads/unloads the Feature Extractor and the Encoding Model 
+      to minimize VRAM usage, at the cost of slower execution.
+    example: true
+    function: "encode"
+
+  return_metadata:
+    description: "Whether to return the encoding model's metadata together with the in silico neural responses."
+    required: false
+    type: bool
+    default: false
+    example: true
+    function: "encode"
+
+  show_progress:
+    description: "Whether to show a progress bar during encoding (for large batches)."
+    required: false
+    type: bool
+    default: true
+    example: true
+    function: "encode"
+
+# Model-specific utility methods
+methods:
+  get_model_variants:
+    description: |
+      Retrieve available pretrained variants for this model without instantiating it. 
+      This is called from the main BERG class.
+    parameters:
+      model_id:
+        type: "str"
+        required: true
+        description: Unique identifier of the model to load.
+    example: |
+      variants = berg.get_model_variants("fmri-cneuromod_algo2025-text2fmri")
+      
+  generate_glass_brain_animation:
+    description: |
+      Generates and saves an animated glass brain GIF from the predicted responses. 
+      Called directly on the loaded model instance.
+    parameters:
+      responses:
+        type: "numpy.ndarray"
+        required: true
+        description: "Model predictions generated by the encode() function."
+      out_path:
+        type: "str"
+        required: false
+        default: "brain_activation.gif"
+        description: "Where to save the generated GIF."
+    example: |
+      model.generate_glass_brain_animation(responses, out_path="activation.gif")
+
+# Performance metrics
+performance:
+  metrics:
+    - name: "Performance Metrics"
+      value: "Available in Hugging Face Collection: ShreyDixit/text2fmri"
+
+# References
+references:
+  - Course Materials: "Dixit, S. (2026). Text2fMRI: Brain Encoding Models using LLMs (Course Materials) (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.18369862"
+  - Huggingface Collection: https://huggingface.co/ShreyDixit/Text2fMRI-Qwen-2.5-0.5B
