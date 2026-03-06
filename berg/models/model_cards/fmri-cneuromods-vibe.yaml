@@ -1,0 +1,107 @@
+# Model Card for Text2fMRI
+# -----------------------------------------------------------------------
+
+# Basic metadata
+model_id: fmri-cneuromods-vibe
+modality: fmri
+training_dataset: CNeuroMods
+species: Human
+stimuli: Videos
+model_architecture: Transformers
+creator: Shrey Dixit, Daniel Carlström Schad, Janis Keck, Viktor Studenyak, Aleksandr Shpilevoi, Andrej Bicanski
+
+# General description of the model
+description: |
+  Text2fMRI offers a suite of lightweightencoding models, available through the Hugging Face 
+  collection 'ShreyDixit/Text2fMRI', designed to predict whole-brain fMRI responses 
+  solely from video transcripts.
+  
+  Multiple configurations are available to suit different resource constraints. 
+  The smallest and most lightweight configuration consists of approximately 52M 
+  trainable parameters, leveraging a frozen 500M parameter LLM (Qwen-2.5-0.5B) 
+  for feature extraction. 
+  
+  Trained on the CNeuroMods dataset (Friends and Movie10)—the same data used for 
+  the Algonauts 2025 Challenge—this model generates in silico neural responses 
+  without requiring visual or audio inputs. Despite its efficiency, even the 
+  smallest model outperforms standard baselines and achieves near-SOTA performance 
+  in auditory and language-selective cortices.
+
+# Input stimulus information
+input:
+  type: "list[str], str"
+  description: |
+    The first argument is a list of strings where each string corresponds to the text spoken during a 
+    single fMRI Time Repetition (TR).
+    Example: ['hello, are you', 'awake? Yes,', 'I am']
+
+    The second argument is a path to the video file to be used as the stimulus.
+
+# Output information
+output:
+  type: "torch.Tensor"
+  shape: [num_timepoints, num_rois]
+  description: "The predicted fMRI activity for the given stimulus."
+  dimensions:
+    - name: "num_timepoints"
+      description: "Number of TRs (timepoints) in the input stimulus."
+    - name: "num_rois"
+      description: "Number of Regions of Interest (1000 parcels from Schaefer 2018 atlas)."
+
+# Model parameters and their usage
+parameters:
+  subject:
+    type: int
+    required: true
+    valid_values: [0, 1, 2, 3] # Adjust based on your config.num_subjects
+    description: "The ID of the subject to generate predictions for."
+    function: "generate_response"
+
+  low_mem_use:
+    type: bool
+    required: false
+    default: false
+    description: |
+      If True, sequentially loads/unloads the Feature Extractor and the Encoding Model 
+      to minimize VRAM usage, at the cost of slower execution.
+    function: "generate_response"
+
+  device:
+    type: str
+    required: false
+    default: "auto"
+    valid_values: ["cpu", "cuda", "auto"]
+    description: "The computing device to use for inference."
+    function: "__init__"
+
+  selection:
+    type: dict
+    required: false
+    description: |
+      Optional filter to restrict the output to specific brain networks.
+    function: "__init__"
+    properties:
+      roi:
+        type: str
+        description: "Filter output by Schaefer 2018 (7-network) atlas labels."
+        valid_values: 
+          - 'Vis'          # Visual
+          - 'SomMot'       # Somatomotor
+          - 'DorsAttn'     # Dorsal Attention
+          - 'SalVentAttn'  # Salience / Ventral Attention
+          - 'Limbic'       # Limbic
+          - 'Cont'         # Control
+          - 'Default'      # Default Mode Network
+        example: "Vis"
+
+# Performance metrics
+performance:
+  metrics:
+    - name: "Pearson Correlation"
+      value: "Refer to Hugging Face Collection for specific values. Collection Slug: ShreyDixit/text2fmri" 
+      description: "Average Pearson correlation between predicted and actual fMRI responses across test set."
+  
+  plots: ""
+# References
+references:
+    - "Dixit, S. (2026). Text2fMRI: Brain Encoding Models using LLMs (Course Materials) (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.18369862"
