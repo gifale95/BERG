@@ -15,17 +15,22 @@ EMOTIONAL_PRIMING_PHRASE = (
 
 
 class TextFeatureExtractor:
+    """Extract per-TR text embeddings for VIBE using a causal language model."""
+
     def __init__(self,
                  config: VIBEConfig,
                  device: str = "cpu",
                  low_mem_usage: bool = True,
                  emotional_priming_phrase: str | None = None):
         """
-        Initialize the FeatureExtractor.
+        Initialize the text feature extractor.
 
         Args:
-            config (Text2fMRIConfig): Configuration dataclass.
-            device (str): Device to load the model on.
+            config (VIBEConfig): VIBE configuration.
+            device (str): Device used for model inference.
+            low_mem_usage (bool): If True, unload model after each extraction call.
+            emotional_priming_phrase (str | None): Optional phrase prepended to
+                metadata prompt text.
         """
         self.config: VIBEConfig = config
         self.model = None
@@ -58,6 +63,7 @@ class TextFeatureExtractor:
         )
 
     def cleanup(self):
+        """Release tokenizer/model references and clear CUDA cache when available."""
         if self.model is not None:
             self.model.cpu()
             self.model = None
@@ -67,6 +73,7 @@ class TextFeatureExtractor:
 
     @contextmanager
     def _model_session(self):
+        """Context manager that lazily loads and conditionally unloads the model."""
         if self.model is None:
             self.load_model()
         try:
@@ -79,9 +86,10 @@ class TextFeatureExtractor:
                      transcripts: list[str],
                      metadata: str = "") -> tuple[str, list[tuple[int, int]]]:
         """
-        Concatenates TR transcripts into a single string and records character spans.
+        Build a single prompt string and record character spans per TR.
 
-        This ensures the model sees the previous TRs as context for the current TR.
+        This lets each TR use preceding transcript context while keeping a mapping
+        back from token offsets to TR indices.
 
         Args:
             transcripts (list[str]): A list of strings, where the i-th string corresponds 
@@ -106,7 +114,7 @@ class TextFeatureExtractor:
 
         return "".join(parts), char_spans
 
-    def tokens_by_tr(self, offsets: torch.Tensor, char_spans: list[tuple[int, int]]):
+    def tokens_by_tr(self, offsets: torch.Tensor, char_spans: list[tuple[int, int]]) -> list[list[int]]:
         """
         Maps token indices to TR indices based on character overlap.
 
@@ -143,24 +151,17 @@ class TextFeatureExtractor:
         transcripts: list[str],
     ):
         """
-        Generates fMRI-aligned text features from a list of per-TR transcripts.
+        Generate per-TR text features from transcript strings.
 
         The pipeline processes the text as a single continuous stream to maintain context,
         extracts hidden states from the LLM, and averages them based on time alignment.
-
-        Process:
-            1. Concatenate all transcripts.
-            2. Run the LLM forward pass (inference mode).
-            3. Extract the last N hidden layers.
-            4. Average the hidden layers to get one vector per token.
-            5. Average the token vectors within each TR's time window.
 
         Args:
             transcripts (list[str]): List of strings, one per TR.
 
         Returns:
-            torch.Tensor: A Float32 Tensor of shape [Num_TRs, Feature_Dim].
-                If a TR has no text, its vector will be all zeros.
+            torch.Tensor: Float32 tensor of shape [num_trs, text_extractor_feature_size].
+            TRs without mapped tokens remain zero vectors.
         """
         with self._model_session():
             num_tr = len(transcripts)

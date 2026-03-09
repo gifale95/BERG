@@ -1,3 +1,4 @@
+import os
 import logging
 from huggingface_hub import hf_hub_download
 import numpy as np
@@ -10,6 +11,8 @@ from berg.models.fmri.vibe_utils.config import VIBEConfig
 
 
 class ModalityFusionTransformer(nn.Module):
+    """Project and fuse modality features together with subject conditioning."""
+
     def __init__(
         self,
         config: VIBEConfig
@@ -42,6 +45,7 @@ class ModalityFusionTransformer(nn.Module):
                                                  num_layers=self.config.modality_fusion_transformer_num_layers)
 
     def build_projection(self, input_dim, output_dim, num_layers):
+        """Build a simple MLP projection block for one modality stream."""
         layers = []
         dims = np.linspace(input_dim, output_dim, num_layers + 1, dtype=int)
 
@@ -53,8 +57,7 @@ class ModalityFusionTransformer(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, inputs: dict, subject_ids):
-        for values in inputs.values():
-            print(values.shape)
+        """Fuse modality sequences and append subject embeddings before encoding."""
         B, T, _ = next(iter(inputs.values())).shape
 
         projected_dict = {
@@ -93,14 +96,18 @@ class ModalityFusionTransformer(nn.Module):
 
 
 class VIBEModel(nn.Module):
+    """End-to-end VIBE prediction model (fusion encoder + temporal predictor + ROI head)."""
+
     def __init__(
         self,
         config: VIBEConfig,
         device: str = "cpu",
+        berg_dir: str = None,
     ):
         super().__init__()
         self.config = config
         self.device = device
+        self.berg_dir = berg_dir
         self.encoder = ModalityFusionTransformer(config)
 
         fused_dim = (
@@ -123,9 +130,11 @@ class VIBEModel(nn.Module):
             attn_flash=use_flash,
         )
 
-        self.output_head = nn.Linear(fused_dim, self.config.num_rois)
+        self.output_head = nn.Linear(fused_dim, self.config.num_rois, bias=False)
+        self.register_buffer("pre_tokens", torch.empty(0, fused_dim))
 
     def forward(self, features, subject_ids):
+        """Predict `[B, T, num_rois]` responses from multimodal feature sequences."""
 
         fused = self.encoder(features, subject_ids)
 
@@ -134,32 +143,45 @@ class VIBEModel(nn.Module):
 
         return preds
     
-    def load_model_from_hub(self, PRETRAINED_CONFIGS: dict[VIBEConfig, str]):
+    def load_model_from_hub(self, repo_id: str):
         """
-        Downloads and loads weights from the Hugging Face Hub if the config matches.
+        Downloads and loads weights from the Hugging Face Hub.
 
         Args:
-            pretrained_configs (Dict[VIBEConfig, str]): A dictionary mapping
-                configuration objects to Hugging Face repository IDs.
+            repo_id (str): HuggingFace repository ID to download weights from.
         """
-        model_id = PRETRAINED_CONFIGS[self.config]
-        # Download the weights file (cached automatically)
-        weights_path = hf_hub_download(repo_id=model_id, filename="model.safetensors")
+        cache_dir = None
+        if self.berg_dir is not None:
+            cache_dir = os.path.join(
+                self.berg_dir,
+                "encoding_models",
+                "modality-fmri",
+                "train_dataset-cneuromod_algo2025",
+                "model-vibe",
+                "encoding_models_weights"
+            )
+
+        weights_path = hf_hub_download(
+            repo_id=repo_id,
+            filename="model.safetensors",
+            cache_dir=cache_dir
+        )
         state_dict = load_file(weights_path, device=self.device)
         if any(k.startswith("module.") for k in state_dict):
             state_dict = {k.replace("module.", "", 1): v for k, v in state_dict.items()}
-        self.load_state_dict(state_dict, strict=False)
+        state_dict.pop("n_averaged", None)
+        self.load_state_dict(state_dict, strict=True)
         self.to(self.device)
 
     def load_model(self, PRETRAINED_CONFIGS):
         """
-        Orchestrates model loading. Checks if current config exists in the registry.
+        Load pretrained weights if current config is present in the registry.
 
         Args:
             pretrained_configs (Dict[VIBEConfig, str]): Registry of valid models.
         """
         if self.config in PRETRAINED_CONFIGS:
-            self.load_model_from_hub(PRETRAINED_CONFIGS)
+            self.load_model_from_hub(PRETRAINED_CONFIGS[self.config])
             logging.info(
                 f"Model loaded from {PRETRAINED_CONFIGS[self.config]}")
 

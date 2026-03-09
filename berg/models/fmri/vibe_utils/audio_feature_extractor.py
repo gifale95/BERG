@@ -11,6 +11,8 @@ AST_CHUNK_LENGTH = 10.24
 
 
 class AudioFeatureExtractor:
+    """Extract per-TR audio embeddings from the video's audio track using AST."""
+
     def __init__(self, config: VIBEConfig, device: str = "cpu", low_mem_usage: bool = True):
         super().__init__()
         self.config = config
@@ -21,11 +23,13 @@ class AudioFeatureExtractor:
         self.low_mem_usage = low_mem_usage
 
     def load_model(self):
+        """Load AST feature extractor and backbone model."""
         self.processor = ASTFeatureExtractor.from_pretrained(self.model_name)
         self.model = ASTModel.from_pretrained(self.model_name,
                                               attn_implementation="sdpa").to(self.device).eval()
 
     def cleanup(self):
+        """Unload model objects and clear CUDA cache when available."""
         if self.model is not None:
             self.model.cpu()
             self.model = None
@@ -35,6 +39,7 @@ class AudioFeatureExtractor:
 
     @contextmanager
     def _model_session(self):
+        """Lazily load model and optionally unload it after use."""
         if self.model is None:
             self.load_model()
         try:
@@ -44,9 +49,9 @@ class AudioFeatureExtractor:
                 self.cleanup()
 
     def extract_features(self, video_path):
+        """Compute one audio feature vector per TR from a video file."""
         with self._model_session():
             full_waveform = extract_audio_for_ast(video_path)
-            all_features = []  # feature for each TR
             duration = full_waveform.shape[0] / 16000.0
             chunks, pooling_meta = split_movie_into_chunks(
                 duration, self.config.tr)
@@ -75,6 +80,13 @@ class AudioFeatureExtractor:
             return torch.stack(all_features)
 
     def run_batch_inference(self, waveforms, pooling_meta):
+        """
+        Run AST on a batch of waveform clips and pool features per TR window.
+
+        Returns:
+            list[torch.Tensor]: One vector per input TR, where each vector is
+            the concatenation of mean and std pooled patch features.
+        """
         inputs = self.processor(
             waveforms,
             sampling_rate=16000,
@@ -118,7 +130,7 @@ class AudioFeatureExtractor:
         batch_pooled = []
 
         for i, (rel_start, rel_end, valid_len) in enumerate(pooling_meta):
-            # Map time to Time Patch Indices
+            # Map relative TR timing to AST patch indices.
             start_idx = int((rel_start / AST_CHUNK_LENGTH) * n_time_patches)
             end_idx = int((rel_end / AST_CHUNK_LENGTH) * n_time_patches)
 
@@ -138,6 +150,7 @@ class AudioFeatureExtractor:
 
 
 def extract_audio_for_ast(video_path):
+    """Decode mono 16 kHz waveform from a video path using decord."""
     ar = AudioReader(video_path, ctx=cpu(0), sample_rate=16000, mono=True)
     audio_data = ar[:].asnumpy()
     waveform = torch.from_numpy(audio_data).squeeze()
@@ -146,10 +159,10 @@ def extract_audio_for_ast(video_path):
 
 def split_movie_into_chunks(video_duration, tr):
     """
-    Generates time windows. 
-    - chunk_length is fixed to 10.24s (AST requirement).
-    - stride is fixed to tr.
-    - Windows are causal (ending at current TR).
+    Build causal AST windows and relative TR pooling ranges.
+
+    Windows are 10.24s (AST constraint), stride by TR, and end at the
+    current TR boundary so pooling can target the most recent TR segment.
     """
     chunks = []
     pooling_ranges = []

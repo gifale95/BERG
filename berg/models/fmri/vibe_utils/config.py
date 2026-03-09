@@ -7,6 +7,7 @@ import torch
 
 @dataclass(frozen=True)
 class VIBEConfig:
+    """Configuration for VIBE feature extractors and fusion/prediction heads."""
     tr: float = 1.49  # Time Resolution in seconds
     num_subjects: int = 4  # Number of subjects
     num_rois: int = 1000  # Number of Regions of Interest
@@ -39,20 +40,20 @@ class VIBEConfig:
 
 def get_pretrained_model_configs(collection_slug: str) -> dict[VIBEConfig, str]:
     """
-    Fetches all valid Text2fMRI models from a Hugging Face Collection.
+    Fetch available VIBE model configs from a Hugging Face collection.
 
-    This function iterates through a collection, downloads the `config.json` for 
-    each model, and attempts to map it to a `Text2fMRIConfig` object.
+    Each model entry in the collection is expected to expose a `config.json`.
+    Keys that are not part of :class:`VIBEConfig` are ignored.
 
     Args:
         collection_slug (str): The Hugging Face collection ID (e.g., "username/my-collection").
 
     Returns:
-        Dict[Text2fMRIConfig, str]: A dictionary mapping the configuration object 
-        to the specific Hugging Face Repository ID (e.g., "username/model-name").
+        dict[VIBEConfig, str]: Mapping from normalized config objects to the
+        corresponding Hugging Face repository IDs.
 
-        Note: If multiple repositories share the exact same configuration (hash),
-        the last one processed will overwrite the previous entry in the dictionary.
+        If multiple repositories share exactly the same configuration hash,
+        the last processed entry overwrites previous ones.
     """
     # 1. Get the list of models from the collection
     collection = get_collection(collection_slug)

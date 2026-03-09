@@ -4,7 +4,6 @@ from decord import VideoReader, cpu
 import torch.nn.functional as F
 import numpy as np
 from tqdm import tqdm
-from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from berg.models.fmri.vibe_utils.config import VIBEConfig
 
@@ -13,16 +12,10 @@ __all__ = ["VideoFeatureExtractor"]
 
 class VideoLoader:
     """
-    Drop-in replacement for your class:
-      - Same __init__(video_path, chunks, chunk_of_interests)
-      - Same __len__()
-      - Same get_batch(start_idx, batch_size) -> (batch_tensor, meta, actual_bs)
+    Helper to decode and batch video frames for V-JEPA feature extraction.
 
-    Functionality matches:
-      - Output tensor: (B, 64, C, H, W) on GPU
-      - dtype: bfloat16
-      - values: (uint8/255) then (x - MEAN)/STD
-      - padding: if a row has padding_mask True, those frames are filled with 0.0 (exactly like your code)
+    The loader precomputes frame indices per chunk on CPU and returns normalized
+    tensors shaped `[B, 64, 3, H, W]` on the target device.
     """
 
     def __init__(self, 
@@ -66,12 +59,11 @@ class VideoLoader:
                 padding_masks[i] = True
                 continue
 
-            # exactly like your approach: pick 64 evenly spaced from [0..len-1]
+            # Sample a fixed 64-frame clip uniformly from the available frame range.
             sel = np.linspace(0, indices.size - 1, self.samples_per_clip).astype(np.int64)
             final_frame_indices = indices[sel]
 
-            # Your old code computed "is_padding = final_frame_indices < 0" (never happens here),
-            # but we keep the exact same logic structure anyway.
+            # Kept for compatibility with downstream mask handling.
             is_padding = final_frame_indices < 0
             clamped = np.maximum(0, final_frame_indices)
 
@@ -102,12 +94,10 @@ class VideoLoader:
         # decord returns NDArray (U,H,W,3) uint8-like
         frames_u = self.vr.get_batch(uniq).asnumpy()  # numpy uint8, (U,H,W,3)
 
-        # ---- Move to GPU and normalize (same as your output semantics) ----
-        # Keep it efficient: move uint8 -> GPU once, then convert/normalize on GPU.
+        # Move to device once, then normalize there.
         frames_u_t = torch.from_numpy(frames_u).to(self.device, non_blocking=False)  # (U,H,W,3), uint8
         frames_u_t = frames_u_t.permute(0, 3, 1, 2).contiguous()                # (U,3,H,W)
 
-        # Match your dtype/normalization path
         frames_u_t = frames_u_t.to(torch.bfloat16).div_(255.0)
         frames_u_t.sub_(self.mean).div_(self.std)
 
@@ -115,7 +105,7 @@ class VideoLoader:
         inv_t = torch.from_numpy(inv).to(device=self.device, dtype=torch.long)  # (B,64)
         batch_tensor = frames_u_t[inv_t]  # (B,64,3,H,W)
 
-        # ---- Apply padding exactly like your code ----
+        # Apply padding mask if present.
         if batch_padding_np.any():
             pad_t = torch.from_numpy(batch_padding_np).to(device=self.device, dtype=torch.bool)  # (B,64)
             batch_tensor.masked_fill_(pad_t.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1), 0.0)
@@ -132,6 +122,8 @@ class VideoLoader:
         return batch_tensor, meta, bs
 
 class VideoFeatureExtractor(torch.nn.Module):
+    """Extract per-TR video features from V-JEPA hidden states."""
+
     def __init__(self, config: VIBEConfig, device: str = "cpu", low_mem_usage: bool = True):
         super().__init__()
         self.config = config
@@ -140,6 +132,7 @@ class VideoFeatureExtractor(torch.nn.Module):
         self.low_mem_usage = low_mem_usage
 
     def load_model(self):
+        """Load the V-JEPA video encoder with hidden-state outputs enabled."""
         self.model = AutoModel.from_pretrained("facebook/vjepa2-vitg-fpc64-256",
                                                output_hidden_states=True,
                                                attn_implementation="sdpa",
@@ -147,6 +140,7 @@ class VideoFeatureExtractor(torch.nn.Module):
                                                ).eval().to(self.device)
 
     def cleanup(self):
+        """Unload model and clear CUDA cache when available."""
         if self.model is not None:
             self.model.cpu()
             self.model = None
@@ -155,6 +149,7 @@ class VideoFeatureExtractor(torch.nn.Module):
 
     @contextmanager
     def _model_session(self):
+        """Context manager for lazy loading and optional low-memory cleanup."""
         if self.model is None:
             self.load_model()
         try:
@@ -164,6 +159,7 @@ class VideoFeatureExtractor(torch.nn.Module):
                 self.cleanup()
 
     def extract_features(self, video_path):
+        """Compute one pooled video feature vector per TR from a video file."""
         with self._model_session():
             video_duration = get_video_info(video_path)[2]
             seconds_before_chunk = self.config.video_extractor_chunk_length_seconds - self.config.tr
@@ -185,7 +181,6 @@ class VideoFeatureExtractor(torch.nn.Module):
             pbar = tqdm(total=num_chunks,
                         desc=f"Extracting Video Features", leave=False)
             for i in range(0, num_chunks, batch_size):
-                # Fetch batch directly (Instant GPU Slice)
                 batch_tensors, batch_meta, actual_bs = loader.get_batch(
                     i, batch_size)
 
@@ -199,6 +194,13 @@ class VideoFeatureExtractor(torch.nn.Module):
             return torch.stack(all_features)
 
     def run_batch_inference(self, batch_tensors, batch_meta, actual_batch_size):
+        """
+        Run V-JEPA on a batch of clips and pool features for each TR interval.
+
+        Returns:
+            list[torch.Tensor]: Per-TR vectors of shape
+            `[video_extractor_feature_size * video_extractor_pool_size^2]`.
+        """
         with torch.inference_mode():
             batch_tensors = batch_tensors.to(self.device)
             B = batch_tensors.shape[0]
@@ -208,7 +210,7 @@ class VideoFeatureExtractor(torch.nn.Module):
             selected_layers = outputs[-self.config.video_extractor_num_last_hidden_states:]
             avg_features = torch.stack(selected_layers, dim=0).mean(dim=0)
 
-            # Spatial Pooling
+            # Pool spatial dimensions to a smaller grid before temporal pooling.
             avg_features = avg_features.reshape(
                 B, -1, 16, 16, avg_features.shape[-1])
             B, T, H, W, D = avg_features.shape
@@ -241,6 +243,7 @@ class VideoFeatureExtractor(torch.nn.Module):
 
 
 def split_movie_into_chunks(video_duration, tr, chunk_length, seconds_before_chunk):
+    """Generate chunk windows and per-TR relative pooling intervals."""
     chunks, chunk_of_interests = [], []
     start_time = 0.0
     while start_time < video_duration:
@@ -258,6 +261,7 @@ def split_movie_into_chunks(video_duration, tr, chunk_length, seconds_before_chu
 
 
 def get_video_info(video_path):
+    """Return `(fps, total_frames, duration_seconds)` for a video file."""
     vr = VideoReader(video_path, ctx=cpu(0))
     fps = vr.get_avg_fps()
     total_frames = len(vr)
