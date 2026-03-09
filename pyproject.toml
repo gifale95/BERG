@@ -45,7 +45,6 @@ dependencies = [
     "huggingface-hub>=0.36.0",
     "x-transformers>=2.0.0",
     "decord>=0.6.0",
-    "ipykernel",
     "safetensors>=0.5.3",
 ]
 
