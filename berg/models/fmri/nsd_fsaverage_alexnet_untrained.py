@@ -27,7 +27,7 @@ from berg.core.parameter_validator import (
 
 # Load model model_info from YAML
 def load_model_info():
-    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-vit_b_32.yaml")
+    yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-alexnet_untrained.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -37,11 +37,11 @@ model_info = load_model_info()
 # Register this model with the registry using model_info
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.nsd_fsaverage_vit_b_32",
+    module_path="berg.models.fmri.nsd_fsaverage_alexnet_untrained",
     class_name="FMRIEncodingModel",
     modality=model_info.get("modality", "fmri"),
     training_dataset=model_info.get("training_dataset", "nsd_fsaverage"),
-    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-vit_b_32.yaml")
+    yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards", "fmri-nsd_fsaverage-alexnet_untrained.yaml")
 )
 
 
@@ -169,7 +169,7 @@ class FMRIEncodingModel(BaseModelInterface):
             if self.roi is not None:
                 metadata_dir = os.path.join(
                     self.berg_dir, 'encoding_models', 'modality-fmri',
-                    'train_dataset-nsd_fsaverage', 'model-vit_b_32',
+                    'train_dataset-nsd_fsaverage', 'model-alexnet_untrained',
                     'metadata', f'metadata_subject-{self.subject:02d}.npy'
                 )
                 metadata_dict = np.load(metadata_dir, allow_pickle=True).item()
@@ -190,7 +190,7 @@ class FMRIEncodingModel(BaseModelInterface):
             self.feature_extractor = self._load_feature_extractor(self.device)
 
             # Define the image preprocessing transform
-            self.transform = torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms()
+            self.transform = torchvision.models.AlexNet_Weights.IMAGENET1K_V1.transforms()
 
             # Load the scaler, PCA, and trained regression weights
             self.scaler, self.pca, self.lh_reg, self.rh_reg = \
@@ -204,7 +204,7 @@ class FMRIEncodingModel(BaseModelInterface):
 
     def _load_feature_extractor(self, device):
         """
-        Load the ViT feature extractor.
+        Load the AlexNet feature extractor.
         
         Parameters
         ----------
@@ -217,23 +217,32 @@ class FMRIEncodingModel(BaseModelInterface):
             Torch feature extractor model in eval mode, configured to
             extract representations from 12 transformer layers.
         """
-        model = torchvision.models.vit_b_32(weights='DEFAULT')
+        # Set random seed to ensure that the same random weights are initialized
+        seed = 20200220
+
+        # Set all relevant seeds
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
+
+        # Ensure deterministic behavior (important for full reproducibility)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+        # Load the model with random weights
+        model = torchvision.models.alexnet(weights=None)
         
         # Select the used layers for feature extraction
         model_layers = [
-            'encoder.layers.encoder_layer_0.add_1',
-            'encoder.layers.encoder_layer_1.add_1',
-            'encoder.layers.encoder_layer_2.add_1',
-            'encoder.layers.encoder_layer_3.add_1',
-            'encoder.layers.encoder_layer_4.add_1',
-            'encoder.layers.encoder_layer_5.add_1',
-            'encoder.layers.encoder_layer_6.add_1',
-            'encoder.layers.encoder_layer_7.add_1',
-            'encoder.layers.encoder_layer_8.add_1',
-            'encoder.layers.encoder_layer_9.add_1',
-            'encoder.layers.encoder_layer_10.add_1',
-            'encoder.layers.encoder_layer_11.add_1'
-        ]
+            'features.2',
+            'features.5',
+            'features.7',
+            'features.9',
+            'features.12',
+            'classifier.2',
+            'classifier.5',
+            'classifier.6'
+            ]
         feature_extractor = create_feature_extractor(model, return_nodes=model_layers)
         feature_extractor.to(device)
         feature_extractor.eval()
@@ -262,7 +271,7 @@ class FMRIEncodingModel(BaseModelInterface):
         # Load the weights
         weights_dir = os.path.join(
             self.berg_dir, 'encoding_models', 'modality-fmri',
-            'train_dataset-nsd_fsaverage', 'model-vit_b_32',
+            'train_dataset-nsd_fsaverage', 'model-alexnet_untrained',
             'encoding_models_weights', 'weights_subject-'+
             format(self.subject, '02')+'.npy'
         )
@@ -447,7 +456,7 @@ class FMRIEncodingModel(BaseModelInterface):
                             'encoding_models', 
                             'modality-fmri',
                             'train_dataset-nsd_fsaverage', 
-                            'model-vit_b_32', 
+                            'model-alexnet_untrained', 
                             'metadata',
                             f'metadata_subject-{subject:02d}.npy')
 

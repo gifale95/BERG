@@ -1,15 +1,15 @@
-model_id: eeg-things_eeg_2-vit_b_32
+model_id: eeg-things_eeg_2-alexnet_untrained
 modality: EEG
 training_dataset: THINGS EEG2
 species: Human
 stimuli: Images
-model_type: Vision transformer (ViT-B/32)
+model_type: AlexNet (untrained)
 creator: Alessandro Gifford
 
 # General description of the model
 description: |
-  These encoding models consist in a linear mapping (through linear regression) of vision transformer
-  (Dosovitskiy et al., 2020) image features onto EEG responses. Prior to mapping onto EEG responses, the
+  These encoding models consist in a linear mapping (through linear regression) of an untrained AlexNet
+  (Krizhevsky et al., 2012) image features onto EEG responses. Prior to mapping onto EEG responses, the
   image features have been downsampled to 250 principal components using principal component analysis.
 
   The encoding models were trained on THINGS EEG2 (Gifford et al., 2022), 63-channel EEG responses of 10 subjects to
@@ -81,8 +81,8 @@ parameters:
     description: Unique identifier of the model to load.
     required: true
     type: "str"
-    valid_values: "eeg-things_eeg_2-vit_b_32"
-    example: "eeg-things_eeg_2-vit_b_32"
+    valid_values: "eeg-things_eeg_2-alexnet_untrained"
+    example: "eeg-things_eeg_2-alexnet_untrained"
     function: "get_encoding_model, get_model_metadata"
 
   subject:
@@ -177,10 +177,10 @@ parameters:
 performance:
   
   accuracy_plots: 
-    - "brain-encoding-response-generator/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32/encoding_models_accuracy"
+    - "brain-encoding-response-generator/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-alexnet_untrained/encoding_models_accuracy"
   
 references:
     - Model building code: 'https://github.com/gifale95/BERG/tree/main/berg_creation_code'
     - THINGS EEG2 (Gifford et al., 2022): https://doi.org/10.1016/j.neuroimage.2022.119754
     - THINGS initiative (Hebart et al., 2019): https://things-initiative.org/
-    - ViT-B/32 (Dosovitskiy et al., 2020): https://arxiv.org/abs/2010.11929
+    - AlexNet (Krizhevsky et al., 2012): https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks.pdf

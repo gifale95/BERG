@@ -102,7 +102,7 @@ class FMRIEncodingModel(BaseModelInterface):
             if "roi" in self.selection:
                 self.roi = validate_roi(
                     self.selection["roi"], self.VALID_ROIS
-                )
+                )[0]
         # Ensure selection is provided
         else:
             raise InvalidParameterError("Parameter 'selection' is required but was not provided")
