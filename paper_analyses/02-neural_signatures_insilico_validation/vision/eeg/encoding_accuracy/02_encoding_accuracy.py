@@ -132,7 +132,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
     # Parameters
     iter = 100
     tot_reps = eeg_invivo.shape[1]
-    target_reps = 20
+    target_reps = 40
     probe_reps = tot_reps - target_reps
     n_chans = eeg_invivo.shape[2]
     n_times = eeg_invivo.shape[3]
@@ -198,27 +198,6 @@ corr_iv_is = np.array(corr_iv_is)
 
 
 # =============================================================================
-# Compute the confidence intervals
-# =============================================================================
-ci_corr_iv_is = np.zeros((2, n_chans, n_times), dtype=np.float32)
-ci_corr_iv_iv = np.zeros((2, probe_reps, n_chans, n_times), dtype=np.float32)
-dist_corr_iv_is = np.zeros((args.n_iter, n_chans, n_times), dtype=np.float32)
-dist_corr_iv_iv = np.zeros((args.n_iter, probe_reps, n_chans, n_times),
-    dtype=np.float32)
-
-for i in tqdm(range(args.n_iter)):
-
-    idx = resample(np.arange(len(args.subjects)))
-    dist_corr_iv_is[i] = np.mean(corr_iv_is[idx], axis=0)
-    dist_corr_iv_iv[i] = np.mean(corr_iv_iv[idx], axis=0)
-
-ci_corr_iv_is[0] = np.percentile(dist_corr_iv_is, 2.5, axis=0)
-ci_corr_iv_is[1] = np.percentile(dist_corr_iv_is, 97.5, axis=0)
-ci_corr_iv_iv[0] = np.percentile(dist_corr_iv_iv, 2.5, axis=0)
-ci_corr_iv_iv[1] = np.percentile(dist_corr_iv_iv, 97.5, axis=0)
-
-
-# =============================================================================
 # Save the results
 # =============================================================================
 results = {
@@ -226,9 +205,7 @@ results = {
     'noise_ceiling': noise_ceiling,
     'metadata': metadata_berg,
     'corr_iv_iv': corr_iv_iv,
-    'corr_iv_is': corr_iv_is,
-    'ci_corr_iv_iv': ci_corr_iv_iv,
-    'ci_corr_iv_is': ci_corr_iv_is
+    'corr_iv_is': corr_iv_is
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',

@@ -4,7 +4,9 @@ For the encoding models trained on NSD, we plotted the results of some analyses 
 
 However, since the ROI surface labels of pycortex' fsaverage subject are based on templates, we replaced these labels with the [subject-specific ROI labels provided in NSD](https://cvnlab.slite.page/p/X_7BBMgghj/ROIs) (using the Python scripts found in this GitHub directory, and Inkscape). Specifically, we added the following ROI surface labels from NSD:
 - **pRF visual ROIs:** `V1v`, `V1d`, `V2v`, `V2d`, `V3v`, `V3d`, `hV4`.
-- **Category-selective ROIs:** `FFA-1`, `FFA-2`, `EBA`, `PPA`.
+- **Face-selective ROIs:** `OFA`, `FFA-1`, `FFA-2`, `mTL-faces`, `aTL-faces`.
+- **Body-selective ROIs:** `EBA`, `FBA-1`, `FBA-2`, `mTL-bodies`.
+- **Place-selective ROIs:** `OPA`, `PPA`, `RSC`.
 - **Visual streams:** `Early`, `Intermediate`, `Ventral`, `Lateral`, `Dorsal`.
 
 To use these subject-specific ROI labels, follow these steps:
