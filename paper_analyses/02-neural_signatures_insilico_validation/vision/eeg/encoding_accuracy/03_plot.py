@@ -189,7 +189,6 @@ for encoding_model in tqdm(args.encoding_models):
     idx = np.where(times >= 0.06)[0]
     corr_iv_iv = corr_iv_iv[:,:,:,idx]
     corr_iv_is = corr_iv_is[:,:,idx]
-    times = times[idx]
 
     # Only select results from occipital and parietal channels
     idx_chan = []
@@ -247,13 +246,13 @@ for encoding_model in tqdm(args.encoding_models):
         figsize=(10, 7.5))
     axs = np.reshape(axs, (-1))
     # Plot the in vivo vs. in silico correlations and CIs
+    x = np.arange(corr_iv_iv.shape[1])
     y = np.repeat(np.mean(corr_iv_is), len(x))
     axs[0].plot(x, y, color=colors[0], linewidth=2,
         label='In silico vs. in vivo target')
     axs[0].fill_between(x, ci_corr_iv_is[1], ci_corr_iv_is[0], color=colors[0],
         alpha=.1)
     # Plot the in vivo vs. in vivo correlations and CIs
-    x = np.arange(corr_iv_iv.shape[1])
     axs[0].plot(x, np.mean(corr_iv_iv, 0), color=colors[1], linewidth=2,
         label='In vivo vs. in vivo target')
     axs[0].fill_between(x, ci_corr_iv_iv[1], ci_corr_iv_iv[0], color=colors[1],
@@ -292,7 +291,7 @@ comparisons = [['vit_b_32', 'alexnet'], ['vit_b_32', 'alexnet_untrained'],
     ['alexnet', 'alexnet_untrained']]
 
 # Loop across comparisons
-for comp in comparisons:
+for comp in tqdm(comparisons):
 
     # Average the correlation scores across channels from the same channel
     # group, and subtract them between encoding models

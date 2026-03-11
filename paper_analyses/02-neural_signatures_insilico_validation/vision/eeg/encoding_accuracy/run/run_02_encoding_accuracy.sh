@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-eeg-encoding_accuracy-02_encoding_accuracy
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
-#SBATCH --time=05:00:00
+#SBATCH --mem=4000
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
