@@ -1,4 +1,4 @@
-"""Plot the encoding accuracy and noise analysis results fro BERG's EEG
+"""Plot the encoding accuracy and noise analysis results for BERG's EEG
 encoding models trained on THINGS EEG2.
 
 Parameters

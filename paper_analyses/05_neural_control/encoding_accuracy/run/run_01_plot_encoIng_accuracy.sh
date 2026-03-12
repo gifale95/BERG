@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-neural_control-encoding_accuracy-03_plot
+#SBATCH --job-name=berg-neural_control-encoding_accuracy-01_plot_encoIng_accuracy
 #SBATCH --mail-type=end
 #SBATCH --mem=2000
 #SBATCH --time=00:20:00
@@ -14,4 +14,4 @@ conda activate berg
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/05_neural_control/encoding_accuracy
 
 # Run the job
-python 03_plot.py
+python 01_plot_encoIng_accuracy.py
