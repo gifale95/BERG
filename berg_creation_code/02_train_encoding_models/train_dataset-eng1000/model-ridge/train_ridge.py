@@ -61,6 +61,7 @@ import sys
 import argparse
 import json
 import numpy as np
+import h5py
 import logging
 from os.path import join
 
@@ -73,12 +74,8 @@ parser.add_argument('--deep_fmri_repo', type=str, required=True,
     help='Path to the cloned deep-fMRI-dataset repository.')
 parser.add_argument('--berg_dir', type=str, required=True,
     help='Path to the BERG data directory.')
-# parser.add_argument('--subjects', nargs='+', type=str,
-#     default=['UTS01', 'UTS02', 'UTS03', 'UTS04', 'UTS05', 'UTS06',
-#              'UTS07', 'UTS08'],
-#     help='Subject identifiers to train. Default: all 8 subjects.')
 parser.add_argument('--subjects', nargs='+', type=str,
-    default=['UTS04', 'UTS05', 'UTS06',
+    default=['UTS01', 'UTS02', 'UTS03', 'UTS05', 'UTS06',
              'UTS07', 'UTS08'],
     help='Subject identifiers to train. Default: all 8 subjects.')
 parser.add_argument('--sessions', nargs='+', type=int,
@@ -172,19 +169,58 @@ for subject in args.subjects:
     print(f'Training encoding model for subject: {subject}')
     print(f'{"="*60}')
 
+    # -----------------------------------------------------------------
+    # Filter stories that actually exist for this subject
+    # -----------------------------------------------------------------
+    subject_dir = join(
+        args.deep_fmri_repo,
+        'data',
+        'ds003020',
+        'derivative',
+        'preprocessed_data',
+        subject
+    )
+
+    available_stories = {
+        f.replace('.hf5', '')
+        for f in os.listdir(subject_dir)
+        if f.endswith('.hf5')
+    }
+
+    train_stories_sub = [s for s in train_stories if s in available_stories]
+    test_stories_sub = [s for s in test_stories if s in available_stories]
+
+    missing = set(train_stories) - available_stories
+    if missing:
+        logging.warning(f'{subject} missing stories: {sorted(missing)}')
+
+    # -----------------------------------------------------------------
+    # Recompute stimulus matrices for this subject
+    # -----------------------------------------------------------------
+    delRstim_sub = apply_zscore_and_hrf(train_stories_sub, downsampled_feat,
+        args.trim, args.ndelays)
+    delPstim_sub = apply_zscore_and_hrf(test_stories_sub, downsampled_feat,
+        args.trim, args.ndelays)
+
+    # -----------------------------------------------------------------
     # Load BOLD responses
-    zRresp = get_response(train_stories, subject)
-    zPresp = get_response(test_stories, subject)
+    # -----------------------------------------------------------------
+    zRresp = get_response(train_stories_sub, subject)
+    zPresp = get_response(test_stories_sub, subject)
     n_voxels = zRresp.shape[1]
+
     print(f'  Train response: {zRresp.shape}')
     print(f'  Test response:  {zPresp.shape}')
     print(f'  Number of voxels: {n_voxels}')
 
+    # -----------------------------------------------------------------
     # Fit ridge regression with bootstrap cross-validation
+    # -----------------------------------------------------------------
     print(f'  Ridge parameters: nboots={args.nboots}, chunklen='
           f'{args.chunklen}, nchunks={args.nchunks}')
+
     wt, corrs, valphas, bscorrs, valinds = bootstrap_ridge(
-        delRstim, zRresp, delPstim, zPresp, alphas,
+        delRstim_sub, zRresp, delPstim_sub, zPresp, alphas,
         args.nboots, args.chunklen, args.nchunks,
         singcutoff=args.singcutoff, single_alpha=False,
         use_corr=False)
@@ -202,6 +238,68 @@ for subject in args.subjects:
     print(f'  Saved weights to: {sub_weights_dir}')
 
     # -----------------------------------------------------------------
+    # Compute noise ceiling from individual repeats
+    # -----------------------------------------------------------------
+    # The test story (wheretheressmoke) was presented once per scanning
+    # session. The preprocessed HDF5 files store individual repeat
+    # responses under the 'individual_repeats' key with shape
+    # (n_repeats, n_TRs, n_voxels).
+    #
+    # The noise ceiling is computed using the regularized CCnorm method
+    # from Schoppe et al. (2016) as described in LeBel et al. (2023):
+    #
+    #   1. CC_half: mean pairwise Pearson correlation across repeats,
+    #      computed per voxel across time.
+    #   2. CC_max (Spearman-Brown correction):
+    #        CC_max = sqrt(2 / (1 + 1 / CC_half^2))
+    #      This estimates the expected correlation between the true
+    #      signal and the average of all repeats.
+    #   3. Regularized noise ceiling:
+    #        noise_ceiling = max(CC_max, CC_floor)
+    #      where CC_floor = 0.3 prevents unbounded corrections for
+    #      poorly-modeled voxels.
+    print(f'  Computing noise ceiling from individual repeats...')
+    test_story_name = test_stories_sub[0]
+    test_story_path = join(subject_dir, f'{test_story_name}.hf5')
+    hf = h5py.File(test_story_path, 'r')
+
+    if 'individual_repeats' in hf.keys():
+        repeats = hf['individual_repeats'][:]  # (n_repeats, n_TRs, n_voxels)
+        hf.close()
+        n_repeats = repeats.shape[0]
+        print(f'    Found {n_repeats} individual repeats, '
+              f'shape: {repeats.shape}')
+
+        # Compute CC_half: mean pairwise correlation across repeats.
+        pair_corrs = []
+        for i in range(n_repeats):
+            for j in range(i + 1, n_repeats):
+                r_i = repeats[i]  # (n_TRs, n_voxels)
+                r_j = repeats[j]
+                # Z-score each repeat across time, then compute correlation.
+                r_i_z = (r_i - r_i.mean(0)) / (r_i.std(0) + 1e-10)
+                r_j_z = (r_j - r_j.mean(0)) / (r_j.std(0) + 1e-10)
+                pair_corrs.append((r_i_z * r_j_z).mean(0))
+        cc_half = np.mean(pair_corrs, axis=0)  # (n_voxels,)
+
+        # Spearman-Brown correction: CC_max = sqrt(2 / (1 + 1/CC_half^2))
+        cc_half_safe = np.clip(np.abs(cc_half), 1e-10, None)
+        cc_max = np.sqrt(2.0 / (1.0 + 1.0 / (cc_half_safe ** 2)))
+
+        # Regularize: floor CC_max at 0.3 (LeBel et al., 2023).
+        cc_floor = 0.3
+        noise_ceiling = np.maximum(cc_max, cc_floor)
+
+        print(f'    Mean CC_half: {np.mean(cc_half):.4f}')
+        print(f'    Mean noise ceiling (CC_max, floored): '
+              f'{np.mean(noise_ceiling):.4f}')
+    else:
+        hf.close()
+        print(f'    WARNING: individual_repeats not found in '
+              f'{test_story_path}. Setting noise ceiling to NaN.')
+        noise_ceiling = np.full(n_voxels, np.nan)
+
+    # -----------------------------------------------------------------
     # Save metadata
     # -----------------------------------------------------------------
     os.makedirs(metadata_dir, exist_ok=True)
@@ -209,13 +307,15 @@ for subject in args.subjects:
         'fmri': {
             'subject_id': subject,
             'n_voxels': n_voxels,
-            'train_stories': np.array(train_stories),
-            'test_stories': np.array(test_stories),
+            'train_stories': np.array(train_stories_sub),
+            'test_stories': np.array(test_stories_sub),
         },
         'encoding_models': {
             'correlation': corrs,
+            'noise_ceiling': noise_ceiling,
         },
     }
+
     metadata_path = join(metadata_dir, f'sub-{subject}.npy')
     np.save(metadata_path, metadata)
     print(f'  Saved metadata to: {metadata_path}')
@@ -231,5 +331,10 @@ print(f'{"="*60}')
 python berg_creation_code/02_train_encoding_models/train_dataset-eng1000/model-ridge/train_ridge.py \
     --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
     --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator
-    
+
+
+python berg_creation_code/02_train_encoding_models/train_dataset-eng1000/model-ridge/train_ridge.py \
+    --deep_fmri_repo /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/deep-fMRI-dataset \
+    --berg_dir /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/BERG/brain-encoding-response-generator
+
 """
