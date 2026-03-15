@@ -1,11 +1,11 @@
 # Basic metadata
-model_id: fmri-eng1000-ridge
+model_id: fmri-lebel-eng1000
 modality: fMRI
-training_dataset: LeBel et al. (2023) — Natural Language fMRI Dataset (English1000)
+training_dataset: LeBel et al. (2023)
 species: Human
 stimuli: Text (spoken narrative stories)
 model_type: English1000 word embeddings + ridge regression with FIR hemodynamic model
-creator: Alexander G. Huth
+creator: Amanda LeBel
 
 # General description of the model
 description: |
@@ -75,27 +75,20 @@ description: |
 metadata: |
   'fmri':
       subject_id                 : str         - Subject identifier (e.g., 'UTS01')
-      n_voxels                   : int         - Total number of cortical voxels (varies per subject, ~80k–110k)
+      n_voxels                   : int         - Total number of cortical voxels (varies per subject, see below)
       train_stories              : (26,)       - Story names used for model training
       test_stories               : (1,)        - Story name used for model testing ('wheretheressmoke')
   'encoding_models':
       correlation                : (n_voxels,) - Voxelwise prediction accuracy (Pearson's r) on test story
       noise_ceiling              : (n_voxels,) - Voxelwise noise ceiling (regularized CCnorm, floored at 0.3)
   'roi':
-      AC                         : (n_voxels,) - Auditory cortex (boolean mask)
-      Broca                      : (n_voxels,) - Broca's area (boolean mask)
-      EBA                        : (n_voxels,) - Extrastriate body area (boolean mask)
-      FEF                        : (n_voxels,) - Frontal eye field (boolean mask)
-      FFA                        : (n_voxels,) - Fusiform face area (boolean mask)
-      IPS                        : (n_voxels,) - Intraparietal sulcus (boolean mask)
-      M1F                        : (n_voxels,) - Primary motor cortex, foot (boolean mask)
-      M1H                        : (n_voxels,) - Primary motor cortex, hand (boolean mask)
-      M1M                        : (n_voxels,) - Primary motor cortex, mouth (boolean mask)
-      OFA                        : (n_voxels,) - Occipital face area (boolean mask)
-      PPA                        : (n_voxels,) - Parahippocampal place area (boolean mask)
-      RSC                        : (n_voxels,) - Retrosplenial cortex (boolean mask)
-      sPMv                       : (n_voxels,) - Superior premotor ventral speech area (boolean mask)
-      (additional motor, visual, and frontal ROIs may be available per subject)
+      Not all ROIs are available for every subject. ROIs are derived from
+      hand-drawn functional localizer data. Use get_model_metadata() to check
+      which ROIs are available for a given subject. Each ROI is a boolean mask
+      of shape (n_voxels,) where True indicates membership.
+      Common ROIs across most subjects include: AC, EBA, FFA, M1F, M1H, M1M,
+      PPA, RSC, S1F, S1H, S1M, SMFA, SMHA, sPMv.
+      See the 'roi' selection parameter below for the full list of possible ROIs.
 
 
 # Input stimulus information
@@ -106,7 +99,7 @@ input:
 
     The model was trained on naturalistic spoken English narrative stories from
     The Moth podcast. For best results, use complete English sentences with
-    common vocabulary. Words not found in the English1000 vocabulary (~60,000
+    common vocabulary. Words not found in the English1000 vocabulary (~10,000
     words) are silently ignored (assigned zero vectors).
 
     The model internally assigns word timings at a fixed rate of 3 words per
@@ -140,8 +133,8 @@ parameters:
     description: Unique identifier of the model to load.
     required: true
     type: "str"
-    valid_values: "fmri-eng1000-ridge"
-    example: "fmri-eng1000-ridge"
+    valid_values: "fmri-lebel-eng1000"
+    example: "fmri-lebel-eng1000"
     function: "get_encoding_model, get_model_metadata"
 
   subject:
@@ -156,6 +149,12 @@ parameters:
     description: |
       Specifies which voxels to include in the model responses.
       If not provided, responses are generated for all cortical voxels.
+
+      **Important:** Not all ROIs are available for every subject. ROIs are
+      derived from hand-drawn functional localizer data and vary across
+      subjects. If a requested ROI is not available for the selected subject,
+      an error is raised listing the available ROIs. Use get_model_metadata()
+      to inspect which ROIs exist for a given subject.
     required: false
     type: dict
     function: get_encoding_model
@@ -164,23 +163,33 @@ parameters:
         type: list[str]
         description: |
           List of ROI names for which in silico fMRI responses are generated.
-          Available ROIs are defined per subject from functional localizer data.
-          Common ROIs include auditory, motor, visual, and language regions.
-          Note: the exact set of ROIs with nonzero voxels may differ across subjects.
-        valid_values: [
-          "AC", "Broca", "EBA", "FEF", "FFA", "FO", "IFSFP", "IPS",
-          "M1F", "M1H", "M1M", "OFA", "PMvh", "PPA", "RSC",
-          "S1F", "S1H", "S1M", "S2F", "S2H", "S2M",
-          "SMFA", "SMHA", "TOS", "sPMv"
-        ]
+          ROIs are defined per subject from functional localizer data. Not all
+          ROIs are available for every subject — use get_model_metadata() to
+          check availability. If a requested ROI does not exist for the selected
+          subject, an error will be raised listing the available ROIs.
+        valid_values: ['AC', 'ATFP', 'Broca', 'Brocas', 'EBA', 'FBA', 'FEF', 'FFA', 
+                      'FO', 'IFSFP', 'IPS', 'IPS ', 'ISPS', 'LO', 'M1F', 'M1H', 'M1M', 'OFA', 'OPA', 
+                      'PMvh', 'PPA', 'RSC', 'S1F', 'S1H', 'S1M', 'S2F', 'S2H', 'S2M', 'SEF', 'SMFA', 
+                      'SMHA', 'TOS', 'V1', 'V2', 'V3', 'V3A', 'V3B', 'V4', 'V7', 'VO', 'hMT', 'pSTS', 'sPMv']
         example: ["AC", "Broca"]
       voxel_index:
         type: numpy.ndarray
         description: |
           Binary one-hot encoded vector with ones indicating the voxels for
           which in silico fMRI responses are generated. This vector must have
-          the same length as the total number of voxels for the subject, which
-          varies per subject (approximately 80,000–110,000).
+          exactly the same length as the number of voxels for the selected
+          subject:
+          - UTS01:  81,126 voxels
+          - UTS02:  94,251 voxels
+          - UTS03:  95,556 voxels
+          - UTS04: 109,469 voxels
+          - UTS05:  99,322 voxels
+          - UTS06:  92,198 voxels
+          - UTS07:  94,395 voxels
+          - UTS08:  97,023 voxels
+          The voxels from the one-hot encoded vector are included in addition to
+          any voxels selected via the "roi" key. If both are provided, the union
+          of all selected voxels is used.
         example: [0, 0, ..., 1, 1, 0]
 
   device:

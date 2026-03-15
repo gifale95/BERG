@@ -15,7 +15,6 @@ from berg.core.parameter_validator import (
     validate_subject,
     validate_selection_keys,
     validate_binary_array,
-    validate_roi,
     get_selected_indices,
 )
 
@@ -26,7 +25,7 @@ def load_model_info():
         os.path.dirname(__file__),
         "..",
         "model_cards",
-        "fmri-eng1000-ridge.yaml"
+        "fmri-lebel-eng1000.yaml"
     )
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
@@ -44,7 +43,7 @@ register_model(
         os.path.dirname(__file__),
         "..",
         "model_cards",
-        "fmri-eng1000-ridge.yaml"
+        "fmri-lebel-eng1000.yaml"
     )
 )
 
@@ -73,6 +72,18 @@ class FMRITextEncodingModel(BaseModelInterface):
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"][
         "valid_values"
     ]
+
+    # Per-subject voxel counts (from preprocessed cortical surface data)
+    VOXELS_PER_SUBJECT = {
+        "UTS01":  81126,
+        "UTS02":  94251,
+        "UTS03":  95556,
+        "UTS04": 109469,
+        "UTS05":  99322,
+        "UTS06":  92198,
+        "UTS07":  94395,
+        "UTS08":  97023,
+    }
 
     # Temporal processing parameters (matching the training pipeline)
     TR = 2.0              # fMRI repetition time in seconds
@@ -135,17 +146,16 @@ class FMRITextEncodingModel(BaseModelInterface):
         if self.selection is not None:
             validate_selection_keys(self.selection, self.SELECTION_KEYS)
 
-            # Validate ROI selection
+            # Store ROI list for validation at load time (when metadata
+            # is available to check subject-specific ROI availability)
             if "roi" in self.selection:
                 roi_input = self.selection["roi"]
                 if not isinstance(roi_input, list):
                     roi_input = [roi_input]
-                for roi in roi_input:
-                    validate_roi(roi, self.VALID_ROIS)
                 self.roi_list = roi_input
 
-            # Validate voxel index (actual length check deferred to
-            # load_model when we know n_voxels)
+            # Store voxel index for validation at load time (when we
+            # know the subject's voxel count)
             if "voxel_index" in self.selection:
                 self.selected_voxels = self.selection["voxel_index"]
 
@@ -185,20 +195,35 @@ class FMRITextEncodingModel(BaseModelInterface):
             self.metadata = np.load(metadata_path, allow_pickle=True).item()
             n_voxels = self.metadata['fmri']['n_voxels']
 
+            # Verify voxel count matches expected value
+            expected = self.VOXELS_PER_SUBJECT[self.subject]
+            if n_voxels != expected:
+                print(f"Warning: Expected {expected} voxels for "
+                      f"{self.subject}, found {n_voxels} in metadata.")
+
+            # ----------------------------------------------------------------
+            # Validate ROI selection against subject-specific availability
+            # ----------------------------------------------------------------
+            roi_dict = self.metadata.get('roi', {})
+            available_rois = sorted(roi_dict.keys())
+
+            if self.roi_list is not None:
+                invalid_rois = [r for r in self.roi_list
+                                if r not in roi_dict]
+                if invalid_rois:
+                    raise InvalidParameterError(
+                        f"ROI(s) {invalid_rois} not available for subject "
+                        f"{self.subject}. Available ROIs for this subject: "
+                        f"{available_rois}"
+                    )
+
             # ----------------------------------------------------------------
             # Build voxel selection from ROI + voxel_index
             # ----------------------------------------------------------------
             selected = set()
 
             if self.roi_list is not None:
-                roi_dict = self.metadata.get('roi', {})
                 for roi in self.roi_list:
-                    if roi not in roi_dict:
-                        raise InvalidParameterError(
-                            f"ROI '{roi}' not found in metadata for "
-                            f"subject {self.subject}. Available ROIs: "
-                            f"{sorted(roi_dict.keys())}"
-                        )
                     roi_mask = roi_dict[roi]
                     selected.update(np.where(roi_mask)[0].tolist())
 
@@ -231,7 +256,6 @@ class FMRITextEncodingModel(BaseModelInterface):
                     f"Weights not found: {weights_path}"
                 )
             weights_data = np.load(weights_path, allow_pickle=True)
-            # The weights are stored as the first array in the npz.
             all_weights = weights_data[weights_data.files[0]]
             # Shape: (n_features * n_delays, n_voxels) = (3940, n_voxels)
             # Select only the voxels we need.
@@ -240,8 +264,6 @@ class FMRITextEncodingModel(BaseModelInterface):
             # ----------------------------------------------------------------
             # Load English1000 semantic model
             # ----------------------------------------------------------------
-            # The English1000 embedding matrix is stored in the BERG data
-            # directory alongside the model weights.
             eng1000_path = os.path.join(
                 self.berg_dir,
                 'encoding_models',
@@ -270,8 +292,8 @@ class FMRITextEncodingModel(BaseModelInterface):
         Load the English1000 word embedding matrix from HDF5.
 
         The HDF5 file stores the embedding matrix as (985, 10470) where
-        rows are features and columns are words. We transpose during
-        lookup so each word maps to a 985-dim vector.
+        rows are features and columns are words. Each word maps to a
+        985-dim vector (a column of the data matrix).
 
         Parameters
         ----------

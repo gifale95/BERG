@@ -151,3 +151,11 @@ for subject in args.subjects:
 print(f'\n{"="*60}')
 print('Done. ROI masks extracted and saved.')
 print(f'{"="*60}')
+
+
+"""
+
+python berg_creation_code/01_prepare_data/train_dataset-eng100/prepare_rige.py \
+    --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
+    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator
+"""
