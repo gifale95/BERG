@@ -44,7 +44,7 @@ dependencies = [
     "transformers>=4.46.3",
     "huggingface-hub>=0.36.0",
     "x-transformers>=2.0.0",
-    "decord>=0.6.0",
+    "eva-decord==0.6.1",
     "safetensors>=0.5.3",
 ]
 

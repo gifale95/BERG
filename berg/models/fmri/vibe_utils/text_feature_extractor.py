@@ -1,3 +1,4 @@
+from __future__ import annotations
 import logging
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
