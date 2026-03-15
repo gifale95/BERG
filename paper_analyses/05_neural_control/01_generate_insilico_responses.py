@@ -16,8 +16,8 @@ roi: str
 berg_dir : str
     Directory of the BERG.
 imagenet_dir : str
-	Directory of the ImageNet image set.
-	https://www.image-net.org/challenges/LSVRC/2012/index.php
+    Directory of the ImageNet image set.
+    https://www.image-net.org/challenges/LSVRC/2012/index.php
 
 """
 
@@ -28,6 +28,7 @@ from tqdm import tqdm
 from berg import BERG
 import torchvision
 from torchvision import transforms as trn
+from torch.utils.data import DataLoader
 import gc
 import torch
 
@@ -63,9 +64,28 @@ metadata = berg.get_model_metadata(
 
 
 # =============================================================================
-# Access ImageNet
+# Access the ILSVRC-2012 train split
 # =============================================================================
-images = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='train')
+# Define the image transform
+transform = trn.Compose([
+    trn.Lambda(lambda img: trn.functional.center_crop(img, min(img.size))),
+    trn.Resize((224, 224)),
+    trn.Lambda(lambda img: np.transpose(img, (2, 0, 1))) # HWC to CHW
+])
+
+# Access the ILSVRC-2012 train split
+images = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='train',
+    transform=transform)
+
+# Create the dataloader
+def collate_numpy(batch):
+    imgs, labels = zip(*batch)
+    imgs = np.stack(imgs, axis=0)
+    labels = np.array(labels)
+    return imgs, labels
+loader = DataLoader(images, batch_size=1000, shuffle=False, num_workers=4,
+    collate_fn=collate_numpy)
+loader_iter = iter(loader)
 
 
 # =============================================================================
@@ -73,24 +93,23 @@ images = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='train')
 # =============================================================================
 insilico_resp = []
 
-for i in tqdm(range(len(images))):
+for b in tqdm(range(len(loader_iter))):
 
-    # Get and preprocess the image
-    img, _ = images.__getitem__(i)
-    transform = trn.Compose([trn.CenterCrop(min(img.size))])
-    img = np.asarray(transform(img))
+    # Get the images
+    imgs, _ = next(loader_iter)
 
-    # Generate the in silico neural response, and average it across electrodes
-    resp = berg.encode(model, img)
-    resp = np.squeeze(np.mean(resp, 0)).astype(np.float32)
+    # Generate the in silico neural responses, and average them across
+    # electrodes from the chosen ROI
+    resp = berg.encode(model, imgs)
+    resp = np.mean(resp, 1).astype(np.float32)
     insilico_resp.append(resp)
 
     # Delete unused variables
-    del resp
+    del imgs, resp
     torch.cuda.empty_cache()
     gc.collect()
 
-insilico_resp = np.array(insilico_resp)
+insilico_resp = np.concatenate(insilico_resp, axis=0)
 
 
 # =============================================================================
