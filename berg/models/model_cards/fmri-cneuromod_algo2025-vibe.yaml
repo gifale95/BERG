@@ -8,33 +8,59 @@ creator: Shrey Dixit, Daniel Carlström Schad, Janis Keck, Viktor Studenyak, Ale
 
 # General description of the model
 description: |
-  VIBE is a multimodal fMRI encoding model trained on CNeuroMod movie data.
-  It combines per-TR language transcripts, movie audio, and video features to
-  predict whole-brain fMRI activity in Schaefer-1000 parcel space.
+  VIBE (Video-Input Brain Encoder) is a multimodal fMRI encoding model trained
+  on CNeuroMod movie data. It combines per-TR language transcripts, movie audio,
+  and video features to predict whole-brain fMRI activity in Schaefer-1000
+  parcel space.
 
-  The models are based on the paper "VIBE: Video-Input Brain Encoder for fMRI
-  Response Modeling", which describes a two-stage Transformer architecture:
-  a modality-fusion transformer followed by a temporal prediction transformer
-  with rotary embeddings. This models are modified from the original to use fewer
+  Architecture overview:
+  VIBE uses a two-stage Transformer architecture. In the first stage, a
+  modality-fusion transformer performs cross-attention across modalities
+  independently at each time point (TR). Each feature stream (text, audio,
+  video) is linearly projected to a shared 256-dimensional space together with
+  a learned subject embedding, and fused via a single-layer Transformer encoder.
+  The fused per-TR representations are concatenated and passed to the second
+  stage: a prediction transformer (2 layers) that models temporal dependencies
+  across TRs using Rotary Positional Embeddings (RoPE). A final feed-forward
+  layer maps to the 1000-parcel Schaefer output space. The model is trained
+  with a combined Pearson-correlation + MSE loss and ensembled across multiple
+  seeds. For full details see Schad, Dixit, Keck et al. (2025),
+  arXiv:2507.17958.
+
+  These BERG-integrated models are modified from the original to use fewer
   feature extractors for faster inference and lower memory usage.
 
-  The best model (when ensembled) reaches 0.3193 on indistribution and 0.2122 on 
-  out-of-distribution data.
+  Temporal resolution:
+  The model was trained with a TR of 1.49 s, which is also the prediction
+  resolution. The number of transcript strings passed as `stimulus` must
+  exactly match the number of TRs derived from the video (i.e.,
+  floor(video_duration / 1.49)). A mismatch will raise an error.
+
+  The best model (when ensembled) reaches 0.3193 on in-distribution and 0.2122
+  on out-of-distribution data.
 
   Pretrained variants are available from the Hugging Face collection
   'ShreyDixit/vibe'. You can inspect variants via `berg.get_model_variants()`
   and load a specific variant using `model_variant=...` in get_encoding_model().
 
 metadata: |
-  Optional metadata files may be available at:
-  encoding_models/modality-fmri/train_dataset-cneuromod_algo2025/model-vibe/metadata/metadata.npy
+  NOTE: Atlas files for glass brain visualization (Schaefer 1000-parcel MNI coordinates) are provided separately in the BERG directory and are not part of the per-subject metadata files.
+  'roi_masks':
+      cont                               : (1000,) - Binary mask for Control/Frontoparietal network parcels
+      default                            : (1000,) - Binary mask for Default Mode network parcels
+      dorsattn                           : (1000,) - Binary mask for Dorsal Attention network parcels
+      limbic                             : (1000,) - Binary mask for Limbic network parcels
+      salventattn                        : (1000,) - Binary mask for Salience/Ventral Attention network parcels
+      sommot                             : (1000,) - Binary mask for Somatomotor network parcels
+      vis                                : (1000,) - Binary mask for Visual network parcels
 
 # Input stimulus information
 input:
   type: "list[str], str"
   description: |
     Two inputs are required:
-    1. `stimulus`: A list of per-TR transcripts (one string per TR).
+    1. `stimulus`: A list of per-TR transcripts (one string per TR, where TR = 1.49 s).
+       The length must match the number of TRs derived from the video.
     2. `video_path`: Path to the source video used for audio/video feature extraction.
   example: |
     stimulus = ["Hello, are you", "awake? Yes,"]
@@ -132,7 +158,9 @@ parameters:
     type: "list[str]"
     required: true
     description: |
-      A list of transcript strings, one per TR.
+      A list of transcript strings, one per TR (TR = 1.49 s).
+      The length of this list must exactly match the number of TRs
+      derived from the video duration (floor(video_duration / 1.49)).
     example: |
       ["Hello, are you", "awake? Yes,"]
     function: "encode"
