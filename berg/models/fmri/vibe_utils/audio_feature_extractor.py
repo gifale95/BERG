@@ -1,3 +1,6 @@
+import warnings
+import logging as _logging
+
 import torch
 from transformers import ASTModel, ASTFeatureExtractor
 from decord import AudioReader, cpu
@@ -23,10 +26,29 @@ class AudioFeatureExtractor:
         self.low_mem_usage = low_mem_usage
 
     def load_model(self):
-        """Load AST feature extractor and backbone model."""
+        """Load AST feature extractor and backbone model.
+
+        The pretrained checkpoint includes classifier head weights
+        (``classifier.layernorm.*``, ``classifier.dense.*``) that are not
+        used for feature extraction. We suppress the resulting
+        ``UNEXPECTED`` key warnings from transformers as well as the
+        ``torch_dtype`` deprecation notice from newer library versions.
+        """
         self.processor = ASTFeatureExtractor.from_pretrained(self.model_name)
-        self.model = ASTModel.from_pretrained(self.model_name,
-                                              attn_implementation="sdpa").to(self.device).eval()
+
+        # Suppress expected warnings during model load:
+        # 1. UNEXPECTED keys from the classifier head (not used for feature extraction)
+        # 2. torch_dtype deprecation in newer transformers versions
+        _hf_logger = _logging.getLogger("transformers.modeling_utils")
+        prev_level = _hf_logger.level
+        _hf_logger.setLevel(_logging.ERROR)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*torch_dtype.*")
+            self.model = ASTModel.from_pretrained(
+                self.model_name,
+                attn_implementation="sdpa",
+            ).to(self.device).eval()
+        _hf_logger.setLevel(prev_level)
 
     def cleanup(self):
         """Unload model objects and clear CUDA cache when available."""

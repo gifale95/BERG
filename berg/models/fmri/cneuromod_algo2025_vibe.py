@@ -306,10 +306,27 @@ class VIBE(BaseModelInterface):
         if not os.path.exists(video_path):
             raise FileNotFoundError(f"Video file {video_path} not found.")
 
+        text_features = self.text_feature_extractor.extract_features(transcripts)
+        audio_features = self.audio_feature_extractor.extract_features(video_path)
+        video_features = self.video_feature_extractor.extract_features(video_path)
+
+        n_text = text_features.shape[0]
+        n_audio = audio_features.shape[0]
+        n_video = video_features.shape[0]
+
+        if n_text != n_audio or n_text != n_video:
+            raise InvalidParameterError(
+                f"TR count mismatch: transcripts has {n_text} TRs, but "
+                f"audio features have {n_audio} and video features have "
+                f"{n_video}. The number of transcript strings must match "
+                f"the number of TRs derived from the video "
+                f"(floor(video_duration / {self.config.tr}))."
+            )
+
         inputs_dict = {
-            "text": self.text_feature_extractor.extract_features(transcripts)[None].float(),
-            "audio": self.audio_feature_extractor.extract_features(video_path)[None].float(),
-            "video": self.video_feature_extractor.extract_features(video_path)[None].float(),
+            "text": text_features[None].float(),
+            "audio": audio_features[None].float(),
+            "video": video_features[None].float(),
         }
         selected_parcel_indices = self._get_selected_parcel_indices()
 
