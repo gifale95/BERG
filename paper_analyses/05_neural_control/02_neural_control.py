@@ -339,13 +339,14 @@ for s, sub in enumerate(tqdm(args.subjects)):
     # control
     save_dir_control = os.path.join(args.berg_dir, 'neural_control',
         'controlling images', args.encoding_model, f'subject-{sub}',
-        f'roi-{args.roi}', f'control-{args.control}', 'time-resolved')
+        f'roi-{args.roi}', 'time-resolved', f'control-{args.control}')
     os.makedirs(save_dir_control, exist_ok=True)
     save_dir_baseline = os.path.join(args.berg_dir, 'neural_control',
         'baseline images', args.encoding_model, f'subject-{sub}',
-        f'roi-{args.roi}', f'control-{args.control}', 'time-resolved')
+        f'roi-{args.roi}', 'time-resolved', f'control-{args.control}')
     os.makedirs(save_dir_baseline, exist_ok=True)
     for t, time in enumerate(times):
+        time = int(time)
         if t % 10 == 0: # Only same images for every 10ms time point
             for i in range(args.n_images):
                 img_c, _ = images.__getitem__(img_control[s,i,t])
@@ -378,12 +379,12 @@ for s, sub in enumerate(tqdm(args.subjects)):
     # Save the controlling and baseline images for the time-averaged neural
     # control
     save_dir_control = os.path.join(args.berg_dir, 'neural_control',
-        'controlling images', args.encoding_model, f'subject-{sub}',
-        f'roi-{args.roi}', f'control-{args.control}', 'time-averaged')
+        'controlling_images', args.encoding_model, f'subject-{sub}',
+        f'roi-{args.roi}', 'time-averaged', f'control-{args.control}')
     os.makedirs(save_dir_control, exist_ok=True)
     save_dir_baseline = os.path.join(args.berg_dir, 'neural_control',
-        'baseline images', args.encoding_model, f'subject-{sub}',
-        f'roi-{args.roi}', f'control-{args.control}', 'time-averaged')
+        'baseline_images', args.encoding_model, f'subject-{sub}',
+        f'roi-{args.roi}', 'time-averaged', f'control-{args.control}')
     os.makedirs(save_dir_baseline, exist_ok=True)
     for i in range(args.n_images):
         img_c, _ = images.__getitem__(img_control_avg[s,i])
@@ -400,7 +401,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
             trn.Resize((425,425))
             ])
         img_b = transform(img_b)
-        file_name_control = f'{args.control}_-img-{i:03}.png'
+        file_name_control = f'{args.control}_img-{i:03}.png'
         file_name_baseline = f'baseline_img-{i:03}.png'
         img_c.save(os.path.join(save_dir_control, file_name_control))
         img_b.save(os.path.join(save_dir_baseline, file_name_baseline))

@@ -54,9 +54,9 @@ for roi in args.rois:
         data = np.load(os.path.join(data_dir, file_name),
             allow_pickle=True).item()
         cv_control_data[f'{roi}_{control}'] = data['cv_control_data']
-        p_val[f'{roi}_{control}'] = data['p_val_bh']
+        p_val[f'{roi}_{control}'] = data['p_val_bonf']
         cv_control_data_avg[f'{roi}_{control}'] = data['cv_control_data_avg']
-        p_val_avg[f'{roi}_{control}'] = data['p_val_avg_bh']
+        p_val_avg[f'{roi}_{control}'] = data['p_val_avg_bonf']
         ci_low_null_distribution[f'{roi}_{control}'] = \
             data['ci_low_null_distribution']
         ci_high_null_distribution[f'{roi}_{control}'] = \
@@ -144,14 +144,14 @@ for r, roi in enumerate(args.rois):
                     color=colors[2], linewidth=1)
 
         # Plot the significance markers
-        sig_drive = np.empty(len(times))
-        sig_suppress = np.empty(len(times))
-        sig_drive[:] = np.nan
-        sig_suppress[:] = np.nan
-        sig_drive[p_val[f'{roi}_drive'][s]<0.05] = 28
-        sig_suppress[p_val[f'{roi}_suppress'][s]<0.05] = 7
-        plt.scatter(times, sig_drive, s=100, color=colors[0])
-        plt.scatter(times, sig_suppress, s=100, color=colors[2])
+        # sig_drive = np.empty(len(times))
+        # sig_suppress = np.empty(len(times))
+        # sig_drive[:] = np.nan
+        # sig_suppress[:] = np.nan
+        # sig_drive[p_val[f'{roi}_drive'][s]<0.05] = 28
+        # sig_suppress[p_val[f'{roi}_suppress'][s]<0.05] = 9
+        # axs[s,r].scatter(times, sig_drive, s=100, color=colors[0])
+        # axs[s,r].scatter(times, sig_suppress, s=100, color=colors[2])
 
         # Title
         title = f'{roi} - Subject {sub}'
@@ -225,14 +225,14 @@ for r, roi in enumerate(args.rois):
                     color=colors[2], linewidth=1)
 
         # Plot the significance markers
-        sig_drive = np.empty(len(times))
-        sig_suppress = np.empty(len(times))
-        sig_drive[:] = np.nan
-        sig_suppress[:] = np.nan
-        sig_drive[p_val_avg[f'{roi}_drive'][s]<0.05] = 28
-        sig_suppress[p_val_avg[f'{roi}_suppress'][s]<0.05] = 7
-        plt.scatter(times, sig_drive, s=100, color=colors[0])
-        plt.scatter(times, sig_suppress, s=100, color=colors[2])
+        # sig_drive = np.empty(len(times))
+        # sig_suppress = np.empty(len(times))
+        # sig_drive[:] = np.nan
+        # sig_suppress[:] = np.nan
+        # sig_drive[p_val_avg[f'{roi}_drive'][s]<0.05] = 28
+        # sig_suppress[p_val_avg[f'{roi}_suppress'][s]<0.05] = 9
+        # axs[s,r].scatter(times, sig_drive, s=100, color=colors[0])
+        # axs[s,r].scatter(times, sig_suppress, s=100, color=colors[2])
 
         # Title
         title = f'{roi} - Subject {sub}'
