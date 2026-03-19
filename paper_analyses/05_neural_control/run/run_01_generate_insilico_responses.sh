@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-neural_control-01_generate_insilico_responses
 #SBATCH --mail-type=end
-#SBATCH --mem=30000
-#SBATCH --time=04-00:00:00
+#SBATCH --mem=25000
+#SBATCH --time=03-00:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
