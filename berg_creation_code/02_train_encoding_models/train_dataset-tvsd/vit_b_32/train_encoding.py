@@ -76,10 +76,6 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 # Set random seed for reproducible results
-if args.monkey == 'monkeyN':
-   seed = 20200220
-elif args.monkey == 'monkeyF':
-   seed = 20200221
 np.random.seed(seed)
 torch.manual_seed(seed)
 
