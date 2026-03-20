@@ -338,11 +338,11 @@ for s, sub in enumerate(tqdm(args.subjects)):
     # Save the controlling and baseline images for the time-resolved neural
     # control
     save_dir_control = os.path.join(args.berg_dir, 'neural_control',
-        'controlling images', args.encoding_model, f'subject-{sub}',
+        'controlling_images', args.encoding_model, f'subject-{sub}',
         f'roi-{args.roi}', 'time-resolved', f'control-{args.control}')
     os.makedirs(save_dir_control, exist_ok=True)
     save_dir_baseline = os.path.join(args.berg_dir, 'neural_control',
-        'baseline images', args.encoding_model, f'subject-{sub}',
+        'baseline_images', args.encoding_model, f'subject-{sub}',
         f'roi-{args.roi}', 'time-resolved', f'control-{args.control}')
     os.makedirs(save_dir_baseline, exist_ok=True)
     for t, time in enumerate(times):
