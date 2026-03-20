@@ -244,17 +244,21 @@ class EEGEncodingModel(BaseModelInterface):
         scaler.n_samples_seen_ = weights['scaler_param']['n_samples_seen_']
 
         # PCA
+        pca = []
         n_components = 250
-        pca = PCA(n_components=n_components, random_state=20200220)
-        pca.components_ = weights['pca_param']['components_']
-        pca.explained_variance_ = weights['pca_param']['explained_variance_']
-        pca.explained_variance_ratio_ = weights['pca_param']['explained_variance_ratio_']
-        pca.singular_values_ = weights['pca_param']['singular_values_']
-        pca.mean_ = weights['pca_param']['mean_']
-        pca.n_components_ = weights['pca_param']['n_components_']
-        pca.n_samples_ = weights['pca_param']['n_samples_']
-        pca.noise_variance_ = weights['pca_param']['noise_variance_']
-        pca.n_features_in_ = weights['pca_param']['n_features_in_']
+        for r in range(len(weights['pca_param'])):
+            pca_rep = PCA(n_components=n_components)
+            pca_rep.components_ = weights['pca_param'][f'rep-{r+1}']['components_']
+            pca_rep.explained_variance_ = weights['pca_param'][f'rep-{r+1}']['explained_variance_']
+            pca_rep.explained_variance_ratio_ = weights['pca_param'][f'rep-{r+1}']['explained_variance_ratio_']
+            pca_rep.singular_values_ = weights['pca_param'][f'rep-{r+1}']['singular_values_']
+            pca_rep.mean_ = weights['pca_param'][f'rep-{r+1}']['mean_']
+            pca_rep.n_components_ = weights['pca_param'][f'rep-{r+1}']['n_components_']
+            pca_rep.n_samples_ = weights['pca_param'][f'rep-{r+1}']['n_samples_']
+            pca_rep.noise_variance_ = weights['pca_param'][f'rep-{r+1}']['noise_variance_']
+            pca_rep.n_features_in_ = weights['pca_param'][f'rep-{r+1}']['n_features_in_']
+            pca.append(deepcopy(pca_rep))
+            del pca_rep
 
         # Linear regression
         regression_weights = []
@@ -272,6 +276,7 @@ class EEGEncodingModel(BaseModelInterface):
             reg.intercept_ = np.reshape(intercept_, -1)
             reg.n_features_in_ = weights['reg_param'][f'rep-{r+1}']['n_features_in_']
             regression_weights.append(deepcopy(reg))
+            del reg
 
         return scaler, pca, regression_weights
 
@@ -336,17 +341,18 @@ class EEGEncodingModel(BaseModelInterface):
                 features = torch.hstack([torch.flatten(l, start_dim=1) for l in features.values()])
                 features = features.detach().cpu().numpy()
 
-                # Process features
+                # Z-score the features
                 features = self.scaler.transform(features)
-                features = self.pca.transform(features)
-                features = features.astype(np.float32)
 
                 # Generate responses for each repetition
                 insilico_eeg_part = []
-                for reg in self.regression_weights:
+                for r in range(len(self.regression_weights)):
+
+                    # Downsample the features with PCA
+                    features = self.pca[r].transform(features).astype(np.float32)
+
                     # Generate the in silico EEG responses for all channels and timepoints
-                    insilico_eeg = reg.predict(features)
-                    insilico_eeg = insilico_eeg.astype(np.float32)
+                    insilico_eeg = self.regression_weights[r].predict(features).astype(np.float32)
 
                     # Reshape to (Images x Channels x Time)
                     insilico_eeg = np.reshape(insilico_eeg,
