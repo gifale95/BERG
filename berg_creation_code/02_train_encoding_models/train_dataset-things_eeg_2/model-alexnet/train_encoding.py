@@ -48,8 +48,8 @@ from sklearn.linear_model import LinearRegression
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--model', type=str, default='alexnet')
-parser.add_argument('--things_eeg_2_dir', default='../things_eeg_2', type=str)
-parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
+parser.add_argument('--things_eeg_2_dir', default='/scratch/giffordale95/datasets/things_eeg_2', type=str) # !!!
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str) # !!!
 args = parser.parse_args()
 
 print('>>> Train encoding models <<<')
@@ -58,7 +58,7 @@ for key, val in vars(args).items():
 	print('{:16} {}'.format(key, val))
 
 # Set random seed for reproducible results
-seed = 20200220 + args.subject
+seed = 20200220 + (args.subject * 1000)
 
 # Check for GPU
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -126,11 +126,16 @@ scaler = StandardScaler()
 scaler.fit(fmaps_train)
 fmaps_train = scaler.transform(fmaps_train)
 
-# Downsample the image features using PCA
-pca = PCA(n_components=250, random_state=seed)
-pca.fit(fmaps_train)
-fmaps_train = pca.transform(fmaps_train)
-fmaps_train = fmaps_train.astype(np.float32)
+# Downsample the image features using PCA (independently for each EEG train
+# repeat, to avoid data leakage between the repeats)
+pca_param = {}
+fmaps_train_rep = []
+for r in range(eeg_train.shape[1]):
+	pca = PCA(n_components=250, random_state=seed+(r+1)*10)
+	pca.fit(fmaps_train)
+	pca_param['rep-'+str(r+1)] = copy.deepcopy(pca)
+	fmaps_train_rep.append(pca.transform(fmaps_train).astype(np.float32))
+	del pca
 
 
 # =============================================================================
@@ -163,7 +168,10 @@ fmaps_test = np.asarray(fmaps_test)
 fmaps_test = scaler.transform(fmaps_test)
 
 # Downsample the image features using PCA
-fmaps_test = pca.transform(fmaps_test)
+fmaps_test_rep = []
+for r in range(eeg_train.shape[1]):
+	fmaps_test_rep.append(
+		pca_param['rep-'+str(r+1)].transform(fmaps_test).astype(np.float32))
 
 
 # =============================================================================
@@ -181,8 +189,8 @@ n_times = eeg_train.shape[3]
 
 # Fit an encoding model at each EEG repeat, time-point and channel
 reg_param = {}
-eeg_test_pred = np.zeros((len(fmaps_test), n_repeats, n_channels, n_times),
-	dtype=np.float32)
+eeg_test_pred = np.zeros((len(fmaps_test_rep[0]), n_repeats, n_channels,
+	n_times), dtype=np.float32)
 
 for r in range(eeg_train.shape[1]): # Loop over the 4 training EEG repeats
 	# Reshape the EEG to (Samples x Features)
@@ -190,7 +198,7 @@ for r in range(eeg_train.shape[1]): # Loop over the 4 training EEG repeats
 	eeg = np.reshape(eeg, (len(eeg), -1))
 	# Fit the linear regression
 	reg = LinearRegression()
-	reg.fit(fmaps_train, eeg)
+	reg.fit(fmaps_train_rep[r], eeg)
 
 	# Store the linear regression weights
 	reg_dict = {
@@ -202,7 +210,7 @@ for r in range(eeg_train.shape[1]): # Loop over the 4 training EEG repeats
 
 	# Use the learned weights to generate in silico EEG responses for the test
 	# images
-	eeg_test_pred_rep = reg.predict(fmaps_test)
+	eeg_test_pred_rep = reg.predict(fmaps_test_rep[r])
 	eeg_test_pred[:,r] = np.reshape(eeg_test_pred_rep, (-1, n_channels,
 		n_times))
 	del reg_dict
@@ -227,17 +235,7 @@ weights = {
 		'n_features_in_': scaler.n_features_in_,
 		'n_samples_seen_': scaler.n_samples_seen_
 		},
-	'pca_param': {
-		'components_': pca.components_,
-		'explained_variance_': pca.explained_variance_,
-		'explained_variance_ratio_': pca.explained_variance_ratio_,
-		'singular_values_': pca.singular_values_,
-		'mean_': pca.mean_,
-		'n_components_': pca.n_components_,
-		'n_samples_': pca.n_samples_,
-		'noise_variance_': pca.noise_variance_,
-		'n_features_in_': pca.n_features_in_
-		},
+	'pca_param': pca_param,
 	'reg_param': reg_param
 	}
 
