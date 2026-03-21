@@ -136,7 +136,7 @@ fmaps_train = scaler.transform(fmaps_train)
 # repeat, to avoid data leakage between the repeats)
 pca_param = {}
 fmaps_train_rep = []
-for r in range(eeg_train.shape[1]):
+for r in range(4):
 	pca = PCA(n_components=250, random_state=seed+(r+1)*10)
 	pca.fit(fmaps_train)
 	pca_param['rep-'+str(r+1)] = copy.deepcopy(pca)
@@ -175,7 +175,7 @@ fmaps_test = scaler.transform(fmaps_test)
 
 # Downsample the image features using PCA
 fmaps_test_rep = []
-for r in range(eeg_train.shape[1]):
+for r in range(4):
 	fmaps_test_rep.append(
 		pca_param['rep-'+str(r+1)].transform(fmaps_test).astype(np.float32))
 
