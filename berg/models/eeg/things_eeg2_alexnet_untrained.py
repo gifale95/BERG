@@ -363,10 +363,10 @@ class EEGEncodingModel(BaseModelInterface):
                 for r in range(len(self.regression_weights)):
 
                     # Downsample the features with PCA
-                    features = self.pca[r].transform(features).astype(np.float32)
+                    features_pca = self.pca[r].transform(features).astype(np.float32)
 
                     # Generate the in silico EEG responses for all channels and timepoints
-                    insilico_eeg = self.regression_weights[r].predict(features).astype(np.float32)
+                    insilico_eeg = self.regression_weights[r].predict(features_pca).astype(np.float32)
 
                     # Reshape to (Images x Channels x Time)
                     insilico_eeg = np.reshape(insilico_eeg,
