@@ -44,7 +44,7 @@ parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b
 parser.add_argument('--subjects', default=['N', 'F'], type=list)
 parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--control', default='drive', type=str)
-parser.add_argument('--n_images', default=100, type=int)
+parser.add_argument('--n_images', default=50, type=int)
 parser.add_argument('--n_iter', type=int, default=100000)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/giffordale95/datasets/image_sets/ILSVRC2012', type=str)
@@ -61,10 +61,11 @@ random.seed(seed)
 np.random.seed(seed)
 
 
-- Only use sensors with NCSNR above threshold.
+- Only use sensors with NCSNR above threshold. => threshold = 0.2
 
 - Add condition where early part of the epoch is suppressed and the late part
     is driven, and vice versa. => early/late time points (1, 100) (101, 200)
+
 
 
 # =============================================================================
