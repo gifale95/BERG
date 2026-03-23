@@ -37,9 +37,7 @@ import argparse
 import os
 import h5py
 import numpy as np
-import random
 import torchvision
-from tqdm import tqdm
 from torchvision import transforms as trn
 
 parser = argparse.ArgumentParser()
@@ -57,11 +55,6 @@ print('>>> Neural control <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
-
-# Set random seed for reproducible results
-seed = 20200220
-random.seed(seed)
-np.random.seed(seed)
 
 
 # =============================================================================
@@ -96,7 +89,6 @@ t_min_late = np.where(times == 101)[0][0]
 t_max_late = np.where(times == 199)[0][0]
 insilico_resp_early = np.mean(insilico_resp[:,t_min_early:t_max_early], 1)
 insilico_resp_late = np.mean(insilico_resp[:,t_min_late:t_max_late], 1)
-insilico_resp_full = np.mean(insilico_resp[:,t_min_early:t_max_late], 1)
 
 
 # =============================================================================
@@ -111,18 +103,18 @@ baseline_results = np.load(data_dir, allow_pickle=True).item()
 # Average the baseline responses across early parts of the epoch
 # (25-100ms), late parts of the epoch (101-200ms), or the entire epoch
 # (25-200ms)
-baseline_resp = baseline_results['baseline_resp']
-baseline_score_early = np.mean(baseline_resp[:,t_min_early:t_max_early], 1)
-baseline_score_late = np.mean(baseline_resp[:,t_min_late:t_max_late], 1)
-baseline_score_full = np.mean(baseline_resp[:,t_min_early:t_max_late], 1)
+baseline_resp = np.mean(baseline_results['baseline_resp'], 0)
+baseline_resp_early = np.mean(baseline_resp[t_min_early:t_max_early])
+baseline_resp_late = np.mean(baseline_resp[t_min_late:t_max_late])
+baseline_resp_full = np.mean(baseline_resp[t_min_early:t_max_late])
 
 
 # =============================================================================
-# Neural control # !!!
+# Neural control
 # =============================================================================
 # Response score margin used to constrain the selection of the controlling
 # images
-margin = 0.04
+margin = 2
 
 # Select the top N images that drive or suppress both early and late part of
 # the epoch
@@ -130,155 +122,80 @@ if args.control in ['early-drive_late-drive', 'early-suppress_late-suppress']:
 
     response_sum = insilico_resp_early + insilico_resp_late
 
-    # Select the top N images that drive both early and late part of the epoch
+    # Select the top N images that drive both the early and late part of the
+    # epoch
     if args.control == 'early-drive_late-drive':
-        img_control = np.argsort(response_sum, 1)[::-1].astype(np.float32)
-        # Ignore images conditions with univariate responses below the baseline
-        # scores (plus a margin)
+        img_control = np.argsort(response_sum)[::-1].astype(np.float32)
+        # Ignore image conditions with responses below the baseline scores
+        # (plus a margin)
         idx_bad_early = np.where(
-            insilico_resp_early[:,img_control.astype(np.int32)] < \
-            baseline_resp_early[0]+margin)[0]
-        idx_bad_late = np.where(resp_roi_2[high_1_high_2.astype(np.int32)] < \
-            baseline_resp[1]+margin)[0]
+            insilico_resp_early[img_control.astype(np.int32)] < \
+            baseline_resp_early+margin)[0]
+        idx_bad_late = np.where(
+            insilico_resp_late[img_control.astype(np.int32)] < \
+            baseline_resp_late+margin)[0]
         img_control[idx_bad_early] = np.nan
         img_control[idx_bad_late] = np.nan
 
-# 2nd ranking: images with low univariate responses for both ROIs
-low_1_low_2 = np.argsort(roi_sum).astype(np.float32)
-# Ignore images conditions with univariate responses above the baseline
-# scores (plus a margin)
-idx_bad_roi_1 = np.where(resp_roi_1[low_1_low_2.astype(np.int32)] > \
-	baseline_resp[0]-margin)[0]
-idx_bad_roi_2 = np.where(resp_roi_2[low_1_low_2.astype(np.int32)] > \
-	baseline_resp[1]-margin)[0]
-low_1_low_2[idx_bad_roi_1] = np.nan
-low_1_low_2[idx_bad_roi_2] = np.nan
+    # Select the top N images that suppress both the early and late part of the
+    # epoch
+    elif args.control == 'early-suppress_late-suppress':
+        img_control = np.argsort(response_sum).astype(np.float32)
+        # Ignore image conditions with responses above the baseline scores
+        # (plus a margin)
+        idx_bad_early = np.where(
+            insilico_resp_early[img_control.astype(np.int32)] > \
+            baseline_resp_early-margin)[0]
+        idx_bad_late = np.where(
+            insilico_resp_late[img_control.astype(np.int32)] > \
+            baseline_resp_late-margin)[0]
+        img_control[idx_bad_early] = np.nan
+        img_control[idx_bad_late] = np.nan
 
-# Select the top N images that disentangle the in silico univariate fMRI
-# responses of the two ROIs (i.e., that lead one ROI having high
-# responses and the other ROI low responses, or vice versa).
-# 3rd ranking: images with high univariate responses for ROI 1 and low
-# univariate responses for ROI 2
-roi_diff = resp_roi_1 - resp_roi_2
-high_1_low_2 = np.argsort(roi_diff)[::-1].astype(np.float32)
-# Ignore images conditions with univariate responses below (ROI 1) or above
-# (ROI 2) the baseline scores (plus/minus a margin)
-idx_bad_roi_1 = np.where(resp_roi_1[high_1_low_2.astype(np.int32)] < \
-	baseline_resp[0]+margin)[0]
-idx_bad_roi_2 = np.where(resp_roi_2[high_1_low_2.astype(np.int32)] > \
-	baseline_resp[1]-margin)[0]
-high_1_low_2[idx_bad_roi_1] = np.nan
-high_1_low_2[idx_bad_roi_2] = np.nan
-# 4th ranking: images with low univariate responses for ROI 1 and high
-# univariate responses for ROI 2
-low_1_high_2 = np.argsort(roi_diff).astype(np.float32)
-# Ignore images conditions with univariate responses above (ROI 1) or below
-# (ROI 2) the baseline scores (minus/plus a margin)
-idx_bad_roi_1 = np.where(resp_roi_1[low_1_high_2.astype(np.int32)] > \
-	baseline_resp[0]-margin)[0]
-idx_bad_roi_2 = np.where(resp_roi_2[low_1_high_2.astype(np.int32)] < \
-	baseline_resp[1]+margin)[0]
-low_1_high_2[idx_bad_roi_1] = np.nan
-low_1_high_2[idx_bad_roi_2] = np.nan
+# Select the top N images that drive the early while suppressing the late part
+# of the epoch, or vice versa
+elif args.control in ['early-drive_late-suppress', 'early-suppress_late-drive']:
 
+    response_diff = insilico_resp_early - insilico_resp_late
 
+    # Select the top N images that drive the early while suppressing the late
+    # part of the epoch
+    if args.control == 'early-drive_late-suppress':
+        img_control = np.argsort(response_diff)[::-1].astype(np.float32)
+        # Ignore image conditions with responses below (for early time points)
+        # or above (for late time points) the baseline scores (plus a margin)
+        idx_bad_early = np.where(
+            insilico_resp_early[img_control.astype(np.int32)] < \
+            baseline_resp_early+margin)[0]
+        idx_bad_late = np.where(
+            insilico_resp_late[img_control.astype(np.int32)] > \
+            baseline_resp_late-margin)[0]
+        img_control[idx_bad_early] = np.nan
+        img_control[idx_bad_late] = np.nan
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Find the images controlling the neural responses
-if args.control == 'drive':
-    img_control = np.argsort(insilico_resp, axis=1)[:,::-1]
-elif args.control == 'suppress':
-    img_control = np.argsort(insilico_resp, axis=1)
-img_control = img_control[:,:args.n_images]
-
-# Cross-validate the controlling images across subjects
-control_data = []
-cv_control_data = []
-for s in range(len(args.subjects)):
-    s_cv = np.delete((0, 1), s)[0]
-    control_data.append(insilico_resp[s,img_control[s]])
-    cv_control_data.append(insilico_resp[s_cv,img_control[s]])
-control_data = np.array(control_data)
-cv_control_data = np.array(cv_control_data)
+    # Select the top N images that suppress the early while driving the late
+    # part of the epoch
+    elif args.control == 'early-suppress_late-drive':
+        img_control = np.argsort(response_diff).astype(np.float32)
+        # Ignore image conditions with responses above (for early time points)
+        # or below (for late time points) the baseline scores (plus a margin)
+        idx_bad_early = np.where(
+            insilico_resp_early[img_control.astype(np.int32)] > \
+            baseline_resp_early-margin)[0]
+        idx_bad_late = np.where(
+            insilico_resp_late[img_control.astype(np.int32)] < \
+            baseline_resp_late+margin)[0]
+        img_control[idx_bad_early] = np.nan
+        img_control[idx_bad_late] = np.nan
 
 
 # =============================================================================
 # Save the quantitative neural control results
 # =============================================================================
-results = {
-    'img_control': img_control
-}
-
 save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
     'quantitative_results', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = f'sub-{args.subject}_roi-{args.roi}_{args.control}.npy'
 
-np.save(os.path.join(save_dir, file_name), results)
-
-
-# =============================================================================
-# Save the controlling images
-# =============================================================================
-# Access the ILSVRC-2012 train split
-imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='train')
-
-# Save directory
-save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
-    'controlling_images', args.encoding_model, f'subject-{args.subject}',
-    f'roi-{args.roi}')
-os.makedirs(save_dir, exist_ok=True)
-
-# Loop across images
-images = []
-for i in range(args.n_images):
-
-    # Get and preprocess the controlling images
-    img, _ = imageset.__getitem__(img_control[i])
-    min_size = min(img.size)
-    transform = trn.Compose([
-        trn.CenterCrop(min_size),
-        trn.Resize((425,425))
-        ])
-    img = transform(img)
-    images.append(np.array(img))
-
-    # Save the controlling and baseline images as .png files
-    file_name = f'{args.control}_img-{i:03}.png'
-    # img.save(os.path.join(save_dir, file_name))
-
-# Save the controlling and baseline images as h5py files
-file_name = f'{args.control}_images.h5'
-with h5py.File(os.path.join(save_dir, file_name), 'w') as f:
-    f.create_dataset('images', data=np.array(images))
+np.save(os.path.join(save_dir, file_name), img_control)

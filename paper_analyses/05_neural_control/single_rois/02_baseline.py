@@ -111,7 +111,7 @@ img_baseline = null_distribution_images[idx_best]
 # =============================================================================
 # Get the neural response scores for the baseline images
 # =============================================================================
-baseline_resp = np.mean(insilico_resp[img_baseline], 0)
+baseline_resp = insilico_resp[img_baseline]
 
 
 # =============================================================================

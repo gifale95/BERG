@@ -311,3 +311,39 @@ os.makedirs(save_dir, exist_ok=True)
 file_name = f'roi-{args.roi}_{args.control}.npy'
 
 np.save(os.path.join(save_dir, file_name), results)
+
+
+# =============================================================================
+# Save the controlling images
+# =============================================================================
+# Access the ILSVRC-2012 train split
+imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='train')
+
+# Save directory
+save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+    'controlling_images', args.encoding_model, f'subject-{args.subject}',
+    f'roi-{args.roi}')
+os.makedirs(save_dir, exist_ok=True)
+
+# Loop across images
+images = []
+for i in range(args.n_images):
+
+    # Get and preprocess the controlling images
+    img, _ = imageset.__getitem__(img_control[i])
+    min_size = min(img.size)
+    transform = trn.Compose([
+        trn.CenterCrop(min_size),
+        trn.Resize((425,425))
+        ])
+    img = transform(img)
+    images.append(np.array(img))
+
+    # Save the controlling and baseline images as .png files
+    file_name = f'{args.control}_img-{i:03}.png'
+    # img.save(os.path.join(save_dir, file_name))
+
+# Save the controlling and baseline images as h5py files
+file_name = f'{args.control}_images.h5'
+with h5py.File(os.path.join(save_dir, file_name), 'w') as f:
+    f.create_dataset('images', data=np.array(images))
