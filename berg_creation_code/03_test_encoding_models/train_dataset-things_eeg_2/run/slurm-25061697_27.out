@@ -1,0 +1,9 @@
+SLURM_ARRAY_JOB_ID: 27
+subject: 10
+model: vit_b_32
+>>> Test encoding models <<<
+
+Input parameters:
+subject          10
+model            vit_b_32
+berg_dir         /scratch/giffordale95/projects/brain-encoding-response-generator
