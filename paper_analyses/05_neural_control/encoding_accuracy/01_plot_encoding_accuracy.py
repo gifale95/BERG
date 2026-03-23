@@ -56,7 +56,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
     )
 
     # Extract the encoding accuracy
-    corr = metadata['encoding_model']['correlation_results']
+    corr = metadata['encoding_model']['all_training_splits']['correlation_results']
     roi_assignments = metadata['roi']['roi_assignments']
     times = metadata['utah_array']['times']
 
