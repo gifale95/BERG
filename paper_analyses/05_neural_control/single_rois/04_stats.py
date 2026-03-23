@@ -1,6 +1,6 @@
-"""Apply neural control to find images that drive or suppress the in silico
-monkey electrophysiology responses. The controlling images are then
-cross-validated across subjects.
+"""Test whether the controlling images found using the in silico neural
+responses of one subject generalize to the in silico neural responses of the
+other subject. Stats include confidence intervals and significance.
 
 Parameters
 ----------
@@ -28,9 +28,6 @@ n_iter : int
     Amount of iterations to generate the bootstrap distributions.
 berg_dir : str
     Directory of the BERG.
-imagenet_dir : str
-    Directory of the ImageNet image set.
-    https://www.image-net.org/challenges/LSVRC/2012/index.php
 
 """
 
@@ -53,7 +50,6 @@ parser.add_argument('--control', default='early-drive_late-drive', type=str)
 parser.add_argument('--n_images', default=50, type=int)
 parser.add_argument('--n_iter', type=int, default=100000)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--imagenet_dir', default='/scratch/giffordale95/datasets/image_sets/ILSVRC2012', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Stats <<<')

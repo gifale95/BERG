@@ -147,7 +147,7 @@ os.makedirs(save_dir, exist_ok=True)
 
 # Loop across images
 images = []
-for i in range(args.n_images):
+for i in tqdm(range(args.n_images)):
 
     # Get and preprocess the baseline images
     img, _ = imageset.__getitem__(img_baseline[i])

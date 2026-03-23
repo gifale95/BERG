@@ -27,9 +27,6 @@ n_iter : int
     Amount of iterations to generate the bootstrap distributions.
 berg_dir : str
     Directory of the BERG.
-imagenet_dir : str
-    Directory of the ImageNet image set.
-    https://www.image-net.org/challenges/LSVRC/2012/index.php
 
 """
 
@@ -48,7 +45,6 @@ parser.add_argument('--control', default='early-drive_late-drive', type=str)
 parser.add_argument('--n_images', default=50, type=int)
 parser.add_argument('--n_iter', type=int, default=100000)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--imagenet_dir', default='/scratch/giffordale95/datasets/image_sets/ILSVRC2012', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Neural control <<<')

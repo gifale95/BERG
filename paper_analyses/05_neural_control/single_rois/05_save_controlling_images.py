@@ -56,7 +56,7 @@ parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-
 parser.add_argument('--imagenet_dir', default='/scratch/giffordale95/datasets/image_sets/ILSVRC2012', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> Stats <<<')
+print('>>> Save controlling images <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
