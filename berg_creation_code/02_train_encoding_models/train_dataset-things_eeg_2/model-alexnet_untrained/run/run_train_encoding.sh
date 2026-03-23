@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_creation_code-things_eeg_2-vit_b_32-train_encoding
+#SBATCH --job-name=berg_creation_code-things_eeg_2-alexnet_untrained-train_encoding
 #SBATCH --mail-type=end
-#SBATCH --mem=130000
+#SBATCH --mem=60000
 #SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
@@ -24,7 +24,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/berg_creation_code/02_train_encoding_models/train_dataset-things_eeg_2/model-vit_b_32
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/berg_creation_code/02_train_encoding_models/train_dataset-things_eeg_2/model-alexnet_untrained
 
 # Run the job
 python train_encoding.py --subject $subject

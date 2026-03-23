@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_creation_code-things_eeg_2-alexnet-train_encoding
 #SBATCH --mail-type=end
-#SBATCH --mem=200000
-#SBATCH --time=02-00:00:00
+#SBATCH --mem=60000
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
