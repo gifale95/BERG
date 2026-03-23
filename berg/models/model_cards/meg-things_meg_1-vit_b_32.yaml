@@ -22,7 +22,7 @@ description: |
   **Model training partition.** Single-trial responses to approximately 22,000 unique naturalistic images were
   used for training. One set of encoding models are trained on the full training data. Another set of encoding
   models are trained on four independent training data random splits (of 5,562 trials each), therefore generating
-  four different in silico MEG response predictions (i.e., repetitions) per image.
+  four different in silico MEG response predictions (i.e., repetitions) per image. A unique PCA random seed is derived for each combination of subject and training split, ensuring independent PCA bases across encoding models.
 
   **Model testing partition.** 200 test images, each repeated 12 times, were used for evaluation; the
   target responses correspond to the average MEG activity across repetitions.
