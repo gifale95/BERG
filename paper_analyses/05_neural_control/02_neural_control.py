@@ -60,12 +60,8 @@ seed = 20200220
 random.seed(seed)
 np.random.seed(seed)
 
-
-- Only use sensors with NCSNR above threshold. => threshold = 0.2
-
 - Add condition where early part of the epoch is suppressed and the late part
     is driven, and vice versa. => early/late time points (1, 100) (101, 200)
-
 
 
 # =============================================================================
@@ -85,7 +81,7 @@ insilico_data = np.array(insilico_data)
 
 # Average the in silico neural responses across the time window around peak
 # activity (as in the TVSD paper)
-times = metadata[0]['utah_array']['times']
+# times = metadata[0]['utah_array']['times']
 # peaks = {
 #     'V1': (25, 125),
 #     'V4': (50, 150),
@@ -93,6 +89,11 @@ times = metadata[0]['utah_array']['times']
 # }
 # t_min = np.where(times == peaks[args.roi][0])[0][0]
 # t_max = np.where(times == peaks[args.roi][1])[0][0]
+
+# Average the in silico neural responses across the entire epoch starting from
+# 25ms after image onset (this is to ignore the noisy baseline data for the
+# neural control analysis)
+times = metadata[0]['utah_array']['times']
 t_min = np.where(times == 25)[0][0]
 insilico_data = np.mean(insilico_data[:,:,t_min:], 2)
 
