@@ -27,7 +27,7 @@ description: |
   **Model training partition.** Single-trial spiking responses to 22,248 unique images from the THINGS database, each
   presented once during passive fixation, were used for training. One set of encoding models are trained on the full training data. Another set of encoding
   models are trained on four independent training data random splits (of 5,562 trials each), therefore generating
-  four different in silico spiking response predictions (i.e., repetitions) per image.
+  four different in silico spiking response predictions (i.e., repetitions) per image. A unique PCA random seed is derived for each combination of monkey and training split, ensuring independent PCA bases across encoding models.
 
   **Model testing partition.** Spiking responses to 100 unique images, each repeated 30 times.
 
