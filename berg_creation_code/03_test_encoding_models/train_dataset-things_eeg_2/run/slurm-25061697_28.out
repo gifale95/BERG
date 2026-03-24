@@ -1,9 +1,0 @@
-SLURM_ARRAY_JOB_ID: 28
-subject: 10
-model: alexnet
->>> Test encoding models <<<
-
-Input parameters:
-subject          10
-model            alexnet
-berg_dir         /scratch/giffordale95/projects/brain-encoding-response-generator
