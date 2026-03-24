@@ -347,3 +347,10 @@ for i in range(args.n_images):
 file_name = f'{args.control}_images.h5'
 with h5py.File(os.path.join(save_dir, file_name), 'w') as f:
     f.create_dataset('images', data=np.array(images))
+
+
+
+
+
+
+

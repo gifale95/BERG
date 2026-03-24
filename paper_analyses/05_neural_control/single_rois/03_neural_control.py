@@ -23,8 +23,6 @@ control: str
     suppressed while the late part is driven.
 n_images: int
     Number of retained controlling or baseline images.
-n_iter : int
-    Amount of iterations to generate the bootstrap distributions.
 berg_dir : str
     Directory of the BERG.
 
@@ -32,10 +30,7 @@ berg_dir : str
 
 import argparse
 import os
-import h5py
 import numpy as np
-import torchvision
-from torchvision import transforms as trn
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b_32')
@@ -43,7 +38,6 @@ parser.add_argument('--subject', default='N', type=str)
 parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--control', default='early-drive_late-drive', type=str)
 parser.add_argument('--n_images', default=50, type=int)
-parser.add_argument('--n_iter', type=int, default=100000)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 

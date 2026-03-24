@@ -115,7 +115,7 @@ baseline_resp = insilico_resp[img_baseline]
 
 
 # =============================================================================
-# Save the quantitative neural control results
+# Save the baseline results
 # =============================================================================
 results = {
     'ci_low_null_distribution': ci_low_null_distribution,

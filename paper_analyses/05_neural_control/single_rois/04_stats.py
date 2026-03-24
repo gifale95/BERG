@@ -25,7 +25,7 @@ control: str
 n_images: int
     Number of retained controlling or baseline images.
 n_iter : int
-    Amount of iterations to generate the bootstrap distributions.
+    Amount of iterations to generate the bootstrap and null distributions.
 berg_dir : str
     Directory of the BERG.
 
@@ -33,13 +33,10 @@ berg_dir : str
 
 import argparse
 import os
-import h5py
 import numpy as np
 import random
-import torchvision
 from tqdm import tqdm
 from sklearn.utils import resample
-from torchvision import transforms as trn
 from statsmodels.stats.multitest import multipletests
 
 parser = argparse.ArgumentParser()
@@ -64,196 +61,83 @@ np.random.seed(seed)
 
 
 # =============================================================================
-# Load the in silico neural responses for the ~1.3M ILSVRC-2012 train images # !!!
+# Load the in silico neural responses for the ~1.3M ILSVRC-2012 train images
 # =============================================================================
-# Load the in silico responses
 data_dir = os.path.join(args.berg_dir, 'neural_control', 'insilico_responses',
-    args.encoding_model)
-insilico_data = []
-metadata = []
-for sub in args.subjects:
-    file_name = f'insilico_responses_sub-{sub}_roi-{args.roi}.npy'
-    data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
-    insilico_data.append(data['responses'])
-    metadata.append(data['metadata'])
-insilico_data = np.array(insilico_data)
+args.encoding_model)
+file_name = f'insilico_responses_sub-{args.subject}_roi-{args.roi}.npy'
 
-# Average the in silico neural responses across the time window around peak
-# activity (as in the TVSD paper)
-# times = metadata[0]['utah_array']['times']
-# peaks = {
-#     'V1': (25, 125),
-#     'V4': (50, 150),
-#     'IT': (75, 175)
-# }
-# t_min = np.where(times == peaks[args.roi][0])[0][0]
-# t_max = np.where(times == peaks[args.roi][1])[0][0]
-
-# Average the in silico neural responses across early parts of the epoch
-# (25-100ms), late parts of the epoch (101-200ms), or the entire epoch
-# (25-200ms)
-times = metadata[0]['utah_array']['times']
-t_min_early = np.where(times == 25)[0][0]
-t_max_early = np.where(times == 100)[0][0]
-t_min_late = np.where(times == 101)[0][0]
-t_max_late = np.where(times == 199)[0][0]
-insilico_data_early = np.mean(insilico_data[:,:,t_min_early:t_max_early], 2)
-insilico_data_late = np.mean(insilico_data[:,:,t_min_late:t_max_late], 2)
-insilico_data_full = np.mean(insilico_data[:,:,t_min_early:t_max_late], 2)
+data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
+insilico_resp = data['responses']
+metadata = data['metadata']
+times = metadata['utah_array']['times']
 
 
 # =============================================================================
-# Load the baseline results # !!!
+# Cross validate the controlling images across subjects
 # =============================================================================
-# Load the baseline results
+# Load the controlling images of the other subject
+other_subject = 'F' if args.subject == 'N' else 'N'
+data_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois', 
+    'quantitative_results', args.encoding_model,
+    f'sub-{other_subject}_roi-{args.roi}_{args.control}.npy')
+img_control = np.load(data_dir)
+
+# Select the first N controlling images which are not NaN (i.e., that have in
+# silico responses above/below the baseline scores, plus a margin)
+idx_nan = np.isnan(img_control)
+img_control = img_control[~idx_nan][:args.n_images].astype(np.int32)
+
+# Cross-validate the controlling on the subject of interest
+control_resp = insilico_resp[img_control]
+
+
+# =============================================================================
+# Get the baseline results
+# =============================================================================
 data_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
     'quantitative_results', args.encoding_model,
-    f'roi-{args.roi}_baseline.npy')
+    f'sub-{args.subject}_roi-{args.roi}_baseline.npy')
 baseline_results = np.load(data_dir, allow_pickle=True).item()
 
-# Average the baseline responses across early parts of the epoch
-# (25-100ms), late parts of the epoch (101-200ms), or the entire epoch
-# (25-200ms)
-baseline_data = baseline_results['baseline_data']
-baseline_data_early = np.mean(baseline_data[:,:,t_min_early:t_max_early], 2)
-baseline_data_late = np.mean(baseline_data[:,:,t_min_late:t_max_late], 2)
-baseline_data_full = np.mean(baseline_data[:,:,t_min_early:t_max_late], 2)
+baseline_resp = baseline_results['baseline_resp']
+ci_low_null_distribution = baseline_results['ci_low_null_distribution']
+ci_high_null_distribution = baseline_results['ci_high_null_distribution']
 
 
 # =============================================================================
-# Neural control # !!!
+# Compute the confidence intervals
 # =============================================================================
-# Response score margin used to constrain the selection of the controlling
-# images
-margin = 0.04
-
-# Select the top N images that drive or suppress both early and late part of
-# the epoch
-if args.control in ['early-drive_late-drive', 'early-suppress_late-suppress']:
-
-    response_sum = insilico_data_early + insilico_data_late
-
-    # Select the top N images that drive both early and late part of the epoch
-    if args.control == 'early-drive_late-drive':
-        img_control = np.argsort(response_sum, 1)[::-1].astype(np.float32)
-        # Ignore images conditions with univariate responses below the baseline
-        # scores (plus a margin)
-        idx_bad_early = np.where(
-            insilico_data_early[:,img_control.astype(np.int32)] < \
-            baseline_data_early[0]+margin)[0]
-        idx_bad_late = np.where(resp_roi_2[high_1_high_2.astype(np.int32)] < \
-            baseline_scores[1]+margin)[0]
-        img_control[idx_bad_early] = np.nan
-        img_control[idx_bad_late] = np.nan
-
-# 2nd ranking: images with low univariate responses for both ROIs
-low_1_low_2 = np.argsort(roi_sum).astype(np.float32)
-# Ignore images conditions with univariate responses above the baseline
-# scores (plus a margin)
-idx_bad_roi_1 = np.where(resp_roi_1[low_1_low_2.astype(np.int32)] > \
-	baseline_scores[0]-margin)[0]
-idx_bad_roi_2 = np.where(resp_roi_2[low_1_low_2.astype(np.int32)] > \
-	baseline_scores[1]-margin)[0]
-low_1_low_2[idx_bad_roi_1] = np.nan
-low_1_low_2[idx_bad_roi_2] = np.nan
-
-# Select the top N images that disentangle the in silico univariate fMRI
-# responses of the two ROIs (i.e., that lead one ROI having high
-# responses and the other ROI low responses, or vice versa).
-# 3rd ranking: images with high univariate responses for ROI 1 and low
-# univariate responses for ROI 2
-roi_diff = resp_roi_1 - resp_roi_2
-high_1_low_2 = np.argsort(roi_diff)[::-1].astype(np.float32)
-# Ignore images conditions with univariate responses below (ROI 1) or above
-# (ROI 2) the baseline scores (plus/minus a margin)
-idx_bad_roi_1 = np.where(resp_roi_1[high_1_low_2.astype(np.int32)] < \
-	baseline_scores[0]+margin)[0]
-idx_bad_roi_2 = np.where(resp_roi_2[high_1_low_2.astype(np.int32)] > \
-	baseline_scores[1]-margin)[0]
-high_1_low_2[idx_bad_roi_1] = np.nan
-high_1_low_2[idx_bad_roi_2] = np.nan
-# 4th ranking: images with low univariate responses for ROI 1 and high
-# univariate responses for ROI 2
-low_1_high_2 = np.argsort(roi_diff).astype(np.float32)
-# Ignore images conditions with univariate responses above (ROI 1) or below
-# (ROI 2) the baseline scores (minus/plus a margin)
-idx_bad_roi_1 = np.where(resp_roi_1[low_1_high_2.astype(np.int32)] > \
-	baseline_scores[0]-margin)[0]
-idx_bad_roi_2 = np.where(resp_roi_2[low_1_high_2.astype(np.int32)] < \
-	baseline_scores[1]+margin)[0]
-low_1_high_2[idx_bad_roi_1] = np.nan
-low_1_high_2[idx_bad_roi_2] = np.nan
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# Find the images controlling the neural responses
-if args.control == 'drive':
-    img_control = np.argsort(insilico_data, axis=1)[:,::-1]
-elif args.control == 'suppress':
-    img_control = np.argsort(insilico_data, axis=1)
-img_control = img_control[:,:args.n_images]
-
-# Cross-validate the controlling images across subjects
-control_data = []
-cv_control_data = []
-for s in range(len(args.subjects)):
-    s_cv = np.delete((0, 1), s)[0]
-    control_data.append(insilico_data[s,img_control[s]])
-    cv_control_data.append(insilico_data[s_cv,img_control[s]])
-control_data = np.array(control_data)
-cv_control_data = np.array(cv_control_data)
-
-
-# =============================================================================
-# Compute the confidence intervals # !!!
-# =============================================================================
-dist = np.zeros((args.n_iter, len(args.subjects), len(times)))
-dist_cv = np.zeros((args.n_iter, len(args.subjects), len(times)))
+dist_control = np.zeros((args.n_iter, len(times)))
+dist_baseline = np.zeros((args.n_iter, len(times)))
 
 for i in tqdm(range(args.n_iter), leave=False):
     idx = resample(np.arange(args.n_images))
-    dist[i] = np.mean(control_data[:,idx], axis=1)
-    dist_cv[i] = np.mean(cv_control_data[:,idx], axis=1)
+    dist_control[i] = np.mean(control_resp[idx], 0)
+    dist_baseline[i] = np.mean(baseline_resp[idx], 0)
 
-ci_low_control_data = np.percentile(dist, 2.5, axis=0)
-ci_high_control_data = np.percentile(dist, 97.5, axis=0)
-ci_low_cv_control_data = np.percentile(dist_cv, 2.5, axis=0)
-ci_high_cv_control_data = np.percentile(dist_cv, 97.5, axis=0)
+ci_low_control_resp = np.percentile(dist_control, 2.5, axis=0)
+ci_high_control_resp = np.percentile(dist_control, 97.5, axis=0)
+ci_low_baseline_resp = np.percentile(dist_baseline, 2.5, axis=0)
+ci_high_baseline_resp = np.percentile(dist_baseline, 97.5, axis=0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # =============================================================================
-# Compute the significance of the CV neural control scores # !!!
+# Compute the within-subject significance of the CV neural control scores # !!!
 # =============================================================================
 # Empty p-value lists
 p_val = []
@@ -284,26 +168,42 @@ p_val_bh = np.array(p_val_bh)
 p_val_bonf = np.array(p_val_bonf)
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # =============================================================================
-# Save the quantitative neural control results # !!!
+# Save the quantitative neural control results
 # =============================================================================
-results = {
-    'img_control': img_control,
-    'control_data': control_data,
-    'ci_low_control_data': ci_low_control_data,
-    'ci_high_control_data': ci_high_control_data,
-    'cv_control_data': cv_control_data,
-    'ci_low_cv_control_data': ci_low_cv_control_data,
-    'ci_high_cv_control_data': ci_high_cv_control_data,
-    'p_val': p_val,
-    'p_val_bh': p_val_bh,
-    'p_val_bonf': p_val_bonf
+results = { # !!!
+    'times': times,
+    'control_resp': control_resp,
+    'baseline_resp': baseline_resp,
+    'ci_low_null_distribution': ci_low_null_distribution,
+    'ci_high_null_distribution': ci_high_null_distribution,
+    'ci_low_control_resp': ci_low_control_resp,
+    'ci_high_control_resp': ci_high_control_resp,
+    'ci_low_baseline_resp': ci_low_baseline_resp,
+    'ci_high_baseline_resp': ci_high_baseline_resp,
 }
 
+
 save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
-    'quantitative_results', args.encoding_model)
+    'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = f'roi-{args.roi}_{args.control}.npy'
+file_name = f'sub-{args.subject}_roi-{args.roi}_{args.control}.npy'
 
 np.save(os.path.join(save_dir, file_name), results)
