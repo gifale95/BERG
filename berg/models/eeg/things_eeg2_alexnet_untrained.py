@@ -262,15 +262,15 @@ class EEGEncodingModel(BaseModelInterface):
         n_components = 250
         for r in range(len(weights['pca_param'])):
             pca_rep = PCA(n_components=n_components)
-            pca_rep.components_ = weights['pca_param'][f'rep-{r+1}']['components_']
-            pca_rep.explained_variance_ = weights['pca_param'][f'rep-{r+1}']['explained_variance_']
-            pca_rep.explained_variance_ratio_ = weights['pca_param'][f'rep-{r+1}']['explained_variance_ratio_']
-            pca_rep.singular_values_ = weights['pca_param'][f'rep-{r+1}']['singular_values_']
-            pca_rep.mean_ = weights['pca_param'][f'rep-{r+1}']['mean_']
-            pca_rep.n_components_ = weights['pca_param'][f'rep-{r+1}']['n_components_']
-            pca_rep.n_samples_ = weights['pca_param'][f'rep-{r+1}']['n_samples_']
-            pca_rep.noise_variance_ = weights['pca_param'][f'rep-{r+1}']['noise_variance_']
-            pca_rep.n_features_in_ = weights['pca_param'][f'rep-{r+1}']['n_features_in_']
+            pca_rep.components_ = weights['pca_param'][f'rep-{r+1}'].components_
+            pca_rep.explained_variance_ = weights['pca_param'][f'rep-{r+1}'].explained_variance_
+            pca_rep.explained_variance_ratio_ = weights['pca_param'][f'rep-{r+1}'].explained_variance_ratio_
+            pca_rep.singular_values_ = weights['pca_param'][f'rep-{r+1}'].singular_values_
+            pca_rep.mean_ = weights['pca_param'][f'rep-{r+1}'].mean_
+            pca_rep.n_components_ = weights['pca_param'][f'rep-{r+1}'].n_components_
+            pca_rep.n_samples_ = weights['pca_param'][f'rep-{r+1}'].n_samples_
+            pca_rep.noise_variance_ = weights['pca_param'][f'rep-{r+1}'].noise_variance_
+            pca_rep.n_features_in_ = weights['pca_param'][f'rep-{r+1}'].n_features_in_
             pca.append(deepcopy(pca_rep))
             del pca_rep
 
