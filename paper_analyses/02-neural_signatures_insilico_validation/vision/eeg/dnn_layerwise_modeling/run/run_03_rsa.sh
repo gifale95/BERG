@@ -15,7 +15,7 @@ index=0
 for s in `seq 1 10` ; do
     for c in 'O,P' ; do
         for m in 'alexnet' 'resnet50' ; do
-            for em in 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
+            for em in 'eeg-things_eeg_2-vit_b_32' 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
                 subject_all[$index]=$s
                 channels_all[$index]=$c
                 dnn_model_all[$index]=$m

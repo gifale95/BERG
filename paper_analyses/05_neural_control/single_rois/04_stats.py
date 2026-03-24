@@ -68,9 +68,16 @@ args.encoding_model)
 file_name = f'insilico_responses_sub-{args.subject}_roi-{args.roi}.npy'
 
 data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
+
 insilico_resp = data['responses']
 metadata = data['metadata']
+
+# Get the indices for early (25-100ms) and late (101-200ms) parts of the epoch
 times = metadata['utah_array']['times']
+t_min_early = np.where(times == 25)[0][0]
+t_max_early = np.where(times == 100)[0][0]
+t_min_late = np.where(times == 101)[0][0]
+t_max_late = np.where(times == 199)[0][0]
 
 
 # =============================================================================
@@ -122,73 +129,71 @@ ci_low_baseline_resp = np.percentile(dist_baseline, 2.5, axis=0)
 ci_high_baseline_resp = np.percentile(dist_baseline, 97.5, axis=0)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # =============================================================================
-# Compute the within-subject significance of the CV neural control scores # !!!
+# Compute the within-subject significance of the CV neural control scores
 # =============================================================================
-# Empty p-value lists
-p_val = []
-p_val_bh = []
-p_val_bonf = []
+# Compute the difference between the mean responses for controlling and
+# baseline images
+control_minus_baseline = np.mean(control_resp, 0) - np.mean(baseline_resp, 0)
 
-# Loop across subjects
-for s in range(len(args.subjects)):
+# Create the permutation-based null distribution
+control_minus_baseline_null_dist = np.zeros((args.n_iter, len(times)),
+    dtype=np.float32)
+# Loop across iterations
+for i in tqdm(range(args.n_iter)):
+    # Shuffle the univariate responses across samples
+    idx = np.arange(len(insilico_resp))
+    np.random.shuffle(idx)
+    # Compute the differences between control and baseline images for the
+    # shuffled data
+    shuffled_resp = insilico_resp[idx]
+    control_minus_baseline_null_dist[i] = np.mean(
+        shuffled_resp[img_control], 0) - \
+        np.mean(shuffled_resp[baseline_resp], 0)
 
-    # Compute the within-subject p-values
-    s_cv = np.delete((0, 1), s)[0]
-    if args.control == 'drive':
-        idx = np.sum(
-            null_distribution[:,s] > np.mean(cv_control_data[s_cv], 0), 0)
-    elif args.control == 'suppress':
-        idx = np.sum(
-            null_distribution[:,s] < np.mean(cv_control_data[s_cv], 0), 0)
-    p_val_sub = (idx + 1) / (args.n_iter + 1) # Add 1 to avoid p-values of 0
-    p_val.append(p_val_sub)
+# Compute the within-subject p-values
+p_val = np.empty((len(times)), dtype=np.float32)
+p_val[:] = np.nan
+if args.control == 'early-drive_late-drive':
+    idx_early = sum(control_minus_baseline_null_dist > \
+        control_minus_baseline, 0)[t_min_early:t_max_early+1]
+    idx_late = sum(control_minus_baseline_null_dist > \
+        control_minus_baseline, 0)[t_min_late:t_max_late+1]
+elif args.control == 'early-suppress_late-suppress':
+    idx_early = sum(control_minus_baseline_null_dist < \
+        control_minus_baseline, 0)[t_min_early:t_max_early+1]
+    idx_late = sum(control_minus_baseline_null_dist < \
+        control_minus_baseline, 0)[t_min_late:t_max_late+1]
+elif args.control == 'early-drive_late-suppress':
+    idx_early = sum(control_minus_baseline_null_dist > \
+        control_minus_baseline, 0)[t_min_early:t_max_early+1]
+    idx_late = sum(control_minus_baseline_null_dist < \
+        control_minus_baseline, 0)[t_min_late:t_max_late+1]
+elif args.control == 'early-suppress_late-drive':
+    idx_early = sum(control_minus_baseline_null_dist < \
+        control_minus_baseline, 0)[t_min_early:t_max_early+1]
+    idx_late = sum(control_minus_baseline_null_dist > \
+        control_minus_baseline, 0)[t_min_late:t_max_late+1]
+p_val[t_min_early:t_max_early+1] = (idx_early + 1) / (args.n_iter + 1) # Add one to avoid p-values of 0
+p_val[t_min_late:t_max_late+1] = (idx_late + 1) / (args.n_iter + 1)
 
-    # Correct for multiple comparisons
-    p_val_bh.append(multipletests(p_val_sub, 0.05, 'fdr_bh')[1])
-    p_val_bonf.append(multipletests(p_val_sub, 0.05, 'bonferroni')[1])
-
-# Format to numpy arrays
-p_val = np.array(p_val)
-p_val_bh = np.array(p_val_bh)
-p_val_bonf = np.array(p_val_bonf)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# Benjamini/Hochberg correct the within-subject p-values for multiple
+# comparisons across time points
+p_val_bh = np.empty((len(times)), dtype=np.float32)
+p_val_bh[:] = np.nan
+p_val_bh[t_min_early:t_max_late+1] = multipletests(
+    p_val[t_min_early:t_max_late+1], 0.05, 'fdr_bh')[1]
 
 
 # =============================================================================
 # Save the quantitative neural control results
 # =============================================================================
-results = { # !!!
+results = {
     'times': times,
+    't_min_early': t_min_early,
+    't_max_early': t_max_early,
+    't_min_late': t_min_late,
+    't_max_late': t_max_late,
     'control_resp': control_resp,
     'baseline_resp': baseline_resp,
     'ci_low_null_distribution': ci_low_null_distribution,
@@ -197,8 +202,9 @@ results = { # !!!
     'ci_high_control_resp': ci_high_control_resp,
     'ci_low_baseline_resp': ci_low_baseline_resp,
     'ci_high_baseline_resp': ci_high_baseline_resp,
+    'p_val': p_val,
+    'p_val_bh': p_val_bh
 }
-
 
 save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
     'stats', args.encoding_model)

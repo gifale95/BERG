@@ -2,14 +2,14 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-erps-01_erps
 #SBATCH --mail-type=end
-#SBATCH --mem=5000
-#SBATCH --time=00:30:00
+#SBATCH --mem=10000
+#SBATCH --time=02:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a encoding_model_all
 index=0
-for em in 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
+for em in 'eeg-things_eeg_2-vit_b_32' 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
     encoding_model_all[$index]=$em
     ((index=index+1))
 done

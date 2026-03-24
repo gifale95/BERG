@@ -11,7 +11,7 @@ declare -a channels_all
 declare -a encoding_model_all
 index=0
 for c in 'O-P' ; do
-    for em in 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
+    for em in 'eeg-things_eeg_2-vit_b_32' 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
         channels_all[$index]=$c
         encoding_model_all[$index]=$em
         ((index=index+1))

@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-eeg-encoding_accuracy-01_generate_insilico_eeg
 #SBATCH --mail-type=end
-#SBATCH --mem=5000
+#SBATCH --mem=10000
 #SBATCH --time=00:30:00
 #SBATCH --qos=extended
 

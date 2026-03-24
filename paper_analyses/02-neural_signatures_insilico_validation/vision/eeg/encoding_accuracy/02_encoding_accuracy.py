@@ -60,7 +60,6 @@ np.random.seed(seed)
 # =============================================================================
 # Empty result variables
 correlation = []
-noise_ceiling = []
 metadata_berg = []
 corr_iv_iv = []
 corr_iv_is = []
@@ -87,7 +86,6 @@ for s, sub in enumerate(tqdm(args.subjects)):
     # Extract the encoding accuracy and noise ceiling
     correlation.append(metadata['encoding_models']\
         ['correlation_averaged_repetitions'])
-    noise_ceiling.append(metadata['eeg']['noise_ceiling'])
 
 
 # =============================================================================
@@ -202,7 +200,6 @@ corr_iv_is = np.array(corr_iv_is)
 # =============================================================================
 results = {
     'correlation': correlation,
-    'noise_ceiling': noise_ceiling,
     'metadata': metadata_berg,
     'corr_iv_iv': corr_iv_iv,
     'corr_iv_is': corr_iv_is

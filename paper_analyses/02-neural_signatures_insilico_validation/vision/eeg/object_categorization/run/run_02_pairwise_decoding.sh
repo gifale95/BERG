@@ -11,7 +11,7 @@ declare -a subject_all
 declare -a encoding_model_all
 index=0
 for sub in `seq 1 10` ; do
-    for em in 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
+    for em in 'eeg-things_eeg_2-vit_b_32' 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
         subject_all[$index]=$sub
         encoding_model_all[$index]=$em
         ((index=index+1))
