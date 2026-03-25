@@ -147,7 +147,7 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
    * - 
      - :doc:`model_cards/fmri-cneuromod_algo2025-text2fmri`
      - Transformer-based encoding model predicting whole-brain fMRI from video transcripts using LLM features
-     - `Dixit, 2026 <https://doi.org/10.5281/zenodo.18369862>`_
+     - `CNeuromod/Algonauts 2025 <https://doi.org/10.48550/arXiv.2501.00504>`_
      - Human
      - Text
      - `Hugging Face Collection <https://huggingface.co/collections/ShreyDixit/text2fmri>`_
