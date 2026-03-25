@@ -201,3 +201,4 @@ performance:
 references:
   - Course Materials: "Dixit, S. (2026). Text2fMRI: Brain Encoding Models using LLMs (Course Materials) (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.18369862"
   - Huggingface Collection: https://huggingface.co/ShreyDixit/Text2fMRI-Qwen-2.5-0.5B
+  - Algonauts 2025 challenge dataset: https://github.com/courtois-neuromod/algonauts_2025.competitors
