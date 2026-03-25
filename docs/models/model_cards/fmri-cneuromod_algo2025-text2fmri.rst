@@ -52,19 +52,19 @@ Metadata
 
 **roi_masks**
 
-    **cont** : ``(1000,)`` - Binary mask for Control/Frontoparietal network parcels
+    **Cont** : ``(1000,)`` - Binary mask for Control/Frontoparietal network parcels
 
-    **default** : ``(1000,)`` - Binary mask for Default Mode network parcels
+    **Default** : ``(1000,)`` - Binary mask for Default Mode network parcels
 
-    **dorsattn** : ``(1000,)`` - Binary mask for Dorsal Attention network parcels
+    **DorsAttn** : ``(1000,)`` - Binary mask for Dorsal Attention network parcels
 
-    **limbic** : ``(1000,)`` - Binary mask for Limbic network parcels
+    **Limbic** : ``(1000,)`` - Binary mask for Limbic network parcels
 
-    **salventattn** : ``(1000,)`` - Binary mask for Salience/Ventral Attention network parcels
+    **SalVentAttn** : ``(1000,)`` - Binary mask for Salience/Ventral Attention network parcels
 
-    **sommot** : ``(1000,)`` - Binary mask for Somatomotor network parcels
+    **SomMot** : ``(1000,)`` - Binary mask for Somatomotor network parcels
 
-    **vis** : ``(1000,)`` - Binary mask for Visual network parcels
+    **Vis** : ``(1000,)`` - Binary mask for Visual network parcels
 
 Input
 -----
