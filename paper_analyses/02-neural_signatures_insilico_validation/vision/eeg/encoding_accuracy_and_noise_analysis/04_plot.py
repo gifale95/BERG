@@ -81,7 +81,6 @@ def sample_cmap(N):
 # =============================================================================
 # Empty result variables
 correlation = {}
-noise_ceiling = {}
 
 # Loop across encoding models
 for encoding_model in tqdm(args.encoding_models):
@@ -95,7 +94,6 @@ for encoding_model in tqdm(args.encoding_models):
 
     # Load the results
     correlation[encoding_model] = np.array(results['correlation'])
-    noise_ceiling[encoding_model] = np.array(results['noise_ceiling'])
     corr_iv_iv = results['corr_iv_iv']
     corr_iv_is = results['corr_iv_is']
     ch_names = results['metadata'][0]['eeg']['ch_names']
@@ -177,7 +175,7 @@ for encoding_model in tqdm(args.encoding_models):
     # Legend
     axs[0].legend(fontsize=fontsize, ncol=3, loc=0, frameon=False)
     # Save the figure
-    file_name = os.path.join(save_dir, 'encoding_accuracy_nsdsynthetic.svg')
+    file_name = os.path.join(save_dir, 'encoding_accuracy.svg')
     fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
     plt.close()
 

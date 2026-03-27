@@ -22,8 +22,7 @@ subjects : list of int
     encoding models are trained on THINGS EEG2 data, valid subject identifiers
     are integers from 1 to 10.
 n_iter : int
-    Amount of iterations for creating the confidence intervals bootstrapped
-    distribution.
+    Amount of iterations for the noise analysis.
 berg_dir : str
     Directory of the BERG.
 """
@@ -107,8 +106,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
 # =============================================================================
 # Load the in vivo EEG responses
 # =============================================================================
-# The in vivo fMRI responses were prepared using this code:
-# https://github.com/gifale95/BERG/blob/main/berg_creation_code/01_prepare_data/train_dataset-things_eeg_2
+    # The in vivo EEG responses were prepared using this code:
+    # https://github.com/gifale95/BERG/blob/main/berg_creation_code/01_prepare_data/train_dataset-things_eeg_2
 
     # Data directories
     data_dir = os.path.join(args.berg_dir, 'model_training_datasets',

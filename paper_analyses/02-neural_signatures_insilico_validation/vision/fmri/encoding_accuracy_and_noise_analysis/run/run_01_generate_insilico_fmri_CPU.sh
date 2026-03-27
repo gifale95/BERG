@@ -1,15 +1,15 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-fmri-encoding_accuracy-02_encoding_accuracy
+#SBATCH --job-name=berg_insilico_validation-fmri-encoding_accuracy_and_noise_analysis-01_generate_insilico_fmri
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
-#SBATCH --time=15:00:00
+#SBATCH --time=00:30:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a encoding_model_all
 index=0
-for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained'; do
+for em in 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
     encoding_model_all[$index]=$em
     ((index=index+1))
 done
@@ -24,7 +24,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/encoding_accuracy
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/encoding_accuracy_and_noise_analysis
 
 # Run the job
-python 02_encoding_accuracy.py --encoding_model $encoding_model
+python 01_generate_insilico_fmri.py --encoding_model $encoding_model

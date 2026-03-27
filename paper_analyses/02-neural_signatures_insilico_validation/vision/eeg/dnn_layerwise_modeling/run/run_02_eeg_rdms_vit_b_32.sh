@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-eeg-dnn_layerwise_modeling-02_eeg_rdms
+#SBATCH --job-name=berg_insilico_validation-eeg-dnn_layerwise_modeling-02_eeg_rdms_vit_b_32
 #SBATCH --mail-type=end
-#SBATCH --mem=3000
-#SBATCH --time=04:00:00
+#SBATCH --mem=10000
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -13,7 +13,7 @@ declare -a encoding_model_all
 index=0
 for s in `seq 1 10` ; do
     for c in 'O,P' ; do
-        for em in 'eeg-things_eeg_2-vit_b_32' 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
+        for em in 'eeg-things_eeg_2-vit_b_32' ; do
             subject_all[$index]=$s
             channels_all[$index]=$c
             encoding_model_all[$index]=$em

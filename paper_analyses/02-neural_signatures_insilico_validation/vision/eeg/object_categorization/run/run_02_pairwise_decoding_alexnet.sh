@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-object_categorization-02_pairwise_decoding
+#SBATCH --job-name=berg_insilico_validation-object_categorization-02_pairwise_decoding_alexnet
 #SBATCH --mail-type=end
 #SBATCH --mem=3000
 #SBATCH --time=20:00:00
@@ -11,7 +11,7 @@ declare -a subject_all
 declare -a encoding_model_all
 index=0
 for sub in `seq 1 10` ; do
-    for em in 'eeg-things_eeg_2-vit_b_32' 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
+    for em in 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
         subject_all[$index]=$sub
         encoding_model_all[$index]=$em
         ((index=index+1))

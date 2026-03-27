@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg_insilico_eeg_validation-behavioral_modeling-03_plot
 #SBATCH --mail-type=end
 #SBATCH --mem=1000
-#SBATCH --time=00:20:00
+#SBATCH --time=00:30:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

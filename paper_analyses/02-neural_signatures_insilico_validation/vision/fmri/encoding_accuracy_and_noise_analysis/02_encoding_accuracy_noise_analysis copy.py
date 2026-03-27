@@ -50,9 +50,6 @@ ncsnr_threshold : float
 encoding_threshold : float
     The threshold on the encoding models explained variance for vertex
     selection (in % units).
-n_iter : int
-    Amount of iterations for creating the confidence intervals bootstrapped
-    distribution.
 berg_dir : str
     Directory of the BERG.
 """
@@ -65,9 +62,6 @@ from berg import BERG
 import h5py
 from scipy.stats import pearsonr
 import random
-from sklearn.utils import resample
-from scipy.stats import ttest_rel
-from statsmodels.stats.multitest import multipletests
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
@@ -75,7 +69,6 @@ parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
 parser.add_argument('--encoding_threshold', default=0, type=float) # 0
-parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -84,11 +77,6 @@ print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
-# Set random seed for reproducible results
-seed = 20200220
-random.seed(seed)
-np.random.seed(seed)
-
 
 # =============================================================================
 # Loop across subjects and hemispheres
@@ -96,7 +84,6 @@ np.random.seed(seed)
 # Empty result variables
 correlation_nsdcore = {}
 correlation_nsdsynthetic = {}
-ncsnr = {}
 metadata_berg = []
 corr_iv1tr_is = {}
 corr_iv1tr_iv1tr = {}
@@ -112,7 +99,6 @@ for s, sub in enumerate(tqdm(args.subjects)):
         if s == 0:
             correlation_nsdcore[hemi] = []
             correlation_nsdsynthetic[hemi] = []
-            ncsnr[hemi] = []
             corr_iv1tr_is[hemi] = []
             corr_iv1tr_iv1tr[hemi] = []
             corr_iv1tr_iv2tr[hemi] = []
@@ -136,7 +122,6 @@ for s, sub in enumerate(tqdm(args.subjects)):
             [f'{hemi}_correlation_nsdcore'])
         correlation_nsdsynthetic[hemi].append(metadata['encoding_models']\
             [f'{hemi}_correlation_nsdsynthetic'])
-        ncsnr[hemi].append(metadata['fmri'][f'{hemi}_ncsnr'])
 
 
 # =============================================================================
@@ -156,8 +141,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
 # =============================================================================
 # Load the in vivo fMRI responses
 # =============================================================================
-# The in vivo fMRI responses were prepared using this code:
-# https://github.com/gifale95/BERG/blob/main/berg_creation_code/01_prepare_data/train_dataset-nsd_fsaverage/prepare_nsd_fsaverage.py
+        # The in vivo fMRI responses were prepared using this code:
+        # https://github.com/gifale95/BERG/blob/main/berg_creation_code/01_prepare_data/train_dataset-nsd_fsaverage/prepare_nsd_fsaverage.py
 
         # Data directories
         data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
@@ -236,9 +221,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
 
 # =============================================================================
-# Compute the confidence intervals and significance
+# Average the noise analysis results across vertices from both hemispheres
 # =============================================================================
-# Average the results across vertices from both hemispheres
 corr_iv1tr_is_avg = []
 corr_iv1tr_iv1tr_avg = []
 corr_iv1tr_iv2tr_avg = []
@@ -257,35 +241,6 @@ corr_iv1tr_is_avg = np.array(corr_iv1tr_is_avg)
 corr_iv1tr_iv1tr_avg = np.array(corr_iv1tr_iv1tr_avg)
 corr_iv1tr_iv2tr_avg = np.array(corr_iv1tr_iv2tr_avg)
 
-# Bootstrap the confidence intervals 
-ci_corr_iv1tr_is = np.zeros((2))
-ci_corr_iv1tr_iv1tr = np.zeros((2))
-ci_corr_iv1tr_iv2tr = np.zeros((2))
-dist_corr_iv1tr_is = np.zeros((args.n_iter))
-dist_corr_iv1tr_iv1tr = np.zeros((args.n_iter))
-dist_corr_iv1tr_iv2tr = np.zeros((args.n_iter))
-for i in tqdm(range(args.n_iter)):
-    idx = resample(np.arange(len(args.subjects)))
-    dist_corr_iv1tr_is[i] = np.mean(corr_iv1tr_is_avg[idx])
-    dist_corr_iv1tr_iv1tr[i] = np.mean(corr_iv1tr_iv1tr_avg[idx])
-    dist_corr_iv1tr_iv2tr[i] = np.mean(corr_iv1tr_iv2tr_avg[idx])
-ci_corr_iv1tr_is[0] = np.percentile(dist_corr_iv1tr_is, 2.5)
-ci_corr_iv1tr_is[1] = np.percentile(dist_corr_iv1tr_is, 97.5)
-ci_corr_iv1tr_iv1tr[0] = np.percentile(dist_corr_iv1tr_iv1tr, 2.5)
-ci_corr_iv1tr_iv1tr[1] = np.percentile(dist_corr_iv1tr_iv1tr, 97.5)
-ci_corr_iv1tr_iv2tr[0] = np.percentile(dist_corr_iv1tr_iv2tr, 2.5)
-ci_corr_iv1tr_iv2tr[1] = np.percentile(dist_corr_iv1tr_iv2tr, 97.5)
-
-# Significance testing
-p_val_1 = ttest_rel(corr_iv1tr_iv2tr_avg, corr_iv1tr_iv1tr_avg,
-    alternative='greater')[1]
-p_val_2 = ttest_rel(corr_iv1tr_is_avg, corr_iv1tr_iv2tr_avg,
-    alternative='greater')[1]
-pval = np.append(p_val_1, p_val_2)
-pval_corrected = multipletests(pval, 0.05, 'fdr_bh')[1]
-p_val_1 = pval_corrected[0]
-p_val_2 = pval_corrected[1]
-
 
 # =============================================================================
 # Save the results
@@ -293,19 +248,13 @@ p_val_2 = pval_corrected[1]
 results = {
     'correlation_nsdcore': correlation_nsdcore,
     'correlation_nsdsynthetic': correlation_nsdsynthetic,
-    'ncsnr': ncsnr,
     'metadata': metadata_berg,
     'corr_iv1tr_is': corr_iv1tr_is,
     'corr_iv1tr_iv2tr': corr_iv1tr_iv2tr,
     'corr_iv1tr_iv1tr': corr_iv1tr_iv1tr,
     'corr_iv1tr_is_avg': corr_iv1tr_is_avg,
     'corr_iv1tr_iv2tr_avg': corr_iv1tr_iv2tr_avg,
-    'corr_iv1tr_iv1tr_avg': corr_iv1tr_iv1tr_avg,
-    'ci_corr_iv1tr_is': ci_corr_iv1tr_is,
-    'ci_corr_iv1tr_iv2tr': ci_corr_iv1tr_iv2tr,
-    'ci_corr_iv1tr_iv1tr': ci_corr_iv1tr_iv1tr,
-    'p_val_1': p_val_1,
-    'p_val_2': p_val_2
+    'corr_iv1tr_iv1tr_avg': corr_iv1tr_iv1tr_avg
 }
 
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',

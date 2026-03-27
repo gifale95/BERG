@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-eeg-llm_modeling-01_rsa
 #SBATCH --mail-type=end
-#SBATCH --mem=4000
+#SBATCH --mem=10000
 #SBATCH --time=30:00:00
 #SBATCH --qos=extended
 

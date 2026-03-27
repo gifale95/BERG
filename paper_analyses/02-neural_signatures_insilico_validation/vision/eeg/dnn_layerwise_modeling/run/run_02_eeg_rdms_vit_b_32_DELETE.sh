@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_eeg_validation-behavioral_modeling-01_rsa
+#SBATCH --job-name=berg_insilico_validation-eeg-dnn_layerwise_modeling-02_eeg_rdms_vit_b_32
 #SBATCH --mail-type=end
-#SBATCH --mem=3000
-#SBATCH --time=10:00:00
+#SBATCH --mem=10000
+#SBATCH --time=24:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -11,9 +11,9 @@ declare -a subject_all
 declare -a channels_all
 declare -a encoding_model_all
 index=0
-for s in `seq 1 10` ; do
+for s in '1' '8' '9' ; do
     for c in 'O,P' ; do
-        for em in 'eeg-things_eeg_2-vit_b_32' 'eeg-things_eeg_2-alexnet' 'eeg-things_eeg_2-alexnet_untrained' ; do
+        for em in 'eeg-things_eeg_2-vit_b_32' ; do
             subject_all[$index]=$s
             channels_all[$index]=$c
             encoding_model_all[$index]=$em
@@ -36,7 +36,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/eeg/behavioral_modeling
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/eeg/dnn_layerwise_modeling
 
 # Run the job
-python 01_rsa.py --subject $subject --channels $channels --encoding_model $encoding_model
+python 02_eeg_rdms.py --subject $subject --channels $channels --encoding_model $encoding_model

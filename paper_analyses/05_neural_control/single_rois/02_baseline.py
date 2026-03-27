@@ -103,8 +103,8 @@ times = metadata['utah_array']['times']
 t_min = np.where(times == 25)[0][0]
 t_max = np.where(times == 199)[0][0]
 null_distribution_mean = np.mean(null_distribution, 0)
-idx_best = np.argsort(abs(np.mean(null_distribution[:,t_min:t_max], 1) - \
-    np.mean(null_distribution_mean[t_min:t_max])))[0]
+idx_best = np.argsort(abs(np.mean(null_distribution[:,t_min:t_max+1], 1) - \
+    np.mean(null_distribution_mean[t_min:t_max+1])))[0]
 img_baseline = null_distribution_images[idx_best]
 
 
@@ -160,7 +160,8 @@ for i in tqdm(range(args.n_images)):
     images.append(np.array(img))
 
     # Save the baseline images as .png files
-    file_name = f'baseline_img-{i:03}.png'
+    file_name = (f'baseline_img-{i+1:03}'
+        f'_imagenet_train-{img_baseline[i]:06}.png')
     # img.save(os.path.join(save_dir, file_name))
 
 # Save the baseline images as h5py files

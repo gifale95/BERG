@@ -13,16 +13,12 @@ rois: list
     List of ROIs used. Valid values are "V1", "V4", and "IT".
 berg_dir : str
     Directory of the BERG.
-imagenet_dir : str
-    Directory of the ImageNet image set.
-    https://www.image-net.org/challenges/LSVRC/2012/index.php
 
 """
 
 import argparse
 import os
 import numpy as np
-from berg import BERG
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -31,45 +27,50 @@ parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b
 parser.add_argument('--subjects', default=['N', 'F'], type=list)
 parser.add_argument('--rois', default=['V1', 'V4', 'IT'], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--imagenet_dir', default='/scratch/giffordale95/datasets/image_sets/ILSVRC2012', type=str)
 args, unknown = parser.parse_known_args()
 
 
 # =============================================================================
 # Load the neural control results
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'neural_control',
-    'quantitative_results', args.encoding_model)
-
-cv_control_data = {}
-p_val = {}
+control_resp = {}
+baseline_resp = {}
 ci_low_null_distribution = {}
 ci_high_null_distribution = {}
+ci_low_control_resp = {}
+ci_high_control_resp = {}
+ci_low_baseline_resp = {}
+ci_high_baseline_resp = {}
+p_val_bh = {}
 
-for roi in args.rois:
-    for control in ['drive', 'suppress']:
-        file_name = f'roi-{roi}_control-{control}.npy'
-        data = np.load(os.path.join(data_dir, file_name),
-            allow_pickle=True).item()
-        cv_control_data[f'{roi}_{control}'] = data['cv_control_data']
-        p_val[f'{roi}_{control}'] = data['p_val_bonf'] # !!! Try other pval too! (if still false positives, do multiple comparison correction across all subjects and ROIs)
-        ci_low_null_distribution[f'{roi}_{control}'] = \
-            data['ci_low_null_distribution']
-        ci_high_null_distribution[f'{roi}_{control}'] = \
-            data['ci_high_null_distribution']
+controls = ['early-drive_late-drive', 'early-suppress_late-suppress',
+    'early-drive_late-suppress', 'early-suppress_late-drive']
 
+for sub in args.subjects:
+    for roi in args.rois:
+        for control in controls:
 
-# =============================================================================
-# Get the times
-# =============================================================================
-berg = BERG(berg_dir=args.berg_dir)
+            data_dir = os.path.join(args.berg_dir, 'neural_control',
+                'single_rois', 'stats', args.encoding_model,
+                f'sub-{sub}_roi-{roi}_{control}.npy')
+            data = np.load(data_dir, allow_pickle=True).item()
 
-metadata = berg.get_model_metadata(
-    args.encoding_model,
-    subject=args.subjects[0]
-)
+            control_resp[f'{sub}_{roi}_{control}'] = data['control_resp']
+            baseline_resp[f'{sub}_{roi}_{control}'] = data['baseline_resp']
+            ci_low_null_distribution[f'{sub}_{roi}_{control}'] = data['ci_low_null_distribution']
+            ci_high_null_distribution[f'{sub}_{roi}_{control}'] = data['ci_high_null_distribution']
+            ci_low_control_resp[f'{sub}_{roi}_{control}'] = data['ci_low_control_resp']
+            ci_high_control_resp[f'{sub}_{roi}_{control}'] = data['ci_high_control_resp']
+            ci_low_baseline_resp[f'{sub}_{roi}_{control}'] = data['ci_low_baseline_resp']
+            ci_high_baseline_resp[f'{sub}_{roi}_{control}'] = data['ci_high_baseline_resp']
+            p_val_bh[f'{sub}_{roi}_{control}'] = data['p_val_bh']
 
-times = metadata['utah_array']['times']
+            times = data['times']
+
+            t_min_early = data['t_min_early']
+            t_max_early = data['t_max_early']
+            t_min_late = data['t_min_late']
+            t_max_late = data['t_max_late']
 
 
 # =============================================================================
@@ -103,80 +104,95 @@ colors = [(139/255, 0/255, 0/255), (0/255, 115/255, 155/255),
 # =============================================================================
 # Plot the neural control results
 # =============================================================================
-fig, axs = plt.subplots(len(args.subjects), len(args.rois), sharex=True,
-    sharey=True, figsize=(30, 15))
+for s, sub in enumerate(args.subjects):
 
-for r, roi in enumerate(args.rois):
-    for s, sub in enumerate(args.subjects):
+    fig, axs = plt.subplots(len(args.rois), len(controls), sharex=True,
+        sharey=True, figsize=(30, 30)) # (10, 7.5)
 
-        # Plot the stimulus onset dashed line
-        axs[s,r].plot([0, 0], [100, -100], 'k--', linewidth=2, alpha=.25,
-            label='_nolegend_')
+    for r, roi in enumerate(args.rois):
+        for c, control in enumerate(controls):
 
-        # Plot the baseline null distribution confidence intervals
-        ci_low = (ci_low_null_distribution[f'{roi}_drive'][s] + \
-            ci_low_null_distribution[f'{roi}_suppress'][s]) / 2
-        ci_high = (ci_high_null_distribution[f'{roi}_drive'][s] + \
-            ci_high_null_distribution[f'{roi}_suppress'][s]) / 2
-        axs[s,r].fill_between(times, ci_low, ci_high, color='k', alpha=.25)
+            # Plot the stimulus onset dashed line
+            axs[r,c].plot([0, 0], [100, -100], 'k--', linewidth=2, alpha=.25,
+                label='_nolegend_')
 
-        # Plot the neural control results
-        s_cv = np.delete((0, 1), s)[0]
-        n_images = cv_control_data[f'{roi}_drive'][s_cv].shape[0]
-        for i in range(n_images):
-            if r == 0 and s == 0 and i == 0:
-                axs[s,r].plot(times, np.transpose(
-                    cv_control_data[f'{roi}_drive'][s_cv][i]),
-                    color=colors[0], linewidth=1, label='Drive')
-                axs[s,r].plot(times, np.transpose(
-                    cv_control_data[f'{roi}_suppress'][s_cv][i]),
-                    color=colors[2], linewidth=1, label='Suppress')
-            else:
-                axs[s,r].plot(times, np.transpose(
-                    cv_control_data[f'{roi}_drive'][s_cv][i]),
-                    color=colors[0], linewidth=1)
-                axs[s,r].plot(times, np.transpose(
-                    cv_control_data[f'{roi}_suppress'][s_cv][i]),
-                    color=colors[2], linewidth=1)
+            # Plot the neural control responses
+            axs[r,c].plot(times, np.mean(
+                control_resp[f'{sub}_{roi}_{control}'], 0),
+                color=colors[0], linewidth=2, label='Control')
+            axs[r,c].fill_between(times,
+                ci_low_control_resp[f'{sub}_{roi}_{control}'],
+                ci_high_control_resp[f'{sub}_{roi}_{control}'],
+                color=colors[0], alpha=.1)
 
-        # Plot the significance markers
-        sig_drive = np.empty(len(times))
-        sig_suppress = np.empty(len(times))
-        sig_drive[:] = np.nan
-        sig_suppress[:] = np.nan
-        sig_drive[p_val[f'{roi}_drive'][s]<0.05] = 28
-        sig_suppress[p_val[f'{roi}_suppress'][s]<0.05] = 9
-        axs[s,r].scatter(times, sig_drive, s=100, color=colors[0])
-        axs[s,r].scatter(times, sig_suppress, s=100, color=colors[2])
+            # Plot the baseline responses
+            axs[r,c].plot(times, np.mean(
+                baseline_resp[f'{sub}_{roi}_{control}'], 0),
+                color='k', linewidth=2, label='Baseline')
+            axs[r,c].fill_between(times,
+                ci_low_baseline_resp[f'{sub}_{roi}_{control}'],
+                ci_high_baseline_resp[f'{sub}_{roi}_{control}'],
+                color='k', alpha=.1)
 
-        # Title
-        title = f'{roi} - Subject {sub}'
-        axs[s,r].set_title(title, fontsize=fontsize)
+            # Plot the significance markers
+            sig_bool = (p_val_bh[f'{sub}_{roi}_{control}'] < 0.05).astype(np.float32)
+            sig_early = sig_bool[t_min_early:t_max_early+1]
+            sig_late = sig_bool[t_min_late:t_max_late+1]
+            sig_early[sig_early==0] = np.nan
+            sig_late[sig_late==0] = np.nan
+            if control == 'early-drive_late-drive':
+                sig_early[sig_early==1] = 28
+                sig_late[sig_late==1] = 28
+            elif control == 'early-suppress_late-suppress':
+                sig_early[sig_early==1] = 9
+                sig_late[sig_late==1] = 9
+            elif control == 'early-drive_late-suppress':
+                sig_early[sig_early==1] = 28
+                sig_late[sig_late==1] = 9
+            elif control == 'early-suppress_late-drive':
+                sig_early[sig_early==1] = 9
+                sig_late[sig_late==1] = 28
+            sig = np.empty(len(times))
+            sig[:] = np.nan
+            sig[t_min_early:t_max_early+1] = sig_early
+            sig[t_min_late:t_max_late+1] = sig_late
+            axs[r,c].scatter(times, sig_early, s=100, color=colors[0])
+            axs[r,c].scatter(times, sig_late, s=100, color=colors[0])
 
-        # x-axis parameters
-        if s == 1:
-            axs[s,r].set_xlabel('Time (ms)', fontsize=fontsize)
-            xticks = [-100, -50, 0, 50, 100, 150, 199]
-            xlabels = [-100, -50, 0, 50, 100, 150, 200]
-            axs[s,r].set_xticks(ticks=xticks, labels=xlabels)
-            axs[s,r].set_xlim(left=min(times), right=max(times))
+            # Title
+            title = f'Subject {sub}, {roi}, {control}'
+            axs[r,c].set_title(title, fontsize=fontsize)
 
-        # y-axis parameters
-        if r == 0:
-            axs[s,r].set_ylabel('MUA', fontsize=fontsize)
-            yticks = [10, 15, 20, 25, 30]
-            ylabels = [10, 15, 20, 25, 30]
-            axs[s,r].set_yticks(ticks=yticks, labels=ylabels)
-            axs[s,r].set_ylim(bottom=8, top=29)
+            # x-axis parameters
+            if r == len(args.rois)-1:
+                axs[r,c].set_xlabel('Time (ms)', fontsize=fontsize)
+                xticks = [-100, -50, 0, 50, 100, 150, 199]
+                xlabels = [-100, -50, 0, 50, 100, 150, 200]
+                axs[r,c].set_xticks(ticks=xticks, labels=xlabels)
+                axs[r,c].set_xlim(left=min(times), right=max(times))
 
-        # Legend
-        if s == 0 and r == 0:
-            axs[s,r].legend(ncol=1, fontsize=fontsize, loc=1, frameon=False)
+            # y-axis parameters
+            if c == 0:
+                axs[r,c].set_ylabel('MUA', fontsize=fontsize)
+                yticks = [10, 15, 20, 25, 30]
+                ylabels = [10, 15, 20, 25, 30]
+                axs[r,c].set_yticks(ticks=yticks, labels=ylabels)
+                axs[r,c].set_ylim(bottom=8, top=29)
 
-# Save the figure
-save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
-    'plots')
-os.makedirs(save_dir, exist_ok=True)
-file_name = os.path.join(save_dir, 'neural_control.svg')
-fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-plt.close(fig)
+            # Legend
+            if r == 0 and c == 0:
+                axs[r,c].legend(ncol=1, fontsize=fontsize, loc=1,
+                    frameon=False)
+
+    # Save the figure
+    save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+        'plots')
+    os.makedirs(save_dir, exist_ok=True)
+    file_name = os.path.join(save_dir, f'neural_control_sub-{sub}.svg')
+    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+    plt.close(fig)
+
+
+# =============================================================================
+# Scatterplots of in silico responses for the early and late parts of the epoch # !!!
+# =============================================================================

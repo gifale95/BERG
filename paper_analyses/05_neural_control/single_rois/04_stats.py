@@ -72,12 +72,17 @@ data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
 insilico_resp = data['responses']
 metadata = data['metadata']
 
-# Get the indices for early (25-100ms) and late (101-200ms) parts of the epoch
+# Average the in silico neural responses across early parts of the epoch
+# (25-100ms), late parts of the epoch (101-200ms), or the entire epoch
+# (25-200ms)
 times = metadata['utah_array']['times']
 t_min_early = np.where(times == 25)[0][0]
 t_max_early = np.where(times == 100)[0][0]
 t_min_late = np.where(times == 101)[0][0]
 t_max_late = np.where(times == 199)[0][0]
+insilico_resp_early = np.mean(insilico_resp[:,t_min_early:t_max_early+1], 1)
+insilico_resp_late = np.mean(insilico_resp[:,t_min_late:t_max_late+1], 1)
+insilico_resp_full = np.mean(insilico_resp[:,t_min_early:t_max_late+1], 1)
 
 
 # =============================================================================
@@ -107,6 +112,7 @@ data_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
     f'sub-{args.subject}_roi-{args.roi}_baseline.npy')
 baseline_results = np.load(data_dir, allow_pickle=True).item()
 
+img_baseline = baseline_results['img_baseline']
 baseline_resp = baseline_results['baseline_resp']
 ci_low_null_distribution = baseline_results['ci_low_null_distribution']
 ci_high_null_distribution = baseline_results['ci_high_null_distribution']
@@ -194,6 +200,11 @@ results = {
     't_max_early': t_max_early,
     't_min_late': t_min_late,
     't_max_late': t_max_late,
+    'insilico_resp_early' : insilico_resp_early,
+    'insilico_resp_late' : insilico_resp_late,
+    'insilico_resp_full' : insilico_resp_full,
+    'img_control': img_control,
+    'img_baseline': img_baseline,
     'control_resp': control_resp,
     'baseline_resp': baseline_resp,
     'ci_low_null_distribution': ci_low_null_distribution,

@@ -77,8 +77,8 @@ t_min_early = np.where(times == 25)[0][0]
 t_max_early = np.where(times == 100)[0][0]
 t_min_late = np.where(times == 101)[0][0]
 t_max_late = np.where(times == 199)[0][0]
-insilico_resp_early = np.mean(insilico_resp[:,t_min_early:t_max_early], 1)
-insilico_resp_late = np.mean(insilico_resp[:,t_min_late:t_max_late], 1)
+insilico_resp_early = np.mean(insilico_resp[:,t_min_early:t_max_early+1], 1)
+insilico_resp_late = np.mean(insilico_resp[:,t_min_late:t_max_late+1], 1)
 
 
 # =============================================================================
@@ -94,9 +94,9 @@ baseline_results = np.load(data_dir, allow_pickle=True).item()
 # (25-100ms), late parts of the epoch (101-200ms), or the entire epoch
 # (25-200ms)
 baseline_resp = np.mean(baseline_results['baseline_resp'], 0)
-baseline_resp_early = np.mean(baseline_resp[t_min_early:t_max_early])
-baseline_resp_late = np.mean(baseline_resp[t_min_late:t_max_late])
-baseline_resp_full = np.mean(baseline_resp[t_min_early:t_max_late])
+baseline_resp_early = np.mean(baseline_resp[t_min_early:t_max_early+1])
+baseline_resp_late = np.mean(baseline_resp[t_min_late:t_max_late+1])
+baseline_resp_full = np.mean(baseline_resp[t_min_early:t_max_late+1])
 
 
 # =============================================================================
