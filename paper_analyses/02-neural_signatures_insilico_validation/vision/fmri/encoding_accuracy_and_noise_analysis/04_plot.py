@@ -3,6 +3,15 @@ encoding models trained on NSD.
 
 Parameters
 ----------
+encoding_models : list
+    The names of BERG's encoding models used for generating the in silico fMRI
+    responses in fsavarage space.
+ncsnr_threshold : float
+    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
+    vertex selection.
+encoding_threshold : float
+    The threshold on the encoding models explained variance for vertex
+    selection (in % units).
 threshold : int
     If 1, only plot encoding accuracies for significant vertices on brain
     surfaces. If 0, plot encoding accuracies for all vertices.
@@ -17,19 +26,23 @@ import numpy as np
 import cortex
 import matplotlib
 import matplotlib.pyplot as plt
+from scipy.stats import ttest_1samp
 
 
 # =============================================================================
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
+parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
+parser.add_argument('--encoding_threshold', default=0, type=float) # 0
 parser.add_argument('--threshold', default=0, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
 
 # =============================================================================
-# Load the encoding accuracy results, and create the plot saving directory
+# Load the results, and create the plot saving directory
 # =============================================================================
 # Load the results
 results_dir = os.path.join(args.berg_dir,
@@ -52,6 +65,7 @@ ci_corr_iv1tr_iv2tr = results['ci_corr_iv1tr_iv2tr']
 ci_corr_iv1tr_iv1tr = results['ci_corr_iv1tr_iv1tr']
 p_val_1 = results['p_val_1']
 p_val_2 = results['p_val_2']
+metadata = results['metadata']
 
 # Plot save directory
 save_dir = os.path.join(args.berg_dir,
@@ -265,6 +279,97 @@ for model in diff_correlation_nsdcore.keys():
 
 
 # =============================================================================
+# Vertex-averaege encoding accuracy stats
+# =============================================================================
+# Compute the vertex-average encoding accuracy
+correlation_nsdcore_avg = {}
+correlation_nsdsynthetic_avg = {}
+# Loop across models
+for model in correlation_nsdcore.keys():
+    correlation_nsdcore_avg[model] = []
+    correlation_nsdsynthetic_avg[model] = []
+    # Loop across subjects
+    for s in range(len(args.subjects)):
+        # Get the index of vertices with NCSNR scores above threshold
+        lh_ncsnr = metadata[s]['fmri']['lh_ncsnr']
+        rh_ncsnr = metadata[s]['fmri']['rh_ncsnr']
+        lh_idx = lh_ncsnr >= args.ncsnr_threshold
+        rh_idx = rh_ncsnr >= args.ncsnr_threshold
+        # Average the encoding accuracy scores across vertices with NCSNR
+        # scores above threshold
+        correlation_nsdcore_avg[model].append(np.mean(np.append(
+            correlation_nsdcore[model]['lh'][s][lh_idx],
+            correlation_nsdcore[model]['rh'][s][rh_idx])))
+        correlation_nsdsynthetic_avg[model].append(np.mean(np.append(
+            correlation_nsdsynthetic[model]['lh'][s][lh_idx],
+            correlation_nsdsynthetic[model]['rh'][s][rh_idx])))
+    correlation_nsdcore_avg[model] = np.array(correlation_nsdcore_avg[model])
+    correlation_nsdsynthetic_avg[model] = np.array(
+        correlation_nsdsynthetic_avg[model])
+
+# Compute the vertex-average encoding accuracy difference
+diff_correlation_nsdcore_avg = {}
+diff_correlation_nsdsynthetic_avg = {}
+# Loop across models
+for model in diff_correlation_nsdcore.keys():
+    diff_correlation_nsdcore_avg[model] = []
+    diff_correlation_nsdsynthetic_avg[model] = []
+    # Loop across subjects
+    for s in range(len(args.subjects)):
+        # Get the index of vertices with NCSNR scores above threshold
+        lh_ncsnr = metadata[s]['fmri']['lh_ncsnr']
+        rh_ncsnr = metadata[s]['fmri']['rh_ncsnr']
+        lh_idx = lh_ncsnr >= args.ncsnr_threshold
+        rh_idx = rh_ncsnr >= args.ncsnr_threshold
+        # Average the encoding accuracy scores across vertices with NCSNR
+        # scores above threshold
+        diff_correlation_nsdcore_avg[model].append(np.mean(np.append(
+            diff_correlation_nsdcore[model]['lh'][s][lh_idx],
+            diff_correlation_nsdcore[model]['rh'][s][rh_idx])))
+        diff_correlation_nsdsynthetic_avg[model].append(np.mean(np.append(
+            diff_correlation_nsdsynthetic[model]['lh'][s][lh_idx],
+            diff_correlation_nsdsynthetic[model]['rh'][s][rh_idx])))
+    diff_correlation_nsdcore_avg[model] = np.array(
+        diff_correlation_nsdcore_avg[model])
+    diff_correlation_nsdsynthetic_avg[model] = np.array(
+        diff_correlation_nsdsynthetic_avg[model])
+
+# Compute the significance for the encoding accuracies
+p_val_correlation_nsdcore_avg = {}
+p_val_correlation_nsdsynthetic_avg = {}
+for model in correlation_nsdcore.keys():
+    p_val_correlation_nsdcore_avg[model] = ttest_1samp(
+        correlation_nsdcore_avg[model], 0, alternative='greater')[1]
+    p_val_correlation_nsdsynthetic_avg[model] = ttest_1samp(
+        correlation_nsdsynthetic_avg[model], 0, alternative='greater')[1]
+
+# Compute the significance for the encoding accuracy differences
+p_val_diff_correlation_nsdcore_avg = {}
+p_val_diff_correlation_nsdsynthetic_avg = {}
+for model in diff_correlation_nsdcore.keys():
+    p_val_diff_correlation_nsdcore_avg[model] = ttest_1samp(
+        diff_correlation_nsdcore_avg[model], 0, alternative='two-sided')[1]
+    p_val_diff_correlation_nsdsynthetic_avg[model] = ttest_1samp(
+        diff_correlation_nsdsynthetic_avg[model], 0, alternative='two-sided')[1]
+
+# Print the encoding accuracy results
+for model in correlation_nsdcore_avg.keys():
+    print(f'Model: {model}')
+    print(f'Encoding accuracy (NSD-core): {np.mean(correlation_nsdcore_avg[model])}')
+    print(f'Encoding accuracy (NSD-synthetic): {np.mean(correlation_nsdsynthetic_avg[model])}')
+    print(f'Encoding accuracy p-value (NSD-core): {p_val_correlation_nsdcore_avg[model]}')
+    print(f'Encoding accuracy p-value (NSD-synthetic): {p_val_correlation_nsdsynthetic_avg[model]}')
+
+# Print the encoding accuracy result differences
+for model in diff_correlation_nsdcore_avg.keys():
+    print(f'Model: {model}')
+    print(f'Encoding accuracy difference (NSD-core): {np.mean(diff_correlation_nsdcore_avg[model])}')
+    print(f'Encoding accuracy difference (NSD-synthetic): {np.mean(diff_correlation_nsdsynthetic_avg[model])}')
+    print(f'Encoding accuracy difference p-value (NSD-core): {p_val_diff_correlation_nsdcore_avg[model]}')
+    print(f'Encoding accuracy difference p-value (NSD-synthetic): {p_val_diff_correlation_nsdsynthetic_avg[model]}')
+
+
+# =============================================================================
 # Plot the noise analysis results
 # =============================================================================
 # Plot parameters
@@ -389,7 +494,7 @@ for model in corr_iv1tr_is_avg.keys():
     plt.ylim(bottom=0, top=0.4)
 
     # Save the figure
-    file_name = os.path.join(save_dir, 'noise_analysis.svg')
+    file_name = os.path.join(save_dir, f'noise_analysis_model-{model}.svg')
     fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
         format='svg')
     plt.close()

@@ -61,7 +61,6 @@ from tqdm import tqdm
 from berg import BERG
 import h5py
 from scipy.stats import pearsonr
-import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')

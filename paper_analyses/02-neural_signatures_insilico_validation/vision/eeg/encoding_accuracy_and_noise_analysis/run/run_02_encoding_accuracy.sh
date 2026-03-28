@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-eeg-encoding_accuracy-02_encoding_accuracy
+#SBATCH --job-name=berg_insilico_validation-eeg-encoding_accuracy_and_noise_analysis-02_encoding_accuracy_noise_analysis
 #SBATCH --mail-type=end
 #SBATCH --mem=4000
 #SBATCH --time=10:00:00
@@ -24,7 +24,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/eeg/encoding_accuracy
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/eeg/encoding_accuracy_and_noise_analysis
 
 # Run the job
-python 02_encoding_accuracy.py --encoding_model $encoding_model
+python 02_encoding_accuracy_noise_analysis.py --encoding_model $encoding_model

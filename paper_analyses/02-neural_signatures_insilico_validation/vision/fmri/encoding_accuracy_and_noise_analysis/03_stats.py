@@ -80,16 +80,20 @@ for model in args.encoding_models:
 diff_correlation_nsdcore = {}
 diff_correlation_nsdcore['huze_minus_alexnet'] = {}
 diff_correlation_nsdcore['huze_minus_alexnet_untrained'] = {}
+diff_correlation_nsdcore['alexnet_minus_alexnet_untrained'] = {}
 diff_correlation_nsdsynthetic = {}
 diff_correlation_nsdsynthetic['huze_minus_alexnet'] = {}
 diff_correlation_nsdsynthetic['huze_minus_alexnet_untrained'] = {}
+diff_correlation_nsdsynthetic['alexnet_minus_alexnet_untrained'] = {}
 
 for h, hemi in enumerate(args.hemispheres):
 
     diff_correlation_nsdcore['huze_minus_alexnet'][hemi] = []
     diff_correlation_nsdcore['huze_minus_alexnet_untrained'][hemi] = []
+    diff_correlation_nsdcore['alexnet_minus_alexnet_untrained'][hemi] = []
     diff_correlation_nsdsynthetic['huze_minus_alexnet'][hemi] = []
     diff_correlation_nsdsynthetic['huze_minus_alexnet_untrained'][hemi] = []
+    diff_correlation_nsdsynthetic['alexnet_minus_alexnet_untrained'][hemi] = []
 
     for s, sub in enumerate(args.subjects):
 
@@ -107,6 +111,14 @@ for h, hemi in enumerate(args.hemispheres):
             correlation_nsdcore['alexnet_untrained'][hemi][s])
         diff_correlation_nsdsynthetic['huze_minus_alexnet_untrained'][hemi].append(
             correlation_nsdsynthetic['huze'][hemi][s] - \
+            correlation_nsdsynthetic['alexnet_untrained'][hemi][s])
+
+        # "alexnet" minus "alexnet_untrained"
+        diff_correlation_nsdcore['alexnet_minus_alexnet_untrained'][hemi].append(
+            correlation_nsdcore['alexnet'][hemi][s] - \
+            correlation_nsdcore['alexnet_untrained'][hemi][s])
+        diff_correlation_nsdsynthetic['alexnet_minus_alexnet_untrained'][hemi].append(
+            correlation_nsdsynthetic['alexnet'][hemi][s] - \
             correlation_nsdsynthetic['alexnet_untrained'][hemi][s])
 
 
