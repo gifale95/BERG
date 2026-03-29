@@ -202,7 +202,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
         corr_iv1tr_iv2tr_sub = np.mean(corr_iv1tr_iv2tr_sub, 0)
 
         # NCSNR and encoding accuracy vertex selection
-        idx_ncsnr = metadata['fmri'][f'{hemi}_ncsnr'] >= args.ncsnr_threshold
+        idx_ncsnr = metadata['fmri'][f'{hemi}_ncsnr'] >= \
+            args.ncsnr_threshold
         encoding = metadata['encoding_models']\
             [hemi+'_explained_variance_nsdcore']
         idx_encoding = encoding >= args.encoding_threshold

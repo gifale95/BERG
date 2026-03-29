@@ -145,8 +145,10 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     # Only retain vertices that have above threshold (i) NCSNR AND
     # (ii) encoding prediction accuracy.
     # Left hemisphere
-    lh_idx_ncsnr = metadata[s]['fmri']['lh_ncsnr'] >= args.ncsnr_threshold
-    rh_idx_ncsnr = metadata[s]['fmri']['rh_ncsnr'] >= args.ncsnr_threshold
+    lh_idx_ncsnr = metadata[s]['fmri']['lh_ncsnr'] >= \
+        args.ncsnr_threshold
+    rh_idx_ncsnr = metadata[s]['fmri']['rh_ncsnr'] >= \
+        args.ncsnr_threshold
     lh_idx_encoding = \
         metadata[s]['encoding_models']['lh_explained_variance_nsdcore'] >= \
         args.encoding_threshold

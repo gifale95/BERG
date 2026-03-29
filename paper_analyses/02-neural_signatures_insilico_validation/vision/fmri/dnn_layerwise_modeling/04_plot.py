@@ -30,7 +30,6 @@ import numpy as np
 import cortex
 import matplotlib
 import matplotlib.pyplot as plt
-from tqdm import tqdm
 
 
 # =============================================================================
@@ -64,28 +63,17 @@ stats_dir = os.path.join(args.berg_dir,
 
 stats = np.load(stats_dir, allow_pickle=True).item()
 
-
-# =============================================================================
-# Load the RSA results
-# =============================================================================
-lh_rsa = {}
-rh_rsa = {}
 lh_best_layer = []
 rh_best_layer = []
 
+# Loop across subjects and hemispheres
 for s, sub in enumerate(args.subjects):
     for hemi in ['lh', 'rh']:
 
-        results_dir = os.path.join(args.berg_dir,
-            'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'dnn_layerwise_modeling', 'rsa', args.encoding_model, 'rsa_sub-'+
-            format(sub, '02')+'_'+hemi+'_model-'+args.model+'.npy')
-        results = np.load(results_dir, allow_pickle=True).item()
-
         # NCSNR and encoding accuracy vertex selection
-        ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
+        ncsnr = stats['metadata'][s]['fmri'][hemi+'_ncsnr']
         idx_ncsnr = ncsnr >= args.ncsnr_threshold
-        encoding = results['metadata']['encoding_models']\
+        encoding = stats['metadata'][s]['encoding_models']\
             [hemi+'_explained_variance_nsdcore']
         idx_encoding = encoding >= args.encoding_threshold
         idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
@@ -100,35 +88,36 @@ for s, sub in enumerate(args.subjects):
             best_layer[idx_nan] = np.nan
             rh_best_layer.append(best_layer)
 
-        # Store the RSA results
-        rsa = results['rsa']
-        for key, val in rsa.items():
-            if s == 0:
-                if hemi == 'lh':
-                    lh_rsa[key] = []
-                elif hemi == 'rh':
-                    rh_rsa[key] = []
-            val[idx_nan] = np.nan
-            if hemi == 'lh':
-                lh_rsa[key].append(val)
-            elif hemi == 'rh':
-                rh_rsa[key].append(val)
-        del rsa
-
 # Format the results to numpy arrays
-for key in lh_rsa.keys():
-    lh_rsa[key] = np.array(lh_rsa[key])
-    rh_rsa[key] = np.array(rh_rsa[key])
 lh_best_layer = np.array(lh_best_layer)
 rh_best_layer = np.array(rh_best_layer)
 
 
 # =============================================================================
-# Threshold the vertices by significance
+# Get the DNN layers
 # =============================================================================
-# for key in lh_rsa.keys():
-#     lh_rsa[key][:,~stats['sig_lh_rsa'][key]] = np.nan
-#     rh_rsa[key][:,~stats['sig_rh_rsa'][key]] = np.nan
+# AlexNet
+if args.model == 'alexnet':
+    model_layers = [
+        'features.2',
+        'features.5',
+        'features.7',
+        'features.9',
+        'features.12',
+        'classifier.2',
+        'classifier.5',
+        'classifier.6'
+        ]
+
+# ResNet-50
+elif args.model == 'resnet50':
+    model_layers = [
+        'layer1.2.relu_2',
+        'layer2.3.relu_2',
+        'layer3.5.relu_2',
+        'layer4.2.relu_2',
+        'fc'
+        ]
 
 
 # =============================================================================
@@ -141,48 +130,6 @@ matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 subject = 'fsaverage_nsd_sub-01'
-
-
-# =============================================================================
-# Plot the RSA results
-# =============================================================================
-# # Loop across model layers
-# for key in tqdm(lh_rsa.keys()):
-
-#     # Average the results across subjects, and append them across left and
-#     # right hemishperes
-#     data = np.append(np.nanmean(lh_rsa[key], 0), np.nanmean(rh_rsa[key], 0))
-
-#     # Create the flat brain surface
-#     vertex_data = cortex.Vertex(
-#         data,
-#         subject=subject,
-#         cmap='afmhot',
-#         vmin=0,
-#         vmax=0.5,
-#         with_colorbar=True
-#         )
-
-#     # Plot the flat brain surface
-#     fig = cortex.quickshow(
-#         vertex_data,
-#         height=2000, # Increase resolution of map and ROI contours
-#         with_curvature=True,
-#         with_rois=True,
-#         roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-#         linewidth=3,
-#         linecolor=(1, 1, 1),
-#         with_labels=True,
-#         labelsize=25,
-#         curvature_brightness=0.4,
-#         with_colorbar=True
-#         )
-
-#     # Save the figure
-#     file_name = os.path.join(save_dir, 'rsa_model-'+args.model+'_layer-'+key+
-#         '.svg')
-#     fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-#     plt.close()
 
 
 # =============================================================================
@@ -199,7 +146,7 @@ vertex_data = cortex.Vertex(
     subject=subject,
     cmap='turbo_r',
     vmin=1,
-    vmax=len(lh_rsa.keys()),
+    vmax=len(model_layers),
     with_colorbar=True
     )
 

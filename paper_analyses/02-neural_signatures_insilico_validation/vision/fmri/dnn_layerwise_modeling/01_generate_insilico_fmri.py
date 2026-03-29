@@ -21,8 +21,6 @@ nsd_dir : str
 import argparse
 import os
 import numpy as np
-from PIL import Image
-from tqdm import tqdm
 from berg import BERG
 import h5py
 import gc

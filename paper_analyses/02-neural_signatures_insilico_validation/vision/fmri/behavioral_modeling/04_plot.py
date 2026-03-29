@@ -52,37 +52,34 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 # Load the RSA results
 # =============================================================================
-lh_rsa = []
-rh_rsa = []
+results_dir = os.path.join(args.berg_dir,
+    'neural_signatures_insilico_validation', 'vision', 'fmri',
+    'behavioral_modeling', 'stats', args.encoding_model, 'stats.npy')
 
-for sub in args.subjects:
+results = np.load(results_dir, allow_pickle=True).item()
+
+lh_rsa = np.array(results['lh_rsa'])
+rh_rsa = np.array(results['rh_rsa'])
+metadata = results['metadata']
+
+
+# =============================================================================
+# NCSNR and encoding accuracy vertex selection
+# =============================================================================
+for s in range(len(args.subjects)):
     for hemi in ['lh', 'rh']:
 
-        results_dir = os.path.join(args.berg_dir,
-            'neural_signatures_insilico_validation', 'vision', 'fmri',
-            'behavioral_modeling', 'rsa', args.encoding_model, 'rsa_sub-'+
-            format(sub, '02')+'_'+hemi+'.npy')
-        results = np.load(results_dir, allow_pickle=True).item()
-
-        # NCSNR and encoding accuracy vertex selection
         ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
         idx_ncsnr = ncsnr >= args.ncsnr_threshold
         encoding = results['metadata']['encoding_models']\
             [hemi+'_explained_variance_nsdcore']
         idx_encoding = encoding >= args.encoding_threshold
         idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
-        rsa = results['rsa']
-        rsa[idx_nan] = np.nan
 
-        # Store the RSA results
         if hemi == 'lh':
-            lh_rsa.append(rsa)
-        elif hemi == 'rh':
-            rh_rsa.append(rsa)
-        del rsa
-
-lh_rsa = np.array(lh_rsa)
-rh_rsa = np.array(rh_rsa)
+            lh_rsa[s,idx_nan] = np.nan
+        else:
+            rh_rsa[s,idx_nan] = np.nan
 
 
 # =============================================================================

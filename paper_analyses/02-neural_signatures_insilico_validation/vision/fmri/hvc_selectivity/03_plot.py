@@ -64,8 +64,10 @@ for sub in args.subjects:
     rh_tval_sub = data['rh_tval']
 
     # NCSNR and encoding accuracy vertex selection
-    idx_ncsnr_lh = data['metadata']['fmri']['lh_ncsnr'] >= args.ncsnr_threshold
-    idx_ncsnr_rh = data['metadata']['fmri']['rh_ncsnr'] >= args.ncsnr_threshold
+    idx_ncsnr_lh = data['metadata']['fmri']['lh_ncsnr'] >= \
+        args.ncsnr_threshold
+    idx_ncsnr_rh = data['metadata']['fmri']['rh_ncsnr'] >= \
+        args.ncsnr_threshold
     idx_encoding_lh = data['metadata']['encoding_models']\
         ['lh_explained_variance_nsdcore'] >= args.encoding_threshold
     idx_encoding_rh = data['metadata']['encoding_models']\
