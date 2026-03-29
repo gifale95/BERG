@@ -36,7 +36,6 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-from berg import BERG
 from tqdm import tqdm
 import cortex
 import matplotlib.pyplot as plt
@@ -67,29 +66,29 @@ os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
+# Load the results
+# =============================================================================
+save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
+    'vision', 'fmri', 'retinotopy', 'GRID_RES-'+str(args.GRID_RES)+
+    '_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+'_BG_VALUE-'+str(args.BG_VALUE),
+    'stats', 'encoding_model-'+args.encoding_model, 'stats.npy')
+
+results = np.load(save_dir, allow_pickle=True).item()
+
+
+# =============================================================================
 # Load the retinotopic maps
 # =============================================================================
 # Loop across fMRI subjects
 for s, sub in enumerate(tqdm(args.fmri_subjects)):
 
-    # Load the metadata
-    berg = BERG(berg_dir=args.berg_dir)
-    metadata = berg.get_model_metadata(
-        args.encoding_model,
-        subject=sub
-        )
+    # Get the metadata
+    metadata = results['metadata'][s]
 
-    # Load the retinotopic maps
-    data_dir = os.path.join(args.berg_dir,
-        'neural_signatures_insilico_validation', 'vision', 'fmri', 'retinotopy',
-        'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
-        '_BG_VALUE-'+str(args.BG_VALUE), 'retinotopic_maps',
-        'encoding_model-'+args.encoding_model+'_subject-'+str(sub),
-        'retinotopic_maps.npz')
-    data = np.load(data_dir, allow_pickle=True)["data"].item()
+    # Get the retinotopic maps
     # Polar angles
-    polar_angle_lh = data['polar_angle_lh']
-    polar_angle_rh = data['polar_angle_rh']
+    polar_angle_lh = results['polar_angle_lh_silico'][s]
+    polar_angle_rh = results['polar_angle_rh_silico'][s]
     # Rotate the polar angles and wrap into 0–2π
     shift = 5 * np.pi / 6  # 150° rotation
     polar_angle_lh = (polar_angle_lh + shift) % (2 * np.pi)
@@ -98,8 +97,8 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     polar_angle_lh_norm = polar_angle_lh / (2 * np.pi)
     polar_angle_rh_norm = polar_angle_rh / (2 * np.pi)
     # Eccentricity
-    eccentricity_lh = data['eccentricity_lh']
-    eccentricity_rh = data['eccentricity_rh']
+    eccentricity_lh = results['eccentricity_lh_silico'][s]
+    eccentricity_rh = results['eccentricity_rh_silico'][s]
     # Normalize the eccentricities to [0,1]
     eccentricity_lh_norm = eccentricity_lh / eccentricity_lh.max()
     eccentricity_rh_norm = eccentricity_rh / eccentricity_rh.max()

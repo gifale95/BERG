@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-retinotopy-03_plot
+#SBATCH --job-name=berg_insilico_validation-retinotopy-04_plot
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
 #SBATCH --time=01:00:00
@@ -27,4 +27,4 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Run the job
-python 03_plot.py --encoding_model $encoding_model
+python 04_plot.py --encoding_model $encoding_model

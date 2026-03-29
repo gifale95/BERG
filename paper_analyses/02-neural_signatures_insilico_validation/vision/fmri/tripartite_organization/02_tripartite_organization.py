@@ -163,6 +163,30 @@ for roi in rois:
         vertex_overlap[roi+'_big_objects'][s] = \
             count_big_objects / tot_vertices * 100
 
+# Compute the average vertex overlap across animate-selective ROIs (EBA, FBA,
+# FFA, OFA) and scene-selective ROIs (PPA, OPA, RSC)
+vertex_overlap['animate_selective_rois_animals'] = np.mean(
+    np.array([vertex_overlap['EBA_animals'], vertex_overlap['FBA_animals'],
+    vertex_overlap['FFA_animals'], vertex_overlap['OFA_animals']]), 0)
+vertex_overlap['animate_selective_rois_small_objects'] = np.mean(
+    np.array([vertex_overlap['EBA_small_objects'],
+    vertex_overlap['FBA_small_objects'], vertex_overlap['FFA_small_objects'],
+    vertex_overlap['OFA_small_objects']]), 0)
+vertex_overlap['animate_selective_rois_big_objects'] = np.mean(
+    np.array([vertex_overlap['EBA_big_objects'],
+    vertex_overlap['FBA_big_objects'], vertex_overlap['FFA_big_objects'],
+    vertex_overlap['OFA_big_objects']]), 0)
+vertex_overlap['scene_selective_rois_big_objects'] = np.mean(
+    np.array([vertex_overlap['PPA_big_objects'],
+    vertex_overlap['OPA_big_objects'], vertex_overlap['RSC_big_objects']]), 0)
+vertex_overlap['scene_selective_rois_animals'] = np.mean(
+    np.array([vertex_overlap['PPA_animals'],
+    vertex_overlap['OPA_animals'], vertex_overlap['RSC_animals']]), 0)
+vertex_overlap['scene_selective_rois_small_objects'] = np.mean(
+    np.array([vertex_overlap['PPA_small_objects'],
+    vertex_overlap['OPA_small_objects'], vertex_overlap['RSC_small_objects']]),
+    0)
+
 
 # =============================================================================
 # Compute the significance
@@ -189,6 +213,24 @@ for bo_roi in bigobject_rois:
     pval_vertex_overlap[bo_roi+'_big_objects>small_objects'] = \
         ttest_rel(vertex_overlap[bo_roi+'_big_objects'],
         vertex_overlap[bo_roi+'_small_objects'], alternative='greater')[1]
+
+# Compute the significance of the average vertex overlap across
+# animate-selective and scene-selective ROIs
+pval_vertex_overlap['animate_selective_rois_animals>small_objects'] = \
+    ttest_rel(vertex_overlap['animate_selective_rois_animals'],
+    vertex_overlap['animate_selective_rois_small_objects'],
+    alternative='greater')[1]
+pval_vertex_overlap['animate_selective_rois_animals>big_objects'] = \
+    ttest_rel(vertex_overlap['animate_selective_rois_animals'],
+    vertex_overlap['animate_selective_rois_big_objects'],
+    alternative='greater')[1]
+pval_vertex_overlap['scene_selective_rois_big_objects>animals'] = \
+    ttest_rel(vertex_overlap['scene_selective_rois_big_objects'],
+    vertex_overlap['scene_selective_rois_animals'], alternative='greater')[1]
+pval_vertex_overlap['scene_selective_rois_big_objects>small_objects'] = \
+    ttest_rel(vertex_overlap['scene_selective_rois_big_objects'],
+    vertex_overlap['scene_selective_rois_small_objects'],
+    alternative='greater')[1]
 
 
 # =============================================================================
