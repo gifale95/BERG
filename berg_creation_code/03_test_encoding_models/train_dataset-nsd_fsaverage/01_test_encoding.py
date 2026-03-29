@@ -135,8 +135,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
 	rh_sigma_signal[rh_sigma_signal<0] = 0
 	lh_sigma_signal = np.sqrt(lh_sigma_signal)
 	rh_sigma_signal = np.sqrt(rh_sigma_signal)
-	lh_ncsnr = lh_sigma_signal / lh_sigma_noise
-	rh_ncsnr = rh_sigma_signal / rh_sigma_noise
+	lh_ncsnr_nsdsynthetic = lh_sigma_signal / lh_sigma_noise
+	rh_ncsnr_nsdsynthetic = rh_sigma_signal / rh_sigma_noise
 
 	# Convert the ncsnr to noise ceiling
 	img_reps_2 = 236
@@ -145,10 +145,10 @@ for s, sub in enumerate(tqdm(args.subjects)):
 	img_reps_10 = 8
 	norm_term = (img_reps_2/2 + img_reps_4/4 + img_reps_8/8 + img_reps_10/10) / \
 		(img_reps_2 + img_reps_4 + img_reps_8 + img_reps_10)
-	lh_noise_ceiling_nsdsynthetic = (lh_ncsnr ** 2) / \
-		((lh_ncsnr ** 2) + norm_term)
-	rh_noise_ceiling_nsdsynthetic = (rh_ncsnr ** 2) / \
-		((rh_ncsnr ** 2) + norm_term)
+	lh_noise_ceiling_nsdsynthetic = (lh_ncsnr_nsdsynthetic ** 2) / \
+		((lh_ncsnr_nsdsynthetic ** 2) + norm_term)
+	rh_noise_ceiling_nsdsynthetic = (rh_ncsnr_nsdsynthetic ** 2) / \
+		((rh_ncsnr_nsdsynthetic ** 2) + norm_term)
 
 
 # =============================================================================
@@ -239,8 +239,10 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
 	# fMRI-related metadata
 	fmri = {
-		'lh_ncsnr': metadata_nsd['lh_ncsnr'],
-		'rh_ncsnr': metadata_nsd['rh_ncsnr'],
+		'lh_ncsnr_nsdcore': metadata_nsd['lh_ncsnr'],
+		'rh_ncsnr_nsdcore': metadata_nsd['rh_ncsnr'],
+		'lh_ncsnr_nsdsynthetic': lh_ncsnr_nsdsynthetic,
+		'rh_ncsnr_nsdsynthetic': rh_ncsnr_nsdsynthetic,
 		'lh_fsaverage_rois': metadata_nsd['lh_fsaverage_rois'],
 		'rh_fsaverage_rois': metadata_nsd['rh_fsaverage_rois']
 		}
