@@ -239,8 +239,8 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
 	# fMRI-related metadata
 	fmri = {
-		'lh_ncsnr_nsdcore': metadata_nsd['lh_ncsnr'],
-		'rh_ncsnr_nsdcore': metadata_nsd['rh_ncsnr'],
+		'lh_ncsnr': metadata_nsd['lh_ncsnr'],
+		'rh_ncsnr': metadata_nsd['rh_ncsnr'],
 		'lh_ncsnr_nsdsynthetic': lh_ncsnr_nsdsynthetic,
 		'rh_ncsnr_nsdsynthetic': rh_ncsnr_nsdsynthetic,
 		'lh_fsaverage_rois': metadata_nsd['lh_fsaverage_rois'],

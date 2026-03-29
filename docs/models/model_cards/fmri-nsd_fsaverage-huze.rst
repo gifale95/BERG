@@ -61,9 +61,9 @@ Metadata
 
 **fmri**
 
-    **lh_ncsnr_nsdcore** : ``(163842,)`` - Left hemisphere noise-ceiling signal-to-noise ratio per vertex (computed on NSD-core)
+    **lh_ncsnr** : ``(163842,)`` - Left hemisphere noise-ceiling signal-to-noise ratio per vertex (computed on NSD-core)
 
-    **rh_ncsnr_nsdcore** : ``(163842,)`` - Right hemisphere noise-ceiling signal-to-noise ratio per vertex (computed on NSD-core)
+    **rh_ncsnr** : ``(163842,)`` - Right hemisphere noise-ceiling signal-to-noise ratio per vertex (computed on NSD-core)
 
     **lh_ncsnr_nsdsynthetic** : ``(163842,)`` - Left hemisphere noise-ceiling signal-to-noise ratio per vertex (computed on NSD-synthetic)
 
