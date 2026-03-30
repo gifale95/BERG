@@ -52,19 +52,19 @@ Metadata
 
 **roi_masks**
 
-    **cont** : ``(1000,)`` - Binary mask for Control/Frontoparietal network parcels
+    **Cont** : ``(1000,)`` - Binary mask for Control/Frontoparietal network parcels
 
-    **default** : ``(1000,)`` - Binary mask for Default Mode network parcels
+    **Default** : ``(1000,)`` - Binary mask for Default Mode network parcels
 
-    **dorsattn** : ``(1000,)`` - Binary mask for Dorsal Attention network parcels
+    **DorsAttn** : ``(1000,)`` - Binary mask for Dorsal Attention network parcels
 
-    **limbic** : ``(1000,)`` - Binary mask for Limbic network parcels
+    **Limbic** : ``(1000,)`` - Binary mask for Limbic network parcels
 
-    **salventattn** : ``(1000,)`` - Binary mask for Salience/Ventral Attention network parcels
+    **SalVentAttn** : ``(1000,)`` - Binary mask for Salience/Ventral Attention network parcels
 
-    **sommot** : ``(1000,)`` - Binary mask for Somatomotor network parcels
+    **SomMot** : ``(1000,)`` - Binary mask for Somatomotor network parcels
 
-    **vis** : ``(1000,)`` - Binary mask for Visual network parcels
+    **Vis** : ``(1000,)`` - Binary mask for Visual network parcels
 
 Input
 -----
@@ -142,7 +142,8 @@ This function loads the encoding model.
      - | **Type:** str
        | **Required:** No
        | **Description:** HuggingFace repository ID of a specific pretrained variant to load.
-       | If provided, the model config associated with this variant is used and any user-passed `config` argument is ignored.
+       | If provided, the model config associated with this variant is used and any
+       | user-passed `config` argument is ignored.
        | If None (default), loads the default configuration (Qwen-2.5-0.5B).
        | Use model.get_pretrained_variants() on any loaded model to see all available options.
        | **Example:** "ShreyDixit/Text2fMRI-Qwen-2.5-0.5B"
@@ -312,6 +313,7 @@ Example Usage
     responses = berg.encode(
         model,
         stimulus,
+        low_mem_use=True
     )
     
     # The in silico fMRI responses will be a torch.Tensor of shape:

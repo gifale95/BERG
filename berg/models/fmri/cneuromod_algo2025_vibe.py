@@ -1,25 +1,36 @@
 import os
 import shutil
 import tempfile
-import numpy as np
-import yaml
-import torch
 import logging
+from contextlib import contextmanager
 from typing import Any
+
+import numpy as np
+import torch
+import yaml
 from nilearn.datasets import fetch_atlas_schaefer_2018
+
 from berg.core.exceptions import InvalidParameterError
 from berg.core.model_registry import register_model
-from berg.core.parameter_validator import validate_roi, validate_selection_keys, validate_subjects, validate_binary_array
+from berg.core.parameter_validator import (
+    validate_binary_array,
+    validate_roi,
+    validate_selection_keys,
+    validate_subjects,
+)
 from berg.interfaces.base_model import BaseModelInterface
-from berg.models.fmri.text2fmri_utils.config import Text2fMRIConfig, get_pretrained_model_configs
-from berg.models.fmri.text2fmri_utils.feature_extractor import FeatureExtractor
-from berg.models.fmri.text2fmri_utils.model import Text2fMRIModel
-
+from berg.models.fmri.vibe_utils.audio_feature_extractor import AudioFeatureExtractor
+from berg.models.fmri.vibe_utils.config import VIBEConfig, get_pretrained_model_configs
+from berg.models.fmri.vibe_utils.model import VIBEModel
+from berg.models.fmri.vibe_utils.text_feature_extractor import TextFeatureExtractor
+from berg.models.fmri.vibe_utils.video_feature_extractor import VideoFeatureExtractor
 
 # Load model info from YAML
+
+
 def load_model_info():
     yaml_path = os.path.join(os.path.dirname(
-        __file__), "..", "model_cards", "fmri-cneuromod_algo2025-text2fmri.yaml")
+        __file__), "..", "model_cards", "fmri-cneuromod_algo2025-vibe.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -30,12 +41,12 @@ model_info = load_model_info()
 # Register this model with the registry using model_info
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.cneuromod_algo2025_text2fmri",
-    class_name="Text2fMRI",
+    module_path="berg.models.fmri.cneuromod_algo2025_vibe",
+    class_name="VIBE",
     modality=model_info.get("modality", "fmri"),
     training_dataset=model_info.get("training_dataset", "cneuromod_algo2025"),
     yaml_path=os.path.join(os.path.dirname(__file__),
-                           "..", "model_cards", "fmri-cneuromod_algo2025-text2fmri.yaml")
+                           "..", "model_cards", "fmri-cneuromod_algo2025-vibe.yaml")
 )
 
 # Algonauts Mapping
@@ -45,25 +56,25 @@ SUBJECT_MAPPING = {1: 0,
                    5: 3,}
 
 
-class Text2fMRI(BaseModelInterface):
+class VIBE(BaseModelInterface):
     """
-    An interface for the Text2fMRI model, predicting brain activity from natural language.
+    BERG interface for the VIBE multimodal fMRI encoding model.
 
-    This model takes transcribed speech (text aligned with fMRI TRs) and predicts 
-    whole-brain fMRI activity using a LLM-based feature extractor followed by a 
-    transformer encoder.
+    VIBE combines text, audio, and video features aligned to TRs and predicts
+    parcel-wise fMRI responses.
 
     Attributes:
-        feature_extractor (FeatureExtractor): Handles text tokenization and LLM feature extraction.
-        model (Text2fMRIModel): The mapping model from LLM features to brain space.
-        config (Text2fMRIConfig): Hyperparameters for the model architecture.
+        text_feature_extractor (TextFeatureExtractor): Transcript encoder.
+        audio_feature_extractor (AudioFeatureExtractor): Audio encoder.
+        video_feature_extractor (VideoFeatureExtractor): Video encoder.
+        model (VIBEModel): Mapping model from fused multimodal features to brain space.
+        config (VIBEConfig): Hyperparameters for the model architecture.
         selection (dict): User selection criteria (e.g., specific ROIs).
-        subject (int): The subject ID for predictions.
     """
 
     MODEL_ID = model_info["model_id"]
     # Extract any validation info from model_info
-    _collection_slug = "ShreyDixit/text2fmri"
+    _collection_slug = "ShreyDixit/vibe"
     SELECTION_KEYS = list(
         model_info["parameters"]["selection"]["properties"].keys())
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
@@ -73,9 +84,16 @@ class Text2fMRI(BaseModelInterface):
     # Setting it to None so that no calls to hugging face are made during the import
     pretrained_configs_dict = None
 
-    def __init__(self, berg_dir: str = None, selection: dict = None, subject: int = None, config: Text2fMRIConfig = Text2fMRIConfig(), device: str = "auto", low_mem_use: bool = False, model_variant: str = None):
+    def __init__(self,
+                 berg_dir: str = None,
+                 selection: dict = None,
+                 subject: int = None,
+                 config: VIBEConfig = VIBEConfig(),
+                 device: str = "auto",
+                 low_mem_use: bool = True,
+                 model_variant: str = None):
         """
-        Initialize the Text2fMRI interface.
+        Initialize the VIBE interface.
 
         Args:
             berg_dir (str, optional): Path to the BERG cache directory.
@@ -85,17 +103,16 @@ class Text2fMRI(BaseModelInterface):
                 Valid values include: 'Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 
                 'Limbic', 'Cont', or 'Default'.
             subject (int): The subject ID (index) to generate predictions for.
-            config (Text2fMRIConfig): Configuration object for the model architecture.
+            config (VIBEConfig): Configuration object for the model architecture.
                 Ignored if `model_variant` is provided.
             device (str): Computation device ('cpu', 'cuda', 'auto').
             low_mem_use : bool
-                If True, use a low-memory usage. The model and the LLMFeatureExtractor will not be loaded at the same time.
-                This will take less memory but it will take longer to generate the responses because it will load the models
-                every time.
+                If True, feature extractors/model are unloaded after use to reduce
+                memory usage at the cost of extra load time.
             model_variant (str, optional): HuggingFace repo ID of a specific pretrained
-                variant to load (e.g. "ShreyDixit/Text2fMRI-Qwen-2.5-3B").
+                variant to load.
                 If provided, the config tied to this variant is used and the `config` argument is ignored.
-                If None, uses the default configuration (Qwen-2.5-0.5B).
+                If None, uses the default configuration.
                 Use model.get_pretrained_variants() to see all available options.
         """
         self.model = None
@@ -105,12 +122,15 @@ class Text2fMRI(BaseModelInterface):
         self.device = device
         self.berg_dir = berg_dir
         self.selection = selection
+        self.roi = self.selection.get(
+            "roi", None) if self.selection is not None else None
         self.subject = subject
         self.model_variant = model_variant
-
+        self.subject_idx = None
         self.parcel_index = None
-        if Text2fMRI.pretrained_configs_dict is None:
-            Text2fMRI.get_pretrained_configs()
+
+        if VIBE.pretrained_configs_dict is None:
+            VIBE.get_pretrained_configs()
 
         if self.model_variant is not None:
             variant_to_config = {
@@ -125,14 +145,15 @@ class Text2fMRI(BaseModelInterface):
                 )
             config = variant_to_config[self.model_variant]
 
-        self.config: Text2fMRIConfig = config
-        self.feature_extractor: FeatureExtractor = FeatureExtractor(
-            config=self.config, device=device, berg_dir=berg_dir)
+        self.config: VIBEConfig = config
+        self.text_feature_extractor = TextFeatureExtractor(
+            config=self.config, device=device, low_mem_usage=low_mem_use)
+        self.audio_feature_extractor = AudioFeatureExtractor(
+            config=self.config, device=device, low_mem_usage=low_mem_use)
+        self.video_feature_extractor = VideoFeatureExtractor(
+            config=self.config, device=device, low_mem_usage=low_mem_use)
 
         self._validate_parameters()
-        self.subject = SUBJECT_MAPPING[subject]
-        self.roi = self.selection.get(
-            "roi", None) if self.selection is not None else None
         self.roi_labels = self._extract_network_names()
         self.low_mem_use = low_mem_use
 
@@ -152,12 +173,14 @@ class Text2fMRI(BaseModelInterface):
             # Validate selection keys
             validate_selection_keys(self.selection, self.SELECTION_KEYS)
 
+            # Individual validations
             if "roi" in self.selection:
-                self.roi = validate_roi(self.selection["roi"], self.VALID_ROIS)
+                self.roi = validate_roi(
+                    self.selection["roi"], self.VALID_ROIS
+                )
 
             if "parcel_index" in self.selection:
                 parcel_index = self.selection["parcel_index"]
-                # Validate as binary array
                 validated_array = validate_binary_array(
                     parcel_index,
                     expected_length=self.N_PARCELS_MODEL,
@@ -165,10 +188,8 @@ class Text2fMRI(BaseModelInterface):
                 )
                 self.parcel_index = validated_array.astype(bool)
 
-        # Validate subject
-        self.subject = validate_subjects(
-            self.subject, self.VALID_SUBJECTS
-        )[0]
+        if self.subject is not None:
+            self.subject_idx = self._normalize_subject(self.subject)
 
         # Validate model_variant if provided
         if self.model_variant is not None:
@@ -181,13 +202,13 @@ class Text2fMRI(BaseModelInterface):
                 )
 
     @classmethod
-    def get_pretrained_configs(cls) -> list[Text2fMRIConfig]:
+    def get_pretrained_configs(cls) -> list[VIBEConfig]:
         """
         A list of all pretrained configs available on HuggingFace. Choose from this list to get a pretrained model.
 
         Returns
         -------
-        List[Text2fMRIConfig]:
+        List[VIBEConfig]:
             A list of all pretrained configs available on HuggingFace.
 
         Notes
@@ -204,44 +225,44 @@ class Text2fMRI(BaseModelInterface):
         """
         Returns the HuggingFace repo IDs of all available pretrained model variants.
 
-        Use this to discover which models are available, then pass the chosen
-        repo ID as model_variant to get_encoding_model().
-
         Returns
         -------
         list[str]
-            A list of HuggingFace repo IDs, e.g.:
-            ["ShreyDixit/Text2fMRI-Qwen-2.5-0.5B", "ShreyDixit/Text2fMRI-Qwen-2.5-3B"]
-
-        Examples
-        --------
-        >>> model = berg.get_encoding_model(model_id, subject=1)
-        >>> variants = model.get_pretrained_variants()
-        >>> model = berg.get_encoding_model(model_id, subject=1, model_variant=variants[1])
+            A list of HuggingFace repo IDs.
         """
         if cls.pretrained_configs_dict is None:
             cls.get_pretrained_configs()
         return list(cls.pretrained_configs_dict.values())
 
-    def load_model(self, load_feature_extractor=True):
+    def load_model(self, load_feature_extractors: bool = False):
         """
-        Loads the neural network weights and optionally the LLM backbone.
+        Load VIBE weights and optionally preload modality feature extractors.
 
         Args:
-            load_feature_extractor (bool): If True, loads the heavy LLM into memory.
+            load_feature_extractors (bool): If True, preloads all modality feature extractors.
         """
-        if load_feature_extractor:
-            self.feature_extractor.load_model()
-        self.model = Text2fMRIModel(config=self.config, device=self.device, berg_dir=self.berg_dir)
+        if load_feature_extractors:
+            self.text_feature_extractor.load_model()
+            self.audio_feature_extractor.load_model()
+            self.video_feature_extractor.load_model()
+
+        self.model = VIBEModel(config=self.config, device=self.device, berg_dir=self.berg_dir)
 
         if self.config in self.pretrained_configs_dict:
             repo_id = self.model_variant if self.model_variant is not None else self.pretrained_configs_dict[self.config]
             self.model.load_model_from_hub(repo_id)
         self.model.eval()
 
+    def _normalize_subject(self, subject: int) -> int:
+        validated_subject = validate_subjects(
+            subject, self.VALID_SUBJECTS
+        )[0]
+        return SUBJECT_MAPPING[validated_subject]
+
     def _get_selected_parcel_indices(self):
         if self.roi is None and self.parcel_index is None:
             return None
+
         mask = np.zeros(self.N_PARCELS_MODEL, dtype=bool)
         if self.roi is not None:
             mask |= np.isin(self.roi_labels, self.roi)
@@ -249,39 +270,76 @@ class Text2fMRI(BaseModelInterface):
             mask |= self.parcel_index
         return np.where(mask)[0]
 
+    @contextmanager
+    def _model_session(self):
+        if self.model is None:
+            self.load_model()
+        try:
+            yield
+        finally:
+            if self.low_mem_use:
+                self._cleanup_model()
+
     @torch.no_grad()
-    def generate_response(self, stimulus: list[str]) -> torch.Tensor:
+    def generate_response(self,
+                          transcripts: list[str],
+                          video_path: str) -> torch.Tensor:
         """
-        Generates in silico neural responses (fMRI TRs) for a given text stimulus.
+        Generate predicted fMRI responses for transcript + video input.
 
         Args:
-            stimulus (List[str]): A list of strings, where each string corresponds 
-                to the transcript of one fMRI TR (Time Repetition).
+            transcripts (list[str]): Transcript string per TR.
+            video_path (str): Path to the video file used for audio/video features.
 
         Returns:
             torch.Tensor: Predicted brain activity. 
                 Shape: [num_timepoints, num_parcels] (or subset of parcels if selected).
         """
-        features = self.feature_extractor.extract_features(stimulus)
-        if self.low_mem_use:
-            self.feature_extractor.cleanup()
+        if self.subject_idx is None:
+            raise InvalidParameterError(
+                "Subject must be set during model initialization."
+            )
 
-        if self.model is None:
-            self.load_model(load_feature_extractor=not self.low_mem_use)
+        if len(transcripts) == 0:
+            raise InvalidParameterError("transcripts cannot be empty.")
 
-        roi_indices = self._get_selected_parcel_indices()
+        if not os.path.exists(video_path):
+            raise FileNotFoundError(f"Video file {video_path} not found.")
 
-        with torch.inference_mode():
-            responses = self.model(
-                features[None], 
-                torch.as_tensor([self.subject], device=self.device),
-                roi_indices=roi_indices
-            ).squeeze()
+        text_features = self.text_feature_extractor.extract_features(transcripts)
+        audio_features = self.audio_feature_extractor.extract_features(video_path)
+        video_features = self.video_feature_extractor.extract_features(video_path)
 
-        if self.low_mem_use:
-            self.cleanup()
+        n_text = text_features.shape[0]
+        n_audio = audio_features.shape[0]
+        n_video = video_features.shape[0]
 
-        return responses
+        if n_text != n_audio or n_text != n_video:
+            raise InvalidParameterError(
+                f"TR count mismatch: transcripts has {n_text} TRs, but "
+                f"audio features have {n_audio} and video features have "
+                f"{n_video}. The number of transcript strings must match "
+                f"the number of TRs derived from the video "
+                f"(floor(video_duration / {self.config.tr}))."
+            )
+
+        inputs_dict = {
+            "text": text_features[None].float(),
+            "audio": audio_features[None].float(),
+            "video": video_features[None].float(),
+        }
+        selected_parcel_indices = self._get_selected_parcel_indices()
+
+        with self._model_session():
+            with torch.inference_mode():
+                responses = self.model(
+                    inputs_dict, torch.as_tensor([self.subject_idx], device=self.device)
+                ).squeeze(0)
+
+            if selected_parcel_indices is not None:
+                responses = responses[:, selected_parcel_indices]
+
+            return responses
 
     def generate_glass_brain_animation(
         self,
@@ -375,7 +433,12 @@ class Text2fMRI(BaseModelInterface):
 
     def cleanup(self):
         """Frees memory by unloading models and clearing CUDA cache."""
-        self.feature_extractor.cleanup()
+        self.text_feature_extractor.cleanup()
+        self.audio_feature_extractor.cleanup()
+        self.video_feature_extractor.cleanup()
+        self._cleanup_model()
+
+    def _cleanup_model(self):
         if self.model is not None:
             self.model.cpu()
             self.model = None
@@ -396,28 +459,11 @@ class Text2fMRI(BaseModelInterface):
 
     @classmethod
     def get_metadata(
-        cls, 
-        berg_dir=None, 
+        cls,
+        berg_dir=None,
         model_instance=None,
         **kwargs
     ) -> dict[str, Any]:
-        """
-        Retrieve metadata for the model.
-
-        Parameters
-        ----------
-        berg_dir : str, optional
-            Path to BERG directory.
-        model_instance : BaseModelInterface, optional
-            If provided, extract parameters from this model instance.
-        **kwargs
-            Additional parameters (subject is ignored as metadata is shared across subjects).
-
-        Returns
-        -------
-        Dict[str, Any]
-            Metadata dictionary.
-        """
         # If model_instance is provided, extract parameters from it
         if model_instance is not None:
             berg_dir = model_instance.berg_dir
@@ -425,27 +471,24 @@ class Text2fMRI(BaseModelInterface):
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             berg_dir = cls.berg_dir
 
-        # Validate required parameters
         if berg_dir is None:
-            raise InvalidParameterError("Required parameter missing: berg_dir")
+            return model_info
 
-        # Build metadata path
         file_name = os.path.join(
             berg_dir,
             'encoding_models',
             'modality-fmri',
             'train_dataset-cneuromod_algo2025',
-            'model-text2fmri',
+            'model-vibe',
             'metadata',
             'metadata.npy'
         )
 
-        # Load metadata if file exists
         if os.path.exists(file_name):
             metadata = np.load(file_name, allow_pickle=True).item()
             return metadata
-        else:
-            raise FileNotFoundError(f"Metadata file not found: {file_name}")
+
+        return model_info
 
     def _extract_network_names(self):
         """

@@ -31,7 +31,7 @@ metadata: |
   'roi_masks':
       Cont                               : (1000,) - Binary mask for Control/Frontoparietal network parcels
       Default                            : (1000,) - Binary mask for Default Mode network parcels
-      ForsAttn                           : (1000,) - Binary mask for Dorsal Attention network parcels
+      DorsAttn                           : (1000,) - Binary mask for Dorsal Attention network parcels
       Limbic                             : (1000,) - Binary mask for Limbic network parcels
       SalVentAttn                        : (1000,) - Binary mask for Salience/Ventral Attention network parcels
       SomMot                             : (1000,) - Binary mask for Somatomotor network parcels

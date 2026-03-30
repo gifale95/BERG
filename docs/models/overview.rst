@@ -152,6 +152,13 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Text
      - `Hugging Face Collection <https://huggingface.co/collections/ShreyDixit/text2fmri>`_
    * - ✅
+     - :doc:`model_cards/fmri-cneuromod_algo2025-vibe`
+     - Multimodal fMRI encoding model fusing video, audio, and text features via a two-stage Transformer architecture
+     - `Algonauts 2025 Challenge <https://algonautsproject.com/2025/braindata.html>`_
+     - Human
+     - Video + Audio + Text
+     - `Accuracy Plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-cneuromod_algo2025/model-vibe/encoding_models_accuracy>`_
+   * - ✅
      - :doc:`model_cards/brainscore_language`
      - Gateway to 10+ GPT-family language models from BrainScore, mapped to human fMRI responses (9 subjects, 384 sentences) via PLS regression. Model weights hosted by BrainScore — not BERG.
      - `Pereira et al., 2018 <https://doi.org/10.1038/s41467-018-03068-4>`_
