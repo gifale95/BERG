@@ -15,7 +15,7 @@ description: |
 
   Architecture overview:
   VIBE uses a two-stage Transformer architecture. In the first stage, a
-  modality-fusion transformer perfvorms cross-attention across modalities
+  modality-fusion transformer performs cross-attention across modalities
   independently at each time point (TR). Each feature stream (text, audio,
   video) is linearly projected to a shared 256-dimensional space together with
   a learned subject embedding, and fused via a single-layer Transformer encoder.
@@ -75,7 +75,7 @@ output:
     - name: "num_timepoints"
       description: "Number of predicted TRs."
     - name: "num_parcels"
-      description: "Number of parceös (up to 1000 Schaefer parcels, or selected subset)."
+      description: "Number of parcels (up to 1000 Schaefer parcels, or selected subset)."
 
 # Model parameters and their usage
 parameters:
