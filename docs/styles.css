@@ -641,9 +641,9 @@ html {
 /* ==========================================================================
    TEAM SECTION
    ========================================================================== */
-.landing-team {
+.landing-news {
     padding: 6rem 0;
-    background: #f8f9fa;
+    background: #ffffff;
 }
 
 .landing-team h2 {
@@ -717,7 +717,7 @@ html {
    ========================================================================== */
 .landing-contact {
     padding: 6rem 0;
-    background: #ffffff;
+    background: #f8f9fa;
 }
 
 .landing-contact h2 {

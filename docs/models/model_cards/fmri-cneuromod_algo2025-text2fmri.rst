@@ -52,19 +52,19 @@ Metadata
 
 **roi_masks**
 
-    **cont** : ``(1000,)`` - Binary mask for Control/Frontoparietal network parcels
+    **Cont** : ``(1000,)`` - Binary mask for Control/Frontoparietal network parcels
 
-    **default** : ``(1000,)`` - Binary mask for Default Mode network parcels
+    **Default** : ``(1000,)`` - Binary mask for Default Mode network parcels
 
-    **dorsattn** : ``(1000,)`` - Binary mask for Dorsal Attention network parcels
+    **DorsAttn** : ``(1000,)`` - Binary mask for Dorsal Attention network parcels
 
-    **limbic** : ``(1000,)`` - Binary mask for Limbic network parcels
+    **Limbic** : ``(1000,)`` - Binary mask for Limbic network parcels
 
-    **salventattn** : ``(1000,)`` - Binary mask for Salience/Ventral Attention network parcels
+    **SalVentAttn** : ``(1000,)`` - Binary mask for Salience/Ventral Attention network parcels
 
-    **sommot** : ``(1000,)`` - Binary mask for Somatomotor network parcels
+    **SomMot** : ``(1000,)`` - Binary mask for Somatomotor network parcels
 
-    **vis** : ``(1000,)`` - Binary mask for Visual network parcels
+    **Vis** : ``(1000,)`` - Binary mask for Visual network parcels
 
 Input
 -----
@@ -346,3 +346,4 @@ References
 
 * Course Materials: Dixit, S. (2026). Text2fMRI: Brain Encoding Models using LLMs (Course Materials) (v0.1.2). Zenodo. https://doi.org/10.5281/zenodo.18369862
 * Huggingface Collection: https://huggingface.co/ShreyDixit/Text2fMRI-Qwen-2.5-0.5B
+* Algonauts 2025 challenge dataset: https://github.com/courtois-neuromod/algonauts_2025.competitors

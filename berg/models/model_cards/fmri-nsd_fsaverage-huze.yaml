@@ -42,8 +42,10 @@ description: |
 
 metadata: |
   'fmri':
-      lh_ncsnr                           : (163842,)   - Left hemisphere noise-ceiling signal-to-noise ratio per vertex
-      rh_ncsnr                           : (163842,)   - Right hemisphere noise-ceiling signal-to-noise ratio per vertex
+      lh_ncsnr                           : (163842,)   - Left hemisphere noise ceiling signal-to-noise ratio per vertex (computed on NSD-core)
+      rh_ncsnr                           : (163842,)   - Right hemisphere noise ceiling signal-to-noise ratio per vertex (computed on NSD-core)
+      lh_ncsnr_nsdsynthetic              : (163842,)   - Left hemisphere noise ceiling signal-to-noise ratio per vertex (computed on NSD-synthetic)
+      rh_ncsnr_nsdsynthetic              : (163842,)   - Right hemisphere noise ceiling signal-to-noise ratio per vertex (computed on NSD-synthetic)
       lh_fsaverage_rois                  : dict        - Left hemisphere ROI definitions on fsaverage surface
           V1v                            : (710,)      - Visual area 1 ventral
           V1d                            : (828,)      - Visual area 1 dorsal
