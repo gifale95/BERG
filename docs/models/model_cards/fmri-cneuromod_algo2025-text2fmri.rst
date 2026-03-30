@@ -142,7 +142,8 @@ This function loads the encoding model.
      - | **Type:** str
        | **Required:** No
        | **Description:** HuggingFace repository ID of a specific pretrained variant to load.
-       | If provided, the model config associated with this variant is used and any user-passed `config` argument is ignored.
+       | If provided, the model config associated with this variant is used and any
+       | user-passed `config` argument is ignored.
        | If None (default), loads the default configuration (Qwen-2.5-0.5B).
        | Use model.get_pretrained_variants() on any loaded model to see all available options.
        | **Example:** "ShreyDixit/Text2fMRI-Qwen-2.5-0.5B"
@@ -312,6 +313,7 @@ Example Usage
     responses = berg.encode(
         model,
         stimulus,
+        low_mem_use=True
     )
     
     # The in silico fMRI responses will be a torch.Tensor of shape:

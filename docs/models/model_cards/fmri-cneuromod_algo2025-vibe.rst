@@ -111,7 +111,7 @@ Output
    * - Type
      - ``torch.Tensor``
    * - Shape
-     - ``['num_timepoints', 'num_rois']``
+     - ``['num_timepoints', 'num_parcels']``
    * - Description
      - Predicted fMRI activity for each TR.
 
@@ -125,8 +125,8 @@ Output
      - Description
    * - num_timepoints
      - Number of predicted TRs.
-   * - num_rois
-     - Number of regions (up to 1000 Schaefer parcels, or selected subset).
+   * - num_parcels
+     - Number of parcels (up to 1000 Schaefer parcels, or selected subset).
 
 Parameters
 ---------
@@ -187,7 +187,7 @@ This function loads the encoding model.
        |     **Valid values:** "Vis", "SomMot", "DorsAttn", "SalVentAttn", "Limbic", "Cont", "Default"
        |     **Example:** ['Vis']
        | 
-       | **voxel_index**
+       | **parcel_index**
        |     **Type:** numpy.ndarray
        |     **Description:** Binary one-hot encoded vector selecting parcels.
        |     Must have length 1000 and contain at least one 1.
@@ -324,7 +324,7 @@ Example Usage
 .. code-block:: python
 
     from berg import BERG
-
+    
     # Initialize BERG
     berg = BERG(berg_dir="path/to/brain-encoding-response-generator")
 
@@ -340,7 +340,7 @@ Example Usage
         low_mem_use=True,
         selection={
             "roi": ["Vis"],
-            "voxel_index": [0, 0, '...', 1, 1, 0]
+            "parcel_index": [0, 0, '...', 1, 1, 0]
         }
     )
     
@@ -356,10 +356,10 @@ Example Usage
     )
     
     # The in silico fMRI responses will be a torch.Tensor of shape:
-    # ['num_timepoints', 'num_rois']
+    # ['num_timepoints', 'num_parcels']
     # where:
     # - num_timepoints: Number of predicted TRs.
-    # - num_rois: Number of regions (up to 1000 Schaefer parcels, or selected subset).
+    # - num_parcels: Number of parcels (up to 1000 Schaefer parcels, or selected subset).
     
     # Generate in silico neural responses with metadata
     responses, metadata = berg.encode(
