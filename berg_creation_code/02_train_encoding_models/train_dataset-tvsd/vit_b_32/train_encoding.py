@@ -77,7 +77,6 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 # Set random seed for reproducible results
-seed = 20200220
 np.random.seed(seed)
 torch.manual_seed(seed)
 
