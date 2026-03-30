@@ -1,0 +1,232 @@
+model_id: fmri-cneuromod_algo2025-vibe
+modality: fMRI
+training_dataset: CNeuroMod (Algonauts 2025 challenge preparation)
+species: Human
+stimuli: Video + Audio + Text
+model_type: Transformers
+creator: Shrey Dixit, Daniel Carlström Schad, Janis Keck, Viktor Studenyak, Aleksandr Shpilevoi, Andrej Bicanski
+
+# General description of the model
+description: |
+  VIBE (Video-Input Brain Encoder) is a multimodal fMRI encoding model trained
+  on CNeuroMod movie data. It combines per-TR language transcripts, movie audio,
+  and video features to predict whole-brain fMRI activity in Schaefer-1000
+  parcel space.
+
+  Architecture overview:
+  VIBE uses a two-stage Transformer architecture. In the first stage, a
+  modality-fusion transformer performs cross-attention across modalities
+  independently at each time point (TR). Each feature stream (text, audio,
+  video) is linearly projected to a shared 256-dimensional space together with
+  a learned subject embedding, and fused via a single-layer Transformer encoder.
+  The fused per-TR representations are concatenated and passed to the second
+  stage: a prediction transformer (2 layers) that models temporal dependencies
+  across TRs using Rotary Positional Embeddings (RoPE). A final feed-forward
+  layer maps to the 1000-parcel Schaefer output space. The model is trained
+  with a combined Pearson-correlation + MSE loss and ensembled across multiple
+  seeds. For full details see Schad, Dixit, Keck et al. (2025),
+  arXiv:2507.17958.
+
+  These BERG-integrated models are modified from the original to use fewer
+  feature extractors for faster inference and lower memory usage.
+
+  Temporal resolution:
+  The model was trained with a TR of 1.49 s, which is also the prediction
+  resolution. The number of transcript strings passed as `stimulus` must
+  exactly match the number of TRs derived from the video (i.e.,
+  floor(video_duration / 1.49)). A mismatch will raise an error.
+
+  The best model (when ensembled) reaches 0.3193 on in-distribution and 0.2122
+  on out-of-distribution data.
+
+  Pretrained variants are available from the Hugging Face collection
+  'ShreyDixit/vibe'. You can inspect variants via `berg.get_model_variants()`
+  and load a specific variant using `model_variant=...` in get_encoding_model().
+
+metadata: |
+  NOTE: Atlas files for glass brain visualization (Schaefer 1000-parcel MNI coordinates) are provided separately in the BERG directory and are not part of the per-subject metadata files.
+  'roi_masks':
+      Cont                               : (1000,) - Binary mask for Control/Frontoparietal network parcels
+      Default                            : (1000,) - Binary mask for Default Mode network parcels
+      DorsAttn                           : (1000,) - Binary mask for Dorsal Attention network parcels
+      Limbic                             : (1000,) - Binary mask for Limbic network parcels
+      SalVentAttn                        : (1000,) - Binary mask for Salience/Ventral Attention network parcels
+      SomMot                             : (1000,) - Binary mask for Somatomotor network parcels
+      Vis                                : (1000,) - Binary mask for Visual network parcels
+
+# Input stimulus information
+input:
+  type: "list[str], str"
+  description: |
+    Two inputs are required:
+    1. `stimulus`: A list of per-TR transcripts (one string per TR, where TR = 1.49 s).
+       The length must match the number of TRs derived from the video.
+    2. `video_path`: Path to the source video used for audio/video feature extraction.
+  example: |
+    stimulus = ["Hello, are you", "awake? Yes,"]
+    video_path = "/path/to/movie.mp4"
+
+# Output information
+output:
+  type: "torch.Tensor"
+  shape: [num_timepoints, num_parcels]
+  description: "Predicted fMRI activity for each TR."
+  dimensions:
+    - name: "num_timepoints"
+      description: "Number of predicted TRs."
+    - name: "num_parcels"
+      description: "Number of parcels (up to 1000 Schaefer parcels, or selected subset)."
+
+# Model parameters and their usage
+parameters:
+  model_id:
+    description: Unique identifier of the model to load.
+    required: true
+    type: "str"
+    valid_values: "fmri-cneuromod_algo2025-vibe"
+    example: "fmri-cneuromod_algo2025-vibe"
+    function: "get_encoding_model, get_model_metadata"
+
+  subject:
+    type: int
+    required: false
+    valid_values: [1, 2, 3, 5]
+    description: |
+      Subject ID for subject-conditioned prediction.
+      Uses Algonauts-style IDs [1,2,3,5].
+      If omitted in get_encoding_model(), pass subject to encode(..., subject=...).
+    example: 1
+    function: "get_encoding_model, get_model_metadata, encode"
+
+  device:
+    type: str
+    required: false
+    default: "auto"
+    valid_values: ["cpu", "cuda", "auto"]
+    description: "The computing device to use for inference."
+    example: "auto"
+    function: "get_encoding_model"
+
+  model_variant:
+    type: str
+    required: false
+    default: null
+    description: |
+      Hugging Face repository ID of a specific pretrained VIBE variant to load.
+      If provided, its associated config is used and the `config` argument is ignored.
+      Use model.get_pretrained_variants() or berg.get_model_variants(model_id).
+    example: "ShreyDixit/VIBE-Qwen2.5-14B"
+    function: "get_encoding_model"
+
+  low_mem_use:
+    type: bool
+    required: false
+    default: false
+    description: |
+      If True, unloads heavy components between calls to reduce memory usage
+      (slower but lower VRAM footprint).
+    example: true
+    function: "get_encoding_model"
+
+  selection:
+    type: dict
+    required: false
+    description: |
+      Optional output filtering by network label and/or parcel index mask.
+      If both are provided, they are combined with OR.
+    function: "get_encoding_model"
+    properties:
+      roi:
+        type: list[str]
+        description: "Schaefer 2018 (7-network) labels to keep."
+        valid_values: ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']
+        example: ['Vis']
+      parcel_index:
+        type: numpy.ndarray
+        description: |
+          Binary one-hot encoded vector selecting parcels.
+          Must have length 1000 and contain at least one 1.
+        example: [0, 0, ..., 1, 1, 0]
+
+  model:
+    description: An instantiated and loaded encoding model.
+    required: true
+    type: BaseModelInterface
+    function: "encode"
+
+  stimulus:
+    type: "list[str]"
+    required: true
+    description: |
+      A list of transcript strings, one per TR (TR = 1.49 s).
+      The length of this list must exactly match the number of TRs
+      derived from the video duration (floor(video_duration / 1.49)).
+    example: |
+      ["Hello, are you", "awake? Yes,"]
+    function: "encode"
+
+  video_path:
+    type: str
+    required: true
+    description: Path to the video stimulus file.
+    example: "/path/to/movie.mp4"
+    function: "encode"
+
+  return_metadata:
+    description: "Whether to return model metadata together with responses."
+    required: false
+    type: bool
+    default: false
+    example: true
+    function: "encode"
+
+  show_progress:
+    description: "Whether to show a progress bar during encoding."
+    required: false
+    type: bool
+    default: true
+    example: true
+    function: "encode"
+
+# Model-specific utility methods
+methods:
+  get_model_variants:
+    description: |
+      Retrieve available pretrained variants for this model without instantiating it.
+    parameters:
+      model_id:
+        type: "str"
+        required: true
+        description: Unique identifier of the model to load.
+    example: |
+      variants = berg.get_model_variants("fmri-cneuromod_algo2025-vibe")
+
+  generate_glass_brain_animation:
+    description: |
+      Generates and saves an animated glass brain GIF from predicted responses.
+      Called directly on the loaded model instance.
+    parameters:
+      responses:
+        type: "torch.Tensor"
+        required: true
+        description: "Model predictions generated by encode()."
+      out_path:
+        type: "str"
+        required: false
+        default: "brain_activation.gif"
+        description: "Path for the generated GIF."
+    example: |
+      model.generate_glass_brain_animation(responses, out_path="activation.gif")
+
+# Performance metrics
+performance:
+  metrics:
+    - name: "Mean parcel-wise Pearson correlation"
+      value: "ID Friends S07: 0.3193; OOD (6 films): 0.2122"
+    - name: "Model variants"
+      value: "Available in Hugging Face Collection: ShreyDixit/vibe"
+
+# References
+references:
+  - "Schad, Daniel Carlström; Dixit, Shrey; Keck, Janis; Studenyak, Viktor; Shpilevoi, Aleksandr; Bicanski, Andrej. VIBE: Video-Input Brain Encoder for fMRI Response Modeling. arXiv:2507.17958 (2025)."
+  - Algonauts 2025 challenge dataset: https://github.com/courtois-neuromod/algonauts_2025.competitors
