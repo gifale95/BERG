@@ -108,7 +108,7 @@ class Text2fMRI(BaseModelInterface):
         self.subject = subject
         self.model_variant = model_variant
 
-        self.voxel_index = None
+        self.parcel_index = None
         if Text2fMRI.pretrained_configs_dict is None:
             Text2fMRI.get_pretrained_configs()
 
@@ -155,15 +155,15 @@ class Text2fMRI(BaseModelInterface):
             if "roi" in self.selection:
                 self.roi = validate_roi(self.selection["roi"], self.VALID_ROIS)
 
-            if "voxel_index" in self.selection:
-                parcel_index = self.selection["voxel_index"]
+            if "parcel_index" in self.selection:
+                parcel_index = self.selection["parcel_index"]
                 # Validate as binary array
                 validated_array = validate_binary_array(
                     parcel_index,
                     expected_length=self.N_PARCELS_MODEL,
-                    parameter_name="voxel_index"
+                    parameter_name="parcel_index"
                 )
-                self.voxel_index = validated_array.astype(bool)
+                self.parcel_index = validated_array.astype(bool)
 
         # Validate subject
         self.subject = validate_subjects(
@@ -240,13 +240,13 @@ class Text2fMRI(BaseModelInterface):
         self.model.eval()
 
     def _get_selected_parcel_indices(self):
-        if self.roi is None and self.voxel_index is None:
+        if self.roi is None and self.parcel_index is None:
             return None
         mask = np.zeros(self.N_PARCELS_MODEL, dtype=bool)
         if self.roi is not None:
             mask |= np.isin(self.roi_labels, self.roi)
-        if self.voxel_index is not None:
-            mask |= self.voxel_index
+        if self.parcel_index is not None:
+            mask |= self.parcel_index
         return np.where(mask)[0]
 
     @torch.no_grad()
@@ -260,7 +260,7 @@ class Text2fMRI(BaseModelInterface):
 
         Returns:
             torch.Tensor: Predicted brain activity. 
-                Shape: [num_timepoints, num_rois] (or subset of ROIs if selected).
+                Shape: [num_timepoints, num_parcels] (or subset of parcels if selected).
         """
         features = self.feature_extractor.extract_features(stimulus)
         if self.low_mem_use:

@@ -127,7 +127,7 @@ class VIBE(BaseModelInterface):
         self.subject = subject
         self.model_variant = model_variant
         self.subject_idx = None
-        self.voxel_index = None
+        self.parcel_index = None
 
         if VIBE.pretrained_configs_dict is None:
             VIBE.get_pretrained_configs()
@@ -179,14 +179,14 @@ class VIBE(BaseModelInterface):
                     self.selection["roi"], self.VALID_ROIS
                 )
 
-            if "voxel_index" in self.selection:
-                parcel_index = self.selection["voxel_index"]
+            if "parcel_index" in self.selection:
+                parcel_index = self.selection["parcel_index"]
                 validated_array = validate_binary_array(
                     parcel_index,
                     expected_length=self.N_PARCELS_MODEL,
-                    parameter_name="voxel_index"
+                    parameter_name="parcel_index"
                 )
-                self.voxel_index = validated_array.astype(bool)
+                self.parcel_index = validated_array.astype(bool)
 
         if self.subject is not None:
             self.subject_idx = self._normalize_subject(self.subject)
@@ -260,14 +260,14 @@ class VIBE(BaseModelInterface):
         return SUBJECT_MAPPING[validated_subject]
 
     def _get_selected_parcel_indices(self):
-        if self.roi is None and self.voxel_index is None:
+        if self.roi is None and self.parcel_index is None:
             return None
 
         mask = np.zeros(self.N_PARCELS_MODEL, dtype=bool)
         if self.roi is not None:
             mask |= np.isin(self.roi_labels, self.roi)
-        if self.voxel_index is not None:
-            mask |= self.voxel_index
+        if self.parcel_index is not None:
+            mask |= self.parcel_index
         return np.where(mask)[0]
 
     @contextmanager
@@ -293,7 +293,7 @@ class VIBE(BaseModelInterface):
 
         Returns:
             torch.Tensor: Predicted brain activity. 
-                Shape: [num_timepoints, num_rois] (or subset of ROIs if selected).
+                Shape: [num_timepoints, num_parcels] (or subset of parcels if selected).
         """
         if self.subject_idx is None:
             raise InvalidParameterError(

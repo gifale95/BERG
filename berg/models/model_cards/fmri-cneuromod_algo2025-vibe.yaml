@@ -15,7 +15,7 @@ description: |
 
   Architecture overview:
   VIBE uses a two-stage Transformer architecture. In the first stage, a
-  modality-fusion transformer performs cross-attention across modalities
+  modality-fusion transformer perfvorms cross-attention across modalities
   independently at each time point (TR). Each feature stream (text, audio,
   video) is linearly projected to a shared 256-dimensional space together with
   a learned subject embedding, and fused via a single-layer Transformer encoder.
@@ -69,13 +69,13 @@ input:
 # Output information
 output:
   type: "torch.Tensor"
-  shape: [num_timepoints, num_rois]
+  shape: [num_timepoints, num_parcels]
   description: "Predicted fMRI activity for each TR."
   dimensions:
     - name: "num_timepoints"
       description: "Number of predicted TRs."
-    - name: "num_rois"
-      description: "Number of regions (up to 1000 Schaefer parcels, or selected subset)."
+    - name: "num_parcels"
+      description: "Number of parceös (up to 1000 Schaefer parcels, or selected subset)."
 
 # Model parameters and their usage
 parameters:
@@ -141,7 +141,7 @@ parameters:
         description: "Schaefer 2018 (7-network) labels to keep."
         valid_values: ['Vis', 'SomMot', 'DorsAttn', 'SalVentAttn', 'Limbic', 'Cont', 'Default']
         example: ['Vis']
-      voxel_index:
+      parcel_index:
         type: numpy.ndarray
         description: |
           Binary one-hot encoded vector selecting parcels.
