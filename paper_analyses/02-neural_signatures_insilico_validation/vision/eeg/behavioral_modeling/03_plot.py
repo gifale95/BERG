@@ -57,11 +57,9 @@ results = np.load(results_dir, allow_pickle=True).item()
 rsa = results['rsa']
 ci_rsa = results['ci_rsa']
 ci_peak_latency_ci_rsa = results['ci_peak_latency_ci_rsa']
-sig_rsa = results['sig_rsa']
 decoding = results['decoding']
 ci_decoding = results['ci_decoding']
 ci_peak_latency_ci_decoding = results['ci_peak_latency_ci_decoding']
-sig_decoding = results['sig_decoding']
 times = results['times']
 
 

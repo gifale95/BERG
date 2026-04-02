@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-neural_control-03_neural_control
 #SBATCH --mail-type=end
-#SBATCH --mem=3500
-#SBATCH --time=00:05:00
+#SBATCH --mem=5000
+#SBATCH --time=02:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -11,9 +11,9 @@ declare -a subject_all
 declare -a roi_all
 declare -a control_all
 index=0
-for s in 'N' 'F' ; do
-    for r in 'V1' 'V4' 'IT' ; do
-        for c in 'early-drive_late-drive' 'early-suppress_late-suppress' 'early-drive_late-suppress' 'early-suppress_late-drive' ; do
+for s in 'F' ; do
+    for r in 'V4' ; do
+        for c in 'early-drive_late-suppress' 'early-suppress_late-drive' ; do
             subject_all[$index]=$s
             roi_all[$index]=$r
             control_all[$index]=$c

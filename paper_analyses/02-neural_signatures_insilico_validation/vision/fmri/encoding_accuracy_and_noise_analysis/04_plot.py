@@ -46,8 +46,8 @@ args, unknown = parser.parse_known_args()
 # =============================================================================
 # Load the results
 results_dir = os.path.join(args.berg_dir,
-    'neural_signatures_insilico_validation',
-'vision', 'fmri', 'encoding_accuracy', 'stats', 'stats.npy')
+    'neural_signatures_insilico_validation', 'vision', 'fmri',
+    'encoding_accuracy', 'stats', 'stats.npy')
 results = np.load(results_dir, allow_pickle=True).item()
 correlation_nsdcore = results['correlation_nsdcore']
 correlation_nsdsynthetic = results['correlation_nsdsynthetic']

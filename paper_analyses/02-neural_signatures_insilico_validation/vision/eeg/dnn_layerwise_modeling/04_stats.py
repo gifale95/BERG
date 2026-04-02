@@ -32,8 +32,6 @@ import numpy as np
 from tqdm import tqdm
 from scipy.stats import spearmanr
 from sklearn.utils import resample
-from scipy.stats import ttest_1samp
-from statsmodels.stats.multitest import multipletests
 
 
 # =============================================================================
@@ -139,12 +137,16 @@ elif args.dnn_model == 'resnet50':
 # Compute the peak latency for each layer
 rsa_peak_latency = {}
 for key in model_layers:
-    rsa_peak_latency[key] = times[np.argmax(np.mean(rsa[key], 0))]
+    rsa_peak_latency[key] = times[np.argmax(rsa[key], 1)]
+peak_latency_vals = np.array([rsa_peak_latency[key] for key in model_layers])
 
 # Correlate the RSA layerwise peak latency with the layer number
 layer_nums = np.arange(1, len(rsa_peak_latency)+1)
-peak_latency_vals = np.array([rsa_peak_latency[key] for key in model_layers])
-rsa_peak_latency_dnn_layer_corr = spearmanr(layer_nums, peak_latency_vals)
+rsa_peak_latency_dnn_layer_corr = []
+for s in range(len(args.subjects)):
+    rsa_peak_latency_dnn_layer_corr.append(spearmanr(layer_nums,
+        peak_latency_vals[:,s])[0])
+rsa_peak_latency_dnn_layer_corr = np.array(rsa_peak_latency_dnn_layer_corr)
 
 
 # =============================================================================
@@ -170,25 +172,11 @@ for key in model_layers:
     for i in tqdm(range(args.n_iter)):
         idx = resample(np.arange(len(args.subjects)))
         rsa_dist[i] = np.mean(rsa[key][idx], 0)
-        peak_lat_dist[i] = times[np.argmax(np.mean(rsa[key][idx], 0))]
+        peak_lat_dist[i] = np.mean(rsa_peak_latency[key][idx])
     ci_rsa[key][0] = np.percentile(rsa_dist, 2.5, axis=0)
     ci_rsa[key][1] = np.percentile(rsa_dist, 97.5, axis=0)
     ci_rsa_peak_latency[key][0] = np.percentile(peak_lat_dist, 2.5, axis=0)
     ci_rsa_peak_latency[key][1] = np.percentile(peak_lat_dist, 97.5, axis=0)
-
-
-# =============================================================================
-# Compute the significance with t-tests, and correct for multiple comparisons
-# =============================================================================
-# Pairwise decoding
-pval_decoding = ttest_1samp(decoding, 50, axis=0, alternative='greater')[1]
-sig_decoding = multipletests(pval_decoding, 0.05, 'fdr_bh')[0]
-
-# RSA
-sig_rsa = {}
-for key in model_layers:
-    pval_rsa = ttest_1samp(rsa[key], 0, axis=0, alternative='greater')[1]
-    sig_rsa[key] = multipletests(pval_rsa, 0.05, 'fdr_bh')[0]
 
 
 # =============================================================================
@@ -202,8 +190,6 @@ results = {
     'ci_decoding': ci_decoding,
     'ci_rsa': ci_rsa,
     'ci_rsa_peak_latency': ci_rsa_peak_latency,
-    'sig_decoding': sig_decoding,
-    'sig_rsa': sig_rsa,
     'times': times
 }
 

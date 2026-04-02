@@ -26,6 +26,7 @@ import os
 import numpy as np
 import matplotlib
 from matplotlib import pyplot as plt
+from scipy.stats import ttest_1samp
 
 
 # =============================================================================
@@ -187,26 +188,9 @@ for c, key in enumerate(model_layers):
     axs[0].plot(times, np.mean(rsa[key], 0), color=colors[c], linewidth=2,
         label=key)
 
-    # Plot the peak time point
-    peak = rsa_peak_latency[key]
-    max_rsa = max(np.mean(rsa[key], 0))
-    axs[0].scatter(peak, max_rsa, color=colors[c], s=200, marker='o',
-        edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
-    ci_low = peak - ci_rsa_peak_latency[key][0]
-    ci_up = ci_rsa_peak_latency[key][1] - peak
-    conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-    axs[0].errorbar(peak, max_rsa, xerr=conf_int, fmt="none", ecolor='k',
-        elinewidth=1, capsize=3)
-
     # Plot the confidence intervals
     axs[0].fill_between(times, ci_rsa[key][1], ci_rsa[key][0], color=colors[c],
         alpha=.1)
-
-    # Plot the significance time points
-    # sig = np.empty(len(times))
-    # sig[:] = np.nan
-    # sig[sig_rsa[chan]] = -.015
-    # plt.scatter(times, sig, s=100, color=colors[c])
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
@@ -234,23 +218,38 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 # =============================================================================
 # Plot the layerwise peak latency
 # =============================================================================
+# Print the subject average peak-latency correlation score and p-value
+p_val = ttest_1samp(rsa_peak_latency_dnn_layer_corr, 0,
+    alternative='greater')[1]
+print((f'RSA peak latency - DNN layer correlation (subject average): '),
+    (f'{np.mean(rsa_peak_latency_dnn_layer_corr):.3f} p = {p_val}'))
+
+
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(7.5, 7.5))
 axs = np.reshape(axs, (-1))
 
-# Plot the layerwise peak latency
+# Plot the layerwise peak latency (subject average)
 layer_nums = np.arange(1, len(rsa_peak_latency)+1)
 peak_latency_vals = np.array([rsa_peak_latency[key] for key in model_layers]) * 1000
-axs[0].plot(layer_nums, peak_latency_vals, color='k', linewidth=2)
-axs[0].scatter(layer_nums, peak_latency_vals, s=25, color='k')
+axs[0].plot(layer_nums, np.mean(peak_latency_vals, 1), color='k', linewidth=2)
+axs[0].scatter(layer_nums, np.mean(peak_latency_vals, 1), s=75, color='k')
+
+# Plot the layerwise peak latency (single subjects)
+for s in range(len(args.subjects)):
+    axs[0].plot(layer_nums, peak_latency_vals[:,s], color='k', linewidth=1,
+        alpha=.1, zorder=1)
+    for l in range(len(layer_nums)):
+        axs[0].scatter(layer_nums[l], peak_latency_vals[l,s], s=25, color='k',
+            alpha=.25, zorder=2)
 
 # Plot the confidence intervals
 conf_int = np.array([ci_rsa_peak_latency[key] for key in model_layers]) * 1000
-conf_int[:,0] = peak_latency_vals - conf_int[:,0]
-conf_int[:,1] = conf_int[:,1] - peak_latency_vals
+conf_int[:,0] = np.mean(peak_latency_vals, 1) - conf_int[:,0]
+conf_int[:,1] = conf_int[:,1] - np.mean(peak_latency_vals, 1)
 conf_int = np.transpose(conf_int)
-axs[0].errorbar(layer_nums, peak_latency_vals, yerr=conf_int, fmt="none",
-    ecolor='k', elinewidth=1, capsize=3)
+axs[0].errorbar(layer_nums, np.mean(peak_latency_vals, 1), yerr=conf_int,
+    fmt="none", ecolor='k', elinewidth=1, capsize=3)
 
 # x-axis parameters
 axs[0].set_xlabel('DNN layer', fontsize=fontsize)
@@ -261,10 +260,10 @@ axs[0].set_xlim(left=layer_nums[0]-0.75, right=layer_nums[-1]+0.75)
 
 # y-axis parameters
 axs[0].set_ylabel("Peak latency (ms)", fontsize=fontsize)
-yticks = [0, 50, 100, 150, 200, 250, 300, 350, 400]
-ylabels = [0, 50, 100, 150, 200, 250, 300, 350, 400]
+yticks = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
+ylabels = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500]
 plt.yticks(ticks=yticks, labels=ylabels)
-axs[0].set_ylim(bottom=0, top=400)
+axs[0].set_ylim(bottom=0, top=450)
 
 # Save the figure
 file_name = os.path.join(save_dir, 'layerwise_peak_latency_channels-'+

@@ -29,7 +29,7 @@ import random
 import numpy as np
 from tqdm import tqdm
 from sklearn.utils import resample
-from scipy.stats import ttest_rel
+from scipy.stats import ttest_1samp, ttest_rel
 from statsmodels.stats.multitest import multipletests
 
 
@@ -93,40 +93,54 @@ eeg_objects = np.mean(eeg_objects[:,:,kept_chan_idx], 2)
 erp_faces = np.mean(eeg_faces, 1)
 erp_objects = np.mean(eeg_objects, 1)
 
+# Compute the difference between face and object absolute ERPs
+erp_diff = erp_faces - erp_objects
+
 
 # =============================================================================
 # Bootstrap the ERP confidence intervals (CIs)
 # =============================================================================
 ci_erp_faces = np.zeros((2, erp_faces.shape[1]))
 ci_erp_objects = np.zeros((ci_erp_faces.shape))
+ci_erp_diff = np.zeros((ci_erp_faces.shape))
 
 faces_dist = np.zeros((args.n_iter, erp_faces.shape[1]))
 objects_dist = np.zeros((faces_dist.shape))
+diff_dist = np.zeros((args.n_iter, erp_diff.shape[1]))
 
 for i in tqdm(range(args.n_iter)):
     idx = resample(np.arange(len(args.subjects)))
     faces_dist[i] = np.mean(erp_faces[idx], 0)
     objects_dist[i] = np.mean(erp_objects[idx], 0)
+    diff_dist[i] = np.mean(erp_diff[idx], 0)
 
 ci_erp_faces[0] = np.percentile(faces_dist, 2.5, axis=0)
 ci_erp_faces[1] = np.percentile(faces_dist, 97.5, axis=0)
 ci_erp_objects[0] = np.percentile(objects_dist, 2.5, axis=0)
 ci_erp_objects[1] = np.percentile(objects_dist, 97.5, axis=0)
+ci_erp_diff[0] = np.percentile(diff_dist, 2.5, axis=0)
+ci_erp_diff[1] = np.percentile(diff_dist, 97.5, axis=0)
 
 
 # =============================================================================
 # Statistical significance
 # =============================================================================
-# Compute the difference between face and object absolute ERPs
-erp_diff = erp_faces - erp_objects
-
 # Compute the p-value
-pval_erp_diff = ttest_rel(erp_faces, erp_objects, axis=0,
-    alternative='less')[1]
+pval_erp_diff = ttest_1samp(erp_diff, 0, axis=0, alternative='less')[1]
 
 # Multiple comparison correction
 sig_erp_diff, pval_erp_diff_corrected, _, _ = multipletests(pval_erp_diff,
     0.05, 'fdr_bh')
+
+
+# =============================================================================
+# Compute the absolute difference between face and object ERPs
+# =============================================================================
+# Average the ERP difference across a time window around the N170 component
+# (150-200 ms)
+times = metadata[0]['eeg']['times']
+idx_time = np.where((times >= 0.15) & (times <= 0.2))[0]
+erp_diff_avg = np.mean(erp_diff[:,idx_time], 1)
 
 
 # =============================================================================
@@ -135,11 +149,14 @@ sig_erp_diff, pval_erp_diff_corrected, _, _ = multipletests(pval_erp_diff,
 results = {
     'erp_faces': erp_faces,
     'erp_objects': erp_objects,
+    'erp_diff': erp_diff,
     'ci_erp_faces': ci_erp_faces,
     'ci_erp_objects': ci_erp_objects,
+    'ci_erp_diff': ci_erp_diff,
     'pval_erp_diff': pval_erp_diff,
     'pval_erp_diff_corrected': pval_erp_diff_corrected,
     'sig_erp_diff': sig_erp_diff,
+    'erp_diff_avg': erp_diff_avg,
     'metadata': metadata
 }
 

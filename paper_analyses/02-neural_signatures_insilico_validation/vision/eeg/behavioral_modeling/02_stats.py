@@ -114,16 +114,13 @@ ci_peak_latency_ci_rsa[1] = np.percentile(peak_lat_rsa_dist, 97.5, axis=0)
 
 
 # =============================================================================
-# Compute the significance
+# RSA difference scores between late (200-400ms) and early (50-200ms) time points
 # =============================================================================
-# Compute the p-values with t-tests
-pval_decoding = ttest_1samp(decoding, 50, axis=0, alternative='greater')[1]
-pval_rsa = ttest_1samp(rsa, 0, axis=0, alternative='greater')[1]
-
-# Correct for multiple comparisons
-sig_decoding, pval_decoding_corrected, _, _ = multipletests(pval_decoding,
-    0.05, 'fdr_bh')
-sig_rsa, pval_rsa_corrected, _, _ = multipletests(pval_rsa, 0.05, 'fdr_bh')
+# Average the MSE across time points between 60ms and 600ms
+idx_early = np.where((times >= 0.06) & (times <= 0.2))[0]
+idx_late = np.where((times > 0.2) & (times <= 0.4))[0]
+diff_rsa_late_early = np.mean(rsa[:,idx_late], 1) - \
+    np.mean(rsa[:,idx_early], 1)
 
 
 # =============================================================================
@@ -136,10 +133,7 @@ results = {
     'ci_rsa': ci_rsa,
     'ci_peak_latency_ci_decoding': ci_peak_latency_ci_decoding,
     'ci_peak_latency_ci_rsa': ci_peak_latency_ci_rsa,
-    'pval_decoding': pval_decoding,
-    'pval_rsa': pval_rsa,
-    'sig_decoding': sig_decoding,
-    'sig_rsa': sig_rsa,
+    'diff_rsa_late_early': diff_rsa_late_early,
     'times': times
 }
 

@@ -150,12 +150,12 @@ for i in tqdm(range(args.n_iter)):
     # Shuffle the univariate responses across samples
     idx = np.arange(len(insilico_resp))
     np.random.shuffle(idx)
+    shuffled_resp = insilico_resp[idx]
     # Compute the differences between control and baseline images for the
     # shuffled data
-    shuffled_resp = insilico_resp[idx]
     control_minus_baseline_null_dist[i] = np.mean(
         shuffled_resp[img_control], 0) - \
-        np.mean(shuffled_resp[baseline_resp], 0)
+        np.mean(shuffled_resp[img_baseline], 0)
 
 # Compute the within-subject p-values
 p_val = np.empty((len(times)), dtype=np.float32)

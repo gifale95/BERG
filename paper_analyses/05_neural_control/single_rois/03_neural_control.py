@@ -23,6 +23,11 @@ control: str
     suppressed while the late part is driven.
 n_images: int
     Number of retained controlling or baseline images.
+margin: int
+    Response score margin used to constrain the selection of the controlling
+    images. For example, if margin=2, then only images with in silico responses
+    that are at least 2 points above (for driving) or below (for suppressing)
+    the baseline scores are retained as controlling images.
 berg_dir : str
     Directory of the BERG.
 
@@ -38,6 +43,7 @@ parser.add_argument('--subject', default='N', type=str)
 parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--control', default='early-drive_late-drive', type=str)
 parser.add_argument('--n_images', default=50, type=int)
+parser.add_argument('--margin', default=0, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -102,10 +108,6 @@ baseline_resp_full = np.mean(baseline_resp[t_min_early:t_max_late+1])
 # =============================================================================
 # Neural control
 # =============================================================================
-# Response score margin used to constrain the selection of the controlling
-# images
-margin = 2
-
 # Select the top N images that drive or suppress both early and late part of
 # the epoch
 if args.control in ['early-drive_late-drive', 'early-suppress_late-suppress']:
@@ -120,10 +122,10 @@ if args.control in ['early-drive_late-drive', 'early-suppress_late-suppress']:
         # (plus a margin)
         idx_bad_early = np.where(
             insilico_resp_early[img_control.astype(np.int32)] < \
-            baseline_resp_early+margin)[0]
+            baseline_resp_early+args.margin)[0]
         idx_bad_late = np.where(
             insilico_resp_late[img_control.astype(np.int32)] < \
-            baseline_resp_late+margin)[0]
+            baseline_resp_late+args.margin)[0]
         img_control[idx_bad_early] = np.nan
         img_control[idx_bad_late] = np.nan
 
@@ -135,10 +137,10 @@ if args.control in ['early-drive_late-drive', 'early-suppress_late-suppress']:
         # (plus a margin)
         idx_bad_early = np.where(
             insilico_resp_early[img_control.astype(np.int32)] > \
-            baseline_resp_early-margin)[0]
+            baseline_resp_early-args.margin)[0]
         idx_bad_late = np.where(
             insilico_resp_late[img_control.astype(np.int32)] > \
-            baseline_resp_late-margin)[0]
+            baseline_resp_late-args.margin)[0]
         img_control[idx_bad_early] = np.nan
         img_control[idx_bad_late] = np.nan
 
@@ -156,10 +158,10 @@ elif args.control in ['early-drive_late-suppress', 'early-suppress_late-drive']:
         # or above (for late time points) the baseline scores (plus a margin)
         idx_bad_early = np.where(
             insilico_resp_early[img_control.astype(np.int32)] < \
-            baseline_resp_early+margin)[0]
+            baseline_resp_early+args.margin)[0]
         idx_bad_late = np.where(
             insilico_resp_late[img_control.astype(np.int32)] > \
-            baseline_resp_late-margin)[0]
+            baseline_resp_late-args.margin)[0]
         img_control[idx_bad_early] = np.nan
         img_control[idx_bad_late] = np.nan
 
@@ -171,10 +173,10 @@ elif args.control in ['early-drive_late-suppress', 'early-suppress_late-drive']:
         # or below (for late time points) the baseline scores (plus a margin)
         idx_bad_early = np.where(
             insilico_resp_early[img_control.astype(np.int32)] > \
-            baseline_resp_early-margin)[0]
+            baseline_resp_early-args.margin)[0]
         idx_bad_late = np.where(
             insilico_resp_late[img_control.astype(np.int32)] < \
-            baseline_resp_late+margin)[0]
+            baseline_resp_late+args.margin)[0]
         img_control[idx_bad_early] = np.nan
         img_control[idx_bad_late] = np.nan
 

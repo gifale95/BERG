@@ -34,7 +34,7 @@ from scipy.stats import ttest_1samp
 from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-alexnet')
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -234,6 +234,25 @@ for chan in chan_groups:
 
 
 # =============================================================================
+# Compute the mean squared error between the in vivo and in silico ERPs
+# =============================================================================
+# Compute the MSE
+mse_erps = (insilico_erps - invivo_erps) ** 2
+
+# Average the MSE across occipital and parietal channels
+idx_chan = []
+for c, ch_name in enumerate(ch_names):
+    if 'O' in ch_name or 'P' in ch_name:
+        idx_chan.append(c)
+idx_chan = np.array(idx_chan)
+mse_erps = np.mean(mse_erps[:,idx_chan], 1)
+
+# Average the MSE across time points between 60ms and 600ms
+idx_time = np.where((times >= 0.06) & (times <= 0.6))[0]
+mse_erps = np.mean(mse_erps[:,idx_time], 1)
+
+
+# =============================================================================
 # Save the results
 # =============================================================================
 results = {
@@ -245,6 +264,7 @@ results = {
     'ci_invivo_erps_chan_avg': ci_invivo_erps_chan_avg,
     'corr_erps_chan_avg': corr_erps_chan_avg,
     'pval_corr_erps_chan_avg': pval_corr_erps_chan_avg,
+    'mse_erps': mse_erps,
     'metadata': metadata
     }
 

@@ -24,6 +24,7 @@ import os
 import h5py
 import numpy as np
 from tqdm import tqdm
+from PIL import Image
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b_32')
@@ -48,7 +49,7 @@ for sub in tqdm(args.subjects):
         # Save directory
         save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
             'controlling_images', args.encoding_model,
-            f'subject-{args.subject}', f'roi-{args.roi}')
+            f'subject-{sub}', f'roi-{roi}')
         os.makedirs(save_dir, exist_ok=True)
 
         for control in args.controls:
@@ -62,5 +63,5 @@ for sub in tqdm(args.subjects):
             # Save the controlling images as .png files
             for i in range(len(images)):
                 img = Image.fromarray(images[i])
-                file_name = f'{control}_img-{i+1:03}'
+                file_name = f'{control}_img-{i+1:03}.png'
                 img.save(os.path.join(save_dir, file_name))

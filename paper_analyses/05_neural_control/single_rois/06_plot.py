@@ -156,11 +156,10 @@ for s, sub in enumerate(args.subjects):
             sig[:] = np.nan
             sig[t_min_early:t_max_early+1] = sig_early
             sig[t_min_late:t_max_late+1] = sig_late
-            axs[r,c].scatter(times, sig_early, s=100, color=colors[0])
-            axs[r,c].scatter(times, sig_late, s=100, color=colors[0])
+            axs[r,c].scatter(times, sig, s=100, color=colors[0])
 
             # Title
-            title = f'Subject {sub}, {roi}, {control}'
+            title = f'Subject {sub}, {roi},\n{control}'
             axs[r,c].set_title(title, fontsize=fontsize)
 
             # x-axis parameters
@@ -181,7 +180,7 @@ for s, sub in enumerate(args.subjects):
 
             # Legend
             if r == 0 and c == 0:
-                axs[r,c].legend(ncol=1, fontsize=fontsize, loc=1,
+                axs[r,c].legend(ncol=1, fontsize=fontsize, loc=0,
                     frameon=False)
 
     # Save the figure
