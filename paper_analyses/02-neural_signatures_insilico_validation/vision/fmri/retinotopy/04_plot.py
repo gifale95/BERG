@@ -46,7 +46,6 @@ parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-hu
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=0, type=float)
-parser.add_argument('--FIELD_SIZE', type=float, default=16.8)
 parser.add_argument('--GRID_RES', type=int, default=40)
 parser.add_argument('--PROBE_SIGMA', type=float, default=0.5)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)

@@ -325,17 +325,17 @@ for t in tqdm(range(len(times))):
 # =============================================================================
 # Perform MDS on the EEG responses of each time point
 # =============================================================================
-# Empty results array of shape (Images, 2 MDS dimensions, Times)
-n_components = 2
-eeg_mds = np.zeros((len(eeg), n_components, len(times)), dtype=np.float32)
+# # Empty results array of shape (Images, 2 MDS dimensions, Times)
+# n_components = 2
+# eeg_mds = np.zeros((len(eeg), n_components, len(times)), dtype=np.float32)
 
-# Loop across time point
-for t in tqdm(range(len(times))):
+# # Loop across time point
+# for t in tqdm(range(len(times))):
 
-    # Perform MDS
-    embedding = MDS(n_components=n_components, n_init=10, max_iter=1000,
-        random_state=20200220)
-    eeg_mds[:,:,t] = embedding.fit_transform(np.mean(eeg[:,:,:,t], 1))
+#     # Perform MDS
+#     embedding = MDS(n_components=n_components, n_init=10, max_iter=1000,
+#         random_state=20200220)
+#     eeg_mds[:,:,t] = embedding.fit_transform(np.mean(eeg[:,:,:,t], 1))
 
 
 # =============================================================================
@@ -343,7 +343,7 @@ for t in tqdm(range(len(times))):
 # =============================================================================
 results = {
     'eeg': eeg,
-    'eeg_mds': eeg_mds,
+    # 'eeg_mds': eeg_mds,
     'decoding_exemplars': decoding_exemplars,
     'decoding_objects': decoding_objects,
     'decoding_animacy': decoding_animacy,

@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-retinotopy-02_estimate_retinotopy_CPU
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
-#SBATCH --time=04-00:00:00
+#SBATCH --mem=15000
+#SBATCH --time=02-00:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -13,7 +13,7 @@ declare -a GRID_RES_all
 declare -a PROBE_SIGMA_all
 declare -a BG_VALUE_all
 index=0
-for em in 'fmri-nsd_fsaverage-vit_b_32' 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
+for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-vit_b_32' 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
     for sub in `seq 1 8` ; do
         for g in '40' ; do
             for s in '0.5' ; do

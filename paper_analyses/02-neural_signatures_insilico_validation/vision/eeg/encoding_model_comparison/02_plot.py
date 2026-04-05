@@ -95,7 +95,7 @@ titles = [
 y_labels = [
     'Mean squared error',
     'Δ μV',
-    "???", # !!!
+    "Decoding accuracy (%)",
     "Spearman's $ρ$",
     "Δ Pearson's $r$",
     "Δ Pearson's $r$"
@@ -107,13 +107,13 @@ y_labels = [
 # =============================================================================
 # Print the average correlation score across all the insilico validation scores
 correlation_avg = np.mean([val[0] for val in corr.values()])
-print(f'Average correlation score for NSD-core: {correlation_avg:.4f}')
+print(f'Average correlation score: {correlation_avg:.4f}')
 
-fig, axs = plt.subplots(2, 5, sharex=True, sharey=False, figsize=(37.5, 15))
+fig, axs = plt.subplots(2, 3, sharex=True, sharey=False, figsize=(25, 15))
 axs = np.reshape(axs, -1)
 
 fig.supylabel("Neural signature in silico validation score", fontsize=fontsize,
-    x=0.075)
+    x=0.05)
 fig.supxlabel("Encoding accuracy", fontsize=fontsize)
 
 for i, (key, val) in enumerate(insilico_validation_scores.items()):
@@ -126,9 +126,17 @@ for i, (key, val) in enumerate(insilico_validation_scores.items()):
     validation = np.empty(0)
     for m in range(len(encoding_models)):
         axs[i].scatter(encoding_accuracy[m], val[m], s=200, color=colors[m],
-            label=f'{encoding_models[m][19:]}', alpha=0.75, zorder=2)
+            label=f'{encoding_models[m][17:]}', alpha=0.75, zorder=2)
         acc = np.append(acc, encoding_accuracy[m])
         validation = np.append(validation, val[m])
+
+    # Plot the subject connection lines
+    acc_array = np.array(encoding_accuracy)
+    val_array = np.array(val)
+    for s in range(len(eeg_subjects)):
+        axs[i].plot(acc_array[:,s], val_array[:,s], color='k', linewidth=1,
+            alpha=.1, zorder=1)
+
     # Print the correlation score between encoding accuracy and neural
     # signature in silico validation scores
     x = 0.35
@@ -138,6 +146,7 @@ for i, (key, val) in enumerate(insilico_validation_scores.items()):
     else:
         s = f'$r$={np.round(corr[key][0], 2):0.2f}'
     axs[i].text(x, y, s, fontsize=fontsize)
+
     # Plot the correlation line
     m, b = np.polyfit(acc, validation, 1)
     x_line = np.linspace(acc.min(), acc.max(), 100)
@@ -148,12 +157,12 @@ for i, (key, val) in enumerate(insilico_validation_scores.items()):
     axs[i].set_title(f'{titles[i]}', fontsize=fontsize)
 
     # x-axis parameters
-    if i in [5, 6, 7, 8, 9]:
+    if i in [3, 4, 5]:
         axs[i].set_xlabel("Pearson's $r$", fontsize=fontsize)
         xticks = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
         xlabels = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
         axs[i].set_xticks(ticks=xticks, labels=xlabels)
-        axs[i].set_xlim(left=0.13, right=.48)
+        axs[i].set_xlim(left=.06, right=.53)
 
     # y-axis parameters # !!!
     axs[i].set_ylabel(y_labels[i], fontsize=fontsize)
@@ -165,7 +174,7 @@ for i, (key, val) in enumerate(insilico_validation_scores.items()):
     # Legend
     if i == 0:
         axs[i].legend(ncol=3, fontsize=fontsize, loc=0, frameon=False,
-            bbox_to_anchor=(3.9, 1.3), markerscale=2)
+            bbox_to_anchor=(2.5, 1.3), markerscale=2)
 
 # Save the figure
 file_name = os.path.join(save_dir, f'scatterplots.svg')

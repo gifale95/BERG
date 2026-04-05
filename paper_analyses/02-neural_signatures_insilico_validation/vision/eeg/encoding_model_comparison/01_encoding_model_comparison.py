@@ -65,7 +65,7 @@ for m, model in enumerate(args.encoding_models):
     if m == 0:
         insilico_validation_scores['mse_erps'] = []
     results_dir = os.path.join(args.berg_dir,
-        'neural_signatures_insilico_validatio   n', 'vision', 'eeg', 'erps',
+        'neural_signatures_insilico_validation', 'vision', 'eeg', 'erps',
         'erps', model, 'erps.npy')
     results = np.load(results_dir, allow_pickle=True).item()
     insilico_validation_scores['mse_erps'].append(np.array(
@@ -81,21 +81,22 @@ for m, model in enumerate(args.encoding_models):
     insilico_validation_scores['erp_diff_avg'].append(np.array(
         results['erp_diff_avg']))
 
-   # Object categorization # !!!
+   # Object categorization
     if m == 0:
-        insilico_validation_scores['animate_selective_rois_animals'] = []
+        insilico_validation_scores['decoding_avg'] = []
     results_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'eeg',
         'object_categorization', 'stats', model, 'stats_channels-O-P.npy')
     results = np.load(results_dir, allow_pickle=True).item()
-    insilico_validation_scores['???'].append(np.array(results['???']))
+    insilico_validation_scores['decoding_avg'].append(np.array(
+        results['decoding_avg']))
 
    # DNN layerwise modeling
     if m == 0:
         insilico_validation_scores['rsa_peak_latency_dnn_layer_corr'] = []
     results_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'eeg',
-        'dnn_layerwise_modeling', 'stats', args.encoding_model,
+        'dnn_layerwise_modeling', 'stats', model,
         'stats_channels-O-P_dnn_model-alexnet.npy')
     results = np.load(results_dir, allow_pickle=True).item()
     insilico_validation_scores['rsa_peak_latency_dnn_layer_corr'].append(
@@ -129,7 +130,7 @@ corr = {}
 
 for key, val in insilico_validation_scores.items():
 
-    if key in ['mse_erps', 'erp_diff_avg']: # !!! Also include object categorization?
+    if key in ['mse_erps', 'erp_diff_avg']:
         corr[key] = pearsonr(np.array(encoding_accuracy).flatten(),
             np.array(val).flatten(), alternative='less')
     else:

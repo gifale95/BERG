@@ -40,7 +40,7 @@ from tqdm import tqdm
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subject', type=int, default=1)
-parser.add_argument('--FIELD_SIZE', type=float, default=16.8)
+parser.add_argument('--FIELD_SIZE', type=float, default=8.4)
 parser.add_argument('--GRID_RES', type=int, default=40)
 parser.add_argument('--PROBE_SIGMA', type=float, default=0.5)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)

@@ -140,6 +140,14 @@ for i, (key, val) in enumerate(insilico_validation_scores.items()):
             zorder=2)
         acc = np.append(acc, encoding_accuracy_nsdcore[m])
         validation = np.append(validation, val[m])
+
+    # Plot the subject connection lines
+    acc_array = np.array(encoding_accuracy_nsdcore)
+    val_array = np.array(val)
+    for s in range(len(fmri_subjects)):
+        axs[i].plot(acc_array[:,s], val_array[:,s], color='k', linewidth=1,
+            alpha=.1, zorder=1)
+
     # Print the correlation score between encoding accuracy and neural
     # signature in silico validation scores
     x = 0.35
@@ -149,6 +157,7 @@ for i, (key, val) in enumerate(insilico_validation_scores.items()):
     else:
         s = f'$r$={np.round(corr_nsdcore[key][0], 2):0.2f}'
     axs[i].text(x, y, s, fontsize=fontsize)
+
     # Plot the correlation line
     m, b = np.polyfit(acc, validation, 1)
     x_line = np.linspace(acc.min(), acc.max(), 100)
@@ -212,6 +221,14 @@ for i, (key, val) in enumerate(insilico_validation_scores.items()):
             zorder=2)
         acc = np.append(acc, encoding_accuracy_nsdsynthetic[m])
         validation = np.append(validation, val[m])
+
+    # Plot the subject connection lines
+    acc_array = np.array(encoding_accuracy_nsdsynthetic)
+    val_array = np.array(val)
+    for s in range(len(fmri_subjects)):
+        axs[i].plot(acc_array[:,s], val_array[:,s], color='k', linewidth=1,
+            alpha=.1, zorder=1)
+
     # Print the correlation score between encoding accuracy and neural
     # signature in silico validation scores
     x = 0.2
@@ -221,6 +238,7 @@ for i, (key, val) in enumerate(insilico_validation_scores.items()):
     else:
         s = f'$r$={np.round(corr_nsdsynthetic[key][0], 2):0.2f}'
     axs[i].text(x, y, s, fontsize=fontsize)
+
     # Plot the correlation line
     m, b = np.polyfit(acc, validation, 1)
     x_line = np.linspace(acc.min(), acc.max(), 100)

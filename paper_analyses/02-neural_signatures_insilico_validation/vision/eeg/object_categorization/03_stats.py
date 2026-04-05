@@ -62,7 +62,7 @@ np.random.seed(seed)
 decoding_exemplars = []
 decoding_objects = []
 decoding_animacy = []
-eeg_mds_single_sub = []
+# eeg_mds_single_sub = []
 
 for s, sub in enumerate(args.subjects):
 
@@ -92,7 +92,7 @@ for s, sub in enumerate(args.subjects):
     decoding_animacy.append(results['decoding_animacy'])
 
     # Get the single subject MDS results
-    eeg_mds_single_sub.append(results['eeg_mds'])
+    # eeg_mds_single_sub.append(results['eeg_mds'])
 
     # EEG metadata
     times = results['times']
@@ -102,7 +102,7 @@ for s, sub in enumerate(args.subjects):
 decoding_exemplars = np.asarray(decoding_exemplars) * 100
 decoding_objects = np.asarray(decoding_objects) * 100
 decoding_animacy = np.asarray(decoding_animacy) * 100
-eeg_mds_single_sub = np.asarray(eeg_mds_single_sub)
+# eeg_mds_single_sub = np.asarray(eeg_mds_single_sub)
 
 
 # =============================================================================
@@ -162,27 +162,40 @@ sig_animacy = multipletests(pval_animacy, 0.05, 'fdr_bh')[0]
 
 
 # =============================================================================
+# Compute the average decoding accuracy
+# =============================================================================
+# Average the different decoding accuracies with each other
+decoding_avg = np.mean(np.stack((decoding_exemplars, decoding_objects,
+    decoding_animacy), 0), 0)
+
+# Average the decoding accuracies across time points from 60ms until the end of
+# the epoch
+idx_time = np.where(times >= 0.06)[0]
+decoding_avg = np.mean(decoding_avg[:,idx_time], 1)
+
+
+# =============================================================================
 # Perform MDS on the EEG responses of each time point
 # =============================================================================
-# Empty results array of shape (Images, 2 MDS dimensions, Times)
-n_components = 2
-eeg_mds = np.zeros((len(eeg), n_components, len(times)), dtype=np.float32)
+# # Empty results array of shape (Images, 2 MDS dimensions, Times)
+# n_components = 2
+# eeg_mds = np.zeros((len(eeg), n_components, len(times)), dtype=np.float32)
 
-# Loop across time point
-for t in tqdm(range(len(times))):
+# # Loop across time point
+# for t in tqdm(range(len(times))):
 
-    # Perform MDS
-    embedding = MDS(n_components=n_components, n_init=10, max_iter=1000,
-        random_state=20200220)
-    eeg_mds[:,:,t] = embedding.fit_transform(eeg[:,:,t])
+#     # Perform MDS
+#     embedding = MDS(n_components=n_components, n_init=10, max_iter=1000,
+#         random_state=20200220)
+#     eeg_mds[:,:,t] = embedding.fit_transform(eeg[:,:,t])
 
 
 # =============================================================================
 # Save the results
 # =============================================================================
 results = {
-    'eeg_mds': eeg_mds,
-    'eeg_mds_single_sub': eeg_mds_single_sub,
+    # 'eeg_mds': eeg_mds,
+    # 'eeg_mds_single_sub': eeg_mds_single_sub,
     'decoding_exemplars': decoding_exemplars,
     'decoding_objects': decoding_objects,
     'decoding_animacy': decoding_animacy,
@@ -195,6 +208,7 @@ results = {
     'ci_peak_latency_exemplars': ci_peak_latency_exemplars,
     'ci_peak_latency_objects': ci_peak_latency_objects,
     'ci_peak_latency_animacy': ci_peak_latency_animacy,
+    'decoding_avg': decoding_avg,
     'times': times,
     'kept_ch_names': kept_ch_names
 }
