@@ -47,7 +47,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import RidgeCV
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_type', type=str, default='invivo')
+parser.add_argument('--data_type', type=str, default='insilico')
 parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b_32')
 parser.add_argument('--subject', default='N', type=str)
 parser.add_argument('--rois', default=['V1', 'IT'], type=list) # !!! ['V1', 'V4', 'IT']
@@ -276,16 +276,8 @@ for roi in tqdm(args.rois):
 
 # Use R2 adjusted
 
-# Make sure that the RSMs have high enough SNR (RSA between them)
-
-# Compute RSMs with responses averaged across half of the trials (compute each
-# RSM with correlation of the same response, as done originally), resulting in
-# only 2 RDMs, one of which I will use for training, and the other for testing.
-
-# Do not use all millisecond time points, but average the RSMs every 10ms.
-
-# Find a combination of parameters that leads to meaningful in vivo results,
-# and then see whether the same results replicate in silico.
+# Do not use all millisecond time points, but average the RSMs every 10ms
+# (this will reduce the number of predictors and thus overfitting).
 
 
 # CV: # !!!
@@ -315,10 +307,8 @@ for roi_target in args.rois:
                 gc_roi_t = []
 
                 # Loop across splits for cross-validation
-                # for s in range(len(rep_splits)): # !!!
-                #     for r in range(len(rep_splits[s])): # !!!
-                for s in range(1): # !!! DELETE
-                    for r in range(1): # !!! DELETE
+                for s in range(len(rep_splits)):
+                    for r in range(len(rep_splits[s])):
 
                         # Get the train and test RSMs of the target and source
                         # ROIs (cross-validate the regressions across RSMs
@@ -390,6 +380,124 @@ for roi_target in args.rois:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Get the time indices
+t_min = times[0] + args.time_window_ms + args.offset_ms
+idx_t_start = np.where(times == t_min)[0][0]
+
+# Loop across ROIs
+gc = {}
+for roi_target in args.rois:
+    for roi_source in args.rois:
+
+        if roi_target != roi_source:
+
+            # Empty result list
+            gc_roi = []
+
+            # Loop across time points
+            for t in tqdm(range(idx_t_start, len(times))):
+
+                gc_roi_t = []
+
+                # Loop across splits for cross-validation
+                # for s in range(len(rep_splits)): # !!!
+                #     for r in range(len(rep_splits[s])): # !!!
+                for s in range(1): # !!!
+                    for r in range(1): # !!!
+
+                        # Get the train and test RSMs of the target and source
+                        # ROIs (cross-validate the regressions across RSMs
+                        # computed on different repeats)
+                        # Train
+                        rsm_roi_target_train = roi_rsms[roi_target][s][r][:,t]
+                        rsm_roi_target_past_train = np.reshape(np.mean(roi_rsms[roi_target][s][r]\
+                            [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms], 1), (-1, 1))
+                        rsm_roi_source_past_train = np.reshape(np.mean(roi_rsms[roi_source][s][r]\
+                            [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms], 1), (-1, 1))
+                        # Test
+                        rsm_roi_target_test = \
+                            roi_rsms[roi_target][s][abs(r-1)][:,t]
+                        rsm_roi_target_past_test = \
+                            np.reshape(np.mean(roi_rsms[roi_target][s][abs(r-1)]\
+                            [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms], 1), (-1, 1))
+                        rsm_roi_source_past_test = \
+                            np.reshape(np.mean(roi_rsms[roi_source][s][abs(r-1)]\
+                            [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms], 1), (-1, 1))
+
+                        # Fit the linear regressions for the full and reduced
+                        # models
+                        if args.regression == 'linear':
+                            reg_reduced = LinearRegression()
+                            reg_full = LinearRegression()
+                        elif args.regression == 'ridge':
+                            alphas = np.logspace(-6, 10, 17)
+                            reg_reduced = RidgeCV(alphas=alphas, cv=None,
+                                alpha_per_target=True)
+                            reg_full = RidgeCV(alphas=alphas, cv=None,
+                                alpha_per_target=True)
+                        reg_reduced.fit(rsm_roi_target_past_train,
+                            np.reshape(rsm_roi_target_train, (-1, 1)))
+                        reg_full.fit(np.append(rsm_roi_target_past_train,
+                            rsm_roi_source_past_train, 1),
+                            np.reshape(rsm_roi_target_train, (-1, 1)))
+
+                        # Compute the unexplained variance for the full and
+                        # reduced models (MSE)
+                        u_reduced = np.mean((
+                            reg_reduced.predict(rsm_roi_target_past_test) -
+                            np.reshape(rsm_roi_target_test, (-1, 1))) ** 2)
+                        u_full = np.mean((reg_full.predict(np.append(
+                            rsm_roi_target_past_test,
+                            rsm_roi_source_past_test, 1)) -
+                            np.reshape(rsm_roi_target_test, (-1, 1))) ** 2)
+
+                        # Compute the GC score as the log ratio of the
+                        # unexplained variance of the reduced and full models
+                        gc_roi_t.append(np.log(u_reduced / u_full))
+
+                        # Remove unused variables
+                        del rsm_roi_target_train, rsm_roi_target_past_train, \
+                            rsm_roi_source_past_train, rsm_roi_target_test, \
+                            rsm_roi_target_past_test, \
+                            rsm_roi_source_past_test, reg_reduced, reg_full, \
+                            u_reduced, u_full
+
+                # Store the GC scores of the multiple RSM splits for the
+                # current time point
+                gc_roi.append(np.array(gc_roi_t))
+                del gc_roi_t
+
+            # Store the GC results in a dictionary
+            gc[f'{roi_source}_to_{roi_target}'] = np.transpose(np.array(
+                gc_roi))
+            del gc_roi
+
 from matplotlib import pyplot as plt
 plt.figure()
 plt.plot(times[idx_t_start:], np.mean(gc['V1_to_IT'], 0), label='V1 to IT')
@@ -401,7 +509,16 @@ plt.show()
 
 
 
+
+
+
+
+
+
 # # One RSM for each ROI and time point
+# # Get the time indices
+# t_min = times[0] + args.time_window_ms + args.offset_ms
+# idx_t_start = np.where(times == t_min)[0][0]
 # # Loop across ROIs
 # idx_tril = np.tril_indices(len(roi_resp[args.rois[0]]), k=-1)
 # gc = {}
@@ -418,10 +535,10 @@ plt.show()
 
 #                 # Get the RSMs of the target and source ROIs
 #                 rsm_roi_target = roi_rsms[roi_target][idx_tril][:,t]
-#                 rsm_roi_target_past = roi_rsms[roi_target][idx_tril]\
-#                     [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms]
-#                 rsm_roi_source_past = roi_rsms[roi_source][idx_tril]\
-#                     [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms]
+#                 rsm_roi_target_past = np.reshape(np.mean(roi_rsms[roi_target][idx_tril]\
+#                     [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms], axis=1), (-1, 1))
+#                 rsm_roi_source_past = np.reshape(np.mean(roi_rsms[roi_source][idx_tril]\
+#                     [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms], axis=1), (-1, 1))
 
 #                 # Fit the linear regressions for the full and reduced models
 #                 if args.regression == 'linear':
