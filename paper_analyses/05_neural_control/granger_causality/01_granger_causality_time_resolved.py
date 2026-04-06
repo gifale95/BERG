@@ -49,9 +49,9 @@ from sklearn.linear_model import RidgeCV
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_type', type=str, default='insilico')
 parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b_32')
-parser.add_argument('--subject', default='N', type=str)
+parser.add_argument('--subject', default='F', type=str)
 parser.add_argument('--rois', default=['V1', 'IT'], type=list) # !!! ['V1', 'V4', 'IT']
-parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # !!! [0, 0.2]
 parser.add_argument('--time_window_ms', default=10, type=int)
 parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -263,7 +263,7 @@ for roi in tqdm(args.rois):
 
             # Store the upper and lower triangle of the RSMs without the main
             # diagonal
-            rsms_split.append(np.append(rsm[idx_tril], rsm[idx_triu], 0))
+            rsms_split.append(rsm[idx_triu])
             del X, Y, X_z, Y_z, X_t, Y_t, rsm
 
         # Store the RSMs
@@ -272,19 +272,8 @@ for roi in tqdm(args.rois):
 
 
 # =============================================================================
-# Compute the Granger Causality # !!!
+# Compute the Granger Causality
 # =============================================================================
-
-# In the GC analysis, the criterion should be from different repeats than the
-# predictors, so as to reduce the effect of noise correlations!
-#   => Use RSMs from different splits for criterion and predictors. # !!!
-
-# Change time window length (1, 2, 4, 6) # !!!
-
-# Change NCSNR threshold # !!!
-
-# Check results with other monkey # !!!
-
 # Loop across ROIs
 gc = {}
 for roi_target in args.rois:
@@ -389,38 +378,6 @@ for roi_target in args.rois:
             del gc_roi
 
 
-
-
-
-
-
-
-
-from matplotlib import pyplot as plt
-
-# Create the figure
-plt.figure()
-
-# Plot the GC results
-vlim = np.max(np.abs(gc['V1_to_IT']))
-plt.imshow(gc['V1_to_IT'], cmap='RdGy_r', aspect='equal', vmin=-vlim, vmax=vlim)
-
-# X-axis parameters
-xticks = [0, 5, 10, 15, 20, 25, 30]
-xlabels = [-100, -50, 0, 50, 100, 150, 200]
-plt.xticks(ticks=xticks, labels=xlabels)
-plt.xlabel('Time source (ms)')
-
-# Y-axis parameters
-yticks = [0, 5, 10, 15, 20, 25, 30]
-ylabels = [-100, -50, 0, 50, 100, 150, 200]
-plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylabel('Time target (ms)')
-
-plt.show()
-
-
-
 # =============================================================================
 # Save the results
 # =============================================================================
@@ -439,3 +396,26 @@ file_name = (f'gc_data_type-{args.data_type}_sub-{args.subject}_'
             f'regression-{args.regression}.npy')
 
 np.save(os.path.join(save_dir, file_name), data)
+
+# from matplotlib import pyplot as plt
+
+# # Create the figure
+# plt.figure()
+
+# # Plot the GC results
+# vlim = np.max(np.abs(gc['V1_to_IT']))
+# plt.imshow(gc['V1_to_IT'], cmap='RdGy_r', aspect='equal', vmin=-vlim, vmax=vlim)
+
+# # X-axis parameters
+# xticks = [0, 5, 10, 15, 20, 25, 30]
+# xlabels = [-100, -50, 0, 50, 100, 150, 200]
+# plt.xticks(ticks=xticks, labels=xlabels)
+# plt.xlabel('Time source (ms)')
+
+# # Y-axis parameters
+# yticks = [0, 5, 10, 15, 20, 25, 30]
+# ylabels = [-100, -50, 0, 50, 100, 150, 200]
+# plt.yticks(ticks=yticks, labels=ylabels)
+# plt.ylabel('Time target (ms)')
+
+# plt.show()

@@ -52,7 +52,7 @@ parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b
 parser.add_argument('--subject', default='N', type=str)
 parser.add_argument('--rois', default=['V1', 'IT'], type=list) # !!! ['V1', 'V4', 'IT']
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--time_window_ms', default=10, type=int)
+parser.add_argument('--time_window_ms', default=5, type=int)
 parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
