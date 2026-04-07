@@ -70,7 +70,7 @@ os.makedirs(save_dir, exist_ok=True)
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
     'vision', 'fmri', 'retinotopy', 'GRID_RES-'+str(args.GRID_RES)+
     '_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+'_BG_VALUE-'+str(args.BG_VALUE),
-    'stats', 'encoding_model-'+args.encoding_model, 'stats.npy')
+    'stats', args.encoding_model, 'stats.npy')
 
 results = np.load(save_dir, allow_pickle=True).item()
 

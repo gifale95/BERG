@@ -146,14 +146,14 @@ results = {
     'eccentricity_rh': eccentricity_rh
     }
 
-# Create the saving directory
 save_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri', 'retinotopy',
     'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
-    '_BG_VALUE-'+str(args.BG_VALUE), 'retinotopic_maps',
-    'encoding_model-'+args.encoding_model+'_subject-'+str(args.subject))
+    '_BG_VALUE-'+str(args.BG_VALUE), 'retinotopic_maps', args.encoding_model,
+    '_subject-'+str(args.subject))
 os.makedirs(save_dir, exist_ok=True)
 
-# Save the results
-np.savez_compressed(os.path.join(save_dir, 'retinotopic_maps.npz'),
+file_name = f'retinotopic_maps_sub-{args.subject:02d}.npz'
+
+np.savez_compressed(os.path.join(save_dir, file_name),
     data=results)

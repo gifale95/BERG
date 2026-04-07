@@ -50,8 +50,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--data_type', type=str, default='insilico')
 parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b_32')
 parser.add_argument('--subject', default='F', type=str)
-parser.add_argument('--rois', default=['V1', 'IT'], type=list) # !!! ['V1', 'V4', 'IT']
-parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # !!! [0, 0.2]
+parser.add_argument('--rois', default=['V1', 'V4'], type=list)
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--time_window_ms', default=10, type=int)
 parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -196,7 +196,13 @@ roi_resp = {}
 for r, roi in enumerate(args.rois):
 
     # Get the channels assigned to the ROI
-    idx_roi = np.where(roi_assignments == r)[0]
+    if roi == 'V1':
+        roi_num = 0
+    elif roi == 'V4':
+        roi_num = 1
+    elif roi == 'IT':
+        roi_num = 2
+    idx_roi = np.where(roi_assignments == roi_num)[0]
 
     # Get the NCSNR scores for those channels, averaged across the time window
     # around peak activity
@@ -403,8 +409,8 @@ np.save(os.path.join(save_dir, file_name), data)
 # plt.figure()
 
 # # Plot the GC results
-# vlim = np.max(np.abs(gc['V1_to_IT']))
-# plt.imshow(gc['V1_to_IT'], cmap='RdGy_r', aspect='equal', vmin=-vlim, vmax=vlim)
+# vlim = np.max(np.abs(gc['V1_to_V4']))
+# plt.imshow(gc['V1_to_V4'], cmap='RdGy_r', aspect='equal', vmin=-vlim, vmax=vlim)
 
 # # X-axis parameters
 # xticks = [0, 5, 10, 15, 20, 25, 30]

@@ -94,8 +94,8 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
         'neural_signatures_insilico_validation', 'vision', 'fmri',
         'retinotopy', 'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+
         str(args.PROBE_SIGMA)+'_BG_VALUE-'+str(args.BG_VALUE),
-        'retinotopic_maps', 'encoding_model-'+args.encoding_model+'_subject-'+
-        str(sub), 'retinotopic_maps.npz')
+        'retinotopic_maps', args.encoding_model,
+        f'retinotopic_maps_sub-{sub:02d}.npz')
     data = np.load(data_dir, allow_pickle=True)["data"].item()
     polar_angle_lh_silico.append(data['polar_angle_lh'])
     polar_angle_rh_silico.append(data['polar_angle_rh'])
@@ -228,8 +228,7 @@ results = {
 save_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri', 'retinotopy',
     'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
-    '_BG_VALUE-'+str(args.BG_VALUE), 'stats',
-    'encoding_model-'+args.encoding_model)
+    '_BG_VALUE-'+str(args.BG_VALUE), 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 # Save the results
