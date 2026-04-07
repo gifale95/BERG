@@ -49,7 +49,7 @@ from sklearn.linear_model import RidgeCV
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_type', type=str, default='insilico')
 parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b_32')
-parser.add_argument('--subject', default='N', type=str)
+parser.add_argument('--subject', default='F', type=str)
 parser.add_argument('--rois', default=['V1', 'V4'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--time_window_ms', default=100, type=int)
@@ -110,6 +110,7 @@ if args.data_type == 'invivo':
             resp_img.append(np.mean(data[idx_pseudo], 0))
         resp.append(np.array(resp_img))
         del resp_img
+    # Shape: (Images, Repeats, Channels, Times)
     resp = np.array(resp)
 
 
@@ -153,6 +154,7 @@ elif args.data_type == 'insilico':
         )
 
     # Generate the in silico neural responses
+    # Shape: (Images, Repeats, Channels, Times)
     resp = berg.encode(model, images)
 
 
