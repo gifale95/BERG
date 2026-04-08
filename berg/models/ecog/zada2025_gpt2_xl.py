@@ -375,9 +375,10 @@ class PodcastECoGEncodingModel(BaseModelInterface):
 
         Parameters
         ----------
-        stimulus : list[str]
-            List of words for which to generate neural responses. Context is
-            built from all preceding words in the list. Word order matters.
+        stimulus : list[str] or np.ndarray of str
+            Words for which to generate neural responses. Can be a list of
+            strings or a numpy array of strings. Context is built from all
+            preceding words in the sequence. Word order matters.
         show_progress : bool, default=True
             Whether to display a progress bar during encoding.
 
@@ -389,10 +390,13 @@ class PodcastECoGEncodingModel(BaseModelInterface):
             Values are in original high-gamma power units.
         """
         # Validate stimulus
+        if isinstance(stimulus, np.ndarray):
+            stimulus = stimulus.tolist()
+
         if not isinstance(stimulus, list) or \
                 not all(isinstance(w, str) for w in stimulus):
             raise StimulusError(
-                "Stimulus must be a list of strings (words)"
+                "Stimulus must be a list of strings (words) or a numpy array of strings"
             )
 
         if len(stimulus) == 0:
