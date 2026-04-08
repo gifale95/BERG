@@ -1,0 +1,545 @@
+"""Train OPT-1.3B ridge regression encoding models on the LeBel et al. (2023)
+deep-fMRI-dataset and save the results into the BERG directory structure.
+
+This script uses contextual embeddings from OPT-1.3B (layer 18) as features
+to predict BOLD fMRI responses via voxelwise ridge regression, following the
+approach of Antonello, Vaidya & Huth (NeurIPS 2023).
+
+Pipeline steps:
+1. Model setup: Load OPT-1.3B from HuggingFace, extract layer 18 hidden states
+2. Feature extraction: For each story, extract word-level hidden states using
+   a dynamic context window (grow to 512 words, reset to 256)
+3. Temporal alignment: Lanczos-downsample word-level features to TR rate (0.5 Hz)
+4. Preprocessing: Z-score per story, then apply FIR delays (2, 4, 6, 8 s)
+5. Response loading: Load preprocessed BOLD responses from prepared data
+6. Model training: Voxelwise ridge regression with bootstrap cross-validation
+7. Evaluation: Predict held-out test story, compute voxelwise correlation
+8. Output: Ridge weights, test predictions, and updated metadata
+
+Before running this script, you must:
+1. Run prepare_ridge.py to create the training data in BERG format
+2. Clone the deep-fMRI-dataset repository (for ridge_utils):
+   $ git clone git@github.com:HuthLab/deep-fMRI-dataset.git
+3. Install transformers and torch
+
+Parameters
+----------
+deep_fmri_repo : str
+    Path to the cloned deep-fMRI-dataset repository.
+berg_dir : str
+    Directory of the Brain Encoding Response Generator (BERG).
+subjects : list of str
+    Subject identifiers. Default: UTS01, UTS02, UTS03.
+model_name : str
+    HuggingFace model ID. Default: facebook/opt-1.3b.
+layer : int
+    Layer to extract (1-indexed). Default: 18.
+trim_train : int
+    TRs to trim from start of training features. Default: 10.
+trim_test : int
+    TRs to trim from start of test features. Default: 50.
+trim_end : int
+    TRs to trim from end of all features. Default: 5.
+ndelays : int
+    Number of FIR delays (at 2 s TR). Default: 4.
+nboots : int
+    Number of bootstrap samples for ridge CV. Default: 5.
+device : str
+    Torch device. Default: auto.
+"""
+
+
+import os
+import sys
+import argparse
+import numpy as np
+import h5py
+import torch
+import logging
+from os.path import join
+from tqdm import tqdm
+
+
+# ============================================================================
+# CLI
+# ============================================================================
+parser = argparse.ArgumentParser(
+    description='Train OPT-1.3B ridge regression encoding models for fMRI.')
+
+parser.add_argument('--deep_fmri_repo', type=str, required=True,
+    help='Path to the cloned deep-fMRI-dataset repository.')
+parser.add_argument('--berg_dir', type=str, required=True,
+    help='Path to the BERG data directory.')
+parser.add_argument('--subjects', nargs='+', type=str,
+    default=['UTS01', 'UTS02', 'UTS03'],
+    help='Subject identifiers.  Default: UTS01 UTS02 UTS03.')
+parser.add_argument('--model_name', type=str, default='facebook/opt-1.3b',
+    help='HuggingFace model identifier.  Default: facebook/opt-1.3b.')
+parser.add_argument('--layer', type=int, default=18,
+    help='Layer to extract hidden states from (1-indexed).  Default: 18.')
+parser.add_argument('--context_min_words', type=int, default=256,
+    help='Context window size after reset (in words).  Default: 256.')
+parser.add_argument('--context_max_words', type=int, default=512,
+    help='Context window size before reset (in words).  Default: 512.')
+parser.add_argument('--trim_train', type=int, default=10,
+    help='TRs to trim from start of training features.  Default: 10.')
+parser.add_argument('--trim_test', type=int, default=50,
+    help='TRs to trim from start of test features.  Default: 50.')
+parser.add_argument('--trim_end', type=int, default=5,
+    help='TRs to trim from end of all features.  Default: 5.')
+parser.add_argument('--ndelays', type=int, default=4,
+    help='Number of FIR delays.  Default: 4.')
+parser.add_argument('--nboots', type=int, default=5,
+    help='Number of bootstrap CV folds.  Default: 5.')
+parser.add_argument('--chunklen', type=int, default=20,
+    help='Chunk length for bootstrap CV.  Default: 20.')
+parser.add_argument('--device', type=str, default='auto',
+    help='Torch device (cpu / cuda / auto).  Default: auto.')
+
+args = parser.parse_args()
+logging.basicConfig(level=logging.INFO)
+
+print('>>> Train OPT-1.3B encoding models <<<')
+print('\nInput arguments:')
+for key, val in vars(args).items():
+    print('{:16} {}'.format(key, val))
+
+
+# ============================================================================
+# Add deep-fMRI-dataset ridge_utils to sys.path
+# ============================================================================
+encoding_dir = join(args.deep_fmri_repo, 'encoding')
+assert os.path.isdir(encoding_dir), (
+    f'Could not find encoding directory at: {encoding_dir}. '
+    f'Make sure --deep_fmri_repo points to the deep-fMRI-dataset repo.')
+sys.path.insert(0, encoding_dir)
+
+from ridge_utils.interpdata import lanczosinterp2D    # noqa: E402
+from ridge_utils.ridge import bootstrap_ridge          # noqa: E402
+from ridge_utils.npp import zscore                     # noqa: E402
+
+try:                                                   # noqa: E402
+    from ridge_utils.utils import make_delayed
+except ImportError:
+    from ridge_utils.util import make_delayed
+
+
+# ============================================================================
+# Resolve device
+# ============================================================================
+if args.device == 'auto':
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+else:
+    device = torch.device(args.device)
+print(f'\nDevice: {device}')
+
+
+# ============================================================================
+# Data paths
+# ============================================================================
+data_dir = join(args.berg_dir, 'model_training_datasets',
+                'train_dataset-lebel2023')
+assert os.path.isdir(data_dir), (
+    f'Prepared data not found at: {data_dir}. '
+    f'Run prepare_ridge.py first.')
+
+stimuli_path = join(data_dir, 'lebel2023_stimuli.h5')
+assert os.path.exists(stimuli_path), (
+    f'Stimuli file not found: {stimuli_path}')
+
+
+# ############################################################################
+#  OPT FEATURE EXTRACTION
+# ############################################################################
+
+def tokenize_story(tokenizer, words):
+    """Tokenize a story's words and build a word-to-token mapping.
+
+    Each "real" word (non-empty and not a bare possessive) is tokenized
+    individually with a leading space (OPT / GPT-2 convention).  This avoids
+    fragile word-boundary detection heuristics while producing a token
+    sequence very close to full-text tokenization.
+
+    Parameters
+    ----------
+    tokenizer : transformers.PreTrainedTokenizer
+    words : list of str
+        Raw word list from the TextGrid (may contain empty strings).
+
+    Returns
+    -------
+    all_tokens : list of int
+        Complete token-ID sequence including the BOS token.
+    real_word_indices : list of int
+        Positions (into *words*) of the real words.
+    word_first_tok : list of int
+        First token index in *all_tokens* per real word.
+    word_last_tok : list of int
+        Last token index in *all_tokens* per real word.
+    """
+    bos_id = tokenizer.bos_token_id
+    all_tokens     = [bos_id]
+    real_word_indices = []
+    word_first_tok = []
+    word_last_tok  = []
+
+    is_first = True
+    for i, w in enumerate(words):
+        if w.strip() == '' or w == "'s":
+            continue
+        real_word_indices.append(i)
+        prefix = '' if is_first else ' '
+        toks = tokenizer.encode(prefix + w, add_special_tokens=False)
+        word_first_tok.append(len(all_tokens))
+        all_tokens.extend(toks)
+        word_last_tok.append(len(all_tokens) - 1)
+        is_first = False
+
+    return all_tokens, real_word_indices, word_first_tok, word_last_tok
+
+
+def extract_opt_features_for_story(
+    model, tokenizer, words, layer, device,
+    context_min_words=256, context_max_words=512,
+):
+    """Extract one hidden-state vector per word using dynamic context windows.
+
+    Following Antonello et al. (2023), the context grows word-by-word until
+    it reaches *context_max_words*, at which point a forward pass is executed
+    and the context resets to *context_min_words*.  For each word, the hidden
+    state at its last BPE token is used.
+
+    Non-real words (empty strings, possessives) receive a copy of the
+    most recent real word's vector.
+
+    Parameters
+    ----------
+    model : transformers.AutoModelForCausalLM
+    tokenizer : transformers.PreTrainedTokenizer
+    words : list of str
+    layer : int
+        1-indexed layer number (layer 1 = first transformer block).
+    device : torch.device
+    context_min_words, context_max_words : int
+
+    Returns
+    -------
+    features : ndarray, shape ``(len(words), hidden_dim)``, float32
+    """
+    hidden_dim = model.config.hidden_size
+    all_tokens, real_word_indices, word_first_tok, word_last_tok = \
+        tokenize_story(tokenizer, words)
+    n_real = len(real_word_indices)
+
+    if n_real == 0:
+        return np.zeros((len(words), hidden_dim), dtype=np.float32)
+
+    real_features   = np.zeros((n_real, hidden_dim), dtype=np.float32)
+    phase_start     = 0
+    next_to_assign  = 0
+
+    for rw in range(n_real):
+        words_in_ctx = rw - phase_start + 1
+        at_end       = (rw == n_real - 1)
+
+        if words_in_ctx < context_max_words and not at_end:
+            continue
+
+        # Build token context
+        if phase_start == 0:
+            ctx_tokens = all_tokens[:word_last_tok[rw] + 1]
+        else:
+            tok_start = word_first_tok[phase_start]
+            tok_end   = word_last_tok[rw] + 1
+            ctx_tokens = [all_tokens[0]] + all_tokens[tok_start:tok_end]
+
+        input_ids = torch.tensor([ctx_tokens], dtype=torch.long, device=device)
+
+        with torch.no_grad():
+            hidden = (
+                model(input_ids, output_hidden_states=True)
+                .hidden_states[layer][0]
+                .cpu().float().numpy()
+            )
+
+        for w in range(next_to_assign, rw + 1):
+            if phase_start == 0:
+                rel = word_last_tok[w]
+            else:
+                rel = word_last_tok[w] - word_first_tok[phase_start] + 1
+            real_features[w] = hidden[rel]
+
+        next_to_assign = rw + 1
+        if not at_end:
+            phase_start = max(0, rw - context_min_words + 1)
+
+    # Map back to full word list
+    features = np.zeros((len(words), hidden_dim), dtype=np.float32)
+    last_feat = np.zeros(hidden_dim, dtype=np.float32)
+    rp = 0
+    for i in range(len(words)):
+        if rp < n_real and real_word_indices[rp] == i:
+            features[i] = real_features[rp]
+            last_feat = real_features[rp]
+            rp += 1
+        else:
+            features[i] = last_feat
+
+    return features
+
+
+# ============================================================================
+# Load OPT model
+# ============================================================================
+from transformers import AutoTokenizer, AutoModelForCausalLM  # noqa: E402
+
+print(f'\nLoading model: {args.model_name} ...')
+tokenizer = AutoTokenizer.from_pretrained(args.model_name)
+model = AutoModelForCausalLM.from_pretrained(
+    args.model_name,
+    torch_dtype=torch.float16 if device.type == 'cuda' else torch.float32,
+)
+model.eval()
+model.to(device)
+
+hidden_dim = model.config.hidden_size
+n_layers   = model.config.num_hidden_layers
+print(f'  hidden_dim={hidden_dim}, n_layers={n_layers}, '
+      f'extracting layer {args.layer}')
+assert 1 <= args.layer <= n_layers, \
+    f'Layer {args.layer} out of range [1, {n_layers}].'
+
+
+# ============================================================================
+# Load stimuli and extract features for all stories
+# ============================================================================
+# Read story lists from the first subject's metadata (shared across subjects)
+first_meta_path = join(data_dir,
+    f'lebel2023_{args.subjects[0]}_metadata.npy')
+first_meta = np.load(first_meta_path, allow_pickle=True).item()
+all_train_stories = list(first_meta['encoding_model']['train_stories'])
+all_test_stories  = list(first_meta['encoding_model']['test_stories'])
+all_stories = sorted(set(all_train_stories) | set(all_test_stories))
+
+print(f'\nStories: {len(all_train_stories)} train, '
+      f'{len(all_test_stories)} test')
+
+# Extract word-level features and Lanczos-downsample per story
+print(f'\nExtracting OPT-1.3B features and downsampling to TR rate ...')
+downsampled_features = {}   # {story: (n_TRs, hidden_dim)}
+
+with h5py.File(stimuli_path, 'r') as stim_hf:
+    for story in tqdm(all_stories, desc='Feature extraction'):
+        grp = stim_hf[story]
+        words       = [w.decode() if isinstance(w, bytes) else w
+                       for w in grp['words'][:]]
+        word_onsets = grp['word_onsets'][:]
+        tr_times    = grp['tr_times'][:]
+
+        # 1) Word-level hidden states → (n_words, hidden_dim)
+        word_features = extract_opt_features_for_story(
+            model, tokenizer, words, args.layer, device,
+            context_min_words=args.context_min_words,
+            context_max_words=args.context_max_words,
+        )
+
+        # 2) Lanczos downsample → (n_TRs, hidden_dim)
+        ds_feat = lanczosinterp2D(word_features, word_onsets, tr_times,
+                                  window=3)
+        downsampled_features[story] = ds_feat.astype(np.float32)
+
+        tqdm.write(f'  {story}: {len(words)} words → {ds_feat.shape[0]} TRs')
+
+# Free GPU memory
+del model
+torch.cuda.empty_cache() if device.type == 'cuda' else None
+print('Feature extraction complete.')
+
+
+# ############################################################################
+#  RIDGE REGRESSION PER SUBJECT
+# ############################################################################
+
+delays = range(1, args.ndelays + 1)
+alphas = np.logspace(1, 4, 15)
+
+for subject in args.subjects:
+    print(f'\n{"="*60}')
+    print(f'Training encoding model for subject: {subject}')
+    print(f'{"="*60}')
+
+    # Load subject metadata
+    meta_path = join(data_dir, f'lebel2023_{subject}_metadata.npy')
+    metadata = np.load(meta_path, allow_pickle=True).item()
+    train_stories = list(metadata['encoding_model']['train_stories'])
+    test_stories  = list(metadata['encoding_model']['test_stories'])
+    n_voxels = metadata['fmri']['n_voxels']
+
+    # ----------------------------------------------------------------
+    # Build training stimulus matrix (z-score + FIR delays)
+    # ----------------------------------------------------------------
+    # Trim: remove trim_train TRs from start, trim_end from end
+    # (Antonello et al. use [10:-5] for training features)
+    print(f'  Building training stimulus matrix '
+          f'(trim_start={args.trim_train}, trim_end={args.trim_end}) ...')
+
+    Rstim_parts = []
+    for story in train_stories:
+        feat = downsampled_features[story]
+        trimmed = feat[args.trim_train:-args.trim_end]
+        Rstim_parts.append(np.nan_to_num(zscore(trimmed)))
+    Rstim = np.vstack(Rstim_parts)
+    delRstim = make_delayed(Rstim, delays)
+
+    # ----------------------------------------------------------------
+    # Build test stimulus matrix
+    # ----------------------------------------------------------------
+    # Trim: remove trim_test TRs from start, trim_end from end
+    # (Antonello et al. use [50:-5] for test features)
+    print(f'  Building test stimulus matrix '
+          f'(trim_start={args.trim_test}, trim_end={args.trim_end}) ...')
+
+    Pstim_parts = []
+    for story in test_stories:
+        feat = downsampled_features[story]
+        trimmed = feat[args.trim_test:-args.trim_end]
+        Pstim_parts.append(np.nan_to_num(zscore(trimmed)))
+    Pstim = np.vstack(Pstim_parts)
+    delPstim = make_delayed(Pstim, delays)
+
+    # ----------------------------------------------------------------
+    # Load training responses
+    # ----------------------------------------------------------------
+    # Training responses are loaded as-is (already preprocessed by
+    # LeBel et al. — demeaned, unit variance, detrended, 10 TRs
+    # trimmed from each end during their preprocessing).
+    print(f'  Loading training responses ...')
+
+    train_path = join(data_dir, f'lebel2023_{subject}_split-train.h5')
+    Rresp_parts = []
+    with h5py.File(train_path, 'r') as hf:
+        for story in train_stories:
+            Rresp_parts.append(hf[f'{story}/data'][:])
+    Rresp = np.vstack(Rresp_parts)
+
+    # ----------------------------------------------------------------
+    # Load test responses
+    # ----------------------------------------------------------------
+    # Test responses are trimmed by 40 TRs from the start to match
+    # the 50-TR feature trim (50 - 10 already removed = 40 additional).
+    print(f'  Loading test responses ...')
+
+    test_resp_trim = args.trim_test - args.trim_train  # 50 - 10 = 40
+    test_path = join(data_dir, f'lebel2023_{subject}_split-test.h5')
+    Presp_parts = []
+    with h5py.File(test_path, 'r') as hf:
+        for story in test_stories:
+            resp = hf[f'{story}/data'][:]
+            Presp_parts.append(resp[test_resp_trim:])
+    Presp = np.vstack(Presp_parts)
+
+    # Verify alignment
+    print(f'  delRstim: {delRstim.shape}  Rresp: {Rresp.shape}')
+    print(f'  delPstim: {delPstim.shape}  Presp: {Presp.shape}')
+    assert delRstim.shape[0] == Rresp.shape[0], (
+        f'Train mismatch: features {delRstim.shape[0]} vs '
+        f'responses {Rresp.shape[0]}')
+    assert delPstim.shape[0] == Presp.shape[0], (
+        f'Test mismatch: features {delPstim.shape[0]} vs '
+        f'responses {Presp.shape[0]}')
+
+    # ----------------------------------------------------------------
+    # Fit ridge regression with bootstrap cross-validation
+    # ----------------------------------------------------------------
+    # nchunks: hold out ~25% of training data per bootstrap
+    nchunks = int(Rresp.shape[0] * 0.25 / args.chunklen)
+
+    print(f'  Ridge parameters: nboots={args.nboots}, '
+          f'chunklen={args.chunklen}, nchunks={nchunks}')
+    print(f'  Alphas: {alphas[0]:.0f} to {alphas[-1]:.0f} '
+          f'({len(alphas)} values)')
+    print(f'  Fitting ridge regression ...')
+
+    wt, corrs, valphas, bscorrs, valinds = bootstrap_ridge(
+        delRstim, Rresp, delPstim, Presp, alphas,
+        args.nboots, args.chunklen, nchunks,
+        singcutoff=1e-10, single_alpha=False, use_corr=False)
+
+    print(f'  Mean test correlation: {np.mean(corrs):.4f}')
+    print(f'  Max test correlation:  {np.max(corrs):.4f}')
+    print(f'  Voxels with r > 0.1:   {np.sum(corrs > 0.1)}')
+
+    # ----------------------------------------------------------------
+    # Generate test predictions (for later evaluation / plotting)
+    # ----------------------------------------------------------------
+    pred = delPstim @ wt
+
+    # ----------------------------------------------------------------
+    # Save encoding model weights
+    # ----------------------------------------------------------------
+    save_dir = join(args.berg_dir, 'encoding_models', 'modality-fmri',
+        'train_dataset-lebel2023', 'model-opt_1_3b_ridge',
+        'encoding_models_weights')
+    os.makedirs(save_dir, exist_ok=True)
+
+    weights = {
+        'ridge_weights': wt,
+        'ridge_alphas': valphas,
+        'model_name': args.model_name,
+        'layer': args.layer,
+        'hidden_dim': hidden_dim,
+        'ndelays': args.ndelays,
+        'trim_train': args.trim_train,
+        'trim_test': args.trim_test,
+        'trim_end': args.trim_end,
+        'context_min_words': args.context_min_words,
+        'context_max_words': args.context_max_words,
+    }
+
+    weights_path = join(save_dir, f'weights_{subject}.npy')
+    np.save(weights_path, weights)
+    print(f'  Saved weights to: {weights_path}')
+
+    # ----------------------------------------------------------------
+    # Save test predictions
+    # ----------------------------------------------------------------
+    results_dir = join(args.berg_dir, 'results', 'test_encoding_models',
+        'modality-fmri', 'train_dataset-lebel2023', 'opt_1_3b_ridge')
+    os.makedirs(results_dir, exist_ok=True)
+
+    pred_path = join(results_dir, f'fmri_test_pred_{subject}.npy')
+    np.save(pred_path, pred.astype(np.float32))
+    print(f'  Saved test predictions to: {pred_path}')
+
+    # ----------------------------------------------------------------
+    # Update metadata with encoding model results
+    # ----------------------------------------------------------------
+    metadata['encoding_model']['correlation'] = corrs
+    metadata['encoding_model']['ridge_alphas'] = valphas
+    np.save(meta_path, metadata)
+    print(f'  Updated metadata with correlations: {meta_path}')
+
+
+# ============================================================================
+# Summary
+# ============================================================================
+print(f'\n{"="*60}')
+print('Done.  All encoding models trained and saved.')
+print(f'{"="*60}')
+
+
+"""
+Example usage
+=============
+
+python train_ridge.py \\
+    --deep_fmri_repo /path/to/deep-fMRI-dataset \\
+    --berg_dir /path/to/brain-encoding-response-generator \\
+    --device cuda
+
+# Quick test run with fewer bootstraps:
+python train_ridge.py \\
+    --deep_fmri_repo /path/to/deep-fMRI-dataset \\
+    --berg_dir /path/to/brain-encoding-response-generator \\
+    --device cuda --nboots 3 --subjects UTS03
+"""

@@ -1,0 +1,434 @@
+"""Prepare the LeBel et al. (2023) deep-fMRI-dataset for BERG model training:
+ - extract and consolidate BOLD fMRI responses per subject,
+ - extract stimulus data (words, word onset times, TR times) from TextGrids,
+ - split training and test stories,
+ - extract ROI masks from the pycortex database,
+ - compute noise ceiling from individual test-story repeats,
+ - save comprehensive per-subject metadata.
+
+After preparation, the data is saved as:
+ - Training responses: per-story HDF5 groups with shape (n_TRs, n_voxels)
+ - Test responses: per-story HDF5 groups with shape (n_TRs, n_voxels),
+   plus individual repeats for noise ceiling
+ - Stimuli: per-story HDF5 groups with words, word onsets, and TR times
+The data is saved in HDF5 and NumPy formats for efficient loading during
+model training.
+
+Parameters
+----------
+deep_fmri_repo : str
+    Path to the cloned deep-fMRI-dataset repository.
+berg_dir : str
+    Directory of the Brain Encoding Response Generator (BERG).
+subjects : list of str
+    Subject identifiers. Default: UTS01, UTS02, UTS03.
+
+
+Output Files Created (per subject):
+────────────────────────────────────────────────────────────────
+lebel2023_stimuli.h5                  : Shared across subjects
+    Per story group:
+        words              : (n_words,)      - Word strings
+        word_onsets        : (n_words,)      - Word onset times in seconds
+        tr_times           : (n_TRs,)        - fMRI acquisition times in seconds
+
+lebel2023_{subject}_split-train.h5    : Training BOLD responses
+    Per story group:
+        data               : (n_TRs, n_voxels) - Z-scored BOLD signal
+
+lebel2023_{subject}_split-test.h5     : Test BOLD responses
+    Per story group:
+        data               : (n_TRs, n_voxels) - Averaged BOLD signal
+        individual_repeats : (n_reps, n_TRs, n_voxels) - Per-repeat responses
+
+lebel2023_{subject}_metadata.npy      :
+
+    'fmri':
+        subject_id          : str      - Subject identifier
+        n_voxels            : int      - Number of cortical voxels
+        tr                  : float    - Repetition time in seconds (2.0)
+        voxel_size_mm       : float    - Isotropic voxel size (2.6)
+
+    'roi':
+        {roi_name}          : (n_voxels,) bool - Voxel mask per ROI
+
+    'encoding_model':
+        train_stories       : list     - Training story names
+        test_stories        : list     - Test story names
+        noise_ceiling       : (n_voxels,) - Regularized CC_max (floored at 0.3)
+        cc_half             : (n_voxels,) - Mean pairwise split-half correlation
+"""
+
+
+import os
+import sys
+import json
+import argparse
+import numpy as np
+import h5py
+from os.path import join
+from tqdm import tqdm
+
+
+# ============================================================================
+# CLI
+# ============================================================================
+parser = argparse.ArgumentParser(
+    description='Prepare LeBel et al. (2023) fMRI data for BERG training.')
+
+parser.add_argument('--deep_fmri_repo', type=str, required=True,
+    help='Path to the cloned deep-fMRI-dataset repository.')
+parser.add_argument('--berg_dir', type=str, required=True,
+    help='Path to the BERG data directory.')
+parser.add_argument('--subjects', nargs='+', type=str,
+    default=['UTS01', 'UTS02', 'UTS03'],
+    help='Subject identifiers.  Default: UTS01 UTS02 UTS03.')
+
+args = parser.parse_args()
+
+print('>>> LeBel et al. (2023) data preparation <<<')
+print('\nInput arguments:')
+for key, val in vars(args).items():
+    print('{:16} {}'.format(key, val))
+
+
+# ============================================================================
+# Add the deep-fMRI-dataset repository to sys.path
+# ============================================================================
+encoding_dir = join(args.deep_fmri_repo, 'encoding')
+assert os.path.isdir(encoding_dir), (
+    f'Could not find encoding directory at: {encoding_dir}. '
+    f'Make sure --deep_fmri_repo points to the deep-fMRI-dataset repo.')
+sys.path.insert(0, encoding_dir)
+
+# Import only the functions we need, bypassing feature_spaces.py which
+# pulls in SemanticModel → tables (PyTables) — an unnecessary dependency
+# that often has numpy binary-compatibility issues.
+from ridge_utils.stimulus_utils import load_textgrids, load_simulated_trfiles  # noqa: E402
+from ridge_utils.dsutils import make_word_ds                                   # noqa: E402
+from config import DATA_DIR, EM_DATA_DIR                                       # noqa: E402
+
+
+def get_story_wordseqs(stories):
+    """Load word DataSequences from TextGrids (reimplemented to avoid tables)."""
+    grids = load_textgrids(stories, DATA_DIR)
+    with open(join(DATA_DIR, 'ds003020', 'derivative', 'respdict.json')) as f:
+        respdict = json.load(f)
+    trfiles = load_simulated_trfiles(respdict)
+    return make_word_ds(grids, trfiles)
+
+
+# ============================================================================
+# Output directory
+# ============================================================================
+output_dir = join(args.berg_dir, 'model_training_datasets',
+                  'train_dataset-lebel2023')
+os.makedirs(output_dir, exist_ok=True)
+
+
+# ============================================================================
+# Discover stories and resolve train/test split
+# ============================================================================
+# The deep-fMRI-dataset organises stories into sessions.  For subjects
+# UTS01-03, sessions 1-5 are the base set (27 stories) and sessions 6-15
+# are the extended set (~55 additional stories).  The test story
+# "wheretheressmoke" is repeated once per session for noise ceiling
+# estimation.  We use *all* available sessions.
+
+with open(join(EM_DATA_DIR, 'sess_to_story.json'), 'r') as f:
+    sess_to_story = json.load(f)
+
+# Collect train/test stories from all sessions
+all_sessions = sorted(sess_to_story.keys(), key=int)
+train_stories_all = []
+test_stories_all = []
+
+for sess in all_sessions:
+    stories, tstory = sess_to_story[sess][0], sess_to_story[sess][1]
+    train_stories_all.extend(stories)
+    if tstory not in test_stories_all:
+        test_stories_all.append(tstory)
+
+# Remove duplicates (a story may appear in multiple sessions' lists)
+train_stories_all = sorted(set(train_stories_all))
+
+# Verify no overlap
+assert len(set(train_stories_all) & set(test_stories_all)) == 0, \
+    'Train and test stories overlap!'
+all_stories = sorted(set(train_stories_all) | set(test_stories_all))
+
+print(f'\nStories discovered:')
+print(f'  Total unique: {len(all_stories)}')
+print(f'  Training:     {len(train_stories_all)}')
+print(f'  Test:         {len(test_stories_all)} ({test_stories_all})')
+
+
+# ============================================================================
+# Part 1 — Extract stimulus data (words, word onsets, TR times)
+# ============================================================================
+# This is shared across subjects since all subjects heard the same stories.
+
+print('\n' + '='*60)
+print('Part 1: Extracting stimulus data from TextGrids')
+print('='*60)
+
+stimuli_path = join(output_dir, 'lebel2023_stimuli.h5')
+
+if os.path.exists(stimuli_path):
+    print(f'  Stimuli file already exists: {stimuli_path}')
+    print(f'  Skipping stimulus extraction.')
+else:
+    print(f'  Loading word sequences for {len(all_stories)} stories ...')
+    wordseqs = get_story_wordseqs(all_stories)
+
+    # HDF5 variable-length string type
+    str_dt = h5py.special_dtype(vlen=str)
+
+    with h5py.File(stimuli_path, 'w') as hf:
+        for story in tqdm(all_stories, desc='  Saving stimuli'):
+            ds = wordseqs[story]
+            grp = hf.create_group(story)
+
+            # Words as variable-length strings
+            words_arr = np.array(list(ds.data), dtype=object)
+            grp.create_dataset('words', data=words_arr, dtype=str_dt)
+
+            # Word onset times (seconds)
+            grp.create_dataset('word_onsets', data=np.array(ds.data_times,
+                                                            dtype=np.float64))
+
+            # TR acquisition times (seconds)
+            grp.create_dataset('tr_times', data=np.array(ds.tr_times,
+                                                         dtype=np.float64))
+
+    print(f'  Saved stimuli to: {stimuli_path}')
+
+
+# ============================================================================
+# Part 2 — Extract BOLD responses and metadata per subject
+# ============================================================================
+
+for subject in args.subjects:
+    print(f'\n{"="*60}')
+    print(f'Part 2: Processing subject {subject}')
+    print(f'{"="*60}')
+
+    # Path to the preprocessed HDF5 files in the deep-fMRI-dataset repo
+    subject_resp_dir = join(DATA_DIR, 'ds003020', 'derivative',
+                            'preprocessed_data', subject)
+    assert os.path.isdir(subject_resp_dir), (
+        f'Preprocessed data not found for {subject} at: {subject_resp_dir}. '
+        f'Have you run load_dataset.py -download_preprocess?')
+
+    # Find which stories actually exist for this subject
+    available = {
+        f.replace('.hf5', '')
+        for f in os.listdir(subject_resp_dir) if f.endswith('.hf5')
+    }
+    train_stories_sub = sorted(s for s in train_stories_all if s in available)
+    test_stories_sub = sorted(s for s in test_stories_all if s in available)
+    missing = (set(train_stories_all) | set(test_stories_all)) - available
+    if missing:
+        print(f'  WARNING: {subject} missing {len(missing)} stories: '
+              f'{sorted(missing)[:5]}{"..." if len(missing)>5 else ""}')
+
+    print(f'  Available training stories: {len(train_stories_sub)}')
+    print(f'  Available test stories:     {len(test_stories_sub)}')
+
+    # ----------------------------------------------------------------
+    # 2a) Consolidate training responses
+    # ----------------------------------------------------------------
+    train_path = join(output_dir, f'lebel2023_{subject}_split-train.h5')
+    n_voxels = None
+
+    if os.path.exists(train_path):
+        print(f'  Training file exists, skipping: {train_path}')
+        with h5py.File(train_path, 'r') as hf:
+            first_story = list(hf.keys())[0]
+            n_voxels = hf[f'{first_story}/data'].shape[1]
+    else:
+        print(f'  Consolidating training responses ...')
+        with h5py.File(train_path, 'w') as out_hf:
+            for story in tqdm(train_stories_sub, desc='  Training'):
+                src = join(subject_resp_dir, f'{story}.hf5')
+                with h5py.File(src, 'r') as in_hf:
+                    data = in_hf['data'][:]  # (n_TRs, n_voxels)
+                    if n_voxels is None:
+                        n_voxels = data.shape[1]
+                    out_hf.create_dataset(f'{story}/data',
+                                          data=data.astype(np.float32))
+        print(f'  Saved training responses ({len(train_stories_sub)} stories, '
+              f'{n_voxels} voxels) to: {train_path}')
+
+    # ----------------------------------------------------------------
+    # 2b) Consolidate test responses (averaged + individual repeats)
+    # ----------------------------------------------------------------
+    test_path = join(output_dir, f'lebel2023_{subject}_split-test.h5')
+
+    if os.path.exists(test_path):
+        print(f'  Test file exists, skipping: {test_path}')
+    else:
+        print(f'  Consolidating test responses ...')
+        with h5py.File(test_path, 'w') as out_hf:
+            for story in tqdm(test_stories_sub, desc='  Test'):
+                src = join(subject_resp_dir, f'{story}.hf5')
+                with h5py.File(src, 'r') as in_hf:
+                    # Averaged response
+                    data = in_hf['data'][:]  # (n_TRs, n_voxels)
+                    grp = out_hf.create_group(story)
+                    grp.create_dataset('data', data=data.astype(np.float32))
+
+                    # Individual repeats (if available)
+                    if 'individual_repeats' in in_hf:
+                        reps = in_hf['individual_repeats'][:]
+                        grp.create_dataset('individual_repeats',
+                                           data=reps.astype(np.float32))
+                        print(f'    {story}: {data.shape[0]} TRs, '
+                              f'{reps.shape[0]} repeats')
+                    else:
+                        print(f'    {story}: {data.shape[0]} TRs, '
+                              f'no individual repeats')
+        print(f'  Saved test responses to: {test_path}')
+
+    # ----------------------------------------------------------------
+    # 2c) Compute noise ceiling from individual repeats
+    # ----------------------------------------------------------------
+    print(f'  Computing noise ceiling ...')
+
+    noise_ceiling = np.full(n_voxels, np.nan)
+    cc_half_arr = np.full(n_voxels, np.nan)
+
+    with h5py.File(test_path, 'r') as hf:
+        for story in test_stories_sub:
+            if f'{story}/individual_repeats' not in hf:
+                print(f'    WARNING: No individual repeats for {story}')
+                continue
+
+            repeats = hf[f'{story}/individual_repeats'][:]
+            n_reps = repeats.shape[0]
+            print(f'    {story}: computing from {n_reps} repeats, '
+                  f'shape {repeats.shape}')
+
+            # CC_half: mean pairwise correlation across repeats (per voxel)
+            pair_corrs = []
+            for i in range(n_reps):
+                for j in range(i + 1, n_reps):
+                    ri = repeats[i]  # (n_TRs, n_voxels)
+                    rj = repeats[j]
+                    # Z-score each repeat across time, then correlate
+                    ri_z = (ri - ri.mean(0)) / (ri.std(0) + 1e-10)
+                    rj_z = (rj - rj.mean(0)) / (rj.std(0) + 1e-10)
+                    pair_corrs.append((ri_z * rj_z).mean(0))
+            cc_half_story = np.mean(pair_corrs, axis=0)
+
+            # Spearman-Brown correction:
+            #   CC_max = sqrt(2 / (1 + 1 / CC_half^2))
+            cc_half_safe = np.clip(np.abs(cc_half_story), 1e-10, None)
+            cc_max = np.sqrt(2.0 / (1.0 + 1.0 / (cc_half_safe ** 2)))
+
+            # Regularised noise ceiling (floor at 0.3, LeBel et al. 2023)
+            nc = np.maximum(cc_max, 0.3)
+
+            # Use first test story's ceiling (consistent with single-story
+            # evaluation used in both LeBel and Antonello papers)
+            if np.all(np.isnan(noise_ceiling)):
+                noise_ceiling = nc
+                cc_half_arr = cc_half_story
+
+    print(f'    Mean CC_half:       {np.nanmean(cc_half_arr):.4f}')
+    print(f'    Mean noise ceiling: {np.nanmean(noise_ceiling):.4f}')
+
+    # ----------------------------------------------------------------
+    # 2d) Extract ROI masks from pycortex
+    # ----------------------------------------------------------------
+    print(f'  Extracting ROI masks from pycortex ...')
+
+    db_path = join(args.deep_fmri_repo, 'data', 'ds003020', 'derivative',
+                   'pycortex-db')
+
+    roi_dict = {}
+    if os.path.isdir(db_path):
+        import nibabel as nib
+        import cortex
+        import cortex.utils as cu
+
+        new_db = cortex.database.Database(db_path)
+        cortex.db = new_db
+        cu.db = new_db
+
+        # Load brain mask (nibabel: x,y,z → pycortex: z,y,x)
+        xfm_dir = join(db_path, subject, 'transforms')
+        xfm_names = [x for x in os.listdir(xfm_dir) if not x.startswith('.')]
+        assert xfm_names, f'No transforms found for {subject}'
+        xfmname = xfm_names[0]
+
+        mask_path = join(xfm_dir, xfmname, 'mask_thick.nii.gz')
+        assert os.path.exists(mask_path), \
+            f'mask_thick.nii.gz not found: {mask_path}'
+        mask_vol = nib.load(mask_path).get_fdata()
+        mask_bool = np.transpose(mask_vol, (2, 1, 0)).astype(bool)
+        print(f'    Mask shape (transposed): {mask_bool.shape}, '
+              f'{np.count_nonzero(mask_bool)} voxels')
+
+        # Map ROIs to encoding-model voxel space
+        rois = cu.get_roi_masks(subject, xfmname)
+        for name in sorted(rois):
+            flat = rois[name][mask_bool].astype(bool)
+            n = np.count_nonzero(flat)
+            if n > 0:
+                roi_dict[name] = flat
+                print(f'      {name}: {n} voxels')
+
+        print(f'    Total ROIs with voxels: {len(roi_dict)}')
+    else:
+        print(f'    WARNING: pycortex-db not found at {db_path}. '
+              f'Skipping ROI extraction.')
+
+    # ----------------------------------------------------------------
+    # 2e) Save metadata
+    # ----------------------------------------------------------------
+    metadata = {
+        'fmri': {
+            'subject_id': subject,
+            'n_voxels': n_voxels,
+            'tr': 2.0,
+            'voxel_size_mm': 2.6,
+        },
+        'roi': roi_dict,
+        'encoding_model': {
+            'train_stories': np.array(train_stories_sub),
+            'test_stories': np.array(test_stories_sub),
+            'noise_ceiling': noise_ceiling,
+            'cc_half': cc_half_arr,
+        },
+    }
+
+    metadata_path = join(output_dir, f'lebel2023_{subject}_metadata.npy')
+    np.save(metadata_path, metadata)
+    print(f'  Saved metadata to: {metadata_path}')
+
+
+# ============================================================================
+# Summary
+# ============================================================================
+print(f'\n{"="*60}')
+print('Done.  All data prepared.')
+print(f'  Output directory: {output_dir}')
+print(f'{"="*60}')
+
+
+
+"""
+Example usage
+=============
+
+python berg_creation_code/01_prepare_data/train_dataset-eng100/prepare_rige.py \
+    --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
+    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator
+
+# For all 8 subjects (base dataset only):
+python prepare_ridge.py \\
+    --deep_fmri_repo /path/to/deep-fMRI-dataset \\
+    --berg_dir /path/to/brain-encoding-response-generator \\
+    --subjects UTS01 UTS02 UTS03 UTS04 UTS05 UTS06 UTS07 UTS08
+"""
