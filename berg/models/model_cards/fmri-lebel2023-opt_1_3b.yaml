@@ -1,11 +1,11 @@
 # Basic metadata
-model_id: fmri-lebel-eng1000
+model_id: fmri-lebel2023-opt_1_3b
 modality: fMRI
 training_dataset: LeBel et al. (2023)
 species: Human
 stimuli: Text (spoken narrative stories)
-model_type: English1000 word embeddings + ridge regression with FIR hemodynamic model
-creator: Amanda LeBel
+model_type: OPT-1.3B–based linear encoding model (LLM embeddings + ridge regression)
+creator: Domenic Bersch
 
 # General description of the model
 description: |

@@ -445,7 +445,7 @@ print(f'{"="*60}')
 Example usage
 =============
 
-python berg_creation_code/01_prepare_data/train_dataset-eng100/prepare_rige.py \
+python berg_creation_code/01_prepare_data/train_dataset-lebel2023/prepare_rige.py \
     --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
     --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator
 
