@@ -34,7 +34,9 @@ description: |
 
   **Model evaluation.** Encoding accuracy was evaluated using 2-fold cross-validation matching the
   paper's methodology: models were trained on each half of the podcast and tested on the other, and
-  the two fold correlations (Pearson's r per electrode × lag) were averaged.
+  the two fold correlations (Pearson's r per electrode × lag) were averaged. Encoding performance varies substantially 
+  across subjects due to differences in electrode placement. Subjects 01, 06, and 09 show the strongest encoding
+  (best electrodes r ≈ 0.30–0.35), while subjects 05 and 07 show near-chance performance.
 
   **Output.** Each encoding model predicts time-resolved high-gamma responses for all electrodes
   (or user-specified subsets) across 129 time lags for each input word.
@@ -47,18 +49,13 @@ metadata: |
       sfreq             : float            - Sampling frequency (32 Hz)
       tmin              : float            - Epoch start (-2.0 s)
       tmax              : float            - Epoch end (+2.0 s)
-      times             : (n_lags,)        - Time points in seconds
+      times             : (129,)           - Time points in seconds
       ch_names          : (n_electrodes,)  - Electrode names
       ch_coords         : (n_electrodes,3) - Electrode MNI coordinates
 
   'encoding_model':
-      n_words_total          : int              - Total words in transcript
-      n_epochs               : int              - Epochs that survived preprocessing
-      epoch_selection        : (n_epochs,)      - Word indices of surviving epochs
-      feature_model          : str              - 'gpt2-xl'
-      feature_layer          : int              - 24
-      feature_dim            : int              - 1600
-      correlation_results    : (n_electrodes, n_lags) - 2-fold CV encoding accuracy (Pearson's r)
+      epoch_selection        : (n_epochs,)          - Word indices of surviving epochs
+      correlation_results    : (n_electrodes, 129)  - 2-fold CV encoding accuracy (Pearson's r)
 
 # Input stimulus information
 input:
@@ -178,7 +175,7 @@ performance:
     - "brain-encoding-response-generator/encoding_models/modality-ecog/train_dataset-zada2025/model-gpt2_xl/encoding_models_accuracy"
 
 references:
-    - Model building code: 'https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-zada2025/model-gpt2_xl'
+    - Model building code: 'https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-zada2025/train_encoding.py'
     - Podcast ECoG Paper (Zada et al., 2025): https://doi.org/10.1038/s41597-025-05462-2
     - Podcast ECoG Data (Zada et al., 2025): https://openneuro.org/datasets/ds005574
     - GPT-2 (Radford et al., 2019): https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
