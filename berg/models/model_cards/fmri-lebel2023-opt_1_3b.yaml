@@ -1,86 +1,90 @@
 # Basic metadata
 model_id: fmri-lebel2023-opt_1_3b
 modality: fMRI
-training_dataset: LeBel et al. (2023)
+training_dataset: LeBel et al. (2023) — extended dataset
 species: Human
-stimuli: Text (spoken narrative stories)
-model_type: OPT-1.3B–based linear encoding model (LLM embeddings + ridge regression)
+stimuli: Text (spoken narrative stories with word onset times)
+model_type: OPT-1.3B–based linear encoding model (contextual LLM embeddings + ridge regression)
 creator: Domenic Bersch
 
 # General description of the model
 description: |
   This encoding model predicts voxelwise BOLD fMRI responses from natural language
-  input using English1000 semantic word embeddings mapped to brain activity via
-  ridge regression.
+  input using contextual embeddings from OPT-1.3B (layer 18) mapped to brain
+  activity via voxelwise ridge regression, following the scaling-laws approach of
+  Antonello, Vaidya & Huth (NeurIPS 2023).
 
-  **Neural data.** The model was trained on the LeBel et al. (2023) dataset, in which
-  8 participants passively listened to 27 complete narrative stories (~6 hours) from
-  The Moth podcast over 5 fMRI scanning sessions. Functional data were acquired at
-  3T (TR=2s, 2.6mm isotropic) and preprocessed with motion correction, cross-run
-  alignment, detrending, and z-scoring. The preprocessed data are projected onto
-  hand-corrected cortical surfaces. The number of cortical voxels varies per subject
-  (approximately 80,000–110,000).
+  **Neural data.** The model was trained on the extended LeBel et al. (2023) dataset,
+  in which 3 participants (UTS01, UTS02, UTS03) passively listened to approximately
+  95 complete narrative stories (~20 hours each) from The Moth and Modern Love
+  podcasts over 15 fMRI scanning sessions. Functional data were acquired at 3T
+  (TR=2s, 2.6mm isotropic) and preprocessed with motion correction, cross-run
+  alignment, Savitzky-Golay detrending, and z-scoring. The number of cortical
+  voxels varies per subject (approximately 80,000–96,000).
 
-  **Feature extraction.** Each word in the input is mapped to a 985-dimensional vector
-  from the English1000 word embedding space, a co-occurrence-based semantic model
-  (Huth et al., 2016, Nature). Words not found in the vocabulary are assigned a
-  zero vector.
+  **Feature extraction.** Each word in the input is processed through OPT-1.3B
+  (Zhang et al., 2022), a 1.3-billion-parameter decoder-only transformer language
+  model. The hidden state at the last BPE token of each word is extracted from
+  layer 18 (of 24 total layers), yielding a 2,048-dimensional contextual embedding
+  per word. A dynamic context window is used for computational efficiency: the
+  context grows word-by-word until 512 words, then resets to 256 words
+  (Antonello et al., 2023, Section 2.3). Unlike static embeddings (e.g.,
+  English1000), these contextual features capture word order, syntax, and
+  discourse-level meaning.
 
-  **Temporal processing.** The model was trained on continuous naturalistic speech,
-  not isolated sentences. To enable a simple "sentences in → responses out"
-  interface, the model internally simulates temporal processing as follows:
+  **Temporal processing.** The model requires word onset times as input, since the
+  temporal structure of the stimulus is essential for accurate predictions (a
+  fixed-rate approximation degrades voxelwise correlation from r≈0.99 to r≈0.33).
+  The temporal pipeline is:
 
-    1. **Word timing.** Each word is assigned an onset time assuming a fixed
-       presentation rate of 3 words per second (close to the ~3.5 words/sec
-       natural speech rate in the training data). Consecutive sentences are
-       separated by a 3-second pause.
+    1. **Lanczos downsampling.** Word-level feature vectors (2,048-dim impulses at
+       each word onset) are low-pass filtered and resampled to the fMRI acquisition
+       rate (TR=2s) using a Lanczos filter with a 3-lobe window. This converts
+       discrete word events into a continuous feature time series aligned to the
+       fMRI sampling grid.
 
-    2. **Lanczos downsampling.** The word-level feature vectors (985-dim Dirac
-       impulses at each word onset) are low-pass filtered and resampled to the
-       fMRI acquisition rate (TR=2s) using a Lanczos filter with a 3-lobe window.
-       This converts discrete word events into a continuous feature time series.
+    2. **Z-scoring.** The downsampled features are standardised (zero mean, unit
+       variance) across time for each feature dimension.
 
-    3. **Finite Impulse Response (FIR) delays.** To account for the hemodynamic
-       response delay (~6s between neural activity and BOLD signal peak), the
-       downsampled features are concatenated with copies delayed by 1, 2, 3, and
+    3. **Finite Impulse Response (FIR) delays.** To model the hemodynamic response
+       delay, the features are concatenated with copies delayed by 1, 2, 3, and
        4 TRs (2, 4, 6, and 8 seconds). This expands the feature vector from
-       985 to 3,940 dimensions at each TR.
+       2,048 to 8,192 dimensions at each TR.
 
     4. **Prediction.** The delayed feature matrix is multiplied by the pre-trained
        ridge regression weights to produce predicted BOLD responses at each TR.
-       The peak predicted response within each sentence's time window is returned
-       as the output for that sentence.
 
-  **Important approximation.** Because the model internally assigns word timings
-  using a fixed rate, the temporal fine structure of real speech (pauses,
-  emphasis, speaking rate variation) is not captured. The semantic content of
-  the words is fully preserved. This approximation is suitable for comparing
-  the predicted neural response to different sentences, but users should be
-  aware that the model was originally designed for continuous narrative speech,
-  not isolated sentences. The encoding model accuracy metrics in the metadata
-  reflect performance on continuous stories, not on isolated sentences.
+  **Training.** Approximately 95 stories were used for training (~20 hours of
+  speech per subject) with ridge regression fitted independently per voxel. The
+  ridge regularisation parameter was selected per voxel via bootstrap
+  cross-validation. Regularisation alphas were drawn from logspace(1, 4, 15).
+  Three test stories (including "Where There's Smoke" with 10 repeats) were used
+  for evaluation. Training features were trimmed by 10 TRs from the start and
+  5 TRs from the end; test features were trimmed by 50 TRs from the start
+  (to exclude long-context artifacts, Antonello et al. Section 3.5) and 5 TRs
+  from the end.
 
-  **Training.** 26 stories were used for training (~320 minutes of speech) with
-  ridge regression fitted independently per voxel. The ridge regularization
-  parameter was selected per voxel via bootstrap cross-validation (50 bootstrap
-  samples). One story ("Where There's Smoke") was repeated across all 5 sessions
-  and used as the held-out test set.
+  **Noise ceiling.** Computed using the Schoppe et al. (2016) signal/noise power
+  decomposition on 10 repeated presentations of the test story, with CCmax
+  floored at 0.25 to regularise noisy voxels (Antonello et al., Section 2.5).
 
-  **Output.** For each input sentence, the model returns a vector of predicted
-  BOLD responses across all cortical voxels (or a user-specified subset via ROI
-  selection). The responses are in z-scored units, consistent with the
-  preprocessing of the training data.
+  **Output.** The model returns a 2D array of predicted BOLD responses at each TR,
+  across all cortical voxels (or a user-specified subset via ROI selection).
+  Responses are in z-scored units consistent with the training data preprocessing.
 
 
 metadata: |
   'fmri':
       subject_id                 : str         - Subject identifier (e.g., 'UTS01')
       n_voxels                   : int         - Total number of cortical voxels (varies per subject, see below)
-      train_stories              : (26,)       - Story names used for model training
-      test_stories               : (1,)        - Story name used for model testing ('wheretheressmoke')
-  'encoding_models':
+      tr                         : float       - Repetition time in seconds (2.0)
+      voxel_size_mm              : float       - Isotropic voxel size in mm (2.6)
+  'encoding_model':
+      train_stories              : array       - Story names used for model training (~95 stories)
+      test_stories               : array       - Story names used for model testing
       correlation                : (n_voxels,) - Voxelwise prediction accuracy (Pearson's r) on test story
-      noise_ceiling              : (n_voxels,) - Voxelwise noise ceiling (regularized CCnorm, floored at 0.3)
+      cc_norm                    : (n_voxels,) - Noise-ceiling-normalised correlation (CCabs / CCmax)
+      noise_ceiling              : (n_voxels,) - Voxelwise noise ceiling CCmax (Schoppe et al., floored at 0.25)
   'roi':
       Not all ROIs are available for every subject. ROIs are derived from
       hand-drawn functional localizer data. Use get_model_metadata() to check
@@ -93,35 +97,45 @@ metadata: |
 
 # Input stimulus information
 input:
-  type: "list[str] or numpy.ndarray"
+  type: "dict"
   description: |
-    List or array of natural language sentences to encode.
+    A dictionary with two required keys:
 
-    The model was trained on naturalistic spoken English narrative stories from
-    The Moth podcast. For best results, use complete English sentences with
-    common vocabulary. Words not found in the English1000 vocabulary (~10,000
-    words) are silently ignored (assigned zero vectors).
+      ``words``   — list of str: the words of the stimulus in order.
+      ``word_onsets`` — list of float or numpy.ndarray: the onset time of each
+                        word in seconds (relative to an arbitrary t=0).
 
-    The model internally assigns word timings at a fixed rate of 3 words per
-    second. Sentences are separated by a 3-second pause. The temporal
-    processing (Lanczos downsampling + FIR delays) is handled automatically.
+    Both lists must have the same length. The word onset times are critical for
+    accurate predictions because the model's temporal pipeline (Lanczos
+    downsampling + FIR delays) depends on the precise timing of each word.
+    Using a fixed-rate approximation instead of real word onsets degrades
+    voxelwise correlation from r≈0.99 to r≈0.33.
+
+    The model was trained on naturalistic spoken English narrative stories.
+    For best results, use natural English text with realistic inter-word timing.
+
+    **Note on TR times.** The output TRs are automatically generated from the
+    word onset times using the fMRI acquisition rate (TR=2s). The first output
+    TR starts at the onset of the first word, and TRs continue at 2-second
+    intervals until the last word.
   example: |
-    ["I reached over and slowly undid my seatbelt",
-     "The audience erupted into laughter and applause"]
+    {
+        "words": ["I", "reached", "over", "and", "slowly", "undid", "my", "seatbelt"],
+        "word_onsets": [0.0, 0.3, 0.6, 0.85, 1.1, 1.5, 1.8, 2.0]
+    }
 
 # Output information
 output:
   type: "numpy.ndarray"
-  shape: "(n_sentences, n_voxels)"
+  shape: "(n_TRs, n_voxels)"
   description: |
     The output is a 2D array containing predicted z-scored BOLD fMRI responses.
-    Each row corresponds to one input sentence, each column to one cortical voxel
-    (or a subset if ROI selection is applied). The response for each sentence is
-    the peak predicted BOLD within that sentence's temporal window, accounting for
-    the hemodynamic delay.
+    Each row corresponds to one fMRI volume (TR=2s), each column to one cortical
+    voxel (or a subset if ROI selection is applied). The number of output TRs is
+    determined by the duration of the input stimulus.
   dimensions:
-    - name: "n_sentences"
-      description: "Number of input sentences."
+    - name: "n_TRs"
+      description: "Number of fMRI volumes (determined by stimulus duration and TR=2s)."
     - name: "n_voxels"
       description: "Number of selected voxels for which in silico fMRI responses are generated."
 
@@ -133,16 +147,20 @@ parameters:
     description: Unique identifier of the model to load.
     required: true
     type: "str"
-    valid_values: "fmri-lebel-eng1000"
-    example: "fmri-lebel-eng1000"
+    valid_values: "fmri-lebel2023-opt_1_3b"
+    example: "fmri-lebel2023-opt_1_3b"
     function: "get_encoding_model, get_model_metadata"
 
   subject:
-    description: "Subject ID from the LeBel et al. (2023) dataset."
+    description: |
+      Subject ID from the LeBel et al. (2023) extended dataset.
+      Only subjects UTS01, UTS02, and UTS03 are available, as only these
+      subjects have the extended dataset (~20 hours) required to train
+      encoding models with high-dimensional contextual features.
     required: true
     type: str
-    valid_values: ["UTS01", "UTS02", "UTS03", "UTS04", "UTS05", "UTS06", "UTS07", "UTS08"]
-    example: "UTS01"
+    valid_values: ["UTS01", "UTS02", "UTS03"]
+    example: "UTS03"
     function: "get_encoding_model, get_model_metadata"
 
   selection:
@@ -165,11 +183,10 @@ parameters:
           List of ROI names for which in silico fMRI responses are generated.
           ROIs are defined per subject from functional localizer data. Not all
           ROIs are available for every subject — use get_model_metadata() to
-          check availability. If a requested ROI does not exist for the selected
-          subject, an error will be raised listing the available ROIs.
-        valid_values: ['AC', 'ATFP', 'Broca', 'Brocas', 'EBA', 'FBA', 'FEF', 'FFA', 
-                      'FO', 'IFSFP', 'IPS', 'IPS ', 'ISPS', 'LO', 'M1F', 'M1H', 'M1M', 'OFA', 'OPA', 
-                      'PMvh', 'PPA', 'RSC', 'S1F', 'S1H', 'S1M', 'S2F', 'S2H', 'S2M', 'SEF', 'SMFA', 
+          check availability.
+        valid_values: ['AC', 'ATFP', 'Broca', 'Brocas', 'EBA', 'FBA', 'FEF', 'FFA',
+                      'FO', 'IFSFP', 'IPS', 'IPS ', 'ISPS', 'LO', 'M1F', 'M1H', 'M1M', 'OFA', 'OPA',
+                      'PMvh', 'PPA', 'RSC', 'S1F', 'S1H', 'S1M', 'S2F', 'S2H', 'S2M', 'SEF', 'SMFA',
                       'SMHA', 'TOS', 'V1', 'V2', 'V3', 'V3A', 'V3B', 'V4', 'V7', 'VO', 'hMT', 'pSTS', 'sPMv']
         example: ["AC", "Broca"]
       voxel_index:
@@ -182,11 +199,6 @@ parameters:
           - UTS01:  81,126 voxels
           - UTS02:  94,251 voxels
           - UTS03:  95,556 voxels
-          - UTS04: 109,469 voxels
-          - UTS05:  99,322 voxels
-          - UTS06:  92,198 voxels
-          - UTS07:  94,395 voxels
-          - UTS08:  97,023 voxels
           The voxels from the one-hot encoded vector are included in addition to
           any voxels selected via the "roi" key. If both are provided, the union
           of all selected voxels is used.
@@ -194,13 +206,15 @@ parameters:
 
   device:
     description: |
-      Device parameter included for API consistency. This model uses NumPy
-      matrix multiplication and always runs on CPU.
+      Device to run the model on. OPT-1.3B requires approximately 3 GB of VRAM
+      in float16 (GPU) or approximately 5 GB of RAM in float32 (CPU). Using
+      'auto' will select CUDA if available, otherwise CPU. GPU inference is
+      recommended for faster feature extraction.
     required: false
     type: str
     valid_values: ["cpu", "cuda", "auto"]
-    example: "cpu"
-    default: "cpu"
+    example: "auto"
+    default: "auto"
     function: "get_encoding_model"
 
   model:
@@ -211,15 +225,17 @@ parameters:
 
   stimulus:
     description: |
-      List or array of natural language sentences to encode.
-      The model was trained on naturalistic spoken English stories. Use complete
-      English sentences for best results. Words not in the English1000 vocabulary
-      are silently ignored.
+      A dictionary containing the words and their onset times:
+        - "words": list of str — the words of the stimulus in presentation order.
+        - "word_onsets": list of float — onset time of each word in seconds.
+      Both lists must have the same length.
     required: true
-    type: "list[str] or numpy.ndarray"
+    type: dict
     example: |
-      ["I reached over and slowly undid my seatbelt",
-       "The audience erupted into laughter and applause"]
+      {
+          "words": ["I", "reached", "over", "and", "slowly", "undid", "my", "seatbelt"],
+          "word_onsets": [0.0, 0.3, 0.6, 0.85, 1.1, 1.5, 1.8, 2.0]
+      }
     function: "encode"
 
   return_metadata:
@@ -242,12 +258,16 @@ parameters:
 performance:
 
   accuracy_plots:
-    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-eng1000/model-ridge/encoding_models_accuracy"
+    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-lebel2023/model-opt_1_3b_ridge/encoding_models_accuracy"
 
 references:
-    - Model building code: "https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-eng1000/model-ridge"
+    - Model building code: "https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-opt_1_3b_ridge"
+    - Scaling laws paper (Antonello et al., 2023): "https://proceedings.neurips.cc/paper_files/paper/2023/hash/4f3f7c5825ad3fdb20650cda3b1846e1-Abstract-Conference.html"
+    - Scaling laws code & data: "https://github.com/HuthLab/encoding-model-scaling-laws"
     - Dataset paper (LeBel et al., 2023): "https://doi.org/10.1038/s41597-023-02437-z"
     - Dataset (OpenNeuro): "https://openneuro.org/datasets/ds003020"
-    - Original code: "https://github.com/HuthLab/deep-fMRI-dataset"
-    - English1000 semantic space (Huth et al., 2016): "https://doi.org/10.1038/nature17637"
+    - Dataset code: "https://github.com/HuthLab/deep-fMRI-dataset"
+    - OPT language models (Zhang et al., 2022): "https://arxiv.org/abs/2205.01068"
+    - Noise ceiling method (Schoppe et al., 2016): "https://doi.org/10.3389/fncom.2016.00010"
+    - Semantic maps (Huth et al., 2016): "https://doi.org/10.1038/nature17637"
     - Semantic decoding (Tang et al., 2023): "https://doi.org/10.1038/s41593-023-01304-9"
