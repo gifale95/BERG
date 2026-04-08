@@ -38,13 +38,7 @@ zada2025_{subject}_metadata.npy :
         ch_coords         : (n_electrodes,3) - Electrode coordinates
 
     'encoding_model':
-        n_words_total     : int              - Total words in transcript
-        n_epochs          : int              - Epochs that survived
         epoch_selection   : (n_epochs,)      - Word indices of surviving epochs
-        feature_model     : str              - 'gpt2-xl'
-        feature_layer     : int              - 24
-        feature_dim       : int              - 1600
-        correlation_results    : (n_electrodes, n_lags) - (added by 01_test_encoding.py)
 """
 
 import argparse
@@ -140,7 +134,7 @@ assert word_embeddings.shape == (n_words_total, token_embeddings.shape[1])
 # =============================================================================
 # Load subject's preprocessed high-gamma ECoG
 # =============================================================================
-print(f"\nLoading high-gamma ECoG for {args.subject}...")
+print(f"Loading high-gamma ECoG for {args.subject}...")
 
 sub_id = args.subject.replace('sub-', '')
 fif_path = os.path.join(args.dataset_dir, 'derivatives', 'ecogprep',
@@ -156,10 +150,8 @@ print(f"  Duration:       {raw.times[-1]:.1f} s")
 # =============================================================================
 # Downsample the continuous raw data before epoching
 # =============================================================================
-# Resampling the raw data first (instead of after epoching) is critical for
-# memory: epoching at 512 Hz with ±2s windows produces ~20 GB for 5000+ words,
-# while epoching at 32 Hz produces ~1.2 GB.
-print(f"\nDownsampling raw to {args.sfreq_resample} Hz...")
+# Resampling the raw data first to 32 Hz
+print(f"Downsampling raw to {args.sfreq_resample} Hz...")
 raw = raw.resample(sfreq=args.sfreq_resample, npad='auto', verbose=False)
 print(f"  New sampling freq: {raw.info['sfreq']} Hz")
 
@@ -168,7 +160,7 @@ print(f"  New sampling freq: {raw.info['sfreq']} Hz")
 # Create epochs around word onsets
 # =============================================================================
 # Each event marks the onset of a word in the continuous ECoG recording.
-print(f"\nCreating epochs (tmin={args.tmin}, tmax={args.tmax})...")
+print(f"Creating epochs (tmin={args.tmin}, tmax={args.tmax})...")
 
 events = np.zeros((n_words_total, 3), dtype=int)
 events[:, 0] = (df_words.start.values * raw.info['sfreq']).astype(int)
@@ -204,12 +196,12 @@ print(f"  Shape: ({n_epochs}, {n_electrodes}, {n_lags})")
 # =============================================================================
 # Some epochs may be dropped by MNE (e.g., too close to recording boundaries).
 # epochs.selection gives indices into the sorted events array.
-# We need to map back to original word indices.
+# We need to map back to original word indices (from tutorial)
 epoch_selection_sorted = epochs.selection
 epoch_selection = sort_order[epoch_selection_sorted]
 aligned_features = word_embeddings[epoch_selection]
 
-print(f"\n  Aligned features shape: {aligned_features.shape}")
+print(f"  Aligned features shape: {aligned_features.shape}")
 assert aligned_features.shape[0] == n_epochs
 
 
@@ -224,15 +216,10 @@ ch_coords = np.array([ch['loc'][:3] for ch in raw.info['chs']])
 # Get time axis
 times = epochs.times
 
-print(f"\n  Electrode names (first 5): {list(ch_names[:5])}")
-print(f"  Coordinates shape:         {ch_coords.shape}")
-print(f"  Time points:               {len(times)} ({times[0]:.3f}s to {times[-1]:.3f}s)")
-
-
 # =============================================================================
 # Save neural data
 # =============================================================================
-print("\nSaving outputs...")
+print("Saving outputs...")
 
 neural_file = os.path.join(output_dir,
                            f'zada2025_{args.subject}_neural.h5')
@@ -268,13 +255,3 @@ metadata = {
 metadata_file = os.path.join(output_dir,
                              f'zada2025_{args.subject}_metadata.npy')
 np.save(metadata_file, metadata)
-print(f"  Metadata:     {metadata_file}")
-
-# Sanity checks
-print("\n--- Sanity Checks ---")
-print(f"  Neural data range:  [{epochs_data.min():.4f}, {epochs_data.max():.4f}]")
-print(f"  Neural data mean:   {epochs_data.mean():.4f}")
-print(f"  Feature range:      [{aligned_features.min():.4f}, {aligned_features.max():.4f}]")
-print(f"  Dropped epochs:     {n_words_total - n_epochs} / {n_words_total}")
-
-print("\nDone!")

@@ -204,5 +204,3 @@ os.makedirs(save_dir, exist_ok=True)
 file_name = f'weights_{args.subject}.npy'
 np.save(os.path.join(save_dir, file_name), weights)
 print(f"\nWeights saved to: {os.path.join(save_dir, file_name)}")
-
-print("\nDone!")

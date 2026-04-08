@@ -315,4 +315,3 @@ if HAS_NILEARN:
     print("Spatial plots saved.")
 
 plt.show()
-print("\nDone!")
