@@ -1,11 +1,9 @@
-"""Plot the OPT-1.3B encoding models' prediction accuracy by brain region,
-with noise ceiling reference.
-
-Generates two figures:
-1. Histogram of voxelwise correlations (CCabs) with noise ceiling (CCmax)
-   distribution overlaid — one panel per subject.
-2. Per-ROI bar chart showing mean encoding accuracy with noise ceiling
-   reference bars — averaged across subjects.
+"""Plot the OPT-1.3B encoding models' prediction accuracy:
+  1. Per-subject cortical flatmap of noise-ceiling-normalised encoding
+     accuracy (CCnorm = CCabs / CCmax), following Antonello et al. (2023)
+     Figure 3c.  Only voxels with CCmax > threshold are shown.
+  2. Per-subject bar chart of mean encoding accuracy per ROI, with noise
+     ceiling reference markers.
 
 Parameters
 ----------
@@ -13,6 +11,9 @@ berg_dir : str
     Directory of the Brain Encoding Response Generator (BERG).
 subjects : list of str
     Subject identifiers. Default: UTS01, UTS02, UTS03.
+ccmax_threshold : float
+    Only include voxels with CCmax above this value. Default: 0.35
+    (matching Antonello et al. Section 2.5).
 """
 
 import argparse
@@ -33,6 +34,8 @@ parser.add_argument('--berg_dir', required=True, type=str,
 parser.add_argument('--subjects', nargs='+', type=str,
     default=['UTS01', 'UTS02', 'UTS03'],
     help='Subject identifiers.  Default: UTS01 UTS02 UTS03.')
+parser.add_argument('--ccmax_threshold', type=float, default=0.35,
+    help='Only show voxels / ROIs with CCmax above this.  Default: 0.35.')
 
 args = parser.parse_args()
 
@@ -64,169 +67,171 @@ plt.rcParams['text.usetex'] = False
 metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
     'train_dataset-lebel2023', 'model-opt_1_3b_ridge', 'metadata')
 
-all_corrs = []
-all_cc_norm = []
-all_noise_ceiling = []
-all_roi_dicts = []
-
+all_metadata = {}
 for subject in args.subjects:
     meta_path = os.path.join(metadata_dir, f'metadata_{subject}.npy')
-    metadata = np.load(meta_path, allow_pickle=True).item()
-
-    all_corrs.append(metadata['encoding_model']['correlation'])
-    all_cc_norm.append(metadata['encoding_model']['cc_norm'])
-    all_noise_ceiling.append(metadata['encoding_model']['noise_ceiling'])
-    all_roi_dicts.append(metadata['roi'])
+    all_metadata[subject] = np.load(meta_path, allow_pickle=True).item()
 
 print(f'Loaded metadata for {len(args.subjects)} subjects.')
 
-
-# ============================================================================
-# Figure 1: Histogram of voxelwise correlations per subject
-# ============================================================================
-n_subjects = len(args.subjects)
-fig1, axes = plt.subplots(1, n_subjects, figsize=(5 * n_subjects, 4),
-                           squeeze=False)
-
-for s, subject in enumerate(args.subjects):
-    ax = axes[0, s]
-    corrs = all_corrs[s]
-    nc = all_noise_ceiling[s]
-
-    # Only include voxels with CCmax > 0.35 (paper convention)
-    good = nc > 0.35
-    corrs_good = corrs[good]
-    nc_good = nc[good]
-
-    bins = np.linspace(-0.4, 1.0, 60)
-
-    ax.hist(corrs_good, bins=bins, color='#3498db', alpha=0.7,
-            edgecolor='white', linewidth=0.3, label='$CC_{abs}$', density=True)
-    ax.hist(nc_good, bins=bins, color='#e74c3c', alpha=0.4,
-            edgecolor='white', linewidth=0.3, label='$CC_{max}$', density=True)
-
-    ax.axvline(np.mean(corrs_good), color='#2c3e50', linestyle='--',
-               linewidth=1.5, alpha=0.8)
-
-    ax.set_xlabel('Correlation (r)', fontsize=fontsize)
-    if s == 0:
-        ax.set_ylabel('Density', fontsize=fontsize)
-    ax.set_xlim(-0.4, 1.0)
-    ax.set_title(f'{subject}\n'
-                 f'mean r = {np.mean(corrs_good):.3f}, '
-                 f'n = {np.sum(good)} voxels',
-                 fontsize=fontsize)
-    ax.legend(fontsize=fontsize - 2, loc='upper left')
-
-fig1.suptitle('Voxelwise Encoding Performance ($CC_{max}$ > 0.35)',
-              fontsize=fontsize + 2, fontweight='bold', y=1.02)
-fig1.tight_layout()
-
-
-# ============================================================================
-# Figure 2: Per-ROI encoding accuracy (averaged across subjects)
-# ============================================================================
-# Collect all ROI names present in any subject
-all_roi_names = set()
-for rd in all_roi_dicts:
-    all_roi_names.update(rd.keys())
-
-# For each ROI, compute mean correlation and noise ceiling across subjects
-# (only considering voxels with CCmax > 0.35)
-roi_mean_r = {}
-roi_mean_nc = {}
-roi_n_voxels = {}
-
-for roi_name in sorted(all_roi_names):
-    rs = []
-    ncs = []
-    ns = []
-    for s in range(n_subjects):
-        if roi_name not in all_roi_dicts[s]:
-            continue
-        roi_mask = all_roi_dicts[s][roi_name]
-        good_mask = all_noise_ceiling[s] > 0.35
-        mask = roi_mask & good_mask
-        n = np.sum(mask)
-        if n > 0:
-            rs.append(np.mean(all_corrs[s][mask]))
-            ncs.append(np.mean(all_noise_ceiling[s][mask]))
-            ns.append(n)
-    if rs:
-        roi_mean_r[roi_name] = np.mean(rs)
-        roi_mean_nc[roi_name] = np.mean(ncs)
-        roi_n_voxels[roi_name] = int(np.mean(ns))
-
-# Sort ROIs by mean correlation (descending)
-sorted_rois = sorted(roi_mean_r.keys(), key=lambda x: roi_mean_r[x],
-                     reverse=True)
-
-# Select top ROIs (skip ROIs with very few voxels)
-min_voxels = 20
-sorted_rois = [r for r in sorted_rois if roi_n_voxels[r] >= min_voxels]
-
-# Limit to top 20 for readability
-if len(sorted_rois) > 20:
-    sorted_rois = sorted_rois[:20]
-
-# Assign colours: highlight key language regions
-highlight_rois = {'AC', 'Broca', 'Brocas', 'AG', 'PFC', 'PrCu', 'sPMv',
-                  'FFA', 'EBA', 'PPA', 'RSC', 'OPA', 'OFA'}
-
-fig2, ax = plt.subplots(figsize=(max(8, len(sorted_rois) * 0.6), 5))
-
-x = np.arange(len(sorted_rois))
-bar_width = 0.35
-
-# Noise ceiling bars (behind)
-nc_vals = [roi_mean_nc[r] for r in sorted_rois]
-ax.bar(x, nc_vals, width=bar_width * 2, color='#ecf0f1', edgecolor='#bdc3c7',
-       linewidth=1, label='Noise ceiling ($CC_{max}$)', zorder=1)
-
-# Encoding accuracy bars (in front)
-r_vals = [roi_mean_r[r] for r in sorted_rois]
-colors = ['#2980b9' if r in highlight_rois else '#7f8c8d' for r in sorted_rois]
-ax.bar(x, r_vals, width=bar_width, color=colors, edgecolor='white',
-       linewidth=0.5, label='Encoding model ($CC_{abs}$)', zorder=2)
-
-# Labels
-ax.set_xticks(x)
-labels = [f'{r}\n({roi_n_voxels[r]})' for r in sorted_rois]
-ax.set_xticklabels(labels, rotation=45, ha='right', fontsize=fontsize - 2)
-ax.set_ylabel('Correlation (r)', fontsize=fontsize)
-ax.set_ylim(0, max(nc_vals) * 1.15)
-ax.legend(fontsize=fontsize - 1, loc='upper right')
-
-title_parts = ', '.join(args.subjects)
-ax.set_title(f'Per-ROI Encoding Accuracy — OPT-1.3B Layer 18\n'
-             f'Average across {n_subjects} subjects ({title_parts})',
-             fontsize=fontsize + 1, fontweight='bold')
-
-fig2.tight_layout()
-
-
-# ============================================================================
-# Save figures
-# ============================================================================
+# Save directory
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-fmri',
-    'train_dataset-lebel2023', 'model-opt_1_3b_ridge', 'encoding_models_accuracy')
+    'train_dataset-lebel2023', 'model-opt_1_3b_ridge',
+    'encoding_models_accuracy')
 os.makedirs(save_dir, exist_ok=True)
 
-fig1_path = os.path.join(save_dir, 'encoding_accuracy_histogram.jpg')
-fig1.savefig(fig1_path, dpi=300, bbox_inches='tight', format='jpeg')
-print(f'Saved histogram to: {fig1_path}')
 
-fig2_path = os.path.join(save_dir, 'encoding_accuracy_per_roi.jpg')
-fig2.savefig(fig2_path, dpi=300, bbox_inches='tight', format='jpeg')
-print(f'Saved ROI plot to:  {fig2_path}')
+# ############################################################################
+#  FIGURE 1 (per subject): Cortical flatmap of CCnorm
+# ############################################################################
+# CCnorm = CCabs / CCmax, only for voxels with CCmax > threshold.
+# This is the standard noise-ceiling-normalised view used in
+# Antonello et al. (2023), Figure 3c.
 
-plt.show()
+try:
+    import cortex
+    has_pycortex = True
+except ImportError:
+    has_pycortex = False
+    print('\n  WARNING: pycortex not installed. Skipping cortical flatmaps.')
+
+if has_pycortex:
+    print('\nGenerating cortical flatmaps (CCnorm) ...')
+
+    for subject in args.subjects:
+        meta = all_metadata[subject]
+        corrs = meta['encoding_model']['correlation']
+        nc = meta['encoding_model']['noise_ceiling']
+
+        # CCnorm = CCabs / CCmax (only for suprathreshold voxels)
+        cc_norm = corrs / nc
+        cc_norm[nc <= args.ccmax_threshold] = np.nan
+
+        # Find pycortex transform name
+        db_path = cortex.db.filestore
+        xfm_dir = os.path.join(db_path, subject, 'transforms')
+        xfm_names = [x for x in os.listdir(xfm_dir)
+                     if not x.startswith('.')]
+        xfmname = xfm_names[0]
+
+        # Plot
+        fig = plt.figure(figsize=(14, 7))
+        vol = cortex.Volume(cc_norm, subject, xfmname,
+                            vmin=0, vmax=1.0, cmap='inferno')
+        cortex.quickshow(vol, fig=fig, with_colorbar=True,
+                         with_curvature=True, with_rois=True,
+                         linewidth=2)
+        fig.axes[0].set_title(
+            f'{subject} — Normalised Encoding Performance '
+            f'($CC_{{norm}}$, $CC_{{max}}$ > {args.ccmax_threshold})',
+            fontsize=fontsize + 1, fontweight='bold')
+
+        fig_path = os.path.join(save_dir, f'flatmap_ccnorm_{subject}.png')
+        fig.savefig(fig_path, dpi=200, bbox_inches='tight')
+        print(f'  Saved: {fig_path}')
+        plt.close(fig)
+
+
+# ############################################################################
+#  FIGURE 2 (per subject): Per-ROI encoding accuracy bar chart
+# ############################################################################
+
+print('\nGenerating per-ROI bar charts ...')
+
+min_voxels = 20
+
+for subject in args.subjects:
+    meta = all_metadata[subject]
+    corrs = meta['encoding_model']['correlation']
+    nc = meta['encoding_model']['noise_ceiling']
+    roi_dict = meta['roi']
+
+    # Compute per-ROI stats
+    roi_stats = {}
+    for roi_name in sorted(roi_dict.keys()):
+        roi_mask = roi_dict[roi_name]
+        good = nc > args.ccmax_threshold
+        mask = roi_mask & good
+        n = np.sum(mask)
+        if n >= min_voxels:
+            roi_stats[roi_name] = {
+                'r_mean': np.mean(corrs[mask]),
+                'nc_mean': np.mean(nc[mask]),
+                'n_voxels': n,
+            }
+
+    if not roi_stats:
+        print(f'  {subject}: no ROIs with enough voxels, skipping.')
+        continue
+
+    # Sort by encoding accuracy (descending)
+    sorted_rois = sorted(roi_stats.keys(),
+                         key=lambda x: roi_stats[x]['r_mean'], reverse=True)
+
+    # Plot
+    n_rois = len(sorted_rois)
+    fig, ax = plt.subplots(figsize=(max(10, n_rois * 0.55), 5))
+
+    x = np.arange(n_rois)
+    bar_width = 0.6
+
+    # Bars: encoding accuracy (CCabs)
+    r_vals = [roi_stats[r]['r_mean'] for r in sorted_rois]
+    ax.bar(x, r_vals, width=bar_width, color='#2980b9', edgecolor='white',
+           linewidth=0.5, zorder=2)
+
+    # Noise ceiling markers (CCmax)
+    nc_vals = [roi_stats[r]['nc_mean'] for r in sorted_rois]
+    ax.plot(x, nc_vals, color='#e74c3c', marker='_', markersize=14,
+            markeredgewidth=2.5, linestyle='none', zorder=4)
+
+    # Labels
+    labels = [f'{r}\n({roi_stats[r]["n_voxels"]})' for r in sorted_rois]
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=45, ha='right', rotation_mode='anchor',
+                       fontsize=fontsize - 2)
+    ax.set_ylabel('Correlation (r)', fontsize=fontsize)
+    ax.set_ylim(bottom=0, top=max(nc_vals) * 1.15)
+    ax.axhline(0, color='black', linewidth=0.5)
+
+    # Legend
+    handles = [
+        matplotlib.patches.Patch(facecolor='#2980b9',
+            label='Encoding model ($CC_{abs}$)'),
+        matplotlib.lines.Line2D([], [], color='#e74c3c', marker='_',
+            markersize=12, markeredgewidth=2.5, linestyle='none',
+            label='Noise ceiling ($CC_{max}$)'),
+    ]
+    ax.legend(handles=handles, fontsize=fontsize - 1, loc='upper right')
+
+    n_voxels = meta['fmri']['n_voxels']
+    n_good = np.sum(nc > args.ccmax_threshold)
+    ax.set_title(
+        f'{subject} — Per-ROI Encoding Accuracy (OPT-1.3B Layer 18)\n'
+        f'{n_good:,} / {n_voxels:,} voxels with '
+        f'$CC_{{max}}$ > {args.ccmax_threshold}',
+        fontsize=fontsize + 1, fontweight='bold')
+
+    fig.tight_layout()
+
+    fig_path = os.path.join(save_dir, f'encoding_accuracy_per_roi_{subject}.jpg')
+    fig.savefig(fig_path, dpi=300, bbox_inches='tight', format='jpeg')
+    print(f'  Saved: {fig_path}')
+    plt.close(fig)
+
+
+# ============================================================================
+# Summary
+# ============================================================================
+print(f'\n{"="*60}')
+print(f'All plots saved to: {save_dir}')
+print(f'{"="*60}')
 
 
 """
 Example usage
 =============
 
-python 02_plot.py \\
-    --berg_dir /path/to/brain-encoding-response-generator
+python berg_creation_code/03_test_encoding_models/train_dataset-lebel2023/02_plot.py \
+    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator \
 """

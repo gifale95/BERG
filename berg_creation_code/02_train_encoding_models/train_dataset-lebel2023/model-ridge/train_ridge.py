@@ -532,14 +532,17 @@ print(f'{"="*60}')
 Example usage
 =============
 
-python train_ridge.py \\
-    --deep_fmri_repo /path/to/deep-fMRI-dataset \\
-    --berg_dir /path/to/brain-encoding-response-generator \\
-    --device cuda
+python berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-ridge/train_ridge.py \
+    --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
+    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator \
+    --device cpu
+    --model_name facebook/opt-6.7b
+    --layer 27
+    
 
 # Quick test run with fewer bootstraps:
-python train_ridge.py \\
-    --deep_fmri_repo /path/to/deep-fMRI-dataset \\
-    --berg_dir /path/to/brain-encoding-response-generator \\
+python berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-ridge/train_ridge.py \
+    --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
+    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator
     --device cuda --nboots 3 --subjects UTS03
 """

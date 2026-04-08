@@ -181,6 +181,6 @@ print(f'{"="*60}')
 Example usage
 =============
 
-python 01_test_encoding.py \\
-    --berg_dir /path/to/brain-encoding-response-generator
+python berg_creation_code/03_test_encoding_models/train_dataset-lebel2023/01_test_encoding.py \
+    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator
 """
