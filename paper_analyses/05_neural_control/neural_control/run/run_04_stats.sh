@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-neural_control-03_neural_control
+#SBATCH --job-name=berg-neural_control-04_stats
 #SBATCH --mail-type=end
-#SBATCH --mem=5000
-#SBATCH --time=02:00:00
+#SBATCH --mem=7000
+#SBATCH --time=30:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -11,9 +11,9 @@ declare -a subject_all
 declare -a roi_all
 declare -a control_all
 index=0
-for s in 'F' ; do
-    for r in 'V4' ; do
-        for c in 'early-drive_late-suppress' 'early-suppress_late-drive' ; do
+for s in 'N' 'F' ; do
+    for r in 'V1' 'V4' 'IT' ; do
+        for c in 'early-drive_late-drive' 'early-suppress_late-suppress' 'early-drive_late-suppress' 'early-suppress_late-drive' ; do
             subject_all[$index]=$s
             roi_all[$index]=$r
             control_all[$index]=$c
@@ -36,7 +36,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/05_neural_control/single_rois/
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/05_neural_control/neural_control/
 
 # Run the job
-python 03_neural_control.py --subject $subject --roi $roi --control $control
+python 04_stats.py --subject $subject --roi $roi --control $control

@@ -63,8 +63,8 @@ np.random.seed(seed)
 # =============================================================================
 # Load the in silico neural responses for the ~1.3M ILSVRC-2012 train images
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'neural_control', 'insilico_responses',
-args.encoding_model)
+data_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
+    'insilico_responses', args.encoding_model)
 file_name = f'insilico_responses_sub-{args.subject}_roi-{args.roi}.npy'
 
 data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
@@ -90,7 +90,7 @@ insilico_resp_full = np.mean(insilico_resp[:,t_min_early:t_max_late+1], 1)
 # =============================================================================
 # Load the controlling images of the other subject
 other_subject = 'F' if args.subject == 'N' else 'N'
-data_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois', 
+data_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
     'quantitative_results', args.encoding_model,
     f'sub-{other_subject}_roi-{args.roi}_{args.control}.npy')
 img_control = np.load(data_dir)
@@ -107,7 +107,7 @@ control_resp = insilico_resp[img_control]
 # =============================================================================
 # Get the baseline results
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+data_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
     'quantitative_results', args.encoding_model,
     f'sub-{args.subject}_roi-{args.roi}_baseline.npy')
 baseline_results = np.load(data_dir, allow_pickle=True).item()
@@ -217,7 +217,7 @@ results = {
     'p_val_bh': p_val_bh
 }
 
-save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+save_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
     'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 

@@ -47,8 +47,8 @@ for sub in tqdm(args.subjects):
     for roi in args.rois:
 
         # Save directory
-        save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
-            'controlling_images', args.encoding_model,
+        save_dir = os.path.join(args.berg_dir, 'neural_control'
+            'neural_control', 'controlling_images', args.encoding_model,
             f'subject-{sub}', f'roi-{roi}')
         os.makedirs(save_dir, exist_ok=True)
 
@@ -56,7 +56,7 @@ for sub in tqdm(args.subjects):
 
             # Load the controlling image h5py file
             data_dir = os.path.join(args.berg_dir, 'neural_control',
-                'single_rois', 'controlling_images', args.encoding_model,
+                'neural_control', 'controlling_images', args.encoding_model,
                 f'subject-{sub}', f'roi-{roi}', f'{control}_images.h5')
             images = h5py.File(data_dir, 'r')['images'][:]
 

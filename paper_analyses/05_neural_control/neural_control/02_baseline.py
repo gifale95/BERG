@@ -1,3 +1,4 @@
+ls =lh
 """Get the in silico neural responses for a randomly selected batch of N images
 # (out of all images in the image set), and then average these univariate
 # responses across images. This will result in one score indicating the mean in
@@ -66,8 +67,8 @@ np.random.seed(seed)
 # =============================================================================
 # Load the in silico neural responses for the ~1.3M ILSVRC-2012 train images
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'neural_control', 'insilico_responses',
-args.encoding_model)
+data_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
+    'insilico_responses', args.encoding_model)
 file_name = f'insilico_responses_sub-{args.subject}_roi-{args.roi}.npy'
 
 data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
@@ -124,7 +125,7 @@ results = {
     'baseline_resp': baseline_resp
 }
 
-save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+save_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
     'quantitative_results', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
@@ -140,7 +141,7 @@ np.save(os.path.join(save_dir, file_name), results)
 imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='train')
 
 # Save directory
-save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+save_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
     'controlling_images', args.encoding_model, f'subject-{args.subject}',
     f'roi-{args.roi}')
 os.makedirs(save_dir, exist_ok=True)

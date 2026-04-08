@@ -54,7 +54,7 @@ for key, val in vars(args).items():
 # =============================================================================
 # Load the controlling image numbers
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+data_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
     'stats', args.encoding_model,
     f'sub-{args.subject}_roi-{args.roi}_{args.control}.npy')
 
@@ -70,7 +70,7 @@ img_control = data['img_control']
 imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='train')
 
 # Save directory
-save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+save_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
     'controlling_images', args.encoding_model, f'subject-{args.subject}',
     f'roi-{args.roi}')
 os.makedirs(save_dir, exist_ok=True)

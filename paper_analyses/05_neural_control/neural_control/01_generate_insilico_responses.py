@@ -13,6 +13,9 @@ subject : str
 roi: str
     ROI for which the in silico responses are generated. Valid values are "V1",
         "V4", and "IT".
+ncsnr_threshold : float
+    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
+    channel selection.
 berg_dir : str
     Directory of the BERG.
 imagenet_dir : str
@@ -36,6 +39,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b_32')
 parser.add_argument('--subject', default='N', type=str)
 parser.add_argument('--roi', default='V1', type=str)
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/giffordale95/datasets/image_sets/ILSVRC2012', type=str)
 args, unknown = parser.parse_known_args()
@@ -47,20 +51,54 @@ for key, val in vars(args).items():
 
 
 # =============================================================================
-# Load BERG's encoding model and metadata
+# Channel selection
 # =============================================================================
+# Load BERG's metadata
 berg = BERG(berg_dir=args.berg_dir)
-
-model = berg.get_encoding_model(
-    args.encoding_model,
-    subject=args.subject,
-    selection={'roi': [args.roi]}
-    )
-
 metadata = berg.get_model_metadata(
     args.encoding_model,
     subject=args.subject
 )
+
+# Retain channels of the chosen ROI based on their NCSNR score averaged across
+# the time window around peak activity of that ROI (use the same time window
+# as in the TVSD paper)
+ncsnr = metadata['encoding_model']['ncsnr']
+times = metadata['utah_array']['times']
+roi_assignments = metadata['roi']['roi_assignments']
+peaks = {
+    'V1': (25, 125),
+    'V4': (50, 150),
+    'IT': (75, 175)
+}
+roi_num = {
+    'V1': 0,
+    'V4': 1,
+    'IT': 2
+}
+
+# Get the indices of channels assigned to the ROI
+idx_roi = roi_assignments == roi_num[args.roi]
+
+# Get the NCSNR scores averaged across the time window around peak activity of
+# the chosen ROI, and get the indices of channels with above threshold NCSNR
+t_min = np.where(times == peaks[args.roi][0])[0][0]
+t_max = np.where(times == peaks[args.roi][1])[0][0]
+ncsnr_roi = np.mean(ncsnr[:,t_min:t_max+1], 1)
+idx_ncsnr = ncsnr_roi >= args.ncsnr_threshold
+
+# Retain channels of the chosen ROI with NCSNR above the threshold
+electrodes = np.logical_and(idx_roi, idx_ncsnr).astype(int)
+
+
+# =============================================================================
+# Load BERG's encoding model
+# =============================================================================
+model = berg.get_encoding_model(
+    args.encoding_model,
+    subject=args.subject,
+    selection={'electrodes': electrodes}
+    )
 
 
 # =============================================================================
@@ -120,8 +158,8 @@ data = {
     'metadata': metadata
 }
 
-save_dir = os.path.join(args.berg_dir, 'neural_control', 'insilico_responses',
-    args.encoding_model)
+save_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
+    'insilico_responses', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = f'insilico_responses_sub-{args.subject}_roi-{args.roi}.npy'

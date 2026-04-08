@@ -162,7 +162,8 @@ elif args.data_type == 'insilico':
 # Divide the neural responses based on ROIs
 # =============================================================================
 # Retain channels based on their NCSNR score averaged across the time window
-# around peak activity (use the same time window as in the TVSD paper)
+# around peak activity of the chosen ROI (use the same time window as in the
+# TVSD paper)
 ncsnr = metadata['encoding_model']['ncsnr']
 times = metadata['utah_array']['times']
 roi_assignments = metadata['roi']['roi_assignments']
@@ -171,22 +172,21 @@ peaks = {
     'V4': (50, 150),
     'IT': (75, 175)
 }
+roi_num = {
+    'V1': 0,
+    'V4': 1,
+    'IT': 2
+}
 
 # Loop across ROIs
 roi_resp = {}
 for r, roi in enumerate(args.rois):
 
     # Get the channels assigned to the ROI
-    if roi == 'V1':
-        roi_num = 0
-    elif roi == 'V4':
-        roi_num = 1
-    elif roi == 'IT':
-        roi_num = 2
-    idx_roi = np.where(roi_assignments == roi_num)[0]
+    idx_roi = np.where(roi_assignments == roi_num[roi])[0]
 
     # Get the NCSNR scores for those channels, averaged across the time window
-    # around peak activity
+    # around peak activity of the chosen
     t_min = np.where(times == peaks[roi][0])[0][0]
     t_max = np.where(times == peaks[roi][1])[0][0]
     ncsnr_roi = np.mean(ncsnr[idx_roi][:,t_min:t_max+1], 1)

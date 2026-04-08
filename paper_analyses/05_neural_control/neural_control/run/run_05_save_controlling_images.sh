@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-neural_control-03_neural_control
+#SBATCH --job-name=berg-neural_control-05_save_controlling_images
 #SBATCH --mail-type=end
-#SBATCH --mem=3500
-#SBATCH --time=00:05:00
+#SBATCH --mem=1000
+#SBATCH --time=02:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -36,7 +36,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/05_neural_control/single_rois/
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/05_neural_control/neural_control/
 
 # Run the job
-python 03_neural_control.py --subject $subject --roi $roi --control $control
+python 05_save_controlling_images.py --subject $subject --roi $roi --control $control

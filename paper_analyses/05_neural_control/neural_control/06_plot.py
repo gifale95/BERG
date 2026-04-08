@@ -51,7 +51,7 @@ for sub in args.subjects:
         for control in controls:
 
             data_dir = os.path.join(args.berg_dir, 'neural_control',
-                'single_rois', 'stats', args.encoding_model,
+                'neural_control', 'stats', args.encoding_model,
                 f'sub-{sub}_roi-{roi}_{control}.npy')
             data = np.load(data_dir, allow_pickle=True).item()
 
@@ -184,7 +184,7 @@ for s, sub in enumerate(args.subjects):
                     frameon=False)
 
     # Save the figure
-    save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+    save_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
         'plots')
     os.makedirs(save_dir, exist_ok=True)
     file_name = os.path.join(save_dir, f'neural_control_sub-{sub}.svg')

@@ -56,8 +56,8 @@ for key, val in vars(args).items():
 # =============================================================================
 # Load the in silico neural responses for the ~1.3M ILSVRC-2012 train images
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'neural_control', 'insilico_responses',
-args.encoding_model)
+data_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
+    'insilico_responses', args.encoding_model)
 file_name = f'insilico_responses_sub-{args.subject}_roi-{args.roi}.npy'
 
 data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
@@ -91,7 +91,7 @@ insilico_resp_late = np.mean(insilico_resp[:,t_min_late:t_max_late+1], 1)
 # Load the baseline results
 # =============================================================================
 # Load the baseline results
-data_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+data_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
     'quantitative_results', args.encoding_model,
     f'sub-{args.subject}_roi-{args.roi}_baseline.npy')
 baseline_results = np.load(data_dir, allow_pickle=True).item()
@@ -184,7 +184,7 @@ elif args.control in ['early-drive_late-suppress', 'early-suppress_late-drive']:
 # =============================================================================
 # Save the quantitative neural control results
 # =============================================================================
-save_dir = os.path.join(args.berg_dir, 'neural_control', 'single_rois',
+save_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
     'quantitative_results', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
