@@ -1,0 +1,184 @@
+# Basic metadata
+model_id: ecog-podcast_ecog-gpt2_xl
+modality: ECoG
+training_dataset: Podcast ECoG Dataset
+species: Human
+stimuli: Text (natural speech transcript)
+model_type: Large language model (GPT-2 XL)
+creator: Domenic Bersch
+
+# General description of the model
+description: |
+  This encoding model consists of a linear mapping (through ridge regression) of GPT-2 XL
+  (Radford et al., 2019) contextual word embeddings onto intracranial electrocorticographic (ECoG)
+  high-gamma band activity during natural speech comprehension. Prior to mapping onto neural responses,
+  word embeddings are extracted from layer 24 (1,600-dimensional) of GPT-2 XL, a 48-layer autoregressive
+  language model with 1.5 billion parameters. When a word is split into multiple sub-word tokens by the
+  GPT-2 tokenizer, the token embeddings are averaged to produce a single word-level embedding.
+
+  The encoding models were trained on the Podcast ECoG dataset (Zada et al., Scientific Data 2025),
+  consisting of 9 human participants with a total of 1,330 intracranial electrodes listening to a
+  30-minute audio podcast (~5,100 words).
+
+  **Neural data.** The preprocessed high-gamma band power (70–150 Hz) was extracted following the
+  dataset's official pipeline. The continuous signal was downsampled to 32 Hz, then epoched from
+  -2.0 s to +2.0 s relative to each word onset, producing 129 time lags per electrode. Each lag
+  represents the temporal offset from word onset (e.g., lag +0.3 s captures neural activity 300 ms
+  after the word began playing). No noise ceiling is available for this dataset because each word
+  is heard exactly once, precluding estimation of trial-to-trial variability.
+
+  **Model training partition.** All available word epochs (~5,100 per subject) were used for training.
+  Independent encoding models were trained for each subject. Features and neural data were standardized
+  prior to fitting. The regularization hyperparameter was selected via 5-fold inner cross-validation
+  from 10 log-spaced alpha values between 10^1 and 10^10.
+
+  **Model evaluation.** Encoding accuracy was evaluated using 2-fold cross-validation matching the
+  paper's methodology: models were trained on each half of the podcast and tested on the other, and
+  the two fold correlations (Pearson's r per electrode × lag) were averaged.
+
+  **Output.** Each encoding model predicts time-resolved high-gamma responses for all electrodes
+  (or user-specified subsets) across 129 time lags for each input word.
+
+metadata: |
+  'ecog':
+      subject_id        : str              - Subject identifier
+      n_electrodes      : int              - Number of electrodes (varies by subject)
+      n_lags            : int              - Number of time lags (129)
+      sfreq             : float            - Sampling frequency (32 Hz)
+      tmin              : float            - Epoch start (-2.0 s)
+      tmax              : float            - Epoch end (+2.0 s)
+      times             : (n_lags,)        - Time points in seconds
+      ch_names          : (n_electrodes,)  - Electrode names
+      ch_coords         : (n_electrodes,3) - Electrode MNI coordinates
+
+  'encoding_model':
+      n_words_total          : int              - Total words in transcript
+      n_epochs               : int              - Epochs that survived preprocessing
+      epoch_selection        : (n_epochs,)      - Word indices of surviving epochs
+      feature_model          : str              - 'gpt2-xl'
+      feature_layer          : int              - 24
+      feature_dim            : int              - 1600
+      correlation_results    : (n_electrodes, n_lags) - 2-fold CV encoding accuracy (Pearson's r)
+
+# Input stimulus information
+input:
+  description: "The input should be a list of words (strings). Context is built from all preceding words in the list."
+  type: "list[str]"
+  example: ["Once", "upon", "a", "time", "there", "was", "a", "king"]
+  constraints:
+    - "Each element should be a single word (string)."
+    - "Context is built from the full preceding word sequence."
+
+# Output information
+output:
+  description: "The output is a 3D array containing in silico high-gamma ECoG responses."
+  type: "numpy.ndarray"
+  shape: [n_words, n_electrodes, n_lags]
+  dimensions:
+    - name: "n_words"
+      description: "Number of words in the input."
+    - name: "n_electrodes"
+      description: "Number of electrodes (subject-dependent, or filtered by selection)."
+    - name: "n_lags"
+      description: "Number of time lags relative to word onset (up to 129, based on the number of time lags selected)."
+
+# Model parameters and their usage
+parameters:
+
+  model_id:
+    description: Unique identifier of the model to load.
+    required: true
+    type: "str"
+    valid_values: "ecog-podcast_ecog-gpt2_xl"
+    example: "ecog-podcast_ecog-gpt2_xl"
+    function: "get_encoding_model, get_model_metadata"
+
+  subject:
+    description: "Subject ID from the Podcast ECoG dataset."
+    required: true
+    type: str
+    valid_values: ["01", "02", "03", "04", "05", "06", "07", "08", "09"]
+    example: "03"
+    function: "get_encoding_model, get_model_metadata"
+
+  selection:
+    description: |
+      Specifies which outputs to include in the model responses.
+      Can include specific electrodes and/or timepoints. If not provided,
+      responses are generated for all electrodes and time lags.
+    required: false
+    type: dict
+    function: get_encoding_model
+    properties:
+      electrode_index:
+        type: numpy.ndarray
+        description: |
+          Binary one-hot encoded vector indicating which electrodes to include.
+          Length must match the number of electrodes for the selected subject:
+            - Subject 01: 99 electrodes
+            - Subject 02: 90 electrodes
+            - Subject 03: 235 electrodes
+            - Subject 04: 143 electrodes
+            - Subject 05: 159 electrodes
+            - Subject 06: 166 electrodes
+            - Subject 07: 116 electrodes
+            - Subject 08: 72 electrodes
+            - Subject 09: 188 electrodes
+        example: [0, 0, 1, 1, 0, ..., 1]
+      timepoints:
+        type: numpy.ndarray
+        description: |
+          Binary one-hot encoded vector indicating which time lags to include.
+          Must have exactly 129 elements.
+          Each position set to 1 indicates that time lag should be included.
+        example: [0, 0, ..., 1, 1, 0]
+
+  device:
+    description: "Device to run the model on. 'auto' will use CUDA if available, otherwise CPU."
+    required: false
+    type: str
+    valid_values: ["cpu", "cuda", "auto"]
+    example: "auto"
+    default: "auto"
+    function: "get_encoding_model"
+
+  model:
+    description: An instantiated and loaded encoding model.
+    required: true
+    type: BaseModelInterface
+    function: "encode"
+
+  stimulus:
+    description: "A list of words (strings) to encode. Context is built from the full preceding word sequence."
+    required: true
+    type: "list[str]"
+    example: '["The", "quick", "brown", "fox", "jumped"]'
+    function: "encode"
+
+  return_metadata:
+    description: "Whether to return the encoding model's metadata together with the in silico neural responses."
+    required: False
+    type: bool
+    default: False
+    example: True
+    function: "encode"
+
+  show_progress:
+    description: "Whether to show a progress bar during encoding."
+    required: false
+    type: bool
+    default: True
+    example: True
+    function: "encode"
+
+# Performance metrics and references
+performance:
+
+  accuracy_plots:
+    - "brain-encoding-response-generator/encoding_models/modality-ecog/train_dataset-podcast_ecog/model-gpt2_xl/encoding_models_accuracy"
+
+references:
+    - Model building code: 'https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-podcast_ecog/model-gpt2_xl'
+    - Podcast ECoG Paper (Zada et al., 2025): https://doi.org/10.1038/s41597-025-05462-2
+    - Podcast ECoG Data (Zada et al., 2025): https://openneuro.org/datasets/ds005574
+    - GPT-2 (Radford et al., 2019): https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf
