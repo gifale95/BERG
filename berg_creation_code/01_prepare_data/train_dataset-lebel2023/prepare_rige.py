@@ -55,8 +55,7 @@ lebel2023_{subject}_metadata.npy      :
     'encoding_model':
         train_stories       : list     - Training story names
         test_stories        : list     - Test story names
-        noise_ceiling       : (n_voxels,) - Regularized CC_max (floored at 0.3)
-        cc_half             : (n_voxels,) - Mean pairwise split-half correlation
+        noise_ceiling       : (n_voxels,) - CCmax (Schoppe et al. 2016), floored at 0.25
 """
 
 
@@ -293,10 +292,24 @@ for subject in args.subjects:
     # ----------------------------------------------------------------
     # 2c) Compute noise ceiling from individual repeats
     # ----------------------------------------------------------------
-    print(f'  Computing noise ceiling ...')
+    # Uses the Schoppe et al. (2016) method as implemented by
+    # Antonello et al. (2023, NeurIPS), Section 2.5:
+    #
+    #   TP  = noise power = mean within-repeat temporal variance
+    #   SP  = signal power = (1/(N-1)) * (N * var(mean_resp) - TP)
+    #   CCmax = 1 / sqrt(1 + (1/N) * (TP/SP - 1))
+    #
+    # CCmax is floored at 0.25 to regularise estimates for noisy
+    # voxels (Antonello et al., Section 2.5).
+    #
+    # Test repeats are trimmed by 40 TRs from the start to match
+    # the evaluation window (Antonello et al., Section 3.5: "we
+    # simply exclude the first 100 seconds of predicted and actual
+    # responses from each test story").
+    print(f'  Computing noise ceiling (Schoppe et al. 2016) ...')
 
-    noise_ceiling = np.full(n_voxels, np.nan)
-    cc_half_arr = np.full(n_voxels, np.nan)
+    cc_max = np.full(n_voxels, np.nan)
+    test_repeat_trim = 40  # Additional TRs to remove from start
 
     with h5py.File(test_path, 'r') as hf:
         for story in test_stories_sub:
@@ -305,38 +318,50 @@ for subject in args.subjects:
                 continue
 
             repeats = hf[f'{story}/individual_repeats'][:]
-            n_reps = repeats.shape[0]
-            print(f'    {story}: computing from {n_reps} repeats, '
-                  f'shape {repeats.shape}')
+            N = repeats.shape[0]
+            print(f'    {story}: {N} repeats, shape {repeats.shape}')
 
-            # CC_half: mean pairwise correlation across repeats (per voxel)
-            pair_corrs = []
-            for i in range(n_reps):
-                for j in range(i + 1, n_reps):
-                    ri = repeats[i]  # (n_TRs, n_voxels)
-                    rj = repeats[j]
-                    # Z-score each repeat across time, then correlate
-                    ri_z = (ri - ri.mean(0)) / (ri.std(0) + 1e-10)
-                    rj_z = (rj - rj.mean(0)) / (rj.std(0) + 1e-10)
-                    pair_corrs.append((ri_z * rj_z).mean(0))
-            cc_half_story = np.mean(pair_corrs, axis=0)
+            # Trim the first 40 TRs to match test evaluation window
+            repeats = repeats[:, test_repeat_trim:, :]
+            print(f'    After trimming {test_repeat_trim} TRs: '
+                  f'{repeats.shape}')
 
-            # Spearman-Brown correction:
-            #   CC_max = sqrt(2 / (1 + 1 / CC_half^2))
-            cc_half_safe = np.clip(np.abs(cc_half_story), 1e-10, None)
-            cc_max = np.sqrt(2.0 / (1.0 + 1.0 / (cc_half_safe ** 2)))
+            # Mean response across repeats → (n_TRs, n_voxels)
+            mean_resp = np.mean(repeats, axis=0)
 
-            # Regularised noise ceiling (floor at 0.3, LeBel et al. 2023)
-            nc = np.maximum(cc_max, 0.3)
+            # TP: noise power — mean within-repeat temporal variance
+            #   var across time for each repeat → (N, n_voxels)
+            #   then average across repeats    → (n_voxels,)
+            within_var = np.var(repeats, axis=1, ddof=1)
+            TP = np.mean(within_var, axis=0)
 
-            # Use first test story's ceiling (consistent with single-story
-            # evaluation used in both LeBel and Antonello papers)
-            if np.all(np.isnan(noise_ceiling)):
-                noise_ceiling = nc
-                cc_half_arr = cc_half_story
+            # SP: signal power
+            var_mean = np.var(mean_resp, axis=0, ddof=1)
+            SP = (1.0 / (N - 1)) * (N * var_mean - TP)
+            SP = np.maximum(SP, 1e-10)
 
-    print(f'    Mean CC_half:       {np.nanmean(cc_half_arr):.4f}')
-    print(f'    Mean noise ceiling: {np.nanmean(noise_ceiling):.4f}')
+            # CCmax per voxel
+            cc_max_story = np.nan_to_num(
+                1.0 / np.sqrt(1.0 + (1.0 / N) * (TP / SP - 1.0)))
+
+            # Floor at 0.25 (Antonello et al., Section 2.5)
+            cc_max_story = np.maximum(cc_max_story, 0.25)
+
+            # Use first test story (consistent with single-story
+            # evaluation in both LeBel and Antonello papers)
+            if np.all(np.isnan(cc_max)):
+                cc_max = cc_max_story
+
+    noise_ceiling = cc_max
+
+    print(f'    Noise ceiling (CCmax, floored at 0.25):')
+    print(f'      Mean:   {np.nanmean(noise_ceiling):.4f}')
+    print(f'      Median: {np.nanmedian(noise_ceiling):.4f}')
+    print(f'      Max:    {np.nanmax(noise_ceiling):.4f}')
+    print(f'      Voxels with CCmax > 0.35: '
+          f'{np.sum(noise_ceiling > 0.35)}')
+    print(f'      Voxels with CCmax > 0.50: '
+          f'{np.sum(noise_ceiling > 0.50)}')
 
     # ----------------------------------------------------------------
     # 2d) Extract ROI masks from pycortex
@@ -399,7 +424,6 @@ for subject in args.subjects:
             'train_stories': np.array(train_stories_sub),
             'test_stories': np.array(test_stories_sub),
             'noise_ceiling': noise_ceiling,
-            'cc_half': cc_half_arr,
         },
     }
 
@@ -415,7 +439,6 @@ print(f'\n{"="*60}')
 print('Done.  All data prepared.')
 print(f'  Output directory: {output_dir}')
 print(f'{"="*60}')
-
 
 
 """
