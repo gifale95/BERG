@@ -25,7 +25,7 @@ from berg.interfaces.base_model import BaseModelInterface
 # Load model info from YAML
 def load_model_info():
     yaml_path = os.path.join(os.path.dirname(__file__), "..", "model_cards",
-                             "ecog-podcast_ecog-gpt2_xl.yaml")
+                             "ecog-zada2025-gpt2_xl.yaml")
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
 
@@ -34,12 +34,12 @@ model_info = load_model_info()
 
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.ecog.podcast_ecog_gpt2_xl",
+    module_path="berg.models.ecog.zada2025_gpt2_xl",
     class_name="PodcastECoGEncodingModel",
     modality=model_info.get("modality", "ecog"),
-    training_dataset=model_info.get("training_dataset", "podcast_ecog"),
+    training_dataset=model_info.get("training_dataset", "zada2025"),
     yaml_path=os.path.join(os.path.dirname(__file__), "..", "model_cards",
-                           "ecog-podcast_ecog-gpt2_xl.yaml")
+                           "ecog-zada2025-gpt2_xl.yaml")
 )
 
 
@@ -58,7 +58,10 @@ class PodcastECoGEncodingModel(BaseModelInterface):
     MODEL_ID = model_info["model_id"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
-    ELECTRODE_COUNTS = model_info["electrode_counts"]
+    ELECTRODE_COUNTS = {
+        "01": 99, "02": 90, "03": 235, "04": 143, "05": 159,
+        "06": 166, "07": 116, "08": 72, "09": 188
+    }
     N_LAGS = 129
     FEATURE_LAYER = 24
     FEATURE_DIM = 1600
@@ -68,7 +71,6 @@ class PodcastECoGEncodingModel(BaseModelInterface):
         subject: str,
         device: str = "auto",
         selection: Optional[Dict] = None,
-        context_length: int = 1024,
         berg_dir: Optional[str] = None
     ):
         """
@@ -86,23 +88,20 @@ class PodcastECoGEncodingModel(BaseModelInterface):
             Specifies which outputs to include in the model responses.
             - electrode_index: Binary array for electrode selection
               (length must match subject's electrode count)
-            - timepoints: Binary array for time lag selection (length 129)
-        context_length : int, default=1024
-            Number of preceding tokens to use as context for GPT-2 XL
-            feature extraction. Must be between 1 and 1024.
+            - lags: Binary array for time lag selection (length 129)
         berg_dir : str, optional
             Root path to the BERG directory containing model files and weights.
         """
         # Assign parameters
         self.subject = subject
-        self.context_length = context_length
+        self.context_length = 1024  # Fixed: GPT-2 XL max context window
         self.berg_dir = berg_dir
         self.model = None
 
         # Parameters from selection
         self.selection = selection
         self.selected_electrodes = None
-        self.selected_timepoints = None
+        self.selected_lags = None
 
         # Validate parameters
         self._validate_parameters()
@@ -119,21 +118,12 @@ class PodcastECoGEncodingModel(BaseModelInterface):
         # Validate subject
         validate_subject(self.subject, self.VALID_SUBJECTS)
 
-        # Validate context_length
-        if not isinstance(self.context_length, int) or \
-                not 1 <= self.context_length <= 1024:
-            raise InvalidParameterError(
-                f"context_length must be an integer between 1 and 1024, "
-                f"got {self.context_length}"
-            )
-
         if self.selection is not None:
             # Validate selection keys
             validate_selection_keys(self.selection, self.SELECTION_KEYS)
 
             # Get subject's electrode count for validation
-            subject_key = f"sub-{self.subject}"
-            n_electrodes = self.ELECTRODE_COUNTS[subject_key]
+            n_electrodes = self.ELECTRODE_COUNTS[self.subject]
 
             # Validate electrode_index
             if "electrode_index" in self.selection:
@@ -144,14 +134,14 @@ class PodcastECoGEncodingModel(BaseModelInterface):
                 )
                 self.selected_electrodes = get_selected_indices(electrode_array)
 
-            # Validate timepoints
-            if "timepoints" in self.selection:
-                timepoints_array = validate_binary_array(
-                    self.selection["timepoints"],
+            # Validate lags
+            if "lags" in self.selection:
+                lags_array = validate_binary_array(
+                    self.selection["lags"],
                     self.N_LAGS,
-                    "timepoints"
+                    "lags"
                 )
-                self.selected_timepoints = get_selected_indices(timepoints_array)
+                self.selected_lags = get_selected_indices(lags_array)
 
     def load_model(self) -> None:
         """
@@ -160,13 +150,13 @@ class PodcastECoGEncodingModel(BaseModelInterface):
         Loads the GPT-2 XL language model and tokenizer for feature extraction,
         then loads the trained encoding weights (StandardScaler for X and Y,
         ridge regression coefficients). Only loads regression weights for
-        selected electrodes and timepoints to optimize memory usage.
+        selected electrodes and lags to optimize memory usage.
         """
-      
+        
         # Load metadata to get electrode/lag dimensions
         metadata_dir = os.path.join(
             self.berg_dir, 'encoding_models', 'modality-ecog',
-            'train_dataset-podcast_ecog', 'model-gpt2_xl',
+            'train_dataset-zada2025', 'model-gpt2_xl',
             'metadata', f'metadata_sub-{self.subject}.npy'
         )
         self.metadata = np.load(metadata_dir, allow_pickle=True).item()
@@ -178,9 +168,9 @@ class PodcastECoGEncodingModel(BaseModelInterface):
         if self.selected_electrodes is None:
             self.selected_electrodes = list(range(n_electrodes))
 
-        # If no timepoints selected, use all
-        if self.selected_timepoints is None:
-            self.selected_timepoints = list(range(n_lags))
+        # If no lags selected, use all
+        if self.selected_lags is None:
+            self.selected_lags = list(range(n_lags))
 
         # Load GPT-2 XL tokenizer and model
         self._load_language_model()
@@ -191,8 +181,7 @@ class PodcastECoGEncodingModel(BaseModelInterface):
 
         print(f"Model loaded on {self.device} for subject {self.subject} "
                 f"({len(self.selected_electrodes)} electrodes, "
-                f"{len(self.selected_timepoints)} lags)")
-
+                f"{len(self.selected_lags)} lags)")
 
 
     def _load_language_model(self):
@@ -237,7 +226,7 @@ class PodcastECoGEncodingModel(BaseModelInterface):
             self.berg_dir,
             'encoding_models',
             'modality-ecog',
-            'train_dataset-podcast_ecog',
+            'train_dataset-zada2025',
             'model-gpt2_xl',
             'encoding_models_weights',
             f'weights_sub-{self.subject}.npy'
@@ -265,7 +254,7 @@ class PodcastECoGEncodingModel(BaseModelInterface):
         electrode_mask[self.selected_electrodes] = True
 
         time_mask = np.zeros(n_lags, dtype=bool)
-        time_mask[self.selected_timepoints] = True
+        time_mask[self.selected_lags] = True
 
         # Combined mask for flattened neural space (electrodes x lags)
         combined_mask = (electrode_mask[:, None] & time_mask[None, :]).flatten()
@@ -314,7 +303,7 @@ class PodcastECoGEncodingModel(BaseModelInterface):
             start_idx = len(all_token_ids)
             all_token_ids.extend(tokens)
             end_idx = len(all_token_ids)
-            word_to_token_indices.append((start_idx, end_idx))  # Records which token belongs to which word
+            word_to_token_indices.append((start_idx, end_idx))
 
         n_tokens = len(all_token_ids)
 
@@ -396,7 +385,7 @@ class PodcastECoGEncodingModel(BaseModelInterface):
         -------
         insilico_responses : np.ndarray
             In silico high-gamma response array of shape
-            (n_words, n_selected_electrodes, n_selected_timepoints).
+            (n_words, n_selected_electrodes, n_selected_lags).
             Values are in original high-gamma power units.
         """
         # Validate stimulus
@@ -427,7 +416,7 @@ class PodcastECoGEncodingModel(BaseModelInterface):
         insilico_responses = Y_pred.reshape(
             len(stimulus),
             len(self.selected_electrodes),
-            len(self.selected_timepoints)
+            len(self.selected_lags)
         ).astype(np.float32)
 
         return insilico_responses
@@ -489,7 +478,7 @@ class PodcastECoGEncodingModel(BaseModelInterface):
             berg_dir,
             'encoding_models',
             'modality-ecog',
-            'train_dataset-podcast_ecog',
+            'train_dataset-zada2025',
             'model-gpt2_xl',
             'metadata',
             f'metadata_sub-{subject}.npy'

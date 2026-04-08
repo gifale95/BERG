@@ -1,11 +1,11 @@
 # Basic metadata
-model_id: ecog-podcast_ecog-gpt2_xl
+model_id: ecog-zada2025-gpt2_xl
 modality: ECoG
-training_dataset: Podcast ECoG Dataset
+training_dataset: Zadal et al. (2025)
 species: Human
 stimuli: Text (natural speech transcript)
-model_type: Large language model (GPT-2 XL)
-creator: Domenic Bersch
+model_type: GPT2-XL
+creator: Zaid Zada
 
 # General description of the model
 description: |
@@ -80,7 +80,7 @@ output:
     - name: "n_electrodes"
       description: "Number of electrodes (subject-dependent, or filtered by selection)."
     - name: "n_lags"
-      description: "Number of time lags relative to word onset (up to 129, based on the number of time lags selected)."
+      description: "Number of time lags relative to word onset."
 
 # Model parameters and their usage
 parameters:
@@ -89,8 +89,8 @@ parameters:
     description: Unique identifier of the model to load.
     required: true
     type: "str"
-    valid_values: "ecog-podcast_ecog-gpt2_xl"
-    example: "ecog-podcast_ecog-gpt2_xl"
+    valid_values: "ecog-zada2025-gpt2_xl"
+    example: "ecog-zada2025-gpt2_xl"
     function: "get_encoding_model, get_model_metadata"
 
   subject:
@@ -104,7 +104,7 @@ parameters:
   selection:
     description: |
       Specifies which outputs to include in the model responses.
-      Can include specific electrodes and/or timepoints. If not provided,
+      Can include specific electrodes and/or lags (timepoints). If not provided,
       responses are generated for all electrodes and time lags.
     required: false
     type: dict
@@ -125,10 +125,10 @@ parameters:
             - Subject 08: 72 electrodes
             - Subject 09: 188 electrodes
         example: [0, 0, 1, 1, 0, ..., 1]
-      timepoints:
+      lags:
         type: numpy.ndarray
         description: |
-          Binary one-hot encoded vector indicating which time lags to include.
+          Binary one-hot encoded vector indicating which time lags (timepoints) to include.
           Must have exactly 129 elements.
           Each position set to 1 indicates that time lag should be included.
         example: [0, 0, ..., 1, 1, 0]
@@ -175,10 +175,10 @@ parameters:
 performance:
 
   accuracy_plots:
-    - "brain-encoding-response-generator/encoding_models/modality-ecog/train_dataset-podcast_ecog/model-gpt2_xl/encoding_models_accuracy"
+    - "brain-encoding-response-generator/encoding_models/modality-ecog/train_dataset-zada2025/model-gpt2_xl/encoding_models_accuracy"
 
 references:
-    - Model building code: 'https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-podcast_ecog/model-gpt2_xl'
+    - Model building code: 'https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-zada2025/model-gpt2_xl'
     - Podcast ECoG Paper (Zada et al., 2025): https://doi.org/10.1038/s41597-025-05462-2
     - Podcast ECoG Data (Zada et al., 2025): https://openneuro.org/datasets/ds005574
     - GPT-2 (Radford et al., 2019): https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf

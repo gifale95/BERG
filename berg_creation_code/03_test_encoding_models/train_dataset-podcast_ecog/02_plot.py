@@ -80,7 +80,7 @@ AVG_FILL_COLOR = '#e74c3c'
 # Load metadata
 # =============================================================================
 metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-ecog',
-                            'train_dataset-podcast_ecog', 'model-gpt2_xl',
+                            'train_dataset-zada2025', 'model-gpt2_xl',
                             'metadata')
 
 all_correlations = []
@@ -148,7 +148,7 @@ for i, subject in enumerate(loaded_subjects):
     n_above_01 = (max_per_el > 0.1).sum()
     n_above_02 = (max_per_el > 0.2).sum()
 
-    print(f"\n{subject} ({n_el} electrodes):")
+    print(f"\n{subject} ({n_el} el):")
     print(f"  Mean r (all el x lags):        {mean_all:.4f}")
     print(f"  Max-over-lags per electrode:")
     print(f"    min={max_per_el.min():.4f}, "
@@ -212,7 +212,7 @@ for i, subject in enumerate(loaded_subjects):
     ax.axvline(0, color='#bdc3c7', linestyle='--', linewidth=0.8)
     ax.set_xlabel('Lag (s)')
     ax.set_ylabel('Encoding r (± SEM)')
-    ax.set_title(f'{subject} ({corr.shape[0]} ch)', fontweight='bold')
+    ax.set_title(f'{subject} ({corr.shape[0]} elec)', fontweight='bold')
     ax.set_ylim(y_lim)
 
 # Hide unused subplots in subject rows
@@ -241,7 +241,7 @@ for j in range(1, n_cols):
 plt.tight_layout()
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-ecog',
-                        'train_dataset-podcast_ecog', 'model-gpt2_xl',
+                        'train_dataset-zada2025', 'model-gpt2_xl',
                         'encoding_models_accuracy')
 os.makedirs(save_dir, exist_ok=True)
 
@@ -261,7 +261,7 @@ for i, subject in enumerate(loaded_subjects):
     mean_corr = corr.mean(axis=0)
     color = subject_colors[i % len(subject_colors)]
     ax_ol.plot(times, mean_corr, color=color, linewidth=1.5, alpha=0.7,
-               label=f'{subject} ({corr.shape[0]} ch)')
+               label=f'{subject} ({corr.shape[0]} elec)')
 
 # Grand average on top
 ax_ol.plot(all_times[0], avg_corr, color='black', linewidth=2.5,

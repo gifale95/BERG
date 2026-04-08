@@ -22,9 +22,9 @@ sfreq_resample : float
 
 Output Files Created (per subject):
 ────────────────────────────────────────────────────────────────
-podcast_ecog_{subject}_neural.h5    : (n_epochs, n_electrodes, n_lags)
-podcast_ecog_{subject}_features.npy : (n_epochs, 1600)
-podcast_ecog_{subject}_metadata.npy :
+zada2025_{subject}_neural.h5    : (n_epochs, n_electrodes, n_lags)
+zada2025_{subject}_features.npy : (n_epochs, 1600)
+zada2025_{subject}_metadata.npy :
 
     'ecog':
         subject_id        : str              - Subject identifier
@@ -83,7 +83,7 @@ for key, val in vars(args).items():
 # Output directory
 # =============================================================================
 output_dir = os.path.join(args.berg_dir, 'model_training_datasets',
-                          'train_dataset-podcast_ecog')
+                          'train_dataset-zada2025')
 os.makedirs(output_dir, exist_ok=True)
 
 
@@ -235,7 +235,7 @@ print(f"  Time points:               {len(times)} ({times[0]:.3f}s to {times[-1]
 print("\nSaving outputs...")
 
 neural_file = os.path.join(output_dir,
-                           f'podcast_ecog_{args.subject}_neural.h5')
+                           f'zada2025_{args.subject}_neural.h5')
 epochs_data = epochs.get_data(copy=False).astype(np.float32)
 with h5py.File(neural_file, 'w') as f:
     f.create_dataset('neural_data', data=epochs_data)
@@ -243,7 +243,7 @@ print(f"  Neural data:  {neural_file}")
 
 # Save aligned features
 features_file = os.path.join(output_dir,
-                             f'podcast_ecog_{args.subject}_features.npy')
+                             f'zada2025_{args.subject}_features.npy')
 np.save(features_file, aligned_features.astype(np.float32))
 print(f"  Features:     {features_file}")
 
@@ -261,17 +261,12 @@ metadata = {
         'ch_coords': ch_coords,
     },
     'encoding_model': {
-        'n_words_total': n_words_total,
-        'n_epochs': n_epochs,
         'epoch_selection': epoch_selection,
-        'feature_model': 'gpt2-xl',
-        'feature_layer': feature_layer,
-        'feature_dim': word_embeddings.shape[1],
     },
 }
 
 metadata_file = os.path.join(output_dir,
-                             f'podcast_ecog_{args.subject}_metadata.npy')
+                             f'zada2025_{args.subject}_metadata.npy')
 np.save(metadata_file, metadata)
 print(f"  Metadata:     {metadata_file}")
 

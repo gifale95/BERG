@@ -1,1 +1,1 @@
-import berg.models.ecog.podcast_ecog_gpt2_xl
+import berg.models.ecog.zada2025_gpt2_xl

@@ -93,11 +93,11 @@ def to_numpy(x):
 # Load data
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
-                        'train_dataset-podcast_ecog')
+                        'train_dataset-zada2025')
 
 # Load metadata
 metadata_path = os.path.join(data_dir,
-                             f'podcast_ecog_{args.subject}_metadata.npy')
+                             f'zada2025_{args.subject}_metadata.npy')
 metadata = np.load(metadata_path, allow_pickle=True).item()
 
 n_electrodes = metadata['ecog']['n_electrodes']
@@ -106,13 +106,13 @@ print(f"\nSubject {args.subject}: {n_electrodes} electrodes, {n_lags} lags")
 
 # Load features (X)
 features_path = os.path.join(data_dir,
-                             f'podcast_ecog_{args.subject}_features.npy')
+                             f'zada2025_{args.subject}_features.npy')
 X = np.load(features_path)
 print(f"Features shape: {X.shape}")
 
 # Load neural data (Y) and reshape to (n_epochs, n_electrodes * n_lags)
 neural_path = os.path.join(data_dir,
-                           f'podcast_ecog_{args.subject}_neural.h5')
+                           f'zada2025_{args.subject}_neural.h5')
 with h5py.File(neural_path, 'r') as f:
     Y = f['neural_data'][:].reshape(f['neural_data'].shape[0], -1)
 print(f"Neural data shape: {Y.shape}")
@@ -197,7 +197,7 @@ weights = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-ecog',
-                        'train_dataset-podcast_ecog', 'model-gpt2_xl',
+                        'train_dataset-zada2025', 'model-gpt2_xl',
                         'encoding_models_weights')
 os.makedirs(save_dir, exist_ok=True)
 
