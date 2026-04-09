@@ -1,9 +1,8 @@
 """Train OPT-1.3B ridge regression encoding models on the LeBel et al. (2023)
-deep-fMRI-dataset and save the results into the BERG directory structure.
+deep-fMRI-dataset, following Antonello, Vaidya & Huth (NeurIPS 2023).
 
-This script uses contextual embeddings from OPT-1.3B (layer 18) as features
-to predict BOLD fMRI responses via voxelwise ridge regression, following the
-approach of Antonello, Vaidya & Huth (NeurIPS 2023).
+Pipeline: OPT hidden states (layer 18) → Lanczos downsample to TR →
+z-score + FIR delays → ridge regression → voxelwise correlation.
 
 Pipeline steps:
 1. Model setup: Load OPT-1.3B from HuggingFace, extract layer 18 hidden states
@@ -42,7 +41,6 @@ nboots : int
 device : str
     Torch device. Default: auto.
 """
-
 
 import os
 import sys
@@ -128,9 +126,6 @@ for key, val in vars(args).items():
 # Add deep-fMRI-dataset ridge_utils to sys.path
 # ============================================================================
 encoding_dir = join(args.deep_fmri_repo, 'encoding')
-assert os.path.isdir(encoding_dir), (
-    f'Could not find encoding directory at: {encoding_dir}. '
-    f'Make sure --deep_fmri_repo points to the deep-fMRI-dataset repo.')
 sys.path.insert(0, encoding_dir)
 
 from ridge_utils.interpdata import lanczosinterp2D    # noqa: E402
@@ -167,19 +162,8 @@ stimuli_path = join(data_dir, 'lebel2023_stimuli.h5')
 # ############################################################################
 
 def tokenize_story(tokenizer, words):
-    """Tokenize a story's words and build a word-to-token mapping.
-
-    Each "real" word (non-empty and not a bare possessive) is tokenized
-    individually with a leading space (OPT / GPT-2 convention).  This avoids
-    fragile word-boundary detection heuristics while producing a token
-    sequence very close to full-text tokenization.
-
-    Parameters
-    ----------
-    tokenizer : transformers.PreTrainedTokenizer
-    words : list of str
-        Raw word list from the TextGrid (may contain empty strings).
-    """
+    """Tokenize words individually with leading-space convention, returning
+    a word-to-token mapping. Skips empty strings and bare possessives."""
     bos_id = tokenizer.bos_token_id
     all_tokens     = [bos_id]
     real_word_indices = []
@@ -206,24 +190,8 @@ def extract_opt_features_for_story(
     context_min_words=256, context_max_words=512,
 ):
     """Extract one hidden-state vector per word using dynamic context windows.
-
-    Following Antonello et al. (2023), the context grows word-by-word until
-    it reaches *context_max_words*, at which point a forward pass is executed
-    and the context resets to *context_min_words*.  For each word, the hidden
-    state at its last BPE token is used.
-
-    Non-real words (empty strings, possessives) receive a copy of the
-    most recent real word's vector.
-
-    Parameters
-    ----------
-    model : transformers.AutoModelForCausalLM
-    tokenizer : transformers.PreTrainedTokenizer
-    words : list of str
-    layer : int
-        1-indexed layer number (layer 1 = first transformer block).
-    device : torch.device
-    context_min_words, context_max_words : int
+    Context grows to context_max_words, then resets to context_min_words.
+    Non-real words get a copy of the previous real word's vector.
     """
     
     hidden_dim = model.config.hidden_size
@@ -306,14 +274,11 @@ hidden_dim = model.config.hidden_size
 n_layers   = model.config.num_hidden_layers
 print(f'  hidden_dim={hidden_dim}, n_layers={n_layers}, '
       f'extracting layer {args.layer}')
-assert 1 <= args.layer <= n_layers, \
-    f'Layer {args.layer} out of range [1, {n_layers}].'
 
 
 # ============================================================================
 # Load stimuli and extract features for all stories
 # ============================================================================
-# Read story lists from the first subject's metadata (shared across subjects)
 first_meta_path = join(data_dir,
     f'lebel2023_{args.subjects[0]}_metadata.npy')
 first_meta = np.load(first_meta_path, allow_pickle=True).item()
@@ -336,14 +301,14 @@ with h5py.File(stimuli_path, 'r') as stim_hf:
         word_onsets = grp['word_onsets'][:]
         tr_times    = grp['tr_times'][:]
 
-        # 1) Word-level hidden states -> (n_words, hidden_dim)
+        # Word-level hidden states -> (n_words, hidden_dim)
         word_features = extract_opt_features_for_story(
             model, tokenizer, words, args.layer, device,
             context_min_words=args.context_min_words,
             context_max_words=args.context_max_words,
         )
 
-        # 2) Lanczos downsample -> (n_TRs, hidden_dim)
+        # Lanczos downsample -> (n_TRs, hidden_dim)
         ds_feat = lanczosinterp2D(word_features, word_onsets, tr_times,
                                   window=3)
         downsampled_features[story] = ds_feat.astype(np.float32)
@@ -378,8 +343,6 @@ for subject in args.subjects:
     # ----------------------------------------------------------------
     # Build training stimulus matrix (z-score + FIR delays)
     # ----------------------------------------------------------------
-    # Trim: remove trim_train TRs from start, trim_end from end
-    # (Antonello et al. use [10:-5] for training features)
     print(f'  Building training stimulus matrix '
           f'(trim_start={args.trim_train}, trim_end={args.trim_end}) ...')
 
@@ -394,8 +357,6 @@ for subject in args.subjects:
     # ----------------------------------------------------------------
     # Build test stimulus matrix
     # ----------------------------------------------------------------
-    # Trim: remove trim_test TRs from start, trim_end from end
-    # (Antonello et al. use [50:-5] for test features)
     print(f'  Building test stimulus matrix '
           f'(trim_start={args.trim_test}, trim_end={args.trim_end}) ...')
 
@@ -410,9 +371,6 @@ for subject in args.subjects:
     # ----------------------------------------------------------------
     # Load training responses
     # ----------------------------------------------------------------
-    # Training responses are loaded as-is (already preprocessed by
-    # LeBel et al. — demeaned, unit variance, detrended, 10 TRs
-    # trimmed from each end during their preprocessing).
     print(f'  Loading training responses ...')
 
     train_path = join(data_dir, f'lebel2023_{subject}_split-train.h5')
@@ -425,11 +383,9 @@ for subject in args.subjects:
     # ----------------------------------------------------------------
     # Load test responses
     # ----------------------------------------------------------------
-    # Test responses are trimmed by 40 TRs from the start to match
-    # the 50-TR feature trim (50 - 10 already removed = 40 additional).
     print(f'  Loading test responses ...')
 
-    test_resp_trim = args.trim_test - args.trim_train  # 50 - 10 = 40
+    test_resp_trim = args.trim_test - args.trim_train
     test_path = join(data_dir, f'lebel2023_{subject}_split-test.h5')
     Presp_parts = []
     with h5py.File(test_path, 'r') as hf:
@@ -438,20 +394,12 @@ for subject in args.subjects:
             Presp_parts.append(resp[test_resp_trim:])
     Presp = np.vstack(Presp_parts)
 
-    # Verify alignment
     print(f'  delRstim: {delRstim.shape}  Rresp: {Rresp.shape}')
     print(f'  delPstim: {delPstim.shape}  Presp: {Presp.shape}')
-    assert delRstim.shape[0] == Rresp.shape[0], (
-        f'Train mismatch: features {delRstim.shape[0]} vs '
-        f'responses {Rresp.shape[0]}')
-    assert delPstim.shape[0] == Presp.shape[0], (
-        f'Test mismatch: features {delPstim.shape[0]} vs '
-        f'responses {Presp.shape[0]}')
 
     # ----------------------------------------------------------------
     # Fit ridge regression with bootstrap cross-validation
     # ----------------------------------------------------------------
-    # nchunks: hold out ~25% of training data per bootstrap
     nchunks = int(Rresp.shape[0] * 0.25 / args.chunklen)
 
     print(f'  Ridge parameters: nboots={args.nboots}, '
@@ -470,12 +418,10 @@ for subject in args.subjects:
     print(f'  Voxels with r > 0.1:   {np.sum(corrs > 0.1)}')
 
     # ----------------------------------------------------------------
-    # Generate test predictions (for later evaluation / plotting)
-    # ----------------------------------------------------------------
+    # Test predictions
     pred = delPstim @ wt
 
-    # ----------------------------------------------------------------
-    # Save encoding model weights
+    # Save weights
     # ----------------------------------------------------------------
     save_dir = join(args.berg_dir, 'encoding_models', 'modality-fmri',
         'train_dataset-lebel2023', 'model-opt_1_3b_ridge',

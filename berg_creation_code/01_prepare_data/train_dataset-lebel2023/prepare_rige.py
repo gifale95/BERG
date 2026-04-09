@@ -1,45 +1,14 @@
-"""Prepare the LeBel et al. (2023) deep-fMRI-dataset for BERG model training:
- - extract and consolidate BOLD fMRI responses per subject,
- - extract stimulus data (words, word onset times, TR times) from TextGrids,
- - split training and test stories,
- - extract ROI masks from the pycortex database,
- - compute noise ceiling from individual test-story repeats,
- - save comprehensive per-subject metadata.
 
-After preparation, the data is saved as:
- - Training responses: per-story HDF5 groups with shape (n_TRs, n_voxels)
- - Test responses: per-story HDF5 groups with shape (n_TRs, n_voxels),
-   plus individual repeats for noise ceiling
- - Stimuli: per-story HDF5 groups with words, word onsets, and TR times
-The data is saved in HDF5 and NumPy formats for efficient loading during
-model training.
-
-Parameters
-----------
-deep_fmri_repo : str
-    Path to the cloned deep-fMRI-dataset repository.
-berg_dir : str
-    Directory of the Brain Encoding Response Generator (BERG).
-subjects : list of str
-    Subject identifiers. Default: UTS01, UTS02, UTS03.
-
-
-Output Files Created (per subject):
-────────────────────────────────────────────────────────────────
-lebel2023_stimuli.h5                  : Shared across subjects
-    Per story group:
-        words              : (n_words,)      - Word strings
-        word_onsets        : (n_words,)      - Word onset times in seconds
-        tr_times           : (n_TRs,)        - fMRI acquisition times in seconds
-
-lebel2023_{subject}_split-train.h5    : Training BOLD responses
-    Per story group:
-        data               : (n_TRs, n_voxels) - Z-scored BOLD signal
-
-lebel2023_{subject}_split-test.h5     : Test BOLD responses
-    Per story group:
-        data               : (n_TRs, n_voxels) - Averaged BOLD signal
-        individual_repeats : (n_reps, n_TRs, n_voxels) - Per-repeat responses
+"""Prepare the LeBel et al. (2023) deep-fMRI-dataset for BERG model training.
+ 
+Extracts BOLD responses, stimulus data (words + timings from TextGrids),
+ROI masks from pycortex, and noise ceilings from test-story repeats.
+ 
+Outputs per subject:
+  lebel2023_stimuli.h5              — words, word_onsets, tr_times per story
+  lebel2023_{subject}_split-train.h5 — training BOLD (n_TRs, n_voxels)
+  lebel2023_{subject}_split-test.h5  — test BOLD + individual repeats
+  lebel2023_{subject}_metadata.npy   — fmri info, ROI masks, noise ceiling
 
 lebel2023_{subject}_metadata.npy      :
 
@@ -124,13 +93,9 @@ os.makedirs(output_dir, exist_ok=True)
 # ============================================================================
 # Discover stories and resolve train/test split
 # ============================================================================
-# Discover stories from the filesystem
-# The file ess_to_story.json only covers the base 5 sessions (27 stories).  
-# The extended dataset for UTS01-03 contains ~84 stories. 
-# We find all stories that have both a preprocessed response file AND a TextGrid annotation.
-#
-# The test story "wheretheressmoke" was repeated across scanning sessions
-# for noise ceiling estimation.  All other stories are used for training.
+# Discover stories from the filesystem.
+# The test story "wheretheressmoke" was repeated across sessions
+# for noise ceiling estimation; everything else is training.
 
 TEST_STORIES = ['wheretheressmoke']
 
@@ -145,7 +110,7 @@ stories_with_tg = {
 with open(join(DATA_DIR, 'ds003020', 'derivative', 'respdict.json')) as f:
     respdict = json.load(f)
 
-# Stories usable for stimulus extraction = have both TextGrid + respdict
+# Stories usable = have both TextGrid + respdict entry
 all_stories = sorted(stories_with_tg & set(respdict.keys()))
 
 test_stories_all = [s for s in TEST_STORIES if s in all_stories]
@@ -160,7 +125,6 @@ print(f'  Test:         {len(test_stories_all)} ({test_stories_all})')
 # ============================================================================
 # Part 1 — Extract stimulus data (words, word onsets, TR times)
 # ============================================================================
-# This is shared across subjects since all subjects heard the same stories.
 
 print('\n' + '='*60)
 print('Part 1: Extracting stimulus data from TextGrids')
@@ -281,14 +245,8 @@ for subject in args.subjects:
     # ----------------------------------------------------------------
     # 2c) Compute noise ceiling from individual repeats
     # ----------------------------------------------------------------
-    # Uses the Schoppe et al. (2016) method as implemented by
-    # Antonello et al. (2023, NeurIPS)
-    #
-    # CCmax is floored at 0.25 to regularise estimates for noisy
-    # voxels (Antonello et al., Section 2.5).
-    #
-    # Test repeats are trimmed by 40 TRs from the start to match
-    # the evaluation window (Antonello et al., Section 3.5)
+    # CCmax (Schoppe et al. 2016), floored at 0.25 (Antonello et al. §2.5).
+    # Test repeats trimmed by 40 TRs from start to match evaluation window.
 
     cc_max = np.full(n_voxels, np.nan)
     test_repeat_trim = 40  # Additional TRs to remove from start
@@ -311,9 +269,7 @@ for subject in args.subjects:
             # Mean response across repeats → (n_TRs, n_voxels)
             mean_resp = np.mean(repeats, axis=0)
 
-            # TP: noise power — mean within-repeat temporal variance
-            #   var across time for each repeat → (N, n_voxels)
-            #   then average across repeats    → (n_voxels,)
+            # TP: mean within-repeat temporal variance
             within_var = np.var(repeats, axis=1, ddof=1)
             TP = np.mean(within_var, axis=0)
 
@@ -329,8 +285,7 @@ for subject in args.subjects:
             # Floor at 0.25 (Antonello et al., Section 2.5)
             cc_max_story = np.maximum(cc_max_story, 0.25)
 
-            # Use first test story (consistent with single-story
-            # evaluation in both LeBel and Antonello papers)
+            # Use first test story
             if np.all(np.isnan(cc_max)):
                 cc_max = cc_max_story
 
@@ -367,7 +322,7 @@ for subject in args.subjects:
         cu.db = new_db
         braindata.db = new_db
 
-        # Load brain mask (nibabel: x,y,z → pycortex: z,y,x)
+        # Load brain mask (nibabel: x,y,z → pycortex expects z,y,x)
         xfm_dir = join(db_path, subject, 'transforms')
         xfm_names = [x for x in os.listdir(xfm_dir) if not x.startswith('.')]
         assert xfm_names, f'No transforms found for {subject}'

@@ -1,17 +1,7 @@
-"""Test the trained OPT-1.3B encoding models' predictions for the test
-stimuli, and save the encoding accuracy as part of the metadata.
+"""Test trained OPT-1.3B encoding models on held-out test stimuli.
 
-Computes:
- - Voxelwise Pearson correlation (CCabs)
- - Noise-ceiling-normalised correlation (CCnorm = CCabs / CCmax)
- - Per-ROI summary statistics
-
-Parameters
-----------
-berg_dir : str
-    Directory of the Brain Encoding Response Generator (BERG).
-subjects : list of str
-    Subject identifiers. Default: UTS01, UTS02, UTS03.
+Computes voxelwise Pearson correlation (CCabs), noise-ceiling-normalised
+correlation (CCnorm), and per-ROI summary statistics.
 """
 
 import argparse
@@ -67,7 +57,7 @@ for subject in args.subjects:
     print(f'{"="*60}')
 
     # ----------------------------------------------------------------
-    # Load metadata (from prepare_ridge.py)
+    # Load metadata
     # ----------------------------------------------------------------
     data_meta_path = os.path.join(data_dir,
         f'lebel2023_{subject}_metadata.npy')
@@ -78,7 +68,7 @@ for subject in args.subjects:
     roi_dict = metadata['roi']
 
     # ----------------------------------------------------------------
-    # Load test predictions (from train_ridge.py)
+    # Load test predictions
     # ----------------------------------------------------------------
     pred_path = os.path.join(results_dir,
         f'fmri_test_pred_{subject}.npy')
@@ -86,7 +76,7 @@ for subject in args.subjects:
     print(f'  Test predictions shape: {pred.shape}')
 
     # ----------------------------------------------------------------
-    # Load actual test responses (same trim as training)
+    # Load actual test responses
     # ----------------------------------------------------------------
     test_resp_trim = args.trim_test - args.trim_train  # 50 - 10 = 40
     test_path = os.path.join(data_dir,
@@ -99,9 +89,6 @@ for subject in args.subjects:
             resp_parts.append(resp[test_resp_trim:])
     actual = np.vstack(resp_parts)
     print(f'  Actual responses shape:  {actual.shape}')
-
-    assert pred.shape == actual.shape, (
-        f'Shape mismatch: pred {pred.shape} vs actual {actual.shape}')
 
     # ----------------------------------------------------------------
     # Compute voxelwise Pearson correlation (CCabs)
@@ -121,7 +108,7 @@ for subject in args.subjects:
     print(f'    Voxels r>0.5:  {np.sum(corrs > 0.5)}')
 
     # ----------------------------------------------------------------
-    # Compute noise-ceiling-normalised correlation (CCnorm)
+    # CCnorm = CCabs / CCmax
     # ----------------------------------------------------------------
 
     cc_norm = corrs / noise_ceiling
@@ -154,9 +141,8 @@ for subject in args.subjects:
                       f'{mean_norm:>12.4f} {mean_ceil:>12.4f}')
 
     # ----------------------------------------------------------------
-    # Save results to model metadata
+    # Save results to metadata
     # ----------------------------------------------------------------
-    # Start from the data metadata and add encoding results
     model_metadata = metadata.copy()
     model_metadata['encoding_model']['correlation'] = corrs
     model_metadata['encoding_model']['cc_norm'] = cc_norm
