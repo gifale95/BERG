@@ -239,8 +239,8 @@ performance:
     - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-lebel2023/model-opt_1_3b_ridge/encoding_models_accuracy"
 
 references:
-    - Model building code: "https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-opt_1_3b_ridge"
-    - Scaling laws paper (Antonello et al., 2023): "https://proceedings.neurips.cc/paper_files/paper/2023/hash/4f3f7c5825ad3fdb20650cda3b1846e1-Abstract-Conference.html"
+    - Model building code: "https://github.com/gifale95/BERG/tree/main/berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-ridge/train_ridge.py"
+    - Scaling laws for language encoding models in fMRI paper (Antonello et al., 2023): "https://arxiv.org/abs/2305.11863"
     - Scaling laws code & data: "https://github.com/HuthLab/encoding-model-scaling-laws"
     - Dataset paper (LeBel et al., 2023): "https://doi.org/10.1038/s41597-023-02437-z"
     - Dataset (OpenNeuro): "https://openneuro.org/datasets/ds003020"
