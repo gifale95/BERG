@@ -82,8 +82,6 @@ metadata: |
  
   'roi':
       {roi_name}          : (n_voxels,) bool - Voxel mask per ROI
-      ROIs vary per subject (25–35 ROIs from hand-drawn functional localizers).
-      Use get_model_metadata() to list available ROIs for a given subject.
  
   'encoding_model':
       train_stories       : (n_train,)   - Story names used for model training (83 stories)

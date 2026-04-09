@@ -97,7 +97,7 @@ The following table shows BERG's most accurate encoding models for each dataset 
 | [fmri-cneuromod_algo2025-text2fmri][fmri-cneuromod_algo2025-text2fmri] | [CNeuroMod/Algonauts2025][Algonauts] | fMRI | Human | Text | [HF Collection][acc-fmri-cneuromod_algo2025-text2fmri] |
 | [brainscore_language][brainscore_language] | [Pereira et al., 2018][pereira_2018] | fMRI | Human | Text | [BrainScore leaderboard (language)][bs_leaderboard_language] |
 | [brainscore_vision][brainscore_vision] | [Freeman et al., 2013][freeman_2013]; [Majaj et al., 2015][majaj_2015] | Ephys | Macaque | Images | [BrainScore leaderboard (vision)][bs_leaderboard_vision] |
-
+| [fmri-lebel2023-opt_1_3b][fmri-lebel2023-opt_1_3b] | [LeBel et al., 2023][lebel_2023] | fMRI | Human | Text | [Accuracy plots][acc-fmri-lebel2023-opt_1_3b] |
 
 ### ✨ BERG functions
 
@@ -275,3 +275,7 @@ If you use BERG, please cite:
 [pereira_2018]: https://doi.org/10.1038/s41467-018-03068-4
 [freeman_2013]: https://doi.org/10.1038/nn.3402
 [majaj_2015]: https://doi.org/10.1152/jn.00262.2014
+
+[fmri-lebel2023-opt_1_3b]: https://gifale95.github.io/BERG/model_cards/fmri-lebel2023-opt_1_3b.html
+[lebel_2023]: https://doi.org/10.1038/s41597-023-02437-z
+[acc-fmri-lebel2023-opt_1_3b]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-lebel2023/model-opt_1_3b_ridge/encoding_models_accuracy/
