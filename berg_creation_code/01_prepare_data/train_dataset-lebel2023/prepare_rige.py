@@ -409,7 +409,7 @@ for subject in args.subjects:
             flat = rois[name][mask_bool].astype(bool)
             n = np.count_nonzero(flat)
             if n > 0:
-                roi_dict[name] = flat
+                roi_dict[name.strip()] = flat
                 print(f'      {name}: {n} voxels')
 
         print(f'    Total ROIs with voxels: {len(roi_dict)}')

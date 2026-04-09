@@ -1,7 +1,7 @@
 # Basic metadata
 model_id: fmri-lebel2023-opt_1_3b
 modality: fMRI
-training_dataset: LeBel et al. (2023) — extended dataset
+training_dataset: LeBel et al. (2023)
 species: Human
 stimuli: Text (spoken narrative stories with word onset times)
 model_type: OPT-1.3B–based linear encoding model (contextual LLM embeddings + ridge regression)
@@ -59,7 +59,7 @@ description: |
   parameter was selected per voxel via bootstrap cross-validation.
   Regularisation alphas were drawn from logspace(1, 4, 15). Training features
   were trimmed by 10 TRs from the start and 5 TRs from the end. One story
-  ("Where There's Smoke") was repeated across all 5 sessions and used as the
+  ("Where There's Smoke") was repeated 10 times across scanning sessions and used as the
   held-out test set. Test features were trimmed by 50 TRs from the start to
   exclude long-context artifacts (Antonello et al., Section 3.5) and 5 TRs
   from the end.
@@ -92,7 +92,7 @@ metadata: |
       UTS02 (35 ROIs): AC, ATFP, Broca, EBA, FEF, FFA, FO, IFSFP, IPS, LO,
           M1F, M1H, M1M, OFA, OPA, PMvh, PPA, RSC, S1F, S1H, S1M, SEF,
           SMFA, SMHA, V1, V2, V3, V3A, V3B, V4, V7, VO, hMT, pSTS, sPMv
-      UTS03 (25 ROIs): AC, Broca, EBA, FBA, FEF, FFA, IFSFP, 'IPS ', M1F,
+      UTS03 (25 ROIs): AC, Broca, EBA, FBA, FEF, FFA, IFSFP, IPS, M1F,
           M1H, M1M, OFA, PMvh, PPA, RSC, S1F, S1H, S1M, S2F, S2H, S2M,
           SMFA, SMHA, TOS, sPMv
       Common ROIs (19): AC, Broca, EBA, FEF, FFA, IFSFP, M1F, M1H, M1M,
@@ -193,7 +193,7 @@ parameters:
           Not all ROIs are available for every subject — use
           get_model_metadata() to check availability.
         valid_values: ['AC', 'ATFP', 'Broca', 'EBA', 'FBA', 'FEF', 'FFA',
-                      'FO', 'IFSFP', 'IPS', 'IPS ', 'LO', 'M1F', 'M1H', 'M1M',
+                      'FO', 'IFSFP', 'IPS', 'LO', 'M1F', 'M1H', 'M1M',
                       'OFA', 'OPA', 'PMvh', 'PPA', 'RSC', 'S1F', 'S1H', 'S1M',
                       'S2F', 'S2H', 'S2M', 'SEF', 'SMFA', 'SMHA', 'TOS',
                       'V1', 'V2', 'V3', 'V3A', 'V3B', 'V4', 'V7', 'VO',
