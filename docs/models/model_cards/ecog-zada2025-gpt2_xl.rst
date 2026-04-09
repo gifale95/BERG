@@ -115,21 +115,10 @@ Output
      - ``['n_words', 'n_electrodes', 'n_lags']``
    * - Description
      - The output is a 3D array containing in silico high-gamma ECoG responses.
-
-**Dimensions:**
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - n_words
-     - Number of words in the input.
-   * - n_electrodes
-     - Number of electrodes (subject-dependent, or filtered by selection).
-   * - n_lags
-     - Number of time lags relative to word onset.
+   * - Dimensions
+     - | **n_words**: Number of words in the input.
+       | **n_electrodes**: Number of electrodes (subject-dependent, or filtered by selection).
+       | **n_lags**: Number of time lags relative to word onset.
 
 Parameters
 ---------
