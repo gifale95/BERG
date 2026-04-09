@@ -115,19 +115,38 @@ if has_pycortex:
         xfmname = xfm_names[0]
 
         # Plot
-        fig = plt.figure(figsize=(14, 7))
+        fig = plt.figure(figsize=(16, 10))
         vol = cortex.Volume(cc_norm, subject, xfmname,
                             vmin=0, vmax=1.0, cmap='inferno')
         cortex.quickshow(vol, fig=fig, with_colorbar=True,
                          with_curvature=True, with_rois=True,
                          linewidth=2)
-        fig.axes[0].set_title(
+
+        # Reposition axes after quickshow to avoid overlap:
+        # Nudge brain down slightly, center the colorbar — but preserve
+        # pycortex's per-subject sizing so no flatmap gets squished.
+        all_axes = fig.get_axes()
+        brain_ax = all_axes[0]
+        bp = brain_ax.get_position()
+        # Shift brain down a bit to make room for title, keep size
+        brain_ax.set_position([bp.x0, bp.y0 - 0.03, bp.width, bp.height])
+
+        # Find and center the colorbar axis
+        for ax in all_axes[1:]:
+            pos = ax.get_position()
+            if pos.width > pos.height:
+                cb_width = 0.4
+                cb_x = 0.5 - cb_width / 2
+                ax.set_position([cb_x, 0.03, cb_width, pos.height])
+                break
+
+        fig.suptitle(
             f'{subject} — Normalised Encoding Performance '
             f'($CC_{{norm}}$, $CC_{{max}}$ > {args.ccmax_threshold})',
-            fontsize=fontsize + 1, fontweight='bold')
+            fontsize=fontsize + 1, fontweight='bold', y=0.96)
 
         fig_path = os.path.join(save_dir, f'flatmap_ccnorm_{subject}.png')
-        fig.savefig(fig_path, dpi=200, bbox_inches='tight')
+        fig.savefig(fig_path, dpi=200, facecolor='white')
         print(f'  Saved: {fig_path}')
         plt.close(fig)
 
@@ -226,7 +245,6 @@ for subject in args.subjects:
 print(f'\n{"="*60}')
 print(f'All plots saved to: {save_dir}')
 print(f'{"="*60}')
-
 
 """
 Example usage
