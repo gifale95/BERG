@@ -60,6 +60,29 @@ from os.path import join
 from tqdm import tqdm
 
 
+# ========================================================================
+# Force all caches / temp files into workspace
+# ========================================================================
+# import os
+
+# BASE = "/pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch"
+
+# os.environ["HF_HOME"] = f"{BASE}/hf_cache"
+# os.environ["TRANSFORMERS_CACHE"] = f"{BASE}/hf_cache"
+# os.environ["TORCH_HOME"] = f"{BASE}/torch_cache"
+# os.environ["XDG_CACHE_HOME"] = f"{BASE}/cache"
+
+# os.environ["TMPDIR"] = f"{BASE}/tmp"
+# os.environ["TEMP"] = f"{BASE}/tmp"
+# os.environ["TMP"] = f"{BASE}/tmp"
+
+# # create folders if missing
+# os.makedirs(f"{BASE}/hf_cache", exist_ok=True)
+# os.makedirs(f"{BASE}/torch_cache", exist_ok=True)
+# os.makedirs(f"{BASE}/cache", exist_ok=True)
+# os.makedirs(f"{BASE}/tmp", exist_ok=True)
+
+
 # ============================================================================
 # CLI
 # ============================================================================
@@ -535,10 +558,16 @@ Example usage
 python berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-ridge/train_ridge.py \
     --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
     --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator \
-    --device cpu
-    --model_name facebook/opt-6.7b
+    --device cpu \
+    --model_name facebook/opt-6.7b \
     --layer 27
-    
+
+python berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-ridge/train_ridge.py \
+    --deep_fmri_repo /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/deep-fMRI-dataset \
+    --berg_dir /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/BERG/brain-encoding-response-generator \
+    --device cuda \
+    --model_name facebook/opt-6.7b \
+    --layer 27
 
 # Quick test run with fewer bootstraps:
 python berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-ridge/train_ridge.py \

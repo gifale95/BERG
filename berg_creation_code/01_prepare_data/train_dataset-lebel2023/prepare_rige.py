@@ -105,7 +105,7 @@ sys.path.insert(0, encoding_dir)
 # that often has numpy binary-compatibility issues.
 from ridge_utils.stimulus_utils import load_textgrids, load_simulated_trfiles  # noqa: E402
 from ridge_utils.dsutils import make_word_ds                                   # noqa: E402
-from config import DATA_DIR, EM_DATA_DIR                                       # noqa: E402
+from config import DATA_DIR                                                    # noqa: E402
 
 
 def get_story_wordseqs(stories):
@@ -128,35 +128,39 @@ os.makedirs(output_dir, exist_ok=True)
 # ============================================================================
 # Discover stories and resolve train/test split
 # ============================================================================
-# The deep-fMRI-dataset organises stories into sessions.  For subjects
-# UTS01-03, sessions 1-5 are the base set (27 stories) and sessions 6-15
-# are the extended set (~55 additional stories).  The test story
-# "wheretheressmoke" is repeated once per session for noise ceiling
-# estimation.  We use *all* available sessions.
+# Discover stories from the filesystem rather than sess_to_story.json,
+# which only covers the base 5 sessions (27 stories).  The extended dataset
+# for UTS01-03 contains ~84 stories.  We find all stories that have both
+# a preprocessed response file AND a TextGrid annotation.
+#
+# The test story "wheretheressmoke" was repeated across scanning sessions
+# for noise ceiling estimation.  All other stories are used for training.
 
-with open(join(EM_DATA_DIR, 'sess_to_story.json'), 'r') as f:
-    sess_to_story = json.load(f)
+TEST_STORIES = ['wheretheressmoke']
 
-# Collect train/test stories from all sessions
-all_sessions = sorted(sess_to_story.keys(), key=int)
-train_stories_all = []
-test_stories_all = []
+# Find stories with TextGrids
+textgrid_dir = join(DATA_DIR, 'ds003020', 'derivative', 'TextGrids')
+assert os.path.isdir(textgrid_dir), (
+    f'TextGrid directory not found: {textgrid_dir}')
+stories_with_tg = {
+    f.replace('.TextGrid', '')
+    for f in os.listdir(textgrid_dir) if f.endswith('.TextGrid')
+}
 
-for sess in all_sessions:
-    stories, tstory = sess_to_story[sess][0], sess_to_story[sess][1]
-    train_stories_all.extend(stories)
-    if tstory not in test_stories_all:
-        test_stories_all.append(tstory)
+# Find stories with respdict entries (needed for TR times)
+with open(join(DATA_DIR, 'ds003020', 'derivative', 'respdict.json')) as f:
+    respdict = json.load(f)
 
-# Remove duplicates (a story may appear in multiple sessions' lists)
-train_stories_all = sorted(set(train_stories_all))
+# Stories usable for stimulus extraction = have both TextGrid + respdict
+all_stories = sorted(stories_with_tg & set(respdict.keys()))
 
-# Verify no overlap
+test_stories_all = [s for s in TEST_STORIES if s in all_stories]
+train_stories_all = sorted(s for s in all_stories if s not in TEST_STORIES)
+
 assert len(set(train_stories_all) & set(test_stories_all)) == 0, \
     'Train and test stories overlap!'
-all_stories = sorted(set(train_stories_all) | set(test_stories_all))
 
-print(f'\nStories discovered:')
+print(f'\nStories discovered (from filesystem):')
 print(f'  Total unique: {len(all_stories)}')
 print(f'  Training:     {len(train_stories_all)}')
 print(f'  Test:         {len(test_stories_all)} ({test_stories_all})')
@@ -376,10 +380,14 @@ for subject in args.subjects:
         import nibabel as nib
         import cortex
         import cortex.utils as cu
+        import cortex.database
+        import cortex.dataset.braindata as braindata
 
+        cortex.database.default_filestore = db_path
         new_db = cortex.database.Database(db_path)
         cortex.db = new_db
         cu.db = new_db
+        braindata.db = new_db
 
         # Load brain mask (nibabel: x,y,z → pycortex: z,y,x)
         xfm_dir = join(db_path, subject, 'transforms')
@@ -448,6 +456,11 @@ Example usage
 python berg_creation_code/01_prepare_data/train_dataset-lebel2023/prepare_rige.py \
     --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
     --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator
+    
+    
+python berg_creation_code/01_prepare_data/train_dataset-lebel2023/prepare_rige.py \
+    --deep_fmri_repo /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/deep-fMRI-dataset \
+    --berg_dir /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/BERG/brain-encoding-response-generator \
 
 # For all 8 subjects (base dataset only):
 python prepare_ridge.py \\

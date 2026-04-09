@@ -14,13 +14,13 @@ description: |
   activity via voxelwise ridge regression, following the scaling-laws approach of
   Antonello, Vaidya & Huth (NeurIPS 2023).
 
-  **Neural data.** The model was trained on the extended LeBel et al. (2023) dataset,
-  in which 3 participants (UTS01, UTS02, UTS03) passively listened to approximately
-  95 complete narrative stories (~20 hours each) from The Moth and Modern Love
-  podcasts over 15 fMRI scanning sessions. Functional data were acquired at 3T
-  (TR=2s, 2.6mm isotropic) and preprocessed with motion correction, cross-run
+  **Neural data.** The model was trained on the LeBel et al. (2023) dataset, in
+  which 3 participants (UTS01, UTS02, UTS03) passively listened to 84 complete
+  narrative stories (~16 hours) from The Moth and Modern Love podcasts over
+  15 fMRI scanning sessions. Functional data were acquired at 3T (TR=2s,
+  2.6mm isotropic) and preprocessed with motion correction, cross-run
   alignment, Savitzky-Golay detrending, and z-scoring. The number of cortical
-  voxels varies per subject (approximately 80,000–96,000).
+  voxels varies per subject: UTS01: 81,126; UTS02: 94,251; UTS03: 95,556.
 
   **Feature extraction.** Each word in the input is processed through OPT-1.3B
   (Zhang et al., 2022), a 1.3-billion-parameter decoder-only transformer language
@@ -54,18 +54,18 @@ description: |
     4. **Prediction.** The delayed feature matrix is multiplied by the pre-trained
        ridge regression weights to produce predicted BOLD responses at each TR.
 
-  **Training.** Approximately 95 stories were used for training (~20 hours of
-  speech per subject) with ridge regression fitted independently per voxel. The
-  ridge regularisation parameter was selected per voxel via bootstrap
-  cross-validation. Regularisation alphas were drawn from logspace(1, 4, 15).
-  Three test stories (including "Where There's Smoke" with 10 repeats) were used
-  for evaluation. Training features were trimmed by 10 TRs from the start and
-  5 TRs from the end; test features were trimmed by 50 TRs from the start
-  (to exclude long-context artifacts, Antonello et al. Section 3.5) and 5 TRs
+  **Training.** 83 stories were used for training (~16 hours of speech) with
+  ridge regression fitted independently per voxel. The ridge regularisation
+  parameter was selected per voxel via bootstrap cross-validation.
+  Regularisation alphas were drawn from logspace(1, 4, 15). Training features
+  were trimmed by 10 TRs from the start and 5 TRs from the end. One story
+  ("Where There's Smoke") was repeated across all 5 sessions and used as the
+  held-out test set. Test features were trimmed by 50 TRs from the start to
+  exclude long-context artifacts (Antonello et al., Section 3.5) and 5 TRs
   from the end.
 
   **Noise ceiling.** Computed using the Schoppe et al. (2016) signal/noise power
-  decomposition on 10 repeated presentations of the test story, with CCmax
+  decomposition on repeated presentations of the test story, with CCmax
   floored at 0.25 to regularise noisy voxels (Antonello et al., Section 2.5).
 
   **Output.** The model returns a 2D array of predicted BOLD responses at each TR,
@@ -75,24 +75,36 @@ description: |
 
 metadata: |
   'fmri':
-      subject_id                 : str         - Subject identifier (e.g., 'UTS01')
-      n_voxels                   : int         - Total number of cortical voxels (varies per subject, see below)
-      tr                         : float       - Repetition time in seconds (2.0)
-      voxel_size_mm              : float       - Isotropic voxel size in mm (2.6)
-  'encoding_model':
-      train_stories              : array       - Story names used for model training (~95 stories)
-      test_stories               : array       - Story names used for model testing
-      correlation                : (n_voxels,) - Voxelwise prediction accuracy (Pearson's r) on test story
-      cc_norm                    : (n_voxels,) - Noise-ceiling-normalised correlation (CCabs / CCmax)
-      noise_ceiling              : (n_voxels,) - Voxelwise noise ceiling CCmax (Schoppe et al., floored at 0.25)
+      subject_id          : str          - Subject identifier (e.g., 'UTS01')
+      n_voxels            : int          - Total number of cortical voxels (varies per subject)
+      tr                  : float        - Repetition time in seconds (2.0)
+      voxel_size_mm       : float        - Isotropic voxel size in mm (2.6)
+
   'roi':
       Not all ROIs are available for every subject. ROIs are derived from
       hand-drawn functional localizer data. Use get_model_metadata() to check
-      which ROIs are available for a given subject. Each ROI is a boolean mask
-      of shape (n_voxels,) where True indicates membership.
-      Common ROIs across most subjects include: AC, EBA, FFA, M1F, M1H, M1M,
-      PPA, RSC, S1F, S1H, S1M, SMFA, SMHA, sPMv.
-      See the 'roi' selection parameter below for the full list of possible ROIs.
+      which ROIs are available for a given subject. Each ROI entry is a boolean
+      mask of shape (n_voxels,) where True indicates membership.
+
+      UTS01 (25 ROIs): AC, Broca, EBA, FEF, FFA, FO, IFSFP, IPS, M1F, M1H,
+          M1M, OFA, PMvh, PPA, RSC, S1F, S1H, S1M, S2F, S2H, S2M, SMFA,
+          SMHA, TOS, sPMv
+      UTS02 (35 ROIs): AC, ATFP, Broca, EBA, FEF, FFA, FO, IFSFP, IPS, LO,
+          M1F, M1H, M1M, OFA, OPA, PMvh, PPA, RSC, S1F, S1H, S1M, SEF,
+          SMFA, SMHA, V1, V2, V3, V3A, V3B, V4, V7, VO, hMT, pSTS, sPMv
+      UTS03 (25 ROIs): AC, Broca, EBA, FBA, FEF, FFA, IFSFP, 'IPS ', M1F,
+          M1H, M1M, OFA, PMvh, PPA, RSC, S1F, S1H, S1M, S2F, S2H, S2M,
+          SMFA, SMHA, TOS, sPMv
+      Common ROIs (19): AC, Broca, EBA, FEF, FFA, IFSFP, M1F, M1H, M1M,
+          OFA, PMvh, PPA, RSC, S1F, S1H, S1M, SMFA, SMHA, sPMv
+
+  'encoding_model':
+      train_stories       : (n_train,)   - Story names used for model training (83 stories)
+      test_stories        : (n_test,)    - Story names used for model testing (1 story)
+      noise_ceiling       : (n_voxels,)  - Voxelwise noise ceiling CCmax (Schoppe et al., floored at 0.25)
+      correlation         : (n_voxels,)  - Voxelwise prediction accuracy (Pearson's r) on test story
+      ridge_alphas        : (n_voxels,)  - Per-voxel ridge regularisation parameter selected by bootstrap CV
+      cc_norm             : (n_voxels,)  - Noise-ceiling-normalised correlation (CCabs / CCmax)
 
 
 # Input stimulus information
@@ -101,9 +113,9 @@ input:
   description: |
     A dictionary with two required keys:
 
-      ``words``   — list of str: the words of the stimulus in order.
-      ``word_onsets`` — list of float or numpy.ndarray: the onset time of each
-                        word in seconds (relative to an arbitrary t=0).
+      ``words``        — list of str: the words of the stimulus in order.
+      ``word_onsets``  — list of float or numpy.ndarray: the onset time of each
+                         word in seconds (relative to an arbitrary t=0).
 
     Both lists must have the same length. The word onset times are critical for
     accurate predictions because the model's temporal pipeline (Lanczos
@@ -153,10 +165,7 @@ parameters:
 
   subject:
     description: |
-      Subject ID from the LeBel et al. (2023) extended dataset.
-      Only subjects UTS01, UTS02, and UTS03 are available, as only these
-      subjects have the extended dataset (~20 hours) required to train
-      encoding models with high-dimensional contextual features.
+      Subject ID from the LeBel et al. (2023) dataset.
     required: true
     type: str
     valid_values: ["UTS01", "UTS02", "UTS03"]
@@ -181,13 +190,14 @@ parameters:
         type: list[str]
         description: |
           List of ROI names for which in silico fMRI responses are generated.
-          ROIs are defined per subject from functional localizer data. Not all
-          ROIs are available for every subject — use get_model_metadata() to
-          check availability.
-        valid_values: ['AC', 'ATFP', 'Broca', 'Brocas', 'EBA', 'FBA', 'FEF', 'FFA',
-                      'FO', 'IFSFP', 'IPS', 'IPS ', 'ISPS', 'LO', 'M1F', 'M1H', 'M1M', 'OFA', 'OPA',
-                      'PMvh', 'PPA', 'RSC', 'S1F', 'S1H', 'S1M', 'S2F', 'S2H', 'S2M', 'SEF', 'SMFA',
-                      'SMHA', 'TOS', 'V1', 'V2', 'V3', 'V3A', 'V3B', 'V4', 'V7', 'VO', 'hMT', 'pSTS', 'sPMv']
+          Not all ROIs are available for every subject — use
+          get_model_metadata() to check availability.
+        valid_values: ['AC', 'ATFP', 'Broca', 'EBA', 'FBA', 'FEF', 'FFA',
+                      'FO', 'IFSFP', 'IPS', 'IPS ', 'LO', 'M1F', 'M1H', 'M1M',
+                      'OFA', 'OPA', 'PMvh', 'PPA', 'RSC', 'S1F', 'S1H', 'S1M',
+                      'S2F', 'S2H', 'S2M', 'SEF', 'SMFA', 'SMHA', 'TOS',
+                      'V1', 'V2', 'V3', 'V3A', 'V3B', 'V4', 'V7', 'VO',
+                      'hMT', 'pSTS', 'sPMv']
         example: ["AC", "Broca"]
       voxel_index:
         type: numpy.ndarray
