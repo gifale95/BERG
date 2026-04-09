@@ -16,11 +16,6 @@ Pipeline steps:
 7. Evaluation: Predict held-out test story, compute voxelwise correlation
 8. Output: Ridge weights, test predictions, and updated metadata
 
-Before running this script, you must:
-1. Run prepare_ridge.py to create the training data in BERG format
-2. Clone the deep-fMRI-dataset repository (for ridge_utils):
-   $ git clone git@github.com:HuthLab/deep-fMRI-dataset.git
-3. Install transformers and torch
 
 Parameters
 ----------
@@ -163,13 +158,8 @@ print(f'\nDevice: {device}')
 # ============================================================================
 data_dir = join(args.berg_dir, 'model_training_datasets',
                 'train_dataset-lebel2023')
-assert os.path.isdir(data_dir), (
-    f'Prepared data not found at: {data_dir}. '
-    f'Run prepare_ridge.py first.')
 
 stimuli_path = join(data_dir, 'lebel2023_stimuli.h5')
-assert os.path.exists(stimuli_path), (
-    f'Stimuli file not found: {stimuli_path}')
 
 
 # ############################################################################
@@ -189,17 +179,6 @@ def tokenize_story(tokenizer, words):
     tokenizer : transformers.PreTrainedTokenizer
     words : list of str
         Raw word list from the TextGrid (may contain empty strings).
-
-    Returns
-    -------
-    all_tokens : list of int
-        Complete token-ID sequence including the BOS token.
-    real_word_indices : list of int
-        Positions (into *words*) of the real words.
-    word_first_tok : list of int
-        First token index in *all_tokens* per real word.
-    word_last_tok : list of int
-        Last token index in *all_tokens* per real word.
     """
     bos_id = tokenizer.bos_token_id
     all_tokens     = [bos_id]
@@ -245,11 +224,8 @@ def extract_opt_features_for_story(
         1-indexed layer number (layer 1 = first transformer block).
     device : torch.device
     context_min_words, context_max_words : int
-
-    Returns
-    -------
-    features : ndarray, shape ``(len(words), hidden_dim)``, float32
     """
+    
     hidden_dim = model.config.hidden_size
     all_tokens, real_word_indices, word_first_tok, word_last_tok = \
         tokenize_story(tokenizer, words)
@@ -360,19 +336,19 @@ with h5py.File(stimuli_path, 'r') as stim_hf:
         word_onsets = grp['word_onsets'][:]
         tr_times    = grp['tr_times'][:]
 
-        # 1) Word-level hidden states → (n_words, hidden_dim)
+        # 1) Word-level hidden states -> (n_words, hidden_dim)
         word_features = extract_opt_features_for_story(
             model, tokenizer, words, args.layer, device,
             context_min_words=args.context_min_words,
             context_max_words=args.context_max_words,
         )
 
-        # 2) Lanczos downsample → (n_TRs, hidden_dim)
+        # 2) Lanczos downsample -> (n_TRs, hidden_dim)
         ds_feat = lanczosinterp2D(word_features, word_onsets, tr_times,
                                   window=3)
         downsampled_features[story] = ds_feat.astype(np.float32)
 
-        tqdm.write(f'  {story}: {len(words)} words → {ds_feat.shape[0]} TRs')
+        tqdm.write(f'  {story}: {len(words)} words -> {ds_feat.shape[0]} TRs')
 
 # Free GPU memory
 del model

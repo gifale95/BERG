@@ -55,7 +55,7 @@ lebel2023_{subject}_metadata.npy      :
     'encoding_model':
         train_stories       : list     - Training story names
         test_stories        : list     - Test story names
-        noise_ceiling       : (n_voxels,) - CCmax (Schoppe et al. 2016), floored at 0.25
+        noise_ceiling       : (n_voxels,) - CCmax (Schoppe et al. 2016)
 """
 
 
@@ -95,14 +95,10 @@ for key, val in vars(args).items():
 # Add the deep-fMRI-dataset repository to sys.path
 # ============================================================================
 encoding_dir = join(args.deep_fmri_repo, 'encoding')
-assert os.path.isdir(encoding_dir), (
-    f'Could not find encoding directory at: {encoding_dir}. '
-    f'Make sure --deep_fmri_repo points to the deep-fMRI-dataset repo.')
 sys.path.insert(0, encoding_dir)
 
-# Import only the functions we need, bypassing feature_spaces.py which
-# pulls in SemanticModel → tables (PyTables) — an unnecessary dependency
-# that often has numpy binary-compatibility issues.
+
+# Imports
 from ridge_utils.stimulus_utils import load_textgrids, load_simulated_trfiles  # noqa: E402
 from ridge_utils.dsutils import make_word_ds                                   # noqa: E402
 from config import DATA_DIR                                                    # noqa: E402
@@ -128,10 +124,10 @@ os.makedirs(output_dir, exist_ok=True)
 # ============================================================================
 # Discover stories and resolve train/test split
 # ============================================================================
-# Discover stories from the filesystem rather than sess_to_story.json,
-# which only covers the base 5 sessions (27 stories).  The extended dataset
-# for UTS01-03 contains ~84 stories.  We find all stories that have both
-# a preprocessed response file AND a TextGrid annotation.
+# Discover stories from the filesystem
+# The file ess_to_story.json only covers the base 5 sessions (27 stories).  
+# The extended dataset for UTS01-03 contains ~84 stories. 
+# We find all stories that have both a preprocessed response file AND a TextGrid annotation.
 #
 # The test story "wheretheressmoke" was repeated across scanning sessions
 # for noise ceiling estimation.  All other stories are used for training.
@@ -140,8 +136,6 @@ TEST_STORIES = ['wheretheressmoke']
 
 # Find stories with TextGrids
 textgrid_dir = join(DATA_DIR, 'ds003020', 'derivative', 'TextGrids')
-assert os.path.isdir(textgrid_dir), (
-    f'TextGrid directory not found: {textgrid_dir}')
 stories_with_tg = {
     f.replace('.TextGrid', '')
     for f in os.listdir(textgrid_dir) if f.endswith('.TextGrid')
@@ -156,9 +150,6 @@ all_stories = sorted(stories_with_tg & set(respdict.keys()))
 
 test_stories_all = [s for s in TEST_STORIES if s in all_stories]
 train_stories_all = sorted(s for s in all_stories if s not in TEST_STORIES)
-
-assert len(set(train_stories_all) & set(test_stories_all)) == 0, \
-    'Train and test stories overlap!'
 
 print(f'\nStories discovered (from filesystem):')
 print(f'  Total unique: {len(all_stories)}')
@@ -177,34 +168,31 @@ print('='*60)
 
 stimuli_path = join(output_dir, 'lebel2023_stimuli.h5')
 
-if os.path.exists(stimuli_path):
-    print(f'  Stimuli file already exists: {stimuli_path}')
-    print(f'  Skipping stimulus extraction.')
-else:
-    print(f'  Loading word sequences for {len(all_stories)} stories ...')
-    wordseqs = get_story_wordseqs(all_stories)
 
-    # HDF5 variable-length string type
-    str_dt = h5py.special_dtype(vlen=str)
+print(f'  Loading word sequences for {len(all_stories)} stories ...')
+wordseqs = get_story_wordseqs(all_stories)
 
-    with h5py.File(stimuli_path, 'w') as hf:
-        for story in tqdm(all_stories, desc='  Saving stimuli'):
-            ds = wordseqs[story]
-            grp = hf.create_group(story)
+# HDF5 variable-length string type
+str_dt = h5py.special_dtype(vlen=str)
 
-            # Words as variable-length strings
-            words_arr = np.array(list(ds.data), dtype=object)
-            grp.create_dataset('words', data=words_arr, dtype=str_dt)
+with h5py.File(stimuli_path, 'w') as hf:
+    for story in tqdm(all_stories, desc='  Saving stimuli'):
+        ds = wordseqs[story]
+        grp = hf.create_group(story)
 
-            # Word onset times (seconds)
-            grp.create_dataset('word_onsets', data=np.array(ds.data_times,
-                                                            dtype=np.float64))
+        # Words as variable-length strings
+        words_arr = np.array(list(ds.data), dtype=object)
+        grp.create_dataset('words', data=words_arr, dtype=str_dt)
 
-            # TR acquisition times (seconds)
-            grp.create_dataset('tr_times', data=np.array(ds.tr_times,
-                                                         dtype=np.float64))
+        # Word onset times (seconds)
+        grp.create_dataset('word_onsets', data=np.array(ds.data_times,
+                                                        dtype=np.float64))
 
-    print(f'  Saved stimuli to: {stimuli_path}')
+        # TR acquisition times (seconds)
+        grp.create_dataset('tr_times', data=np.array(ds.tr_times,
+                                                        dtype=np.float64))
+
+print(f'  Saved stimuli to: {stimuli_path}')
 
 
 # ============================================================================
@@ -219,9 +207,6 @@ for subject in args.subjects:
     # Path to the preprocessed HDF5 files in the deep-fMRI-dataset repo
     subject_resp_dir = join(DATA_DIR, 'ds003020', 'derivative',
                             'preprocessed_data', subject)
-    assert os.path.isdir(subject_resp_dir), (
-        f'Preprocessed data not found for {subject} at: {subject_resp_dir}. '
-        f'Have you run load_dataset.py -download_preprocess?')
 
     # Find which stories actually exist for this subject
     available = {
@@ -297,20 +282,13 @@ for subject in args.subjects:
     # 2c) Compute noise ceiling from individual repeats
     # ----------------------------------------------------------------
     # Uses the Schoppe et al. (2016) method as implemented by
-    # Antonello et al. (2023, NeurIPS), Section 2.5:
-    #
-    #   TP  = noise power = mean within-repeat temporal variance
-    #   SP  = signal power = (1/(N-1)) * (N * var(mean_resp) - TP)
-    #   CCmax = 1 / sqrt(1 + (1/N) * (TP/SP - 1))
+    # Antonello et al. (2023, NeurIPS)
     #
     # CCmax is floored at 0.25 to regularise estimates for noisy
     # voxels (Antonello et al., Section 2.5).
     #
     # Test repeats are trimmed by 40 TRs from the start to match
-    # the evaluation window (Antonello et al., Section 3.5: "we
-    # simply exclude the first 100 seconds of predicted and actual
-    # responses from each test story").
-    print(f'  Computing noise ceiling (Schoppe et al. 2016) ...')
+    # the evaluation window (Antonello et al., Section 3.5)
 
     cc_max = np.full(n_voxels, np.nan)
     test_repeat_trim = 40  # Additional TRs to remove from start
@@ -461,10 +439,4 @@ python berg_creation_code/01_prepare_data/train_dataset-lebel2023/prepare_rige.p
 python berg_creation_code/01_prepare_data/train_dataset-lebel2023/prepare_rige.py \
     --deep_fmri_repo /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/deep-fMRI-dataset \
     --berg_dir /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/BERG/brain-encoding-response-generator \
-
-# For all 8 subjects (base dataset only):
-python prepare_ridge.py \\
-    --deep_fmri_repo /path/to/deep-fMRI-dataset \\
-    --berg_dir /path/to/brain-encoding-response-generator \\
-    --subjects UTS01 UTS02 UTS03 UTS04 UTS05 UTS06 UTS07 UTS08
 """

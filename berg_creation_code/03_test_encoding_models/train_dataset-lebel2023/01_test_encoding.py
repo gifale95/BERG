@@ -123,8 +123,7 @@ for subject in args.subjects:
     # ----------------------------------------------------------------
     # Compute noise-ceiling-normalised correlation (CCnorm)
     # ----------------------------------------------------------------
-    # CCnorm = CCabs / max(CCmax, 0.25)
-    # (Antonello et al., Section 2.5; floor already applied in prepare)
+
     cc_norm = corrs / noise_ceiling
     cc_norm = np.nan_to_num(cc_norm)
 
