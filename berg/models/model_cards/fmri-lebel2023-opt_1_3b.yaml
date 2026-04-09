@@ -79,25 +79,12 @@ metadata: |
       n_voxels            : int          - Total number of cortical voxels (varies per subject)
       tr                  : float        - Repetition time in seconds (2.0)
       voxel_size_mm       : float        - Isotropic voxel size in mm (2.6)
-
+ 
   'roi':
-      Not all ROIs are available for every subject. ROIs are derived from
-      hand-drawn functional localizer data. Use get_model_metadata() to check
-      which ROIs are available for a given subject. Each ROI entry is a boolean
-      mask of shape (n_voxels,) where True indicates membership.
-
-      UTS01 (25 ROIs): AC, Broca, EBA, FEF, FFA, FO, IFSFP, IPS, M1F, M1H,
-          M1M, OFA, PMvh, PPA, RSC, S1F, S1H, S1M, S2F, S2H, S2M, SMFA,
-          SMHA, TOS, sPMv
-      UTS02 (35 ROIs): AC, ATFP, Broca, EBA, FEF, FFA, FO, IFSFP, IPS, LO,
-          M1F, M1H, M1M, OFA, OPA, PMvh, PPA, RSC, S1F, S1H, S1M, SEF,
-          SMFA, SMHA, V1, V2, V3, V3A, V3B, V4, V7, VO, hMT, pSTS, sPMv
-      UTS03 (25 ROIs): AC, Broca, EBA, FBA, FEF, FFA, IFSFP, IPS, M1F,
-          M1H, M1M, OFA, PMvh, PPA, RSC, S1F, S1H, S1M, S2F, S2H, S2M,
-          SMFA, SMHA, TOS, sPMv
-      Common ROIs (19): AC, Broca, EBA, FEF, FFA, IFSFP, M1F, M1H, M1M,
-          OFA, PMvh, PPA, RSC, S1F, S1H, S1M, SMFA, SMHA, sPMv
-
+      {roi_name}          : (n_voxels,) bool - Voxel mask per ROI
+      ROIs vary per subject (25–35 ROIs from hand-drawn functional localizers).
+      Use get_model_metadata() to list available ROIs for a given subject.
+ 
   'encoding_model':
       train_stories       : (n_train,)   - Story names used for model training (83 stories)
       test_stories        : (n_test,)    - Story names used for model testing (1 story)
@@ -112,24 +99,11 @@ input:
   type: "dict"
   description: |
     A dictionary with two required keys:
-
       ``words``        — list of str: the words of the stimulus in order.
       ``word_onsets``  — list of float or numpy.ndarray: the onset time of each
                          word in seconds (relative to an arbitrary t=0).
-
-    Both lists must have the same length. The word onset times are critical for
-    accurate predictions because the model's temporal pipeline (Lanczos
-    downsampling + FIR delays) depends on the precise timing of each word.
-    Using a fixed-rate approximation instead of real word onsets degrades
-    voxelwise correlation from r≈0.99 to r≈0.33.
-
-    The model was trained on naturalistic spoken English narrative stories.
-    For best results, use natural English text with realistic inter-word timing.
-
-    **Note on TR times.** The output TRs are automatically generated from the
-    word onset times using the fMRI acquisition rate (TR=2s). The first output
-    TR starts at the onset of the first word, and TRs continue at 2-second
-    intervals until the last word.
+    Both lists must have the same length. Output TRs are automatically generated
+    from word onsets at the fMRI acquisition rate (TR=2s).
   example: |
     {
         "words": ["I", "reached", "over", "and", "slowly", "undid", "my", "seatbelt"],
@@ -143,8 +117,7 @@ output:
   description: |
     The output is a 2D array containing predicted z-scored BOLD fMRI responses.
     Each row corresponds to one fMRI volume (TR=2s), each column to one cortical
-    voxel (or a subset if ROI selection is applied). The number of output TRs is
-    determined by the duration of the input stimulus.
+    voxel (or a subset if ROI selection is applied).
   dimensions:
     - name: "n_TRs"
       description: "Number of fMRI volumes (determined by stimulus duration and TR=2s)."
@@ -164,8 +137,7 @@ parameters:
     function: "get_encoding_model, get_model_metadata"
 
   subject:
-    description: |
-      Subject ID from the LeBel et al. (2023) dataset.
+    description: "Subject ID from the LeBel et al. (2023) dataset."
     required: true
     type: str
     valid_values: ["UTS01", "UTS02", "UTS03"]
@@ -176,12 +148,8 @@ parameters:
     description: |
       Specifies which voxels to include in the model responses.
       If not provided, responses are generated for all cortical voxels.
-
-      **Important:** Not all ROIs are available for every subject. ROIs are
-      derived from hand-drawn functional localizer data and vary across
-      subjects. If a requested ROI is not available for the selected subject,
-      an error is raised listing the available ROIs. Use get_model_metadata()
-      to inspect which ROIs exist for a given subject.
+      Not all ROIs are available for every subject — use get_model_metadata()
+      to check availability.
     required: false
     type: dict
     function: get_encoding_model
@@ -279,5 +247,3 @@ references:
     - Dataset code: "https://github.com/HuthLab/deep-fMRI-dataset"
     - OPT language models (Zhang et al., 2022): "https://arxiv.org/abs/2205.01068"
     - Noise ceiling method (Schoppe et al., 2016): "https://doi.org/10.3389/fncom.2016.00010"
-    - Semantic maps (Huth et al., 2016): "https://doi.org/10.1038/nature17637"
-    - Semantic decoding (Tang et al., 2023): "https://doi.org/10.1038/s41593-023-01304-9"

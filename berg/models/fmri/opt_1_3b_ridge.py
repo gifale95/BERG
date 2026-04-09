@@ -82,12 +82,12 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
         "UTS03":  95556,
     }
 
-    # Temporal processing parameters (matching training pipeline)
+    # Temporal processing
     TR = 2.0
     NDELAYS = 4
     LANCZOS_WINDOW = 3
 
-    # OPT-1.3B parameters (matching training pipeline)
+    # OPT-1.3B
     MODEL_NAME = "facebook/opt-1.3b"
     LAYER = 18
     HIDDEN_DIM = 2048
@@ -117,7 +117,7 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
             Device for OPT-1.3B inference. Options: "cpu", "cuda", "auto".
             OPT-1.3B requires ~3 GB VRAM (fp16) or ~5 GB RAM (fp32).
         berg_dir : str, optional
-            Path to the BERG directory containing model weights and metadata.
+            Path to BERG directory with model weights and metadata.
         """
         self.subject = subject
         self.berg_dir = berg_dir
@@ -197,7 +197,7 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
                       f"{self.subject}, found {n_voxels} in metadata.")
 
             # ----------------------------------------------------------------
-            # Validate ROI selection against subject-specific availability
+            # Validate ROI selection
             # ----------------------------------------------------------------
             roi_dict = self.metadata.get('roi', {})
             available_rois = sorted(roi_dict.keys())
@@ -213,7 +213,7 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
                     )
 
             # ----------------------------------------------------------------
-            # Build voxel selection from ROI + voxel_index
+            # Build voxel selection
             # ----------------------------------------------------------------
             selected = set()
 
@@ -251,8 +251,6 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
                 )
             weights_data = np.load(weights_path, allow_pickle=True).item()
             all_weights = weights_data['ridge_weights']
-            # Shape: (hidden_dim * ndelays, n_voxels) = (8192, n_voxels)
-            # Select only the voxels we need
             self.weights = all_weights[:, self.selected_voxels].astype(
                 np.float32)
 
@@ -393,7 +391,7 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
             if not at_end:
                 phase_start = max(0, rw - self.CONTEXT_MIN_WORDS + 1)
 
-        # Map back to full word list (copy-forward for non-real words)
+        # Map back to full word list
         features = np.zeros((len(words), self.HIDDEN_DIM), dtype=np.float32)
         last_feat = np.zeros(self.HIDDEN_DIM, dtype=np.float32)
         rp = 0
@@ -408,7 +406,7 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
         return features
 
     # ====================================================================
-    # Temporal processing (pure NumPy, no external dependencies)
+    # Temporal processing
     # ====================================================================
 
     def _lanczos_downsample(
@@ -547,14 +545,14 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
             )
 
         # ----------------------------------------------------------------
-        # Step 1: Extract OPT-1.3B features
+        # Extract OPT-1.3B features
         # ----------------------------------------------------------------
         if show_progress:
             print("Extracting OPT-1.3B features ...")
         word_features = self._extract_features(words)
 
         # ----------------------------------------------------------------
-        # Step 2: Lanczos downsample to TR rate
+        # Lanczos downsample to TR rate
         # ----------------------------------------------------------------
         # Generate TR times from the word onsets
         t_start = word_onsets[0]
@@ -567,7 +565,7 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
         )
 
         # ----------------------------------------------------------------
-        # Step 3: Z-score features across time
+        # Z-score features
         # ----------------------------------------------------------------
         mean = downsampled.mean(axis=0, keepdims=True)
         std = downsampled.std(axis=0, keepdims=True)
@@ -575,13 +573,13 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
         downsampled_z = (downsampled - mean) / std
 
         # ----------------------------------------------------------------
-        # Step 4: Apply FIR delays
+        # FIR delays
         # ----------------------------------------------------------------
         delays = list(range(1, self.NDELAYS + 1))
         delayed = self._make_delayed(downsampled_z, delays)
 
         # ----------------------------------------------------------------
-        # Step 5: Predict BOLD responses
+        # Predict BOLD
         # ----------------------------------------------------------------
         predicted_bold = delayed @ self.weights
 
@@ -599,24 +597,7 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
         model_instance: Optional[BaseModelInterface] = None,
         **kwargs,
     ) -> Dict[str, Any]:
-        """
-        Retrieve metadata for the model.
-
-        Parameters
-        ----------
-        berg_dir : str, optional
-            Path to BERG directory.
-        subject : str, optional
-            Subject ID (e.g., 'UTS01').
-        model_instance : BaseModelInterface, optional
-            If provided, extract parameters from this model instance.
-
-        Returns
-        -------
-        dict
-            Metadata dictionary with 'fmri', 'encoding_model', and
-            'roi' keys.
-        """
+        """Retrieve subject metadata (fmri info, ROI masks, encoding stats)."""
         if model_instance is not None:
             berg_dir = model_instance.berg_dir
             subject = model_instance.subject
