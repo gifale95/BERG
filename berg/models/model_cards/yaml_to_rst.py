@@ -985,6 +985,7 @@ if __name__ == "__main__":
     print(f"Converted {args.yaml_file} to {output_file}")
 
 
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-multi_study-tribe_v2.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-cneuromod_algo2025-text2fmri.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/brainscore_language.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/brainscore_vision.yaml

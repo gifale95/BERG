@@ -98,7 +98,7 @@ The following table shows BERG's most accurate encoding models for each dataset 
 | [fmri-cneuromod_algo2025-vibe][fmri-cneuromod_algo2025-vibe] | [CNeuroMod/Algonauts2025][Algonauts] | fMRI | Human | Video + Audio + Text | [Accuracy plots][acc-fmri-cneuromod_algo2025-vibe] |
 | [brainscore_language][brainscore_language] | [Pereira et al., 2018][pereira_2018] | fMRI | Human | Text | [BrainScore leaderboard (language)][bs_leaderboard_language] |
 | [brainscore_vision][brainscore_vision] | [Freeman et al., 2013][freeman_2013]; [Majaj et al., 2015][majaj_2015] | Ephys | Macaque | Images | [BrainScore leaderboard (vision)][bs_leaderboard_vision] |
-
+| [fmri-multi_study-tribe_v2][fmri-multi_study-tribe_v2] | [Multi-study naturalistic fMRI][tribev2] | fMRI | Human | Video + Audio + Text | [TRIBE v2 paper][acc-fmri-multi_study-tribe_v2] |
 
 ### ✨ BERG functions
 
@@ -279,3 +279,7 @@ If you use BERG, please cite:
 [pereira_2018]: https://doi.org/10.1038/s41467-018-03068-4
 [freeman_2013]: https://doi.org/10.1038/nn.3402
 [majaj_2015]: https://doi.org/10.1152/jn.00262.2014
+
+[fmri-multi_study-tribe_v2]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-multi_study-tribe_v2.html
+[tribev2]: https://github.com/facebookresearch/tribev2
+[acc-fmri-multi_study-tribe_v2]: https://ai.meta.com/research/publications/a-foundation-model-of-vision-audition-and-language-for-in-silico-neuroscience/
