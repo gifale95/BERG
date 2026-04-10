@@ -49,7 +49,7 @@ model_info = load_model_info()
 
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.tribe_v2",
+    module_path="berg.models.fmri.multi_study_tribe_v2",
     class_name="TribeV2EncodingModel",
     modality=model_info.get("modality", "fmri"),
     training_dataset=model_info.get("training_dataset", "multi_study"),
