@@ -253,6 +253,28 @@ class TribeV2EncodingModel(BaseModelInterface):
             )
             from tribev2.demo_utils import TribeModel
 
+            # Patch whisperx compute type for CPU compatibility.
+            # tribev2 hardcodes float16 in ExtractWordsFromAudio, which fails
+            # on CPU/Mac. We monkey-patch subprocess.run to swap float16->int8.
+            if self.device != "cuda":
+                try:
+                    import subprocess
+                    import functools
+                    import tribev2.eventstransforms as _et
+
+                    _orig_subprocess_run = subprocess.run
+
+                    @functools.wraps(_orig_subprocess_run)
+                    def _patched_subprocess_run(cmd, *args, **kwargs):
+                        if isinstance(cmd, list):
+                            cmd = ["int8" if c == "float16" else c for c in cmd]
+                        return _orig_subprocess_run(cmd, *args, **kwargs)
+
+                    subprocess.run = _patched_subprocess_run
+                    print("  Patched whisperx compute_type to int8 for CPU compatibility.")
+                except Exception as patch_err:
+                    print(f"  Warning: could not patch whisperx compute_type: {patch_err}")
+
             self.tribe_model = TribeModel.from_pretrained(
                 "facebook/tribev2",
                 cache_folder=cache_folder,
