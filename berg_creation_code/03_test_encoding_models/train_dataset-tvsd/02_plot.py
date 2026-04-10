@@ -49,7 +49,7 @@ metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-utah_arr
     'train_dataset-tvsd', 'model-vit_b_32', 'metadata')
 
 for monkey in args.monkey:
-    file_name = f'metadata_monkey{monkey}.npy'
+    file_name = f'metadata_{monkey}.npy'
     metadata = np.load(os.path.join(metadata_dir, file_name),
         allow_pickle=True).item()
     

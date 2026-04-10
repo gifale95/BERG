@@ -95,6 +95,7 @@ The following table shows BERG's most accurate encoding models for each dataset 
 | [calcium_2p-wang_2025-3DCNN][calcium_2p-wang_2025-3DCNN] | [Wang et al., 2025][wang_2025] | two-photon calcium imaging | Mouse | Videos | [Accuracy plots][acc-calcium_2p-wang_2025-3DCNN] |
 | [fmri-tuckute_2024-GPT2_XL][fmri-tuckute_2024-GPT2_XL] | [Tuckute et al., 2024][tuckute_2024] | fMRI | Human | Text | [Accuracy plots][acc-fmri-tuckute_2024-GPT2_XL] |
 | [fmri-cneuromod_algo2025-text2fmri][fmri-cneuromod_algo2025-text2fmri] | [CNeuroMod/Algonauts2025][Algonauts] | fMRI | Human | Text | [HF Collection][acc-fmri-cneuromod_algo2025-text2fmri] |
+| [fmri-cneuromod_algo2025-vibe][fmri-cneuromod_algo2025-vibe] | [CNeuroMod/Algonauts2025][Algonauts] | fMRI | Human | Video + Audio + Text | [Accuracy plots][acc-fmri-cneuromod_algo2025-vibe] |
 | [brainscore_language][brainscore_language] | [Pereira et al., 2018][pereira_2018] | fMRI | Human | Text | [BrainScore leaderboard (language)][bs_leaderboard_language] |
 | [brainscore_vision][brainscore_vision] | [Freeman et al., 2013][freeman_2013]; [Majaj et al., 2015][majaj_2015] | Ephys | Macaque | Images | [BrainScore leaderboard (vision)][bs_leaderboard_vision] |
 | [fmri-lebel2023-opt_1_3b][fmri-lebel2023-opt_1_3b] | [LeBel et al., 2023][lebel_2023] | fMRI | Human | Text | [Accuracy plots][acc-fmri-lebel2023-opt_1_3b] |
@@ -265,9 +266,12 @@ If you use BERG, please cite:
 [tuckute_2024]: https://www.nature.com/articles/s41562-023-01783-7
 [acc-fmri-tuckute_2024-GPT2_XL]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-tuckute_2024/model-GPT2_XL/encoding_models_accuracy/
 
-[fmri-cneuromod_algo2025-text2fmri]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod_algo2025-text2fmri.md
+[fmri-cneuromod_algo2025-text2fmri]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod_algo2025-text2fmri.html
 [Algonauts]: https://algonautsproject.com/2025/index.html
 [acc-fmri-cneuromod_algo2025-text2fmri]: https://huggingface.co/collections/ShreyDixit/text2fmri
+[fmri-cneuromod_algo2025-vibe]: https://brain-encoding-response-generator.readthedocs.io/en/latest/model_cards/fmri-cneuromod_algo2025-vibe.html
+[acc-fmri-cneuromod_algo2025-vibe]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-cneuromod_algo2025/model-vibe/encoding_models_accuracy
+
 [brainscore_language]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_language.html
 [brainscore_vision]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_vision.html
 [bs_leaderboard_vision]: https://www.brain-score.org/vision/leaderboard/

@@ -35,6 +35,7 @@ train_split : str
 """
 
 import argparse
+import hashlib
 import torch
 import numpy as np
 import os
@@ -76,9 +77,14 @@ for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
 # Set random seed for reproducible results
-seed = 20200220
 np.random.seed(seed)
 torch.manual_seed(seed)
+
+# Derive a unique PCA random seed for each monkey × training split combination,
+# so that each encoding model starts from a different PCA basis
+pca_seed_key = f"{args.monkey}_{args.train_split}"
+pca_seed = int(hashlib.md5(pca_seed_key.encode()).hexdigest(), 16) % (2**31)
+print(f'\nPCA seed:        {pca_seed} (from "{pca_seed_key}")')
 
 # Check for GPU
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -171,7 +177,7 @@ scaler.fit(fmaps_train)
 fmaps_train = scaler.transform(fmaps_train)
 
 # Downsample the image features using PCA
-pca = PCA(n_components=args.n_pca_components, random_state=seed)
+pca = PCA(n_components=args.n_pca_components, random_state=pca_seed)
 pca.fit(fmaps_train)
 fmaps_train = pca.transform(fmaps_train)
 fmaps_train = fmaps_train.astype(np.float32)
