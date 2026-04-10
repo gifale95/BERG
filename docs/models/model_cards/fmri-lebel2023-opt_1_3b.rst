@@ -20,7 +20,7 @@ Model Summary
    * - Model Type
      - OPT-1.3B–based linear encoding model (contextual LLM embeddings + ridge regression)
    * - Creator
-     - Domenic Bersch
+     - Richard J. Antonello
 
 Description
 ----------
@@ -81,8 +81,13 @@ exclude long-context artifacts (Antonello et al., Section 3.5) and 5 TRs
 from the end.
 
 **Noise ceiling.** Computed using the Schoppe et al. (2016) signal/noise power
-decomposition on repeated presentations of the test story, with CCmax
-floored at 0.25 to regularise noisy voxels (Antonello et al., Section 2.5).
+decomposition on 10 repeated presentations of the test story. For each voxel,
+noise power (NP) is the mean within-repeat temporal variance across repeats,
+and signal power (SP) is derived by removing the noise contribution from the
+variance of the repeat-averaged response: SP = (1/(N−1)) × (N × var(mean) − NP).
+The maximum attainable correlation is then CCmax = √(1 / (1 + (1/N) × (NP/SP − 1))).
+CCmax is floored at 0.25 to regularise noisy voxels (Antonello et al., Section 2.5).
+The first 40 TRs of each repeat are excluded to match the test evaluation window.
 
 **Output.** The model returns a 2D array of predicted BOLD responses at each TR,
 across all cortical voxels (or a user-specified subset via ROI selection).
