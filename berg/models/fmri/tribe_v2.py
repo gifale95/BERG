@@ -253,6 +253,14 @@ class TribeV2EncodingModel(BaseModelInterface):
             )
             from tribev2.demo_utils import TribeModel
 
+            # Ensure 'spawn' multiprocessing start method to avoid broken pipe
+            # errors on macOS and compatibility issues across platforms.
+            import torch.multiprocessing
+            try:
+                torch.multiprocessing.set_start_method("spawn", force=True)
+            except RuntimeError:
+                pass  # already set
+
             # Patch whisperx compute type for CPU compatibility.
             # tribev2 hardcodes float16 in ExtractWordsFromAudio, which fails
             # on CPU/Mac. We monkey-patch subprocess.run to swap float16->int8.
@@ -275,10 +283,22 @@ class TribeV2EncodingModel(BaseModelInterface):
                 except Exception as patch_err:
                     print(f"  Warning: could not patch whisperx compute_type: {patch_err}")
 
+            # Build config overrides to ensure feature extractors use the
+            # correct device (they default to CUDA in the shipped config).
+            # Also reduce num_workers on CPU to avoid multiprocessing issues.
+            config_update = {}
+            if self.device != "cuda":
+                config_update["data.text_feature.device"] = self.device
+                config_update["data.audio_feature.device"] = self.device
+                config_update["data.image_feature.image.device"] = self.device
+                config_update["data.video_feature.image.device"] = self.device
+                config_update["data.num_workers"] = 0
+
             self.tribe_model = TribeModel.from_pretrained(
                 "facebook/tribev2",
                 cache_folder=cache_folder,
                 device=self.device,
+                config_update=config_update,
             )
 
             print(
