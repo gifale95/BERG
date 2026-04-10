@@ -472,28 +472,3 @@ print(f'\n{"="*60}')
 print('Done.  All encoding models trained and saved.')
 print(f'{"="*60}')
 
-
-"""
-Example usage
-=============
-
-python berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-ridge/train_ridge.py \
-    --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
-    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator \
-    --device cpu \
-    --model_name facebook/opt-6.7b \
-    --layer 27
-
-python berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-ridge/train_ridge.py \
-    --deep_fmri_repo /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/deep-fMRI-dataset \
-    --berg_dir /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/BERG/brain-encoding-response-generator \
-    --device cuda \
-    --model_name facebook/opt-6.7b \
-    --layer 27
-
-# Quick test run with fewer bootstraps:
-python berg_creation_code/02_train_encoding_models/train_dataset-lebel2023/model-ridge/train_ridge.py \
-    --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
-    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator
-    --device cuda --nboots 3 --subjects UTS03
-"""

@@ -245,11 +245,3 @@ for subject in args.subjects:
 print(f'\n{"="*60}')
 print(f'All plots saved to: {save_dir}')
 print(f'{"="*60}')
-
-"""
-Example usage
-=============
-
-python berg_creation_code/03_test_encoding_models/train_dataset-lebel2023/02_plot.py \
-    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator \
-"""

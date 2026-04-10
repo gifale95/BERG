@@ -160,12 +160,3 @@ print(f'\n{"="*60}')
 print('Done.  All subjects evaluated.')
 print(f'  Model metadata dir: {model_meta_dir}')
 print(f'{"="*60}')
-
-
-"""
-Example usage
-=============
-
-python berg_creation_code/03_test_encoding_models/train_dataset-lebel2023/01_test_encoding.py \
-    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator
-"""

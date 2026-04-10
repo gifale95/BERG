@@ -12,7 +12,7 @@ description: |
   This encoding model predicts voxelwise BOLD fMRI responses from natural language
   input using contextual embeddings from OPT-1.3B (layer 18) mapped to brain
   activity via voxelwise ridge regression, following the scaling-laws approach of
-  Antonello, Vaidya & Huth (NeurIPS 2023).
+  Antonello (NeurIPS 2023).
 
   **Neural data.** The model was trained on the LeBel et al. (2023) dataset, in
   which 3 participants (UTS01, UTS02, UTS03) passively listened to 84 complete
@@ -28,13 +28,10 @@ description: |
   layer 18 (of 24 total layers), yielding a 2,048-dimensional contextual embedding
   per word. A dynamic context window is used for computational efficiency: the
   context grows word-by-word until 512 words, then resets to 256 words
-  (Antonello et al., 2023, Section 2.3). Unlike static embeddings (e.g.,
-  English1000), these contextual features capture word order, syntax, and
-  discourse-level meaning.
+  (Antonello et al., 2023, Section 2.3).
 
   **Temporal processing.** The model requires word onset times as input, since the
-  temporal structure of the stimulus is essential for accurate predictions (a
-  fixed-rate approximation degrades voxelwise correlation from r≈0.99 to r≈0.33).
+  temporal structure of the stimulus is essential for accurate predictions.
   The temporal pipeline is:
 
     1. **Lanczos downsampling.** Word-level feature vectors (2,048-dim impulses at
@@ -56,8 +53,7 @@ description: |
 
   **Training.** 83 stories were used for training (~16 hours of speech) with
   ridge regression fitted independently per voxel. The ridge regularisation
-  parameter was selected per voxel via bootstrap cross-validation.
-  Regularisation alphas were drawn from logspace(1, 4, 15). Training features
+  parameter was selected per voxel via bootstrap cross-validation. Training features
   were trimmed by 10 TRs from the start and 5 TRs from the end. One story
   ("Where There's Smoke") was repeated 10 times across scanning sessions and used as the
   held-out test set. Test features were trimmed by 50 TRs from the start to

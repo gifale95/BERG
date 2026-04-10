@@ -380,18 +380,3 @@ print(f'\n{"="*60}')
 print('Done.  All data prepared.')
 print(f'  Output directory: {output_dir}')
 print(f'{"="*60}')
-
-
-"""
-Example usage
-=============
-
-python berg_creation_code/01_prepare_data/train_dataset-lebel2023/prepare_rige.py \
-    --deep_fmri_repo /Volumes/ExtremeSSD/Repositories/deep-fMRI-dataset \
-    --berg_dir /Volumes/ExtremeSSD/brain-encoding-response-generator
-    
-    
-python berg_creation_code/01_prepare_data/train_dataset-lebel2023/prepare_rige.py \
-    --deep_fmri_repo /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/deep-fMRI-dataset \
-    --berg_dir /pfss/mlde/workspaces/mlde_wsp_PI_Roig/bersch/repositories/BERG/brain-encoding-response-generator \
-"""
