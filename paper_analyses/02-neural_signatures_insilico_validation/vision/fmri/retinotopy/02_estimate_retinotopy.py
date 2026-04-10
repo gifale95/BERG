@@ -149,8 +149,7 @@ results = {
 save_dir = os.path.join(args.berg_dir,
     'neural_signatures_insilico_validation', 'vision', 'fmri', 'retinotopy',
     'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+str(args.PROBE_SIGMA)+
-    '_BG_VALUE-'+str(args.BG_VALUE), 'retinotopic_maps', args.encoding_model,
-    '_subject-'+str(args.subject))
+    '_BG_VALUE-'+str(args.BG_VALUE), 'retinotopic_maps', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = f'retinotopic_maps_sub-{args.subject:02d}.npz'

@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg-neural_control-02_baseline
 #SBATCH --mail-type=end
 #SBATCH --mem=5000
-#SBATCH --time=01:30:00
+#SBATCH --time=03:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

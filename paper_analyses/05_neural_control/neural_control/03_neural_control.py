@@ -52,7 +52,7 @@ parser.add_argument('--roi_2', default=None, type=str)
 parser.add_argument('--control_roi_1', default='early-drive_late-drive', type=str)
 parser.add_argument('--control_roi_2', default=None, type=str)
 parser.add_argument('--n_images', default=100, type=int)
-parser.add_argument('--margin', default=1, type=int)
+parser.add_argument('--margin', default=0, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 

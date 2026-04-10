@@ -1,4 +1,3 @@
-ls =lh
 """Get the in silico neural responses for a randomly selected batch of N images
 # (out of all images in the image set), and then average these univariate
 # responses across images. This will result in one score indicating the mean in

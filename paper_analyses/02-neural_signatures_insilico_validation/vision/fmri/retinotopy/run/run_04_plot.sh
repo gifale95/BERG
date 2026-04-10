@@ -9,7 +9,7 @@
 # Create the parameters combinations
 declare -a encoding_model_all
 index=0
-for em in 'fmri-nsd_fsaverage-vit_b_32' 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
+for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
     encoding_model_all[$index]=$em
     ((index=index+1))
 done

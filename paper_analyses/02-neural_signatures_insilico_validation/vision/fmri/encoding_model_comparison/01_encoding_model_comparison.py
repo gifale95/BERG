@@ -94,7 +94,7 @@ for m, model in enumerate(args.encoding_models):
     results_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'fmri',
         'retinotopy', 'GRID_RES-40_PROBE_SIGMA-0.5_BG_VALUE-0.5', 'stats',
-        'encoding_model-'+model, 'stats.npy')
+        model, 'stats.npy')
     results = np.load(results_dir, allow_pickle=True).item()
     insilico_validation_scores['corr_polar_angle_silico_vivo'].append(
         np.array(results['corr_polar_angle_silico_vivo']))
