@@ -248,7 +248,6 @@ metadata = {
         'ch_coords': ch_coords,
     },
     'encoding_model': {
-        'epoch_selection': epoch_selection,
     },
 }
 

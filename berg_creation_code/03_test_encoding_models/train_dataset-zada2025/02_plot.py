@@ -36,6 +36,8 @@ parser.add_argument('--subjects', nargs='+',
                     default=[f'sub-{i:02d}' for i in range(1, 10)],
                     help='List of subjects (default: sub-01 to sub-09)')
 parser.add_argument('--berg_dir', required=True, type=str)
+parser.add_argument('--top_percent', type=float, default=10.0,
+                    help='Percentage of top electrodes to use for selected-electrodes plot (default: 10)')
 args = parser.parse_args()
 
 print('>>> Plot Podcast ECoG Encoding Accuracy <<<')
@@ -251,33 +253,99 @@ print(f"\nTemporal plot saved.")
 
 
 # =============================================================================
-# Plot 2: All subjects overlaid on one temporal plot
+# Plot 2: Temporal profiles using top-k% electrodes per subject
 # =============================================================================
-fig_overlay, ax_ol = plt.subplots(1, 1, figsize=(8, 5))
+# For each subject, select the top top_percent% of electrodes ranked by their
+# max-over-lags correlation. This approximates the paper's approach of showing
+# only electrodes with significant encoding performance.
+top_pct = args.top_percent
+print(f"\nComputing temporal profiles for top {top_pct:.0f}% electrodes...")
+
+n_cols_top = min(3, n_subjects)
+n_rows_top = (n_subjects + n_cols_top - 1) // n_cols_top + 1
+
+fig_top, axes_top = plt.subplots(n_rows_top, n_cols_top,
+                                 figsize=(5 * n_cols_top, 4 * n_rows_top),
+                                 squeeze=False)
+
+all_topk_profiles = []
 
 for i, subject in enumerate(loaded_subjects):
+    ax = axes_top[i // n_cols_top, i % n_cols_top]
     corr = all_correlations[i]
     times = all_times[i]
-    mean_corr = corr.mean(axis=0)
-    color = subject_colors[i % len(subject_colors)]
-    ax_ol.plot(times, mean_corr, color=color, linewidth=1.5, alpha=0.7,
-               label=f'{subject} ({corr.shape[0]} elec)')
+    n_el = corr.shape[0]
 
-# Grand average on top
-ax_ol.plot(all_times[0], avg_corr, color='black', linewidth=2.5,
-           label='Grand average')
+    # Select top-k% electrodes by max-over-lags correlation
+    max_per_el = corr.max(axis=1)
+    k = max(1, int(np.ceil(n_el * top_pct / 100)))
+    top_indices = np.argsort(max_per_el)[-k:]
 
-ax_ol.axhline(0, color='#bdc3c7', linestyle='--', linewidth=0.8)
-ax_ol.axvline(0, color='#bdc3c7', linestyle='--', linewidth=0.8)
-ax_ol.set_xlabel('Lag (s)')
-ax_ol.set_ylabel('Encoding r')
-ax_ol.set_title('Encoding Performance Across Subjects', fontweight='bold')
-ax_ol.legend(fontsize=9, loc='upper left', bbox_to_anchor=(1.02, 1.0),
-             borderaxespad=0, frameon=False)
+    mean_corr = corr[top_indices].mean(axis=0)
+    sem_corr = corr[top_indices].std(axis=0) / np.sqrt(k)
 
-fig_overlay.savefig(os.path.join(save_dir, 'encoding_accuracy_overlay.jpg'),
-                    dpi=300, bbox_inches='tight')
-print("Overlay plot saved.")
+    all_topk_profiles.append(mean_corr)
+
+    ax.plot(times, mean_corr, color=LINE_COLOR, linewidth=2)
+    ax.fill_between(times, mean_corr - sem_corr, mean_corr + sem_corr,
+                    alpha=0.2, color=FILL_COLOR)
+    ax.axhline(0, color='#bdc3c7', linestyle='--', linewidth=0.8)
+    ax.axvline(0, color='#bdc3c7', linestyle='--', linewidth=0.8)
+    ax.set_xlabel('Lag (s)')
+    ax.set_ylabel('Encoding r (± SEM)')
+    ax.set_title(f'{subject} (top {k}/{n_el} elec)', fontweight='bold')
+
+    print(f"  {subject}: top {k}/{n_el} elec, "
+          f"peak r={mean_corr.max():.4f} at lag={times[mean_corr.argmax()]:.3f}s")
+
+# Shared y-axis for top-k plots
+all_topk_sem = [all_correlations[i][
+    np.argsort(all_correlations[i].max(axis=1))[
+        -max(1, int(np.ceil(all_correlations[i].shape[0] * top_pct / 100))):
+    ]
+].std(axis=0) / np.sqrt(
+    max(1, int(np.ceil(all_correlations[i].shape[0] * top_pct / 100)))
+) for i in range(n_subjects)]
+
+y_max_top = max((m + s).max() for m, s in zip(all_topk_profiles, all_topk_sem))
+y_min_top = min((m - s).min() for m, s in zip(all_topk_profiles, all_topk_sem))
+y_range_top = y_max_top - y_min_top
+y_lim_top = (y_min_top - 0.1 * y_range_top, y_max_top + 0.1 * y_range_top)
+
+for i in range(n_subjects):
+    axes_top[i // n_cols_top, i % n_cols_top].set_ylim(y_lim_top)
+
+# Hide unused subplots
+for i in range(n_subjects, (n_rows_top - 1) * n_cols_top):
+    axes_top[i // n_cols_top, i % n_cols_top].set_visible(False)
+
+# Average across subjects in last row
+ax_avg_top = axes_top[-1, 0]
+avg_topk = np.mean(all_topk_profiles, axis=0)
+avg_topk_sem = np.std(all_topk_profiles, axis=0) / np.sqrt(n_subjects)
+
+ax_avg_top.plot(all_times[0], avg_topk, color=AVG_LINE_COLOR, linewidth=2.5)
+ax_avg_top.fill_between(all_times[0], avg_topk - avg_topk_sem,
+                        avg_topk + avg_topk_sem,
+                        alpha=0.2, color=AVG_FILL_COLOR)
+ax_avg_top.axhline(0, color='#bdc3c7', linestyle='--', linewidth=0.8)
+ax_avg_top.axvline(0, color='#bdc3c7', linestyle='--', linewidth=0.8)
+ax_avg_top.set_xlabel('Lag (s)')
+ax_avg_top.set_ylabel('Encoding r (± SEM)')
+ax_avg_top.set_title(f'Average across {n_subjects} subjects '
+                     f'(top {top_pct:.0f}% elec)', fontweight='bold')
+ax_avg_top.set_ylim(y_lim_top)
+
+for j in range(1, n_cols_top):
+    axes_top[-1, j].set_visible(False)
+
+plt.tight_layout()
+fig_top.savefig(os.path.join(save_dir,
+                f'encoding_accuracy_temporal_top{int(top_pct)}pct.jpg'),
+                dpi=300, bbox_inches='tight')
+print(f"Top {top_pct:.0f}% temporal plot saved.")
+
+
 
 
 # =============================================================================

@@ -316,7 +316,7 @@ class PodcastECoGEncodingModel(BaseModelInterface):
         token_embeddings = np.zeros((n_tokens, self.FEATURE_DIM), dtype=np.float32)
 
         # Process in batches to manage memory
-        batch_size = 32
+        batch_size = 4
 
         if show_progress:
             progress = tqdm(range(0, n_tokens, batch_size),

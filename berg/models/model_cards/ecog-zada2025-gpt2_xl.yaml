@@ -38,6 +38,14 @@ description: |
   across subjects due to differences in electrode placement. Subjects 01, 06, and 09 show the strongest encoding
   (best electrodes r ≈ 0.30–0.35), while subjects 05 and 07 show near-chance performance.
 
+  **Encoding accuracy.** The temporal accuracy plots average across all electrodes, many of which lie
+  outside the language network, resulting in modest peak correlations (~0.03–0.05). The original paper reports accuracy around 12% but used only 
+  a subset of electrodes, selected through siginificance. To approximate the paper's electrode selection, 
+  we additionally provide plots for the top 10% and 30% of electrodes ranked by peak correlation. 
+  For electrode-level detail, refer to the spatial maps. Note that the
+  actual model is trained on all data but evaluated via 2-fold CV (each fold sees only half the data),
+  so model performance is expected to be slightly better than the reported accuracy.
+
   **Output.** Each encoding model predicts time-resolved high-gamma responses for all electrodes
   (or user-specified subsets) across 129 time lags for each input word.
 
@@ -54,7 +62,6 @@ metadata: |
       ch_coords         : (n_electrodes,3) - Electrode MNI coordinates
 
   'encoding_model':
-      epoch_selection        : (n_epochs,)          - Word indices of surviving epochs
       correlation_results    : (n_electrodes, 129)  - 2-fold CV encoding accuracy (Pearson's r)
 
 # Input stimulus information
