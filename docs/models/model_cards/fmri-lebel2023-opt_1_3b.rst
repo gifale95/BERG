@@ -118,8 +118,6 @@ Metadata
 
     **correlation** : ``(n_voxels,)`` - Voxelwise prediction accuracy (Pearson's r) on test story
 
-    **ridge_alphas** : ``(n_voxels,)`` - Per-voxel ridge regularisation parameter selected by bootstrap CV
-
     **cc_norm** : ``(n_voxels,)`` - Noise-ceiling-normalised correlation (CCabs / CCmax)
 
 Input

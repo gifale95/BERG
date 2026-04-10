@@ -461,7 +461,6 @@ for subject in args.subjects:
     # Update metadata with encoding model results
     # ----------------------------------------------------------------
     metadata['encoding_model']['correlation'] = corrs
-    metadata['encoding_model']['ridge_alphas'] = valphas
     np.save(meta_path, metadata)
     print(f'  Updated metadata with correlations: {meta_path}')
 

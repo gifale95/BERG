@@ -93,7 +93,6 @@ metadata: |
       test_stories        : (n_test,)    - Story names used for model testing (1 story)
       noise_ceiling       : (n_voxels,)  - Voxelwise noise ceiling CCmax (Schoppe et al., floored at 0.25)
       correlation         : (n_voxels,)  - Voxelwise prediction accuracy (Pearson's r) on test story
-      ridge_alphas        : (n_voxels,)  - Per-voxel ridge regularisation parameter selected by bootstrap CV
       cc_norm             : (n_voxels,)  - Noise-ceiling-normalised correlation (CCabs / CCmax)
 
 
