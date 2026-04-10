@@ -7,9 +7,6 @@ required by the BERG model implementation.
 The Glasser parcellation provides 180 bilateral cortical regions (360 hemisphere-
 specific), which are used for ROI-based selection of predicted brain responses.
 
-Usage
------
-    python prepare_tribe_v2.py --berg_dir /path/to/berg
 
 Output Files Created
 ────────────────────
@@ -29,7 +26,7 @@ Metadata structure:
         parcellation         : str      - Parcellation name ('Glasser_HCP-MMP1.0')
         roi_labels           : (180,)   - Bilateral ROI names (e.g., 'V1', 'V2', 'FFC')
         roi_assignments      : (20484,) - ROI index per vertex (-1 = medial wall)
-        vertex_counts        : dict     - Number of vertices per ROI
+        roi_index            : dict     - Mapping from ROI name to integer index in roi_assignments
 
 Requirements
 ------------
@@ -316,11 +313,8 @@ def create_tribe_v2_metadata(berg_dir):
     print("\nStep 1: Obtaining Glasser HCP-MMP1.0 parcellation on fsaverage5")
     roi_labels, roi_assignments = get_glasser_parcellation_fsaverage5(cache_dir)
 
-    # Compute vertex counts per ROI
-    vertex_counts = {}
-    for i, label in enumerate(roi_labels):
-        count = int(np.sum(roi_assignments == i))
-        vertex_counts[label] = count
+    # Build roi_index: mapping from ROI name to its integer index in roi_assignments
+    roi_index = {label: int(i) for i, label in enumerate(roi_labels)}
 
     n_assigned = int(np.sum(roi_assignments >= 0))
     n_medial_wall = int(np.sum(roi_assignments == -1))
@@ -347,7 +341,7 @@ def create_tribe_v2_metadata(berg_dir):
             "parcellation": "Glasser_HCP-MMP1.0",
             "roi_labels": roi_labels,
             "roi_assignments": roi_assignments,
-            "vertex_counts": vertex_counts,
+            "roi_index": roi_index,
         },
     }
 
@@ -358,13 +352,13 @@ def create_tribe_v2_metadata(berg_dir):
     np.save(output_path, metadata)
     print(f"\nMetadata saved to: {output_path}")
 
-    # Print summary of ROI vertex counts
-    print("\nROI vertex counts (top 20 by size):")
-    sorted_rois = sorted(vertex_counts.items(), key=lambda x: x[1], reverse=True)
-    for name, count in sorted_rois[:20]:
-        print(f"  {name:12s}: {count:5d} vertices")
-    if len(sorted_rois) > 20:
-        print(f"  ... and {len(sorted_rois) - 20} more ROIs")
+    # Print summary of ROI indices
+    print("\nROI index mapping (first 20):")
+    for name, idx in list(roi_index.items())[:20]:
+        n_verts = int(np.sum(roi_assignments == idx))
+        print(f"  {name:12s}: index {idx:3d}  ({n_verts:5d} vertices)")
+    if len(roi_index) > 20:
+        print(f"  ... and {len(roi_index) - 20} more ROIs")
 
     print("\nDone.")
 

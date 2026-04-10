@@ -7,12 +7,6 @@ to generate in silico fMRI responses on the fsaverage5 cortical surface
 TRIBE v2 uses frozen pretrained feature extractors (V-JEPA2-Giant for video,
 Wav2Vec-BERT-2.0 for audio, LLaMA-3.2-3B for text) fed into a trainable
 Transformer that predicts whole-brain fMRI at 1 Hz temporal resolution.
-
-Requirements
-------------
-- ``tribev2`` package: ``pip install tribev2 @ git+https://github.com/facebookresearch/tribev2.git``
-- HuggingFace account with access to LLaMA-3.2-3B: ``huggingface-cli login``
-- GPU with >= 16 GB VRAM recommended
 """
 
 import os
@@ -106,6 +100,7 @@ class TribeV2EncodingModel(BaseModelInterface):
     MODEL_ID = model_info["model_id"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
     VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
+    VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     N_VERTICES = 20484
     N_VERTICES_PER_HEMI = 10242
 
@@ -211,23 +206,20 @@ class TribeV2EncodingModel(BaseModelInterface):
 
             # Resolve ROI selection to vertex indices
             if self.selected_rois is not None:
-                # Validate ROI names against metadata
-                valid_rois = list(self.metadata["roi"]["roi_labels"])
-                invalid_rois = [r for r in self.selected_rois if r not in valid_rois]
+                # Validate ROI names against YAML
+                invalid_rois = [r for r in self.selected_rois if r not in self.VALID_ROIS]
                 if invalid_rois:
                     raise InvalidParameterError(
                         f"Invalid ROI(s): {invalid_rois}. "
-                        f"Valid ROIs are listed in metadata['roi']['roi_labels'] "
-                        f"({len(valid_rois)} available)."
+                        f"Valid ROIs: {self.VALID_ROIS}"
                     )
 
-                # Get vertex indices for selected ROIs
+                # Get vertex indices for selected ROIs using roi_index mapping
                 roi_assignments = self.metadata["roi"]["roi_assignments"]
-                roi_labels = list(self.metadata["roi"]["roi_labels"])
+                roi_index = self.metadata["roi"]["roi_index"]
                 roi_vertex_indices = np.array([], dtype=int)
                 for roi_name in self.selected_rois:
-                    roi_idx = roi_labels.index(roi_name)
-                    roi_vertices = np.where(roi_assignments == roi_idx)[0]
+                    roi_vertices = np.where(roi_assignments == roi_index[roi_name])[0]
                     roi_vertex_indices = np.append(roi_vertex_indices, roi_vertices)
 
                 # Combine with explicit vertex selection (logical OR)
@@ -254,16 +246,13 @@ class TribeV2EncodingModel(BaseModelInterface):
             from tribev2.demo_utils import TribeModel
 
             # Ensure 'spawn' multiprocessing start method to avoid broken pipe
-            # errors on macOS and compatibility issues across platforms.
             import torch.multiprocessing
             try:
                 torch.multiprocessing.set_start_method("spawn", force=True)
             except RuntimeError:
                 pass  # already set
 
-            # Patch whisperx compute type for CPU compatibility.
-            # tribev2 hardcodes float16 in ExtractWordsFromAudio, which fails
-            # on CPU/Mac. We monkey-patch subprocess.run to swap float16->int8.
+            # Whisperx sometimes has compute errors if CPU selected. This patches it.
             if self.device != "cuda":
                 try:
                     import subprocess
@@ -285,7 +274,6 @@ class TribeV2EncodingModel(BaseModelInterface):
 
             # Build config overrides to ensure feature extractors use the
             # correct device (they default to CUDA in the shipped config).
-            # Also reduce num_workers on CPU to avoid multiprocessing issues.
             config_update = {}
             if self.device != "cuda":
                 config_update["data.text_feature.device"] = self.device
@@ -306,12 +294,6 @@ class TribeV2EncodingModel(BaseModelInterface):
                 f"({len(self.selected_vertices)} / {self.N_VERTICES} vertices selected)"
             )
 
-        except ImportError as e:
-            raise ModelLoadError(
-                "Failed to import tribev2. Install it with: "
-                "pip install 'tribev2 @ git+https://github.com/facebookresearch/tribev2.git'\n"
-                f"Original error: {e}"
-            )
         except Exception as e:
             raise ModelLoadError(f"Failed to load TRIBE v2 model: {e}")
 

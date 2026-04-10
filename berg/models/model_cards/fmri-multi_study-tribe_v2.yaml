@@ -5,14 +5,28 @@ training_dataset: Multi-study naturalistic fMRI (CNeuroMod, BoldMoments, Lebel20
 species: Human
 stimuli: Video, Audio, Text
 model_type: Multimodal Transformer (TRIBE v2)
-creator: d'Ascoli, Rapin, Benchetrit, Brookes, Begany, Raugel, Banville, King (FAIR at Meta)
+creator: Stéphane d’Ascoli (FAIR at Meta)
 
 # General description of the model
 description: |
+  **Setup.** This model requires Python >= 3.11, FFmpeg, and HuggingFace authentication.
+
+  1. Install FFmpeg:
+     - Linux: ``sudo apt install ffmpeg``
+     - macOS: ``brew install ffmpeg``
+     - Conda: ``conda install -c conda-forge ffmpeg``
+  2. Install the HuggingFace CLI: ``pip install huggingface_hub``
+  3. Request access to LLaMA-3.2-3B at https://huggingface.co/meta-llama/Llama-3.2-3B
+  4. Authenticate: ``hf auth login``
+
+  GPU with >= 16 GB VRAM is recommended. CPU inference is supported but very slow.
+
+  **What is TRIBE v2?**
   TRIBE v2 is a tri-modal (video, audio, and language) foundation model for predicting human fMRI
   brain activity. It uses frozen pretrained feature extractors — V-JEPA2-Giant (video), Wav2Vec-BERT-2.0
-  (audio), and LLaMA-3.2-3B (text) — whose embeddings are fed into a trainable Transformer encoder that
-  maps multimodal representations onto the cortical surface (fsaverage5, 20,484 vertices).
+  (audio), and LLaMA-3.2-3B (text) — whose embeddings are fed into a trainable 8-layer, 8-head
+  Transformer encoder that maps multimodal representations onto the cortical surface (fsaverage5,
+  20,484 vertices).
 
   **Architecture.** Stimulus features are extracted at 2 Hz from each modality, projected to a shared
   384-dimensional space per modality (1,152 total), and processed by an 8-layer, 8-head Transformer with
@@ -35,19 +49,11 @@ description: |
   cortical vertices on the fsaverage5 surface mesh. ROI selection is available via the Glasser
   HCP-MMP1.0 parcellation (180 bilateral cortical regions).
 
-  **Performance.** TRIBE v2 achieved first place in the Algonauts 2025 brain prediction competition
-  (263 teams). It significantly outperforms linear encoding baselines across all training datasets
-  and generalizes zero-shot to unseen subjects and tasks, including non-naturalistic experimental
-  paradigms such as visual and language functional localizers.
-
-  **Setup requirements:**
-  - GPU with at least 16 GB VRAM is recommended (runs V-JEPA2-Giant, LLaMA-3.2-3B, and
-    Wav2Vec-BERT-2.0 for feature extraction).
-  - HuggingFace account with access to the gated LLaMA-3.2-3B model
-    (https://huggingface.co/meta-llama/Llama-3.2-3B). Request access, then authenticate:
-    ``huggingface-cli login``
-  - The tribev2 package must be installed:
-    ``pip install tribev2 @ git+https://github.com/facebookresearch/tribev2.git``
+  **Performance.** An earlier iteration of TRIBE v2 achieved first place in the Algonauts 2025 brain
+  prediction competition (263 teams, mean score 0.2146). The current model, trained on over 1,000
+  hours of fMRI across 720 subjects, significantly outperforms linear encoding baselines across all
+  training datasets and generalizes zero-shot to unseen subjects and tasks, including non-naturalistic
+  experimental paradigms such as visual and language functional localizers.
 
 
 metadata: |
@@ -63,25 +69,32 @@ metadata: |
         parcellation         : str      - Parcellation name ('Glasser_HCP-MMP1.0')
         roi_labels           : (180,)   - Bilateral ROI names (e.g., 'V1', 'V2', 'FFC')
         roi_assignments      : (20484,) - ROI index per vertex (-1 = medial wall)
-        vertex_counts        : dict     - Number of vertices per ROI
+        roi_index            : dict     - Mapping from ROI name to integer index in roi_assignments
 
 
 # Input stimulus information
 input:
   description: |
-    The input should be a file path (string) to a video, audio, or text file.
-    The file type is auto-detected from the extension.
+    The input is a single file path (string) to a video, audio, or text file.
+    The file type is auto-detected from the extension, and determines which
+    modalities are activated:
+
+    • Video input → visual + audio + text features (full multimodal)
+    • Audio input → audio + text features (speech is transcribed)
+    • Text input  → audio + text features (text is first synthesized to speech)
+
+    Exactly one file path must be provided per call.
   type: "str (file path)"
   supported_formats:
-    video: [".mp4", ".avi", ".mkv", ".mov", ".webm"]
-    audio: [".wav", ".mp3", ".flac", ".ogg"]
-    text: [".txt"]
-  constraints:
-    - "Exactly one file path must be provided."
-    - "For video files, audio is automatically extracted and speech is transcribed."
-    - "For text files, text is synthesized to speech via gTTS, then processed."
-    - "HuggingFace authentication is required for LLaMA-3.2-3B (run: huggingface-cli login)."
-    - "GPU with >= 16 GB VRAM is recommended for feature extraction."
+    video:
+      extensions: [".mp4", ".avi", ".mkv", ".mov", ".webm"]
+      description: "Video files. Audio track is automatically extracted and speech is transcribed."
+    audio:
+      extensions: [".wav", ".mp3", ".flac", ".ogg"]
+      description: "Audio files. Speech is automatically transcribed for text features."
+    text:
+      extensions: [".txt"]
+      description: "Plain text files. Text is converted to speech via gTTS, then processed as audio+text."
 
 # Output information
 output:
@@ -89,15 +102,11 @@ output:
     The output is a 2D array containing predicted fMRI activity on the fsaverage5
     cortical surface. Shape is (n_timesteps, n_vertices), where n_timesteps depends
     on stimulus duration (1 TR = 1 second) and n_vertices depends on ROI selection.
-
-    With no selection: n_vertices = 20,484 (full cortex).
-    With ROI selection: n_vertices = sum of vertices in selected ROIs.
-    With vertex selection: n_vertices = number of selected vertices.
   type: "numpy.ndarray"
   shape: "[n_timesteps, n_vertices]"
   dimensions:
     - name: "n_timesteps"
-      description: "Number of seconds of predicted brain activity (depends on stimulus duration)"
+      description: "Number of seconds of predicted brain activity (1 per second, depends on stimulus duration)"
     - name: "n_vertices"
       description: "Number of cortical vertices in the selection (up to 20,484)"
 
@@ -139,18 +148,26 @@ parameters:
         description: |
           List of Glasser HCP-MMP1.0 ROI names to include.
           Selects vertices from both hemispheres for each named region.
-        valid_values: |
-          180 bilateral Glasser ROI names. Common examples include:
-          Visual (Early): V1, V2, V3, V4
-          Visual (Ventral): VMV1, VMV2, VMV3, PHA1, PHA2, PHA3, FFC
-          Visual (Dorsal): V3A, V6, V6A, V7, V3B, IPS1
-          Visual (MT Complex): V3CD, V4t, LO1, LO2, LO3, MT, MST, FST
-          Multisensory (TPJ): TPOJ1, TPOJ2, TPOJ3, STV, PSL
-          Auditory (Association): A5, STSdp, STSvp, STSda, STSva, TA2
-          Auditory (Early): RI, PBelt, MBelt, LBelt, A1, A4
-          Inferior Frontal: 44, 45, IFSa, IFSp, IFJa, IFJp, PEF
-          Default Mode: PGi, PGs, PFm, 10v, 10r, 10d, 10pp
-          See metadata roi_labels for complete list.
+        valid_values: ['V1', 'MST', 'V6', 'V2', 'V3', 'V4', 'V8', '4', '3b', 'FEF', 'PEF',
+                      '55b', 'V3A', 'RSC', 'POS2', 'V7', 'IPS1', 'FFC', 'V3B', 'LO1',
+                      'LO2', 'PIT', 'MT', 'A1', 'PSL', 'SFL', 'PCV', 'STV', '7Pm', '7m',
+                      'POS1', '23d', 'v23ab', 'd23ab', '31pv', '5m', '5mv', '23c', '5L',
+                      '24dd', '24dv', '7AL', 'SCEF', '6ma', '7Am', '7PL', '7PC', 'LIPv',
+                      'VIP', 'MIP', '1', '2', '3a', '6d', '6mp', '6v', 'p24pr', '33pr',
+                      'a24pr', 'p32pr', 'a24', 'd32', '8BM', 'p32', '10r', '47m', '8Av',
+                      '8Ad', '9m', '8BL', '9p', '10d', '8C', '44', '45', '47l', 'a47r',
+                      '6r', 'IFJa', 'IFJp', 'IFSp', 'IFSa', 'p9-46v', '46', 'a9-46v',
+                      '9-46d', '9a', '10v', 'a10p', '10pp', '11l', '13l', 'OFC', '47s',
+                      'LIPd', '6a', 'i6-8', 's6-8', '43', 'OP4', 'OP1', 'OP2-3', '52',
+                      'RI', 'PFcm', 'PoI2', 'TA2', 'FOP4', 'MI', 'Pir', 'AVI', 'AAIC',
+                      'FOP1', 'FOP3', 'FOP2', 'PFt', 'AIP', 'EC', 'PreS', 'H', 'ProS',
+                      'PeEc', 'STGa', 'PBelt', 'A5', 'PHA1', 'PHA3', 'STSda', 'STSdp',
+                      'STSvp', 'TGd', 'TE1a', 'TE1p', 'TE2a', 'TF', 'TE2p', 'PHT', 'PH',
+                      'TPOJ1', 'TPOJ2', 'TPOJ3', 'DVT', 'PGp', 'IP2', 'IP1', 'IP0',
+                      'PFop', 'PF', 'PFm', 'PGi', 'PGs', 'V6A', 'VMV1', 'VMV3', 'PHA2',
+                      'V4t', 'FST', 'V3CD', 'LO3', 'VMV2', '31pd', '31a', 'VVC', '25',
+                      's32', 'pOFC', 'PoI1', 'Ig', 'FOP5', 'p10p', 'p47r', 'TGv',
+                      'MBelt', 'LBelt', 'A4', 'STSva', 'TE1m', 'PI', 'a32pr', 'p24']
         example: ["V1", "V2", "FFC"]
       vertices:
         type: numpy.ndarray
@@ -163,8 +180,7 @@ parameters:
   device:
     description: |
       Device to run the model on. 'auto' will use CUDA if available, otherwise CPU.
-      GPU is strongly recommended due to the heavy feature extraction pipeline
-      (V-JEPA2-Giant, LLaMA-3.2-3B, Wav2Vec-BERT-2.0).
+      GPU with >= 16 GB VRAM is strongly recommended. CPU inference is supported but very slow.
     required: false
     type: str
     valid_values: ["cpu", "cuda", "auto"]
@@ -180,9 +196,12 @@ parameters:
 
   stimulus:
     description: |
-      File path to the stimulus. Accepts video files (.mp4, .avi, .mkv, .mov, .webm),
-      audio files (.wav, .mp3, .flac, .ogg), or text files (.txt). The file type is
-      auto-detected from the extension.
+      File path (string) to the stimulus. Exactly one file must be provided.
+      The file type is auto-detected from the extension:
+
+        • Video: .mp4, .avi, .mkv, .mov, .webm → activates video + audio + text features
+        • Audio: .wav, .mp3, .flac, .ogg → activates audio + text features
+        • Text:  .txt → text is synthesized to speech, then activates audio + text features
     required: true
     type: str
     example: "'/path/to/video.mp4'"
@@ -207,13 +226,9 @@ parameters:
 
 # Performance metrics and references
 performance:
-  description: |
-    TRIBE v2 achieves state-of-the-art encoding performance across all training
-    datasets and generalizes zero-shot to unseen subjects and paradigms. It placed
-    first in the Algonauts 2025 competition (mean score 0.2146 ± 0.0312 across 4
-    subjects) out of 263 teams. Encoding scores (Pearson R) range from ~0.1 in
-    inferior frontal regions to ~0.35 in early visual cortex, with strongest
-    performance for multimodal (video + audio + speech) stimuli.
+
+  accuracy_plots: 
+    - "brain-encoding-response-generator/encoding_models/modality-fmri/train_dataset-multi_study/model-tribe_v2/encoding_models_accuracy"
 
 references:
     - TRIBE v2 paper (d'Ascoli et al., 2026): https://ai.meta.com/research/publications/a-foundation-model-of-vision-audition-and-language-for-in-silico-neuroscience/
