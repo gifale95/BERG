@@ -94,7 +94,7 @@ class PodcastECoGEncodingModel(BaseModelInterface):
         """
         # Assign parameters
         self.subject = subject
-        self.context_length = 1024  # Fixed: GPT-2 XL max context window
+        self.context_length = 32  # Fixed: matches the context length used for pre-extracting features
         self.berg_dir = berg_dir
         self.model = None
 
@@ -307,10 +307,16 @@ class PodcastECoGEncodingModel(BaseModelInterface):
 
         n_tokens = len(all_token_ids)
 
-        # Build context windows for each token
-        # For token i, the input is [max(0, i-context_length) : i+1]
+        # Build context windows for each token, matching the authors' llm.py
+        # exactly: input size = context_len + 1, with left-padding.
         fill_value = self.tokenizer.pad_token_id or 0
         context_len = self.context_length
+
+        # Pre-build all context windows as a tensor (same as authors' multi_batch)
+        data = torch.full((n_tokens, context_len + 1), fill_value, dtype=torch.long)
+        for i in range(n_tokens):
+            example_tokens = all_token_ids[max(0, i - context_len) : i + 1]
+            data[i, -len(example_tokens):] = torch.tensor(example_tokens)
 
         # Extract embeddings for all tokens
         token_embeddings = np.zeros((n_tokens, self.FEATURE_DIM), dtype=np.float32)
@@ -328,26 +334,10 @@ class PodcastECoGEncodingModel(BaseModelInterface):
             for batch_start in progress:
                 batch_end = min(batch_start + batch_size, n_tokens)
 
-                batch_inputs = []
-                for i in range(batch_start, batch_end):
-                    # Get context window: preceding tokens + current token
-                    # Total length must not exceed context_len (max 1024 for GPT-2)
-                    start = max(0, i - context_len + 1)
-                    context = all_token_ids[start:i + 1]
-
-                    # Pad if needed
-                    if len(context) < context_len:
-                        padding = [fill_value] * (context_len - len(context))
-                        context = padding + context
-
-                    batch_inputs.append(context)
-
-                # Convert to tensor
-                input_ids = torch.tensor(batch_inputs, dtype=torch.long,
-                                         device=self.device)
+                batch = data[batch_start:batch_end].to(self.device)
 
                 # Forward pass
-                output = self.language_model(input_ids,
+                output = self.language_model(batch,
                                              output_hidden_states=True)
 
                 # Extract layer 24 hidden states for the last token position
