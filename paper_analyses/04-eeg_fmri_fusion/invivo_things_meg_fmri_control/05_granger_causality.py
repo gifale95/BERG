@@ -1,66 +1,66 @@
-"""Compute Granger Causality, using RSA, on the TVSD in vivo or in silico
-responses for the test images.
+"""Use the trained encoding fusion models to predict time-resolved fMRI
+(t-fMRI) responses for the 100 THINGS MEG1/fMRI1 test images. These t-fMRI
+responses are then used to compute granger causality scores between ROIs.
+
+To reduce computational load, the MEG-fMRI fusion encoding models are only
+trained, tested, and used for voxels falling within the THINGS fMRI1 visual
+ROIs.
+
+The in vivo THINGS MEG1 responses are prepared using this code:
+https://github.com/gifale95/BERG/tree/main/berg_creation_code/01_prepare_data/train_dataset-things_meg_1
+
+The in vivo THINGS fMRI1 responses are prepared using this code:
+https://github.com/gifale95/BERG/tree/main/berg_creation_code/01_prepare_data/train_dataset-things_fmri_1
 
 Parameters
 ----------
-data_type : str
-    If 'invivo', compute Granger Causality for in vivo responses.
-    If 'insilico', compute it for in silico responses.
-encoding_model : str
-    The name of BERG's encoding model used for generating the in silico
-    responses.
-subject : str
-    The subject identifier for the monkey encoding model. Since the used
-    encoding models are trained on the TVSD data, valid subject identifiers
-    are "N" and "F".
+fmri_subject : int
+    THINGS fMRI1 subject identifiers. Valid subject identifiers are integers
+    from 1 to 3.
 rois: list
     List of ROIs between which to compute Granger Causality.
-ncsnr_threshold : float
-    The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
-    channel selection.
-time_window_ms : int
-    Time window in milliseconds for computing Granger Causality.
-offset_ms : int
-    Offset in milliseconds for the time window.
+nc_threshold : float
+    The threshold on the noise ceiling for fMRI voxel selection.
+meg_subjects : list
+    List containing the subject identifiers for the THINGS MEG1 subjects. Valid
+    subject identifiers are integers from 1 to 4.
+time_window_s : int
+    Time window in seconds for computing Granger Causality.
+offset_s : int
+    Offset in seconds for the time window.
 regression : str
     The type of regression to use for computing Granger Causality. If 'linear',
     use linear regression. If 'ridge', use RidgeCV regression.
 berg_dir : str
     Directory of the BERG.
-things_dir : str
-    Directory of the THINGS database.
-    https://osf.io/jum2f/
 
 """
 
 import argparse
 import os
-from PIL import Image
 import numpy as np
-import random
-from tqdm import tqdm
-from berg import BERG
-from copy import copy
-from PIL import Image
 import h5py
+import random
+from berg import BERG
+from tqdm import tqdm
+from copy import copy
+import gc
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import RidgeCV
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--data_type', type=str, default='insilico')
-parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b_32')
-parser.add_argument('--subject', default='F', type=str)
-parser.add_argument('--rois', default=['V1', 'V4'], type=list)
-parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--time_window_ms', default=100, type=int)
-parser.add_argument('--offset_ms', default=20, type=int)
+parser.add_argument('--fmri_subject', default=1, type=int)
+parser.add_argument('--rois', default=['V1', 'V2', 'V3', 'hV4', 'IT'], type=list)
+parser.add_argument('--nc_threshold', default=20, type=float)
+parser.add_argument('--meg_subjects', default=[1, 2, 3, 4], type=list)
+parser.add_argument('--time_window_s', default=0.1, type=float)
+parser.add_argument('--offset_s', default=0.02, type=float)
 parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Granger Causality <<<')
-print('\nInput arguments:')
+print('Input arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
 
@@ -71,33 +71,55 @@ np.random.seed(seed)
 
 
 # =============================================================================
+# Get the THINGS fMRI1 metadata and test image file names
+# =============================================================================
 # Load the metadata
-# =============================================================================
 berg = BERG(berg_dir=args.berg_dir)
+metadata_fmri = berg.get_model_metadata(
+    'fmri-things_fmri_1-vit_b_32',
+    subject=args.fmri_subject
+    )
 
-metadata = berg.get_model_metadata(
-    args.encoding_model,
-    subject=args.subject)
+# Get the image files names
+unique_test_stimuli = np.unique(
+    metadata_fmri['encoding_model']['test_stimuli'])
+
+# Get the noise ceiling
+noise_ceiling = metadata_fmri['encoding_model']['noise_ceiling_testset']
 
 
 # =============================================================================
-# Load the in vivo responses for the test images
+# Load and append the in vivo THINGS MEG1 test responses across subjects
 # =============================================================================
-# The in vivo data has been prepared using this code:
-# https://github.com/gifale95/BERG/tree/main/berg_creation_code/01_prepare_data/train_dataset-tvsd
+# Loop across MEG subjects
+for ms, msub in enumerate(tqdm(args.meg_subjects)):
 
-if args.data_type == 'invivo':
+    # Load the MEG metadata
+    metadata_meg = berg.get_model_metadata(
+        'meg-things_meg_1-vit_b_32',
+        subject=msub
+    )
 
-    data_dir = os.path.join(args.berg_dir, 'model_training_datasets',
-        'train_dataset-tvsd', f'tvsd_monkey{args.subject}_split-test.h5')
-    data = h5py.File(data_dir, 'r')['neural_data']
+    # Load the MEG responses
+    meg_dir = os.path.join(args.berg_dir, 'model_training_datasets',
+        'train_dataset-things_meg_1', f'meg_P{msub}_split-test.h5')
+    meg_all = h5py.File(meg_dir, 'r')['neural_data']
 
-    # Create 4 pseudo-trials by averaging the responses across repeats
-    test_img_ids = metadata['encoding_model']['test_img_ids']
-    unique_img_ids = np.unique(test_img_ids)
-    resp = []
-    for img_id in tqdm(unique_img_ids):
-        idx = np.where(test_img_ids == img_id)[0]
+    # Time point selection
+    tmax = 0.595
+    times = metadata_meg['meg']['times']
+    time_idx = np.zeros(len(times), dtype=int)
+    time_idx[times <= tmax] = 1
+    time_idx = np.where(time_idx == 1)[0]
+    times = times[times <= tmax]
+    meg_all = meg_all[:,:,time_idx].astype(np.float32)
+
+    # Create 4 pseudo-trial repeats using the MEG responses for the images
+    # shared with the fMRI
+    test_stimuli_meg = metadata_meg['encoding_model']['test_stimuli']
+    meg_sub = []
+    for stim in unique_test_stimuli:
+        idx = [i for i, x in enumerate(test_stimuli_meg) if x == stim]
         np.random.shuffle(idx)
         resp_img = []
         pseudotrials = 4
@@ -107,93 +129,58 @@ if args.data_type == 'invivo':
             idx_end = (p + 1) * n_reps
             idx_pseudo = idx[idx_start:idx_end]
             idx_pseudo.sort()
-            resp_img.append(np.mean(data[idx_pseudo], 0))
-        resp.append(np.array(resp_img))
+            resp_img.append(np.mean(meg_all[idx_pseudo], 0))
+        meg_sub.append(np.array(resp_img))
         del resp_img
-    # Shape: (Images, Repeats, Channels, Times)
-    resp = np.array(resp)
+
+    # Append the MEG sensor responses across subjects
+    if ms == 0:
+        meg = np.array(meg_sub)
+    else:
+        meg = np.append(meg, np.array(meg_sub), 2)
+    del meg_all, meg_sub
 
 
 # =============================================================================
-# Generate the in silico responses for the test images
+# Generate the t-fMRI responses
 # =============================================================================
-elif args.data_type == 'insilico':
-
-    # Get the test image file names
-    test_img_ids = metadata['encoding_model']['test_img_ids']
-    unique_img_ids = np.unique(test_img_ids)
-    test_stimuli = metadata['encoding_model']['test_stimuli']
-
-    # Loop across test image files
-    images = []
-    for img_id in tqdm(unique_img_ids):
-
-        # Find the corresponding image file name
-        idx = np.where(test_img_ids == img_id)[0][0]
-        file = test_stimuli[idx]
-
-        # Find correct subfolder
-        img_path = None
-        for root, _, files in os.walk(os.path.join(args.things_dir)):
-            if file in files:
-                img_path = os.path.join(root, file)
-                break
-    
-        # Load and transform the image
-        img = Image.open(img_path)
-        img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
-        img = np.array(img).transpose(2, 0, 1)  # Convert to (C, H, W)
-        images.append(img)
-    images = np.array(images)
-
-    # Load the encoding model
-    model = berg.get_encoding_model(
-        args.encoding_model,
-        subject=args.subject,
-        train_splits='single'
-        )
-
-    # Generate the in silico neural responses
-    # Shape: (Images, Repeats, Channels, Times)
-    resp = berg.encode(model, images)
-
-
-# =============================================================================
-# Divide the neural responses based on ROIs
-# =============================================================================
-# Retain channels based on their NCSNR score averaged across the time window
-# around peak activity of the chosen ROI (use the same time window as in the
-# TVSD paper)
-ncsnr = metadata['encoding_model']['ncsnr']
-times = metadata['utah_array']['times']
-roi_assignments = metadata['roi']['roi_assignments']
-peaks = {
-    'V1': (25, 125),
-    'V4': (50, 150),
-    'IT': (75, 175)
-}
-roi_num = {
-    'V1': 0,
-    'V4': 1,
-    'IT': 2
-}
+# Load the encoding fusion model regression weights
+weight_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'invivo_things_meg_fmri_control', 'encoding_fusion_weights',
+    f'weights_fmri_sub-{args.fmri_subject:02d}.npy')
+reg_param = np.load(weight_dir, allow_pickle=True).item()
 
 # Loop across ROIs
-roi_resp = {}
-for r, roi in enumerate(args.rois):
+tfmri = {}
+for r, roi in enumerate(tqdm(args.rois)):
 
-    # Get the channels assigned to the ROI
-    idx_roi = np.where(roi_assignments == roi_num[roi])[0]
+    # Only generate responses for voxels with noise ceiling above the threshold
+    nc_roi = noise_ceiling[metadata_fmri['roi'][roi]]
+    voxels_keep = np.where(nc_roi >= args.nc_threshold)[0]
 
-    # Get the NCSNR scores for those channels, averaged across the time window
-    # around peak activity of the chosen
-    t_min = np.where(times == peaks[roi][0])[0][0]
-    t_max = np.where(times == peaks[roi][1])[0][0]
-    ncsnr_roi = np.mean(ncsnr[idx_roi][:,t_min:t_max+1], 1)
+    # Empty response array of shape:
+    # (100 Image conditions, N repeats, N ROI voxels, 140 MEG time points)
+    tfmri[roi] = np.zeros((len(unique_test_stimuli), pseudotrials,
+        len(voxels_keep), len(times)), dtype=np.float32)
 
-    # Retain channels with NCSNR above the threshold
-    idx_ncsnr = ncsnr_roi >= args.ncsnr_threshold
-    roi_resp[roi] = resp[:,:,idx_roi[idx_ncsnr]]
+    # Loop across MEG time points
+    for t in range(len(times)):
+
+        # Instantiate the fusion regression model
+        reg = LinearRegression()
+        reg.coef_ = reg_param[roi]['coef_'][t][voxels_keep]
+        reg.intercept_ = reg_param[roi]['intercept_'][t][voxels_keep]
+        reg.n_features_in_ = reg_param[roi]['n_features_in_'][t]
+
+        # Generate the t-fMRI responses for the test images, independently for
+        # each MEG repeat
+        for r in range(pseudotrials):
+            tfmri[roi][:,r,:,t] = reg.predict(meg[:,r,:,t])
+
+        # Delete unused variables
+        del reg
+        gc.collect()
+del reg_param, metadata_meg, meg
 
 
 # =============================================================================
@@ -214,7 +201,7 @@ rep_splits = [
     ]
 
 roi_rsms = {}
-idx_triu = np.triu_indices(len(roi_resp[args.rois[0]]), k=1)
+idx_triu = np.triu_indices(len(unique_test_stimuli), k=1)
 for roi in tqdm(args.rois):
 
     roi_rsms[roi] = []
@@ -226,8 +213,8 @@ for roi in tqdm(args.rois):
         for r, rep in enumerate(split):
 
             # Get the responses for the two repetition splits
-            X = copy(roi_resp[roi][:,rep[0]])
-            Y = copy(roi_resp[roi][:,rep[1]])
+            X = copy(tfmri[roi][:,rep[0]])
+            Y = copy(tfmri[roi][:,rep[1]])
 
             # Z-score across channels
             X_mean = X.mean(axis=1, keepdims=True)
@@ -260,11 +247,11 @@ for roi in tqdm(args.rois):
 # Compute the Granger Causality (RSM averaged over past times)
 # =============================================================================
 # Get the time indices
-t_min = times[0] + args.time_window_ms + args.offset_ms
+t_min = times[0] + args.time_window_s + args.offset_s
 idx_t_start = np.where(times == t_min)[0][0]
 
 # Loop across ROIs
-gc = {}
+granger_c = {}
 for roi_target in args.rois:
     for roi_source in args.rois:
         if roi_target != roi_source:
@@ -277,6 +264,13 @@ for roi_target in args.rois:
 
                 gc_roi_t = []
 
+                # Get the onset and offset time points for the time window
+                time_onset = np.round(
+                    (times[t] - args.time_window_s - args.offset_s), 3)
+                idx_onset = np.where(times == time_onset)[0][0]
+                time_offset = np.round((times[t] - args.offset_s), 3)
+                idx_offset = np.where(times == time_offset)[0][0]
+
                 # Loop across splits for cross-validation
                 for s in range(len(rep_splits)):
                     for r in range(len(rep_splits[s])):
@@ -287,12 +281,10 @@ for roi_target in args.rois:
                         rsm_roi_target_train = np.reshape(
                             roi_rsms[roi_target][s][r][:,t], (-1, 1))
                         rsm_roi_target_past_train = np.mean(
-                            roi_rsms[roi_target][s][r]\
-                            [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms],
+                            roi_rsms[roi_target][s][r][:,idx_onset:idx_offset],
                             1, keepdims=True)
                         rsm_roi_source_past_train = np.mean(
-                            roi_rsms[roi_source][s][r]\
-                            [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms],
+                            roi_rsms[roi_source][s][r][:,idx_onset:idx_offset],
                             1, keepdims=True)
                         # Test (use a different repeat for the test target
                         # than for the test predictors, to reduce the effect of
@@ -300,12 +292,10 @@ for roi_target in args.rois:
                         rsm_roi_target_test = np.reshape(
                             roi_rsms[roi_target][s][abs(r-1)][:,t], (-1, 1))
                         rsm_roi_target_past_test = np.mean(
-                            roi_rsms[roi_target][s][r]\
-                            [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms],
+                            roi_rsms[roi_target][s][r][:,idx_onset:idx_offset],
                             1, keepdims=True)
                         rsm_roi_source_past_test = np.mean(
-                            roi_rsms[roi_source][s][r]\
-                            [:,t-args.time_window_ms-args.offset_ms:t-args.offset_ms],
+                            roi_rsms[roi_source][s][r][:,idx_onset:idx_offset],
                             1, keepdims=True)
 
                         # Fit the linear regressions for the full and reduced
@@ -360,7 +350,7 @@ for roi_target in args.rois:
                 del gc_roi_t
 
             # Store the GC results in a dictionary
-            gc[f'{roi_source}_to_{roi_target}'] = np.transpose(np.array(
+            granger_c[f'{roi_source}_to_{roi_target}'] = np.transpose(np.array(
                 gc_roi))
             del gc_roi
 
@@ -368,27 +358,11 @@ for roi_target in args.rois:
 # =============================================================================
 # Save the results
 # =============================================================================
-data = {
-    'gc': gc,
-    'metadata': metadata
-}
-
-save_dir = os.path.join(args.berg_dir, 'neural_control', 'granger_causality',
-    'granger_causality', args.encoding_model)
+# Create the save directory
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'invivo_things_meg_fmri_control', 'granger_causality')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = (f'gc_data_type-{args.data_type}_sub-{args.subject}_'
-            f'time_window_ms-{args.time_window_ms:03d}_'
-            f'offset_ms-{args.offset_ms:03d}_regression-{args.regression}.npy')
-
-np.save(os.path.join(save_dir, file_name), data)
-
-
-# from matplotlib import pyplot as plt
-# plt.figure()
-# plt.plot(times[idx_t_start:], np.mean(gc['V1_to_V4'], 0), label='V1 to V4')
-# plt.plot(times[idx_t_start:], np.mean(gc['V4_to_V1'], 0), label='V4 to V1')
-# plt.xlabel('Time (ms)')
-# plt.ylabel('Granger Causality')
-# plt.legend()
-# plt.show()
+# Save the Granger causality scores
+file_name = f'gc_fmri_sub-{args.fmri_subject:02d}.npy'
+np.save(os.path.join(save_dir, file_name), granger_c)

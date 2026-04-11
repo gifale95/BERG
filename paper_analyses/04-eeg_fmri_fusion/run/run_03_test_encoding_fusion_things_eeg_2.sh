@@ -13,7 +13,7 @@ declare -a source_dataset_all
 index=0
 for fs in `seq 1 8` ; do
     for h in 'lh' 'rh' ; do
-        for d in '_things_eeg_2' ; do
+        for d in 'things_eeg_2' ; do
             fmri_subject_all[$index]=$fs
             hemisphere_all[$index]=$h
             source_dataset_all[$index]=$d

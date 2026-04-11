@@ -9,7 +9,7 @@
 # Create the parameters combinations
 declare -a source_dataset_all
 index=0
-for d in 'things_meg_1' ; do
+for d in 'things_eeg_2' ; do
     source_dataset_all[$index]=$d
     ((index=index+1))
 done
