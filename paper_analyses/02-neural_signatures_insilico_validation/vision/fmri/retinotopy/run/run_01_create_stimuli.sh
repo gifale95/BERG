@@ -11,8 +11,8 @@ declare -a GRID_RES_all
 declare -a PROBE_SIGMA_all
 declare -a BG_VALUE_all
 index=0
-for g in '40' ; do
-    for s in '0.5' ; do
+for g in '40' '60' '80' ; do
+    for s in '0.25' '0.5' '0.75' ; do
         for b in '0.5' ; do
             GRID_RES_all[$index]=$g
             PROBE_SIGMA_all[$index]=$s

@@ -132,7 +132,7 @@ for i, img in enumerate(tqdm(test_img_cond)):
     os.makedirs(save_dir, exist_ok=True)
 
     # Load the image
-    img_rgb = Image.fromarray(sdataset[img]).convert('RGB') # type: ignore
+    img_rgb = Image.fromarray(sdataset[img]).convert('RGB')
     img_rgb = img_rgb.resize((args.IMG_SIZE, args.IMG_SIZE))
     img_rgb = np.asarray(img_rgb).astype(np.float32) / 255.0  # normalize to [0,1]
 
