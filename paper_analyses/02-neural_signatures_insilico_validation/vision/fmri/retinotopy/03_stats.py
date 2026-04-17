@@ -47,13 +47,13 @@ from scipy.stats import ttest_1samp
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
-parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
+parser.add_argument('--fmri_subjects', default=[1], type=list) # !!! 1, 2, 3, 4, 5, 6, 7, 8
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=0, type=float)
 parser.add_argument('--GRID_RES', type=int, default=40)
 parser.add_argument('--PROBE_SIGMA', type=float, default=0.5)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)
-parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--nsd_dir', default='/scratch/ccn_datasets/natural-scenes-dataset', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -184,7 +184,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     # rotate them counterclockwise by 90 degrees to match the in vivo polar
     # angle maps
     corr_polar_angle_silico_vivo.append(pearsonr(polar_angle_vivo,
-        (np.degrees(polar_angle_silico) - 90) % 360)[0])
+        (np.degrees(polar_angle_silico) - 90) % 360)[0]) # !!! What is the % 360 doing?
 
     # Clip the eccentricity values at 8.4 degrees of visual angle to avoid
     # outliers (since the NSD stimuli were presented within a circular aperture

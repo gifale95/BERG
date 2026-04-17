@@ -31,8 +31,8 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
+import h5py
 from berg import BERG
-from PIL import Image
 import gc
 import torch
 from tqdm import tqdm
@@ -78,28 +78,20 @@ test_img_list.sort()
 # Loop across test images
 for i, test_img in enumerate(tqdm(test_img_list)):
 
-    # Get the probe image condition numbers
-    probe_img_list = os.listdir(os.path.join(test_img_dir, test_img))
-    probe_img_list.sort()
-
-    # Load the probe images into a numpy array using PIL
-    probe_imgs = []
-    for probe_img in probe_img_list:
-        img = Image.open(os.path.join(test_img_dir, test_img, probe_img))
-        img = np.array(img)
-        probe_imgs.append(img)
-    probe_imgs = np.array(probe_imgs)
-    probe_imgs = np.swapaxes(probe_imgs, 1, 3)  # BHWC to BCHW
+    # Load the probe images
+    data_dir = os.path.join(test_img_dir, test_img)
+    probe_images = h5py.File(data_dir, 'r')['probe_images'][:]
+    probe_images = np.transpose(probe_images, (0, 3, 1, 2)) # BHWC to BCHW
 
     # Generate the in silico fMRI responses using BERG
-    in_silico_fmri = berg.encode(model, probe_imgs)
+    in_silico_fmri = berg.encode(model, probe_images)
     if i == 0:
         lh_response = in_silico_fmri[0]
         rh_response = in_silico_fmri[1]
     else:
         lh_response += in_silico_fmri[0]
         rh_response += in_silico_fmri[1]
-    del in_silico_fmri, probe_imgs
+    del in_silico_fmri, probe_images
     torch.cuda.empty_cache()
     gc.collect()
 

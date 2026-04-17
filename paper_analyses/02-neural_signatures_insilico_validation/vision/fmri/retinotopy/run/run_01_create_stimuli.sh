@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-retinotopy-01_create_stimuli
 #SBATCH --mail-type=end
-#SBATCH --mem=2000
-#SBATCH --time=03:00:00
+#SBATCH --mem=10000
+#SBATCH --time=01:00:00
 #SBATCH --qos=prio
 
 # Create the parameters combinations
@@ -11,7 +11,7 @@ declare -a GRID_RES_all
 declare -a PROBE_SIGMA_all
 declare -a BG_VALUE_all
 index=0
-for g in '40' '60' '80' ; do
+for g in '40' '60' '80' '100' ; do
     for s in '0.25' '0.5' '0.75' ; do
         for b in '0.5' ; do
             GRID_RES_all[$index]=$g

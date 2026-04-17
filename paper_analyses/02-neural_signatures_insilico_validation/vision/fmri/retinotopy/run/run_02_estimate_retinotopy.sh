@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-retinotopy-02_estimate_retinotopy
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
+#SBATCH --mem=50000
 #SBATCH --time=04-00:00:00
 #SBATCH --qos=extended
 #SBATCH --partition=agcichy
@@ -20,7 +20,7 @@ declare -a BG_VALUE_all
 index=0
 for em in 'fmri-nsd_fsaverage-huze' ; do
     for sub in `seq 1 1` ; do
-        for g in '40' '60' '80' ; do
+        for g in '40' '60' '80' '100' ; do
             for s in '0.25' '0.5' '0.75' ; do
                 for b in '0.5' ; do
                     encoding_model_all[$index]=$em

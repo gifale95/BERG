@@ -31,7 +31,6 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
 import h5py
 from PIL import Image
@@ -118,18 +117,19 @@ def make_gaussian_crop(mask, img_rgb):
 # =============================================================================
 # Make the Gaussian masks
 masks = np.array([make_gaussian_masks(center) for center in centers])
-masks = masks[..., None]  # shape [n_probes, H, W, 1]
+masks = masks[..., None] # shape [n_probes, H, W, 1]
+
+# Create the saving directory
+save_dir = os.path.join(args.berg_dir,
+    'neural_signatures_insilico_validation', 'vision', 'fmri',
+    'retinotopy', 'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+
+    str(args.PROBE_SIGMA)+'_BG_VALUE-'+str(args.BG_VALUE), 'stimuli')
+os.makedirs(save_dir, exist_ok=True)
 
 # Loop across the 100 NSD test images
 for i, img in enumerate(tqdm(test_img_cond)):
 
-    # Create the saving directory
-    save_dir = os.path.join(args.berg_dir,
-        'neural_signatures_insilico_validation', 'vision', 'fmri',
-        'retinotopy', 'GRID_RES-'+str(args.GRID_RES)+'_PROBE_SIGMA-'+
-        str(args.PROBE_SIGMA)+'_BG_VALUE-'+str(args.BG_VALUE), 'stimuli',
-        'test_img-'+str(i).zfill(4))
-    os.makedirs(save_dir, exist_ok=True)
+    probe_images = []
 
     # Load the image
     img_rgb = Image.fromarray(sdataset[img]).convert('RGB')
@@ -141,11 +141,15 @@ for i, img in enumerate(tqdm(test_img_cond)):
 
         # Create the probe image
         probe_img = make_gaussian_crop(mask, img_rgb)
-        probe_img = Image.fromarray((probe_img * 255).astype(np.uint8))
+        probe_img = (probe_img * 255).astype(np.uint8)
 
-        # Save the probe image
-        probe_fname = 'mask-' + str(m).zfill(5)+'.png'
-        probe_img.save(os.path.join(save_dir, probe_fname))
+        # Store the probe image
+        probe_images.append(probe_img)
         del probe_img
 
-    del img_rgb
+    # Save the probe images for this NSD test image in a .h5 file
+    probe_images = np.array(probe_images)
+    save_path = os.path.join(save_dir, f'probes_img{i:04d}.h5')
+    with h5py.File(save_path, 'w') as f:
+        f.create_dataset('probe_images', data=probe_images, dtype=np.uint8)
+    del probe_images, img_rgb

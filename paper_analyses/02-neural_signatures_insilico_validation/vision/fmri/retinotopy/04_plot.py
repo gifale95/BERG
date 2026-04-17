@@ -88,13 +88,22 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     # Polar angles
     polar_angle_lh = results['polar_angle_lh_silico'][s]
     polar_angle_rh = results['polar_angle_rh_silico'][s]
+
+    # # Rotate the polar angles and wrap into 0–2π
+    # shift = 5 * np.pi / 6  # 150° rotation
+    # polar_angle_lh = (polar_angle_lh + shift) % (2 * np.pi)
+    # polar_angle_rh = (polar_angle_rh + shift) % (2 * np.pi)
+    # # Normalize the polar angles to [0,1]
+    # polar_angle_lh_norm = polar_angle_lh / (2 * np.pi)
+    # polar_angle_rh_norm = polar_angle_rh / (2 * np.pi)
+
     # Rotate the polar angles and wrap into 0–2π
-    shift = 5 * np.pi / 6  # 150° rotation
-    polar_angle_lh = (polar_angle_lh + shift) % (2 * np.pi)
-    polar_angle_rh = (polar_angle_rh + shift) % (2 * np.pi)
+    polar_angle_lh = np.degrees(polar_angle_lh) - 90
+    polar_angle_rh = np.degrees(polar_angle_rh) - 90
     # Normalize the polar angles to [0,1]
-    polar_angle_lh_norm = polar_angle_lh / (2 * np.pi)
-    polar_angle_rh_norm = polar_angle_rh / (2 * np.pi)
+    polar_angle_lh_norm = polar_angle_lh / 360
+    polar_angle_rh_norm = polar_angle_rh / 360
+
     # Eccentricity
     eccentricity_lh = results['eccentricity_lh_silico'][s]
     eccentricity_rh = results['eccentricity_rh_silico'][s]
