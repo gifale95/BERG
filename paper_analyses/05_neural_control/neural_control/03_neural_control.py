@@ -119,9 +119,9 @@ if args.roi_2 is not None:
 
 
 # =============================================================================
-# Neural control
+# Neural control (ROI 1)
 # =============================================================================
-# Select the top N images that drive or suppress both early and late part of
+# Select the top N images that drive or suppress both early and late parts of
 # the epoch
 if args.control_roi_1 in ['early-drive_late-drive', 'early-suppress_late-suppress']:
 
@@ -199,7 +199,7 @@ elif args.control_roi_1 in ['early-drive_late-suppress', 'early-suppress_late-dr
 # =============================================================================
 if args.roi_2 is not None:
 
-    # Select the top N images that drive or suppress both early and late part
+    # Select the top N images that drive or suppress both early and late parts
     # of the epoch
     if args.control_roi_2 in ['early-drive_late-drive', 'early-suppress_late-suppress']:
 
@@ -291,16 +291,16 @@ else:
     # Remove NaNs
     img_roi_1 = img_control_roi_1[~np.isnan(img_control_roi_1)].astype(int)
     img_roi_2 = img_control_roi_2[~np.isnan(img_control_roi_2)].astype(int)
-    # Get first occurrence indices
+    # Get first image occurrence indices
     pos_1 = {}
     for i, val in enumerate(img_roi_1):
         pos_1[val] = i
     pos_2 = {}
     for i, val in enumerate(img_roi_2):
         pos_2[val] = i
-    # Find common elements
+    # Find common controlling images
     common = set(pos_1.keys()) & set(pos_2.keys())
-    # Rank by combined position (lower = earlier in both)
+    # Rank by combined position in both ROIs
     ranked = sorted(common, key=lambda x: pos_1[x] + pos_2[x])
     # Keep the best N image conditions
     img_control = np.array(ranked[:args.n_images])

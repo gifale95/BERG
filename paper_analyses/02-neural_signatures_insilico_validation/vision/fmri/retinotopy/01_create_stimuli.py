@@ -31,7 +31,6 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-from scipy.ndimage import gaussian_filter
 import h5py
 from PIL import Image
 from berg import BERG
@@ -40,10 +39,10 @@ from tqdm import tqdm
 parser = argparse.ArgumentParser()
 parser.add_argument('--FIELD_SIZE', type=float, default=8.4)
 parser.add_argument('--GRID_RES', type=int, default=40)
-parser.add_argument('--PROBE_SIGMA', type=float, default=0.5)
+parser.add_argument('--PROBE_SIGMA', type=float, default=0.25)
 parser.add_argument('--IMG_SIZE', type=int, default=224)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)
-parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--nsd_dir', default='/scratch/ccn_datasets/natural-scenes-dataset', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -117,7 +116,7 @@ def make_gaussian_crop(mask, img_rgb):
 # =============================================================================
 # Make the Gaussian masks
 masks = np.array([make_gaussian_masks(center) for center in centers])
-masks = masks[..., None] # shape [n_probes, H, W, 1]
+masks = masks[...,None] # shape [n_probes, H, W, 1]
 
 # Create the saving directory
 save_dir = os.path.join(args.berg_dir,

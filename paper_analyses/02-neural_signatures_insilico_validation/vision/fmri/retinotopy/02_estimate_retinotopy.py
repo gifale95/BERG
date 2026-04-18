@@ -42,7 +42,7 @@ parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-hu
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--FIELD_SIZE', type=float, default=8.4)
 parser.add_argument('--GRID_RES', type=int, default=40)
-parser.add_argument('--PROBE_SIGMA', type=float, default=0.5)
+parser.add_argument('--PROBE_SIGMA', type=float, default=0.25)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -116,15 +116,15 @@ y0s_rh = centers[max_idx_rh, 1]
 # =============================================================================
 # Estimate the retinotopic maps (polar angle and eccentricity)
 # =============================================================================
-# arctan2 outputs values in the range [−π +π], but here polar angles set to the
-# range [0 2π] to facilitate later color-coded visualization.
+# "np.arctan2()"" gives angle in [-180°, 180°], "+ 360) % 360" remaps it to
+# [0°, 360°)
 
 # LH
-polar_angle_lh = np.mod(np.arctan2(y0s_lh, x0s_lh), 2 * np.pi)
+polar_angle_lh = (np.degrees(np.arctan2(x0s_lh, y0s_lh)) + 360) % 360
 eccentricity_lh = np.sqrt(x0s_lh**2 + y0s_lh**2)
 
 # RH
-polar_angle_rh = np.mod(np.arctan2(y0s_rh, x0s_rh), 2 * np.pi)
+polar_angle_rh = (np.degrees(np.arctan2(x0s_rh, y0s_rh)) + 360) % 360
 eccentricity_rh = np.sqrt(x0s_rh**2 + y0s_rh**2)
 
 
@@ -132,6 +132,10 @@ eccentricity_rh = np.sqrt(x0s_rh**2 + y0s_rh**2)
 # Save the retinotopic maps
 # =============================================================================
 results = {
+    'x0s_lh': x0s_lh,
+    'y0s_lh': y0s_lh,
+    'x0s_rh': x0s_rh,
+    'y0s_rh': y0s_rh,
     'polar_angle_lh': polar_angle_lh,
     'eccentricity_lh': eccentricity_lh,
     'polar_angle_rh': polar_angle_rh,

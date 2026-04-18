@@ -46,10 +46,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b_32')
 parser.add_argument('--subject', default='N', type=str)
 parser.add_argument('--roi', default='V1', type=str)
-parser.add_argument('--n_images', default=50, type=int)
+parser.add_argument('--n_images', default=100, type=int)
 parser.add_argument('--n_iter', type=int, default=100000)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--imagenet_dir', default='/scratch/giffordale95/datasets/image_sets/ILSVRC2012', type=str)
+parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Baseline <<<')
@@ -141,8 +141,8 @@ imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='train')
 
 # Save directory
 save_dir = os.path.join(args.berg_dir, 'neural_control', 'neural_control',
-    'controlling_images', args.encoding_model, f'subject-{args.subject}',
-    f'roi-{args.roi}')
+    'baseline_images', args.encoding_model, f'subject-{args.subject}',
+    f'{args.roi}')
 os.makedirs(save_dir, exist_ok=True)
 
 # Loop across images
@@ -159,11 +159,7 @@ for i in tqdm(range(args.n_images)):
     img = transform(img)
     images.append(np.array(img))
 
-    # Save the baseline images as .png files
-    file_name = (f'baseline_img-{i+1:03}'
-        f'_imagenet_train-{img_baseline[i]:06}.png')
-    # img.save(os.path.join(save_dir, file_name))
-
 # Save the baseline images as h5py files
-with h5py.File(os.path.join(save_dir, 'baseline_images.h5'), 'w') as f:
+h5_dir = os.path.join(save_dir, f'{args.roi}_baseline_images.h5')
+with h5py.File(h5_dir, 'w') as f:
     f.create_dataset('images', data=np.array(images))

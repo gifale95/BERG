@@ -42,10 +42,11 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import hsv_to_rgb
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
-parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-alexnet')
+parser.add_argument('--fmri_subjects', default=[1], type=list) # !!! 1, 2, 3, 4, 5, 6, 7, 8
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=0, type=float)
+parser.add_argument('--FIELD_SIZE', type=float, default=8.4)
 parser.add_argument('--GRID_RES', type=int, default=40)
 parser.add_argument('--PROBE_SIGMA', type=float, default=0.5)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)
@@ -84,32 +85,21 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     # Get the metadata
     metadata = results['metadata'][s]
 
-    # Get the retinotopic maps
-    # Polar angles
+    # Get the polar angle
     polar_angle_lh = results['polar_angle_lh_silico'][s]
     polar_angle_rh = results['polar_angle_rh_silico'][s]
+    # Rotate the polar angles by 150° for nicer color visualization
+    polar_angle_lh = (polar_angle_lh + 150) % 360
+    polar_angle_rh = (polar_angle_rh + 150) % 360
 
-    # # Rotate the polar angles and wrap into 0–2π
-    # shift = 5 * np.pi / 6  # 150° rotation
-    # polar_angle_lh = (polar_angle_lh + shift) % (2 * np.pi)
-    # polar_angle_rh = (polar_angle_rh + shift) % (2 * np.pi)
-    # # Normalize the polar angles to [0,1]
-    # polar_angle_lh_norm = polar_angle_lh / (2 * np.pi)
-    # polar_angle_rh_norm = polar_angle_rh / (2 * np.pi)
-
-    # Rotate the polar angles and wrap into 0–2π
-    polar_angle_lh = np.degrees(polar_angle_lh) - 90
-    polar_angle_rh = np.degrees(polar_angle_rh) - 90
-    # Normalize the polar angles to [0,1]
-    polar_angle_lh_norm = polar_angle_lh / 360
-    polar_angle_rh_norm = polar_angle_rh / 360
-
-    # Eccentricity
+    # Get the eccentricity
     eccentricity_lh = results['eccentricity_lh_silico'][s]
     eccentricity_rh = results['eccentricity_rh_silico'][s]
     # Normalize the eccentricities to [0,1]
-    eccentricity_lh_norm = eccentricity_lh / eccentricity_lh.max()
-    eccentricity_rh_norm = eccentricity_rh / eccentricity_rh.max()
+    max_ecc = np.append(eccentricity_lh, eccentricity_rh).max()
+    max_ecc = 12 # !!! Check if this is true, and if so hard-code it so that it is constant across encoding models
+    eccentricity_lh_norm = eccentricity_lh / max_ecc
+    eccentricity_rh_norm = eccentricity_rh / max_ecc
 
     # Only retain vertices that have above threshold (i) NCSNR AND
     # (ii) encoding prediction accuracy.
@@ -119,7 +109,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     lh_encoding = metadata['encoding_models']['lh_explained_variance_nsdcore']
     idx_encoding = lh_encoding >= args.encoding_threshold
     idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
-    polar_angle_lh_norm[idx_nan] = np.nan
+    polar_angle_lh[idx_nan] = np.nan
     eccentricity_lh_norm[idx_nan] = np.nan
     # Right hemisphere
     rh_ncsnr = metadata['fmri']['rh_ncsnr']
@@ -127,7 +117,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     rh_encoding = metadata['encoding_models']['rh_explained_variance_nsdcore']
     idx_encoding = rh_encoding >= args.encoding_threshold
     idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
-    polar_angle_rh_norm[idx_nan] = np.nan
+    polar_angle_rh[idx_nan] = np.nan
     eccentricity_rh_norm[idx_nan] = np.nan
 
 
@@ -135,7 +125,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # Plot the polar angle results
 # =============================================================================
     # Append the results across left and right hemishperes
-    data = np.append(polar_angle_lh_norm, polar_angle_rh_norm)
+    data = np.append(polar_angle_lh, polar_angle_rh)
 
     # Create the flat brain surface
     subject = 'fsaverage_nsd_sub-0' + str(sub)
@@ -144,7 +134,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
         subject=subject,
         cmap='hsv',
         vmin=0,
-        vmax=1,
+        vmax=360,
         with_colorbar=True
         )
 
@@ -215,7 +205,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # Plot the polar angle colorwheel
 # =============================================================================
 # Create a grid of coordinates
-size = 2000 # image size of the colorwheel
+size = 2000  # image size of the colorwheel
 radius = size // 2
 x = np.linspace(-1, 1, size)
 y = np.linspace(-1, 1, size)
@@ -223,24 +213,28 @@ X, Y = np.meshgrid(x, y)
 
 # Compute polar coordinates
 R = np.sqrt(X**2 + Y**2)
-theta = np.arctan2(Y, X)  # range: -pi to pi
+theta = np.degrees(np.arctan2(Y, X))  # range: -180 to 180
+
 # Mask outside the unit circle
 mask = R <= 1
 
-# Rotate
-shift = 5 * np.pi / 6 + np.pi / 2
-theta_rot = (theta + shift) % (2 * np.pi)
+# Rotate by 240° (i.e. 90° to match the original brain maps + additional 150°
+# since the brain maps were also rotated by 150°)
+shift = 240 # (150° + 90°)
+# Convert to degrees in the range [0, 360) and apply the rotation
+theta_rot = (theta + shift) % 360
 
 # Convert polar angle to HSV color wheel
-# H = angle / 2π
-# S = 1 (full saturation)
-# V = 1 (full brightness)
-H = theta_rot / (2 * np.pi)  # hue: 0–1
-S = np.ones_like(H)          # full saturation
-V = np.ones_like(H)          # full brightness
+# H = angle / 360
+H = theta_rot / 360.0      # hue: 0–1
+S = np.ones_like(H)        # full saturation
+V = np.ones_like(H)        # full brightness
+
 HSV = np.stack((H, S, V), axis=-1)
 RGB = hsv_to_rgb(HSV)
-RGB[~mask] = np.nan  # transparent background outside circle
+
+# Apply mask
+RGB[~mask] = np.nan
 
 # Plot color wheel
 fig = plt.figure(figsize=(6, 6))
@@ -256,12 +250,11 @@ plt.close(fig)
 
 
 # =============================================================================
-# Plot the eccentricity map
+# Plot the eccentricity map # !!!
 # =============================================================================
 # Parameters
 size = 2000
-max_ecc = 12
-square_ecc = 8.4
+square_ecc = args.FIELD_SIZE
 cmap = "gist_rainbow"
 
 # Create coordinate grid
@@ -279,7 +272,7 @@ ecc = np.clip(R, 0, 1) * max_ecc
 mask = R > 1
 
 # Compute square boundary in normalized img space
-s = square_ecc / max_ecc # e.g. 8.4/12 = 0.7
+s = square_ecc / max_ecc
 
 # Prepare the image
 ecc_img = ecc.copy()

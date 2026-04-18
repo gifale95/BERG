@@ -16,10 +16,6 @@ ncsnr_threshold : float
 encoding_threshold : float
     The threshold on the encoding models explained variance for vertex
     selection (in % units).
-FIELD_SIZE : float
-    The total width and height of the simulated visual field in degrees of
-    visual angle. The coordinate system spans from -FIELD_SIZE/2 to
-    +FIELD_SIZE/2 in both x and y directions.
 GRID_RES : int
     The number of probe centers sampled per axis (x and y). The total number of
     probes will be GRID_RES × GRID_RES.
@@ -46,12 +42,12 @@ from scipy.stats import pearsonr
 from scipy.stats import ttest_1samp
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-alexnet')
 parser.add_argument('--fmri_subjects', default=[1], type=list) # !!! 1, 2, 3, 4, 5, 6, 7, 8
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=0, type=float)
 parser.add_argument('--GRID_RES', type=int, default=40)
-parser.add_argument('--PROBE_SIGMA', type=float, default=0.5)
+parser.add_argument('--PROBE_SIGMA', type=float, default=0.25)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)
 parser.add_argument('--nsd_dir', default='/scratch/ccn_datasets/natural-scenes-dataset', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -180,18 +176,35 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # =============================================================================
 # Correlate the in silico and in vivo retinotopic maps
 # =============================================================================
-    # Transform the in silico polar angle maps from radians to degrees and
-    # rotate them counterclockwise by 90 degrees to match the in vivo polar
-    # angle maps
+    # Rotate the in silico polar angle maps counterclockwise by 90 degrees to
+    # match the in vivo polar angle maps
     corr_polar_angle_silico_vivo.append(pearsonr(polar_angle_vivo,
-        (np.degrees(polar_angle_silico) - 90) % 360)[0]) # !!! What is the % 360 doing?
+        (polar_angle_silico - 90) % 360)[0])
+
+
+
+    # Check whether X/Y degree coordinates are correct (e.g., RH V1v histogram # !!!
+    # mostly mostly having negative X and negative Y values?):
+    # 'x0s_lh': x0s_lh,
+    # 'y0s_lh': y0s_lh,
+    # 'x0s_rh': x0s_rh,
+    # 'y0s_rh': y0s_rh,
+
+
 
     # Clip the eccentricity values at 8.4 degrees of visual angle to avoid
     # outliers (since the NSD stimuli were presented within a circular aperture
     # of 8.4 degrees of visual)
     corr_eccentricity_silico_vivo.append(pearsonr(
-        np.clip(eccentricity_vivo, 0, 8.4),
+        np.clip(eccentricity_vivo, 0, 8.4), # !!! Set to max_ecc=12 ???
         np.clip(eccentricity_silico, 0, 8.4))[0])
+
+    # Plot the following x and y best coordinated on brain surfaces, to check
+    # why the max eccentricities are of only 5 degrees: # !!!
+    # 'x0s_lh': x0s_lh,
+    # 'y0s_lh': y0s_lh,
+    # 'x0s_rh': x0s_rh,
+    # 'y0s_rh': y0s_rh,
 
 
 # =============================================================================
