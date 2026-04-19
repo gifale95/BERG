@@ -31,12 +31,14 @@ activity via voxelwise ridge regression, following the scaling-laws approach of
 Antonello (NeurIPS 2023).
 
 **Neural data.** The model was trained on the LeBel et al. (2023) dataset, in
-which 3 participants (UTS01, UTS02, UTS03) passively listened to 84 complete
-narrative stories (~16 hours) from The Moth and Modern Love podcasts over
-15 fMRI scanning sessions. Functional data were acquired at 3T (TR=2s,
-2.6mm isotropic) and preprocessed with motion correction, cross-run
-alignment, Savitzky-Golay detrending, and z-scoring. The number of cortical
-voxels varies per subject: UTS01: 81,126; UTS02: 94,251; UTS03: 95,556.
+which 8 participants passively listened to narrative stories from The Moth and
+Modern Love podcasts during fMRI scanning. Three participants (UTS01–UTS03)
+listened to 84 stories (~16 hours) across 15 sessions; the remaining five
+(UTS04–UTS08) listened to 27 stories (~6 hours) across 5 sessions. Functional
+data were acquired at 3T (TR=2s, 2.6mm isotropic) and preprocessed with motion
+correction, cross-run alignment, Savitzky-Golay detrending, and z-scoring.
+The data lives in volumetric voxel space (cortical mask applied to the 84×84×54
+acquisition grid); the number of cortical voxels varies per subject (81K–109K).
 
 **Feature extraction.** Each word in the input is processed through OPT-1.3B
 (Zhang et al., 2022), a 1.3-billion-parameter decoder-only transformer language
@@ -67,23 +69,26 @@ The temporal pipeline is:
   4. **Prediction.** The delayed feature matrix is multiplied by the pre-trained
      ridge regression weights to produce predicted BOLD responses at each TR.
 
-**Training.** 83 stories were used for training (~16 hours of speech) with
-ridge regression fitted independently per voxel. The ridge regularisation
+**Training.** For subjects UTS01–UTS03, 83 stories were used for training
+(~16 hours of speech); for UTS04–UTS08, 25–26 stories were used (~5.5 hours).
+Ridge regression was fitted independently per voxel. The ridge regularisation
 parameter was selected per voxel via bootstrap cross-validation. Training features
 were trimmed by 10 TRs from the start and 5 TRs from the end. One story
-("Where There's Smoke") was repeated 10 times across scanning sessions and used as the
-held-out test set. Test features were trimmed by 50 TRs from the start to
-exclude long-context artifacts (Antonello et al., Section 3.5) and 5 TRs
-from the end.
+("Where There's Smoke") was held out for testing and repeated across scanning
+sessions (10 repeats for UTS01–UTS03, 5 repeats for UTS04–UTS08). Test features
+were trimmed by 50 TRs from the start to exclude long-context artifacts
+(Antonello et al., Section 3.5) and 5 TRs from the end.
 
 **Noise ceiling.** Computed using the Schoppe et al. (2016) signal/noise power
-decomposition on 10 repeated presentations of the test story. For each voxel,
+decomposition on repeated presentations of the test story. For each voxel,
 noise power (NP) is the mean within-repeat temporal variance across repeats,
 and signal power (SP) is derived by removing the noise contribution from the
 variance of the repeat-averaged response: SP = (1/(N−1)) × (N × var(mean) − NP).
 The maximum attainable correlation is then CCmax = √(1 / (1 + (1/N) × (NP/SP − 1))).
 CCmax is floored at 0.25 to regularise noisy voxels (Antonello et al., Section 2.5).
 The first 40 TRs of each repeat are excluded to match the test evaluation window.
+Noise ceiling estimates from 5 repeats (UTS04–UTS08) are noisier than from 10
+repeats (UTS01–UTS03).
 
 **Output.** The model returns a 2D array of predicted BOLD responses at each TR,
 across all cortical voxels (or a user-specified subset via ROI selection).
@@ -106,9 +111,9 @@ Metadata
     **{roi_name}** : ``(n_voxels,) bool`` - Voxel mask per ROI
 **encoding_model**
 
-    **train_stories** : ``(n_train,)`` - Story names used for model training (83 stories)
+    **train_stories** : ``(n_train,)`` - Story names used for training (83 for UTS01–03, 25–26 for UTS04–08)
 
-    **test_stories** : ``(n_test,)`` - Story names used for model testing (1 story)
+    **test_stories** : ``(n_test,)`` - Story names used for testing (1 story)
 
     **noise_ceiling** : ``(n_voxels,)`` - Voxelwise noise ceiling CCmax (Schoppe et al., floored at 0.25)
 
@@ -178,8 +183,11 @@ This function loads the encoding model.
    * - **subject**
      - | **Type:** str
        | **Required:** Yes
-       | **Description:** Subject ID from the LeBel et al. (2023) dataset.
-       | **Valid Values:** "UTS01", "UTS02", "UTS03"
+       | **Description:** Subject ID from the LeBel et al. (2023) dataset. UTS01–UTS03 have the
+       | extended dataset (~16 hours, 83 training stories, 10 test repeats).
+       | UTS04–UTS08 have the base dataset (~5.5 hours, 25–26 training stories,
+       | 5 test repeats). Encoding performance scales with training data size.
+       | **Valid Values:** "UTS01", "UTS02", "UTS03", "UTS04", "UTS05", "UTS06", "UTS07", "UTS08"
        | **Example:** "UTS03"
    * - **selection**
      - | **Type:** dict
@@ -196,7 +204,7 @@ This function loads the encoding model.
        |     **Description:** List of ROI names for which in silico fMRI responses are generated.
        |     Not all ROIs are available for every subject — use
        |     get_model_metadata() to check availability.
-       |     **Valid values:** "AC", "ATFP", "Broca", "EBA", "FBA", "FEF", "FFA", "FO", "IFSFP", "IPS", "LO", "M1F", "M1H", "M1M", "OFA", "OPA", "PMvh", "PPA", "RSC", "S1F", "S1H", "S1M", "S2F", "S2H", "S2M", "SEF", "SMFA", "SMHA", "TOS", "V1", "V2", "V3", "V3A", "V3B", "V4", "V7", "VO", "hMT", "pSTS", "sPMv"
+       |     **Valid values:** "A1", "AC", "ATFP", "Broca", "EBA", "FBA", "FEF", "FFA", "FFA1", "FO", "IFSFP", "IPS", "LO", "M1F", "M1H", "M1M", "OFA", "OPA", "PMvh", "PPA", "RSC", "S1F", "S1H", "S1M", "S2F", "S2H", "S2M", "SEF", "SMFA", "SMHA", "TOS", "V1", "V2", "V3", "V3A", "V3B", "V4", "V7", "VO", "hMT", "pSTS", "sPMv"
        |     **Example:** ['AC', 'Broca']
        | 
        | **voxel_index**
@@ -205,9 +213,14 @@ This function loads the encoding model.
        |     which in silico fMRI responses are generated. This vector must have
        |     exactly the same length as the number of voxels for the selected
        |     subject:
-       |     - UTS01:  81,126 voxels
-       |     - UTS02:  94,251 voxels
-       |     - UTS03:  95,556 voxels
+       |     - UTS01:   81,126 voxels
+       |     - UTS02:   94,251 voxels
+       |     - UTS03:   95,556 voxels
+       |     - UTS04:  109,469 voxels
+       |     - UTS05:   99,322 voxels
+       |     - UTS06:   92,198 voxels
+       |     - UTS07:   94,395 voxels
+       |     - UTS08:   97,023 voxels
        |     The voxels from the one-hot encoded vector are included in addition to
        |     any voxels selected via the "roi" key. If both are provided, the union
        |     of all selected voxels is used.
@@ -276,8 +289,11 @@ This function loads the encoding model's metadata without having to load the mod
    * - **subject**
      - | **Type:** str
        | **Required:** Yes
-       | **Description:** Subject ID from the LeBel et al. (2023) dataset.
-       | **Valid Values:** "UTS01", "UTS02", "UTS03"
+       | **Description:** Subject ID from the LeBel et al. (2023) dataset. UTS01–UTS03 have the
+       | extended dataset (~16 hours, 83 training stories, 10 test repeats).
+       | UTS04–UTS08 have the base dataset (~5.5 hours, 25–26 training stories,
+       | 5 test repeats). Encoding performance scales with training data size.
+       | **Valid Values:** "UTS01", "UTS02", "UTS03", "UTS04", "UTS05", "UTS06", "UTS07", "UTS08"
        | **Example:** "UTS03"
 
 Performance
