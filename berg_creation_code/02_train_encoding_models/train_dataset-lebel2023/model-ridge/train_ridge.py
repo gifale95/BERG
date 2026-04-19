@@ -88,8 +88,9 @@ parser.add_argument('--deep_fmri_repo', type=str, required=True,
 parser.add_argument('--berg_dir', type=str, required=True,
     help='Path to the BERG data directory.')
 parser.add_argument('--subjects', nargs='+', type=str,
-    default=['UTS01', 'UTS02', 'UTS03'],
-    help='Subject identifiers.  Default: UTS01 UTS02 UTS03.')
+    default=['UTS01', 'UTS02', 'UTS03', 'UTS04', 'UTS05',
+             'UTS06', 'UTS07', 'UTS08'],
+    help='Subject identifiers.  Default: all 8 LeBel et al. subjects.')
 parser.add_argument('--model_name', type=str, default='facebook/opt-1.3b',
     help='HuggingFace model identifier.  Default: facebook/opt-1.3b.')
 parser.add_argument('--layer', type=int, default=18,
@@ -279,15 +280,18 @@ print(f'  hidden_dim={hidden_dim}, n_layers={n_layers}, '
 # ============================================================================
 # Load stimuli and extract features for all stories
 # ============================================================================
-first_meta_path = join(data_dir,
-    f'lebel2023_{args.subjects[0]}_metadata.npy')
-first_meta = np.load(first_meta_path, allow_pickle=True).item()
-all_train_stories = list(first_meta['encoding_model']['train_stories'])
-all_test_stories  = list(first_meta['encoding_model']['test_stories'])
-all_stories = sorted(set(all_train_stories) | set(all_test_stories))
+all_train_stories = set()
+all_test_stories  = set()
+for subj in args.subjects:
+    meta_path = join(data_dir, f'lebel2023_{subj}_metadata.npy')
+    meta = np.load(meta_path, allow_pickle=True).item()
+    all_train_stories |= set(meta['encoding_model']['train_stories'])
+    all_test_stories  |= set(meta['encoding_model']['test_stories'])
+all_stories = sorted(all_train_stories | all_test_stories)
 
-print(f'\nStories: {len(all_train_stories)} train, '
-      f'{len(all_test_stories)} test')
+print(f'\nStories (union across {len(args.subjects)} subjects): '
+      f'{len(all_train_stories)} train, {len(all_test_stories)} test, '
+      f'{len(all_stories)} total')
 
 # Extract word-level features and Lanczos-downsample per story
 print(f'\nExtracting OPT-1.3B features and downsampling to TR rate ...')
@@ -339,6 +343,14 @@ for subject in args.subjects:
     train_stories = list(metadata['encoding_model']['train_stories'])
     test_stories  = list(metadata['encoding_model']['test_stories'])
     n_voxels = metadata['fmri']['n_voxels']
+
+    print(f'  Training stories: {len(train_stories)}, '
+          f'test stories: {len(test_stories)}, '
+          f'voxels: {n_voxels}')
+    if len(train_stories) < 50:
+        print(f'  NOTE: {subject} has only {len(train_stories)} training '
+              f'stories (~{len(train_stories)*12//60}h). Encoding performance '
+              f'will be lower than for subjects with the extended dataset.')
 
     # ----------------------------------------------------------------
     # Build training stimulus matrix (z-score + FIR delays)
@@ -471,4 +483,3 @@ for subject in args.subjects:
 print(f'\n{"="*60}')
 print('Done.  All encoding models trained and saved.')
 print(f'{"="*60}')
-

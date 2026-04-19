@@ -36,7 +36,7 @@ model_info = load_model_info()
 
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.opt_1_3b_ridge",
+    module_path="berg.models.fmri.lebel2023_opt_1_3b_ridge",
     class_name="FMRIOpt13BEncodingModel",
     modality=model_info.get("modality", "fmri"),
     training_dataset=model_info.get("training_dataset", "lebel2023"),
@@ -80,6 +80,11 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
         "UTS01":  81126,
         "UTS02":  94251,
         "UTS03":  95556,
+        "UTS04": 109469,
+        "UTS05":  99322,
+        "UTS06":  92198,
+        "UTS07":  94395,
+        "UTS08":  97023,
     }
 
     # Temporal processing
@@ -108,7 +113,7 @@ class FMRIOpt13BEncodingModel(BaseModelInterface):
         ----------
         subject : str
             Subject ID from the LeBel et al. (2023) dataset
-            (e.g., 'UTS01', 'UTS02', 'UTS03').
+            (e.g., 'UTS01' through 'UTS08').
         selection : dict, optional
             Specifies which voxels to include in the output.
             - roi: List of ROI names (e.g., ['AC', 'Broca'])

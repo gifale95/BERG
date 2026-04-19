@@ -1,4 +1,3 @@
-
 """Prepare the LeBel et al. (2023) deep-fMRI-dataset for BERG model training.
  
 Extracts BOLD responses, stimulus data (words + timings from TextGrids),
@@ -49,8 +48,9 @@ parser.add_argument('--deep_fmri_repo', type=str, required=True,
 parser.add_argument('--berg_dir', type=str, required=True,
     help='Path to the BERG data directory.')
 parser.add_argument('--subjects', nargs='+', type=str,
-    default=['UTS01', 'UTS02', 'UTS03'],
-    help='Subject identifiers.  Default: UTS01 UTS02 UTS03.')
+    default=['UTS01', 'UTS02', 'UTS03', 'UTS04', 'UTS05',
+             'UTS06', 'UTS07', 'UTS08'],
+    help='Subject identifiers.  Default: all 8 LeBel et al. subjects.')
 
 args = parser.parse_args()
 
@@ -337,13 +337,22 @@ for subject in args.subjects:
               f'{np.count_nonzero(mask_bool)} voxels')
 
         # Map ROIs to encoding-model voxel space
+        # Normalise inconsistent ROI names across subjects
+        ROI_NAME_MAP = {
+            'Brocas': 'Broca',   # UTS05, UTS06, UTS07
+            'ISPS':   'IPS',     # UTS06
+            'FFA 1':  'FFA1',    # UTS04
+        }
         rois = cu.get_roi_masks(subject, xfmname)
         for name in sorted(rois):
             flat = rois[name][mask_bool].astype(bool)
             n = np.count_nonzero(flat)
             if n > 0:
-                roi_dict[name.strip()] = flat
-                print(f'      {name}: {n} voxels')
+                clean = name.strip()
+                clean = ROI_NAME_MAP.get(clean, clean)
+                roi_dict[clean] = flat
+                suffix = f' (renamed from "{name}")' if clean != name.strip() else ''
+                print(f'      {clean}: {n} voxels{suffix}')
 
         print(f'    Total ROIs with voxels: {len(roi_dict)}')
     else:

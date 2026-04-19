@@ -12,7 +12,7 @@ import berg.models.fmri.tuckute_2024_gpt2_xl
 import berg.models.fmri.mosaic_CNN8_multihead_subNSD_verticesAll
 import berg.models.fmri.mosaic_CNN8_multihead_subAll_verticesVisual
 import berg.models.fmri.cneuromod_algo2025_text2fmri
-import berg.models.fmri.opt_1_3b_ridge
+import berg.models.fmri.lebel2023_opt_1_3b_ridge
 import berg.models.fmri.cneuromod_algo2025_vibe
 import berg.models.fmri.tuckute_2024_gpt2_xl
 try:
