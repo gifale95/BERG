@@ -32,8 +32,9 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--berg_dir', required=True, type=str,
     help='Path to the BERG data directory.')
 parser.add_argument('--subjects', nargs='+', type=str,
-    default=['UTS01', 'UTS02', 'UTS03'],
-    help='Subject identifiers.  Default: UTS01 UTS02 UTS03.')
+    default=['UTS01', 'UTS02', 'UTS03', 'UTS04', 'UTS05',
+             'UTS06', 'UTS07', 'UTS08'],
+    help='Subject identifiers.  Default: all 8 LeBel et al. subjects.')
 parser.add_argument('--ccmax_threshold', type=float, default=0.35,
     help='Only show voxels / ROIs with CCmax above this.  Default: 0.35.')
 

@@ -96,10 +96,17 @@ for subject in args.subjects:
     # ----------------------------------------------------------------
     print(f'  Computing voxelwise correlations ...')
     corrs = np.zeros(n_voxels, dtype=np.float32)
+    n_nan_voxels = 0
     for v in range(n_voxels):
-        r, _ = pearsonr(actual[:, v], pred[:, v])
+        a, p = actual[:, v], pred[:, v]
+        if np.any(~np.isfinite(a)) or np.any(~np.isfinite(p)):
+            n_nan_voxels += 1
+            continue  # leave corrs[v] = 0
+        r, _ = pearsonr(a, p)
         corrs[v] = r
     corrs = np.nan_to_num(corrs)
+    if n_nan_voxels > 0:
+        print(f'    Skipped {n_nan_voxels} voxels with NaN/Inf in responses')
 
     print(f'    Mean r:        {np.mean(corrs):.4f}')
     print(f'    Median r:      {np.median(corrs):.4f}')
