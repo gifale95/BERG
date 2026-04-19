@@ -166,7 +166,7 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Text
      - `BrainScore leaderboard <https://www.brain-score.org>`_
    * - ✅
-     - :doc:`model_cards/fmri-multi_study-tribe_v2`
+     - :doc:`model_cards/fmri-dascoli_2026-tribe_v2`
      - Tri-modal (video, audio, language) Transformer encoding model predicting whole-brain fMRI (20,484 vertices). First place in Algonauts 2025 (263 teams).
      - `Multi-study naturalistic fMRI <https://github.com/facebookresearch/tribev2>`_
      - Human

@@ -14,7 +14,7 @@ import berg.models.fmri.mosaic_CNN8_multihead_subAll_verticesVisual
 import berg.models.fmri.cneuromod_algo2025_text2fmri
 import berg.models.fmri.cneuromod_algo2025_vibe
 import berg.models.fmri.tuckute_2024_gpt2_xl
-import berg.models.fmri.multi_study_tribe_v2
+import berg.models.fmri.dascoli_2026_tribe_v2
 try:
     import berg.models.fmri.brainscore_language_models
 except ImportError:

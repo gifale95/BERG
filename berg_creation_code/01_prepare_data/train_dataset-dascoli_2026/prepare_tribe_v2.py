@@ -10,8 +10,8 @@ specific), which are used for ROI-based selection of predicted brain responses.
 
 Output Files Created
 ────────────────────
-{berg_dir}/encoding_models/modality-fmri/train_dataset-multi_study/
-    model-tribe_v2/metadata/metadata_average.npy
+{berg_dir}/encoding_models/modality-fmri/train_dataset-dascoli_2026/
+    model-tribe_v2/metadata/metadata.npy
 
 Metadata structure:
     'fmri':
@@ -298,7 +298,7 @@ def create_tribe_v2_metadata(berg_dir):
         berg_dir,
         "encoding_models",
         "modality-fmri",
-        "train_dataset-multi_study",
+        "train_dataset-dascoli_2026",
         "model-tribe_v2",
         "metadata",
     )
@@ -348,7 +348,7 @@ def create_tribe_v2_metadata(berg_dir):
     # -------------------------------------------------------------------------
     # Step 3: Save metadata
     # -------------------------------------------------------------------------
-    output_path = os.path.join(output_dir, "metadata_average.npy")
+    output_path = os.path.join(output_dir, "metadata.npy")
     np.save(output_path, metadata)
     print(f"\nMetadata saved to: {output_path}")
 

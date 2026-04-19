@@ -1,6 +1,6 @@
-=========================
-fmri-multi_study-tribe_v2
-=========================
+==========================
+fmri-dascoli_2026-tribe_v2
+==========================
 
 Model Summary
 ------------
@@ -12,7 +12,7 @@ Model Summary
    * - Modality
      - fMRI
    * - Training Dataset
-     - Multi-study naturalistic fMRI (CNeuroMod, BoldMoments, Lebel2023, Wen2017)
+     - d'Ascioli et al. (2026) (CNeuroMod, BoldMoments, Lebel2023, Wen2017)
    * - Species
      - Human
    * - Stimuli
@@ -48,7 +48,8 @@ Transformer encoder that maps multimodal representations onto the cortical surfa
 384-dimensional space per modality (1,152 total), and processed by an 8-layer, 8-head Transformer with
 100-second context windows. A subject-conditioned final layer maps latent representations to cortical
 vertices. For inference, the model uses a special "unseen subject" layer trained via subject dropout,
-producing group-average-like predictions without requiring subject-specific data.
+producing group-average-like predictions without requiring subject-specific data. No subject
+parameter is needed, the model always runs in this mode.
 
 **Training data.** The model was trained on over 450 hours of fMRI across 25 subjects from four
 naturalistic datasets: Courtois NeuroMod (4 subjects, 269h — movies with speech), BoldMoments
@@ -164,13 +165,6 @@ This function loads the encoding model.
        | **Description:** Unique identifier of the model to load.
        | **Valid Values:** fmri-multi_study-tribe_v2
        | **Example:** "fmri-multi_study-tribe_v2"
-   * - **subject**
-     - | **Type:** str
-       | **Required:** No
-       | **Description:** Subject identifier. TRIBE v2 uses a single 'unseen subject' layer that
-       | predicts group-average-like brain responses. Only 'average' is supported.
-       | **Valid Values:** "average"
-       | **Example:** "average"
    * - **selection**
      - | **Type:** dict
        | **Required:** No
@@ -251,13 +245,6 @@ This function loads the encoding model's metadata without having to load the mod
        | **Description:** Unique identifier of the model to load.
        | **Valid Values:** fmri-multi_study-tribe_v2
        | **Example:** "fmri-multi_study-tribe_v2"
-   * - **subject**
-     - | **Type:** str
-       | **Required:** No
-       | **Description:** Subject identifier. TRIBE v2 uses a single 'unseen subject' layer that
-       | predicts group-average-like brain responses. Only 'average' is supported.
-       | **Valid Values:** "average"
-       | **Example:** "average"
 
 Performance
 ----------

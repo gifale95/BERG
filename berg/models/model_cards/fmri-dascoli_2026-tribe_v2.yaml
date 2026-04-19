@@ -1,7 +1,7 @@
 # Basic metadata
-model_id: fmri-multi_study-tribe_v2
+model_id: fmri-dascoli_2026-tribe_v2
 modality: fMRI
-training_dataset: Multi-study naturalistic fMRI (CNeuroMod, BoldMoments, Lebel2023, Wen2017)
+training_dataset: d'Ascioli et al. (2026) (CNeuroMod, BoldMoments, Lebel2023, Wen2017)
 species: Human
 stimuli: Video, Audio, Text
 model_type: Multimodal Transformer (TRIBE v2)
@@ -32,7 +32,8 @@ description: |
   384-dimensional space per modality (1,152 total), and processed by an 8-layer, 8-head Transformer with
   100-second context windows. A subject-conditioned final layer maps latent representations to cortical
   vertices. For inference, the model uses a special "unseen subject" layer trained via subject dropout,
-  producing group-average-like predictions without requiring subject-specific data.
+  producing group-average-like predictions without requiring subject-specific data. No subject
+  parameter is needed, the model always runs in this mode.
 
   **Training data.** The model was trained on over 450 hours of fMRI across 25 subjects from four
   naturalistic datasets: Courtois NeuroMod (4 subjects, 269h — movies with speech), BoldMoments
@@ -120,17 +121,6 @@ parameters:
     type: "str"
     valid_values: "fmri-multi_study-tribe_v2"
     example: "fmri-multi_study-tribe_v2"
-    function: "get_encoding_model, get_model_metadata"
-
-  subject:
-    description: |
-      Subject identifier. TRIBE v2 uses a single 'unseen subject' layer that
-      predicts group-average-like brain responses. Only 'average' is supported.
-    required: false
-    type: str
-    valid_values: ["average"]
-    default: "average"
-    example: "average"
     function: "get_encoding_model, get_model_metadata"
 
   selection:

@@ -26,7 +26,6 @@ from berg.core.model_registry import register_model
 from berg.core.parameter_validator import (
     validate_binary_array,
     validate_selection_keys,
-    validate_subject,
     get_selected_indices,
 )
 from berg.interfaces.base_model import BaseModelInterface
@@ -39,7 +38,7 @@ from berg.interfaces.base_model import BaseModelInterface
 
 def load_model_info():
     yaml_path = os.path.join(
-        os.path.dirname(__file__), "..", "model_cards", "fmri-multi_study-tribe_v2.yaml"
+        os.path.dirname(__file__), "..", "model_cards", "fmri-dascoli_2026-tribe_v2.yaml"
     )
     with open(os.path.abspath(yaml_path), "r") as f:
         return yaml.safe_load(f)
@@ -49,15 +48,15 @@ model_info = load_model_info()
 
 register_model(
     model_id=model_info["model_id"],
-    module_path="berg.models.fmri.multi_study_tribe_v2",
+    module_path="berg.models.fmri.dascoli_2026_tribe_v2",
     class_name="TribeV2EncodingModel",
     modality=model_info.get("modality", "fmri"),
-    training_dataset=model_info.get("training_dataset", "multi_study"),
+    training_dataset=model_info.get("training_dataset", "dascoli_2026"),
     yaml_path=os.path.join(
         os.path.dirname(__file__),
         "..",
         "model_cards",
-        "fmri-multi_study-tribe_v2.yaml",
+        "fmri-dascoli_2026-tribe_v2.yaml",
     ),
 )
 
@@ -87,8 +86,6 @@ class TribeV2EncodingModel(BaseModelInterface):
 
     Parameters
     ----------
-    subject : str
-        Subject identifier. Only 'average' is supported (unseen subject mode).
     device : str
         Device for computation ('cpu', 'cuda', or 'auto').
     selection : dict, optional
@@ -99,14 +96,12 @@ class TribeV2EncodingModel(BaseModelInterface):
 
     MODEL_ID = model_info["model_id"]
     SELECTION_KEYS = list(model_info["parameters"]["selection"]["properties"].keys())
-    VALID_SUBJECTS = model_info["parameters"]["subject"]["valid_values"]
     VALID_ROIS = model_info["parameters"]["selection"]["properties"]["roi"]["valid_values"]
     N_VERTICES = 20484
     N_VERTICES_PER_HEMI = 10242
 
     def __init__(
         self,
-        subject: str = "average",
         device: str = "auto",
         selection: Optional[Dict] = None,
         berg_dir: Optional[str] = None,
@@ -115,8 +110,6 @@ class TribeV2EncodingModel(BaseModelInterface):
 
         Parameters
         ----------
-        subject : str, default='average'
-            Subject identifier. Only 'average' is supported.
         device : str, default='auto'
             Target device for computation. 'auto' selects CUDA if available.
         selection : dict, optional
@@ -128,7 +121,7 @@ class TribeV2EncodingModel(BaseModelInterface):
         berg_dir : str, optional
             Root path to the BERG directory.
         """
-        self.subject = subject
+        self.subject = "average"
         self.berg_dir = berg_dir
         self.selection = selection
         self.tribe_model = None
@@ -148,12 +141,9 @@ class TribeV2EncodingModel(BaseModelInterface):
     def _validate_parameters(self):
         """Validate user-provided parameters against the model YAML.
 
-        Checks that subject ID, selection keys, ROI names, and vertex
-        arrays all conform to the expected formats and values.
+        Checks that selection keys, ROI names, and vertex arrays all
+        conform to the expected formats and values.
         """
-        # Validate subject
-        validate_subject(self.subject, self.VALID_SUBJECTS)
-
         if self.selection is not None:
             # Validate selection keys
             validate_selection_keys(self.selection, self.SELECTION_KEYS)
@@ -197,10 +187,10 @@ class TribeV2EncodingModel(BaseModelInterface):
                 self.berg_dir,
                 "encoding_models",
                 "modality-fmri",
-                "train_dataset-multi_study",
+                "train_dataset-dascoli_2026",
                 "model-tribe_v2",
                 "metadata",
-                "metadata_average.npy",
+                "metadata.npy",
             )
             self.metadata = np.load(metadata_path, allow_pickle=True).item()
 
@@ -380,7 +370,6 @@ class TribeV2EncodingModel(BaseModelInterface):
     def get_metadata(
         cls,
         berg_dir=None,
-        subject="average",
         model_instance=None,
         **kwargs,
     ) -> Dict[str, Any]:
@@ -390,8 +379,6 @@ class TribeV2EncodingModel(BaseModelInterface):
         ----------
         berg_dir : str
             Path to BERG directory.
-        subject : str
-            Subject identifier (only 'average' supported).
         model_instance : BaseModelInterface, optional
             If provided, extract parameters from this model instance.
         **kwargs
@@ -400,7 +387,7 @@ class TribeV2EncodingModel(BaseModelInterface):
         Returns
         -------
         dict
-            Metadata dictionary with keys 'fmri', 'roi', 'encoding_model'.
+            Metadata dictionary with keys 'fmri', 'roi'.
 
         Raises
         ------
@@ -412,26 +399,22 @@ class TribeV2EncodingModel(BaseModelInterface):
         # Extract parameters from model instance if provided
         if model_instance is not None:
             berg_dir = model_instance.berg_dir
-            subject = model_instance.subject
         elif not isinstance(cls, type) and isinstance(cls, BaseModelInterface):
             berg_dir = cls.berg_dir
-            subject = cls.subject
 
         # Validate required parameters
         if berg_dir is None:
             raise InvalidParameterError("Required parameter missing: berg_dir")
-
-        validate_subject(subject, cls.VALID_SUBJECTS)
 
         # Build metadata path
         metadata_path = os.path.join(
             berg_dir,
             "encoding_models",
             "modality-fmri",
-            "train_dataset-multi_study",
+            "train_dataset-dascoli_2026",
             "model-tribe_v2",
             "metadata",
-            "metadata_average.npy",
+            "metadata.npy",
         )
 
         if os.path.exists(metadata_path):
@@ -449,7 +432,7 @@ class TribeV2EncodingModel(BaseModelInterface):
         Returns
         -------
         str
-            Model ID string: 'fmri-multi_study-tribe_v2'
+            Model ID string: 'fmri-dascoli_2026-tribe_v2'
         """
         return cls.MODEL_ID
 
