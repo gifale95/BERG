@@ -100,8 +100,9 @@ for i, test_img in enumerate(tqdm(test_img_list)):
 # Define the probe location that elicits the maximum in silico fMRI response
 # =============================================================================
 # Define grid of probe centers (x,y) in degrees
-coords = np.linspace(-args.FIELD_SIZE/2, args.FIELD_SIZE/2, args.GRID_RES)
-xx, yy = np.meshgrid(coords, coords, indexing="xy")
+coords_x = np.linspace(-args.FIELD_SIZE/2, args.FIELD_SIZE/2, args.GRID_RES)
+coords_y = np.linspace(args.FIELD_SIZE/2, -args.FIELD_SIZE/2, args.GRID_RES)
+xx, yy = np.meshgrid(coords_x, coords_y, indexing="xy")
 centers = np.stack([xx.ravel(), yy.ravel()], axis=1)
 
 # Define the probe location that elicits the maximum in silico fMRI responses
@@ -120,11 +121,11 @@ y0s_rh = centers[max_idx_rh, 1]
 # [0°, 360°)
 
 # LH
-polar_angle_lh = (np.degrees(np.arctan2(x0s_lh, y0s_lh)) + 360) % 360
+polar_angle_lh = (np.degrees(np.arctan2(y0s_lh, x0s_lh)) + 360) % 360
 eccentricity_lh = np.sqrt(x0s_lh**2 + y0s_lh**2)
 
 # RH
-polar_angle_rh = (np.degrees(np.arctan2(x0s_rh, y0s_rh)) + 360) % 360
+polar_angle_rh = (np.degrees(np.arctan2(y0s_rh, x0s_rh)) + 360) % 360
 eccentricity_rh = np.sqrt(x0s_rh**2 + y0s_rh**2)
 
 

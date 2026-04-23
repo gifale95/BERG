@@ -49,10 +49,10 @@ from sklearn.linear_model import RidgeCV
 parser = argparse.ArgumentParser()
 parser.add_argument('--data_type', type=str, default='insilico')
 parser.add_argument('--encoding_model', type=str, default='utah_array-tvsd-vit_b_32')
-parser.add_argument('--subject', default='F', type=str)
+parser.add_argument('--subject', default='N', type=str)
 parser.add_argument('--rois', default=['V1', 'V4'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--time_window_ms', default=10, type=int)
+parser.add_argument('--time_window_ms', default=1, type=int)
 parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
@@ -162,7 +162,6 @@ elif args.data_type == 'insilico':
 # responses are then averaged across the time window.
 
 times = metadata['utah_array']['times']
-n_times_new = times
 times_new = np.arange(times[0], times[-1]+args.time_window_ms,
     args.time_window_ms)
 
@@ -280,6 +279,13 @@ for roi in tqdm(args.rois):
 # =============================================================================
 # Compute the Granger Causality
 # =============================================================================
+# Define the target times (starting from time 0)
+idx_t_start_target = np.where(times_new == 0)[0][0]
+times_target = times_new[idx_t_start_target:]
+
+# Define the test times (always up to 100 ms prior to the target time)
+offset = np.where(times_new == 0)[0][0] - np.where(times_new == -100)[0][0]
+
 # Loop across ROIs
 gc = {}
 for roi_target in args.rois:
@@ -288,16 +294,16 @@ for roi_target in args.rois:
 
             # Empty result array
             tot_splits = len(rep_splits) * len(rep_splits[0])
-            gc_roi = np.zeros((tot_splits, len(times_new), len(times_new)),
+            gc_roi = np.zeros((tot_splits, offset, len(times_target)),
                 dtype=np.float32)
 
             # Loop across time points of the target's present time point to be
             # predicted
-            for t1 in tqdm(range(len(times_new))):
+            for tt_idx, tt in enumerate(tqdm(range(idx_t_start_target, len(times_new)))): # time target
 
                 # Loop across time points of the target and source past time
                 # points used for the prediction
-                for t2 in range(t1):
+                for ts_idx, ts in enumerate(range(tt-offset, tt)): # time source
 
                     # Loop across splits for cross-validation
                     idx_split = 0
@@ -308,22 +314,22 @@ for roi_target in args.rois:
                             # source ROIs
                             # Train
                             rsm_roi_target_train = np.reshape(
-                                roi_rsms[roi_target][s][r][:,t1], (-1, 1))
+                                roi_rsms[roi_target][s][r][:,tt], (-1, 1))
                             rsm_roi_target_past_train = np.reshape(
-                                roi_rsms[roi_target][s][r][:,t2], (-1, 1))
+                                roi_rsms[roi_target][s][r][:,ts], (-1, 1))
                             rsm_roi_source_past_train = np.reshape(
-                                roi_rsms[roi_source][s][r][:,t2], (-1, 1))
+                                roi_rsms[roi_source][s][r][:,ts], (-1, 1))
                             # Test (use a different repeat for the test target
                             # than for the test predictors, to reduce the
                             # effect of noise correlations)
                             rsm_roi_target_test = np.reshape(
-                                roi_rsms[roi_target][s][abs(r-1)][:,t1],
+                                roi_rsms[roi_target][s][abs(r-1)][:,tt],
                                 (-1, 1))
                             rsm_roi_target_past_test = np.reshape(
-                                roi_rsms[roi_target][s][r][:,t2],
+                                roi_rsms[roi_target][s][r][:,ts],
                                 (-1, 1))
                             rsm_roi_source_past_test = np.reshape(
-                                roi_rsms[roi_source][s][r][:,t2],
+                                roi_rsms[roi_source][s][r][:,ts],
                                 (-1, 1))
 
                             # Fit the linear regressions for the full and
@@ -366,7 +372,7 @@ for roi_target in args.rois:
                             # Compute the GC score as the log ratio of the
                             # unexplained variance of the reduced and full
                             # models
-                            gc_roi[idx_split,t1,t2] = \
+                            gc_roi[idx_split,ts_idx,tt_idx] = \
                                 np.log(u_reduced / u_full)
                             idx_split += 1
 
@@ -403,25 +409,50 @@ file_name = (f'gc_data_type-{args.data_type}_sub-{args.subject}_'
 
 np.save(os.path.join(save_dir, file_name), data)
 
-# from matplotlib import pyplot as plt
 
-# # Create the figure
-# plt.figure()
 
-# # Plot the GC results
-# vlim = np.max(np.abs(gc['V1_to_V4']))
-# plt.imshow(gc['V1_to_V4'], cmap='RdGy_r', aspect='equal', vmin=-vlim, vmax=vlim)
+from matplotlib import pyplot as plt
 
-# # X-axis parameters
-# xticks = [0, 5, 10, 15, 20, 25, 30]
-# xlabels = [-100, -50, 0, 50, 100, 150, 200]
-# plt.xticks(ticks=xticks, labels=xlabels)
-# plt.xlabel('Time source (ms)')
+# Create the figure
+plt.figure()
 
-# # Y-axis parameters
-# yticks = [0, 5, 10, 15, 20, 25, 30]
-# ylabels = [-100, -50, 0, 50, 100, 150, 200]
-# plt.yticks(ticks=yticks, labels=ylabels)
-# plt.ylabel('Time target (ms)')
+# Plot the GC results
+vlim = np.max(np.abs(gc['V1_to_V4']))
+plt.imshow(gc['V1_to_V4'], cmap='RdGy_r', aspect='equal', vmin=-vlim, vmax=vlim)
 
-# plt.show()
+# X-axis parameters
+xticks = [0, 50, 100, 150, 200]
+xlabels = [0, 50, 100, 150, 200]
+plt.xticks(ticks=xticks, labels=xlabels)
+plt.xlabel('Time target (ms)')
+
+# Y-axis parameters
+yticks = [0, 50]
+ylabels = [-100, -50]
+plt.yticks(ticks=yticks, labels=ylabels)
+plt.ylabel('Time source (ms)')
+
+plt.show()
+
+
+
+# Create the figure
+plt.figure()
+
+# Plot the GC results
+vlim = np.max(np.abs(gc['V4_to_V1']))
+plt.imshow(gc['V4_to_V1'], cmap='RdGy_r', aspect='equal', vmin=-vlim, vmax=vlim)
+
+# X-axis parameters
+xticks =[0, 50, 100, 150, 200]
+xlabels = [0, 50, 100, 150, 200]
+plt.xticks(ticks=xticks, labels=xlabels)
+plt.xlabel('Time target (ms)')
+
+# Y-axis parameters
+yticks = [0, 50]
+ylabels = [-100, -50]
+plt.yticks(ticks=yticks, labels=ylabels)
+plt.ylabel('Time source (ms)')
+
+plt.show()

@@ -1,14 +1,10 @@
-"""Plot the encoding accuracy of the M/EEG-fMRI fusion encoding models.
+"""Plot the encoding accuracy of the EEG-fMRI fusion encoding models.
 
 Parameters
 ----------
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
-source_dataset : str
-    If 'things_eeg_2', the source dataset is THINGS EEG2. If 'things_meg_1',
-    the source dataset  is THINGS MEG1. (The source dataset is the dataset that
-    is mapped onto fMRI responses.)
 berg_dir : str
     Directory of the BERG.
 
@@ -24,7 +20,6 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
-parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -32,8 +27,8 @@ args, unknown = parser.parse_known_args()
 # =============================================================================
 # Load the results
 # =============================================================================
-results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats',
-    f'source_dataset-{args.source_dataset}', 'stats.npy')
+results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'invivo_nsd_eeg_fmri_control', 'stats', 'stats.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
@@ -45,8 +40,8 @@ ci_corr_tfmri_fmri_roi = results['ci_corr_tfmri_fmri_roi']
 ci_corr_tfmri_fmri_roi_peak_lat = results['ci_corr_tfmri_fmri_roi_peak_lat']
 
 # Create the plots save directory
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
-    f'source_dataset-{args.source_dataset}', 'encoding_accuracy_surfaceplots')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'invivo_nsd_eeg_fmri_control', 'plots', 'encoding_accuracy_surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -98,7 +93,7 @@ for t, time in enumerate(tqdm(times)):
         )
 
     # Add title
-    title = f'Time (ms): {np.round(time*1000)}'
+    title = f'Time (ms): {time}'
     plt.title(title, fontsize=fontsize)
 
     # Save the plot
@@ -136,7 +131,7 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 
 # Define the ROIs to plot
-rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA']
+rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA', 'ventral']
 
 # Get the plot colors
 def sample_cmap(N):
@@ -150,7 +145,7 @@ colors = sample_cmap(len(rois))
 fig = plt.figure(figsize=(10, 7.5))
 
 # Plot the stimulus onset and chance dashed line
-plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
+plt.plot([-1000, 1000], [0, 0], 'k--', [0, 0], [1, -1], 'k--', linewidth=2,
     alpha=.25, label='_nolegend_')
 
 # Loop across ROIs
@@ -177,7 +172,7 @@ for r, roi in enumerate(rois):
 
 # x-axis parameters
 plt.xlabel('Time (ms)', fontsize=fontsize)
-xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+xticks = [-100, 0, 100, 200, 300, 400, 500, 600]
 xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 plt.xlim(left=min(times), right=max(times))
@@ -193,8 +188,8 @@ plt.ylim(bottom=-.1, top=.8)
 plt.legend(fontsize=fontsize, loc=4, ncols=2, frameon=False)
 
 # Save the figure
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
-    f'source_dataset-{args.source_dataset}')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'invivo_nsd_eeg_fmri_control', 'plots')
 file_name = os.path.join(save_dir, 'roi_correlation.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

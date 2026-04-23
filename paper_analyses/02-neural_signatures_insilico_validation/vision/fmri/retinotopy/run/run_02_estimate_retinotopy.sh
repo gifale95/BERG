@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-retinotopy-02_estimate_retinotopy
 #SBATCH --mail-type=end
-#SBATCH --mem=50000
-#SBATCH --time=04-00:00:00
+#SBATCH --mem=30000
+#SBATCH --time=40:00:00
 #SBATCH --qos=extended
 #SBATCH --partition=agcichy
 #SBATCH --gres=gpu:1 # number of GPUs
@@ -19,9 +19,9 @@ declare -a PROBE_SIGMA_all
 declare -a BG_VALUE_all
 index=0
 for em in 'fmri-nsd_fsaverage-huze' ; do
-    for sub in `seq 1 1` ; do # !!! `seq 1 8`
-        for g in '40' '50' '60' ; do
-            for s in '0.1' '0.25' '0.5' ; do
+    for sub in `seq 1 8` ; do
+        for g in '40' ; do
+            for s in '0.25' ; do
                 for b in '0.5' ; do
                     encoding_model_all[$index]=$em
                     subjects_all[$index]=$sub

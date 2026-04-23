@@ -119,7 +119,6 @@ rh_ncsnr = rh_ncsnr.astype(np.float32)
 # =============================================================================
 # Prepare the ROI mask indices
 # =============================================================================
-
 def read_ctab_file(filepath):
     with open(filepath, 'r') as f:
         lines = f.readlines()

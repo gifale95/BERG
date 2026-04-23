@@ -14,9 +14,9 @@ declare -a PROBE_SIGMA_all
 declare -a BG_VALUE_all
 index=0
 for em in 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
-    for sub in `seq 1 1` ; do
-        for g in '40' '50' '60' ; do
-            for s in '0.25' '0.5' ; do # !!! '0.1' '0.25' '0.5'
+    for sub in `seq 1 8` ; do
+        for g in '40' ; do
+            for s in '0.25' ; do
                 for b in '0.5' ; do
                     encoding_model_all[$index]=$em
                     subjects_all[$index]=$sub

@@ -61,8 +61,8 @@ berg = BERG(berg_dir=args.berg_dir)
 # Get the metadata for the NSD huze encoding model
 metadata = berg.get_model_metadata('fmri-nsd_fsaverage-huze', subject=1)
 
-# Get the test image condition number of the first 100 test images
-test_img_cond = metadata['encoding_models']['test_img_num'][:100]
+# Get the test image condition number
+test_img_cond = metadata['encoding_models']['test_img_num']
 
 
 # =============================================================================

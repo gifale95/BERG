@@ -51,7 +51,7 @@ parser.add_argument('--roi_2', default=None, type=str)
 parser.add_argument('--control_roi_1', default='early-drive_late-drive', type=str)
 parser.add_argument('--control_roi_2', default=None, type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Save controlling images <<<')
@@ -71,7 +71,7 @@ if args.roi_2 is not None:
 else:
     file_name = f'sub-{args.subject}_roi-{args.roi_1}_{args.control_roi_1}.npy'
 
-data = np.load(data_dir, allow_pickle=True).item()
+data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
 
 img_control = data['img_control']
 

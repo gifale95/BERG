@@ -181,16 +181,16 @@ axs = np.reshape(axs, (-1))
 axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=2, alpha=.25, label='_nolegend_')
 
-# Loop across channel groups
-for c, key in enumerate(model_layers):
+# Loop across model layers
+for l, layer in enumerate(model_layers):
 
     # Plot the RSA subject-average results
-    axs[0].plot(times, np.mean(rsa[key], 0), color=colors[c], linewidth=2,
-        label=key)
+    axs[0].plot(times, np.mean(rsa[layer], 0), color=colors[l], linewidth=2,
+        label=layer)
 
     # Plot the confidence intervals
-    axs[0].fill_between(times, ci_rsa[key][1], ci_rsa[key][0], color=colors[c],
-        alpha=.1)
+    axs[0].fill_between(times, ci_rsa[layer][1], ci_rsa[layer][0],
+        color=colors[l], alpha=.1)
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)

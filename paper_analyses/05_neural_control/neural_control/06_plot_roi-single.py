@@ -1,4 +1,4 @@
-"""Plot the neural control results.
+"""Plot the neural control results, for single ROIs.
 
 Parameters
 ----------
@@ -34,13 +34,13 @@ args, unknown = parser.parse_known_args()
 # Load the neural control results
 # =============================================================================
 control_resp = {}
-baseline_resp = {}
+base_resp = {}
 ci_low_null_distribution = {}
 ci_high_null_distribution = {}
 ci_low_control_resp = {}
 ci_high_control_resp = {}
-ci_low_baseline_resp = {}
-ci_high_baseline_resp = {}
+ci_low_base_resp = {}
+ci_high_base_resp = {}
 p_val_bh = {}
 
 controls = ['early-drive_late-drive', 'early-suppress_late-suppress',
@@ -55,15 +55,15 @@ for sub in args.subjects:
                 f'sub-{sub}_roi-{roi}_{control}.npy')
             data = np.load(data_dir, allow_pickle=True).item()
 
-            control_resp[f'{sub}_{roi}_{control}'] = data['control_resp']
-            baseline_resp[f'{sub}_{roi}_{control}'] = data['baseline_resp']
-            ci_low_null_distribution[f'{sub}_{roi}_{control}'] = data['ci_low_null_distribution']
-            ci_high_null_distribution[f'{sub}_{roi}_{control}'] = data['ci_high_null_distribution']
-            ci_low_control_resp[f'{sub}_{roi}_{control}'] = data['ci_low_control_resp']
-            ci_high_control_resp[f'{sub}_{roi}_{control}'] = data['ci_high_control_resp']
-            ci_low_baseline_resp[f'{sub}_{roi}_{control}'] = data['ci_low_baseline_resp']
-            ci_high_baseline_resp[f'{sub}_{roi}_{control}'] = data['ci_high_baseline_resp']
-            p_val_bh[f'{sub}_{roi}_{control}'] = data['p_val_bh']
+            control_resp[f'{sub}_{roi}_{control}'] = data['control_resp_roi_1']
+            base_resp[f'{sub}_{roi}_{control}'] = data['base_resp_roi_1']
+            ci_low_null_distribution[f'{sub}_{roi}_{control}'] = data['ci_low_null_distribution_roi_1']
+            ci_high_null_distribution[f'{sub}_{roi}_{control}'] = data['ci_high_null_distribution_roi_1']
+            ci_low_control_resp[f'{sub}_{roi}_{control}'] = data['ci_low_control_resp_roi_1']
+            ci_high_control_resp[f'{sub}_{roi}_{control}'] = data['ci_high_control_resp_roi_1']
+            ci_low_base_resp[f'{sub}_{roi}_{control}'] = data['ci_low_base_resp_roi_1']
+            ci_high_base_resp[f'{sub}_{roi}_{control}'] = data['ci_high_base_resp_roi_1']
+            # p_val_bh[f'{sub}_{roi}_{control}'] = data['p_val_bh']
 
             times = data['times']
 
@@ -127,36 +127,36 @@ for s, sub in enumerate(args.subjects):
 
             # Plot the baseline responses
             axs[r,c].plot(times, np.mean(
-                baseline_resp[f'{sub}_{roi}_{control}'], 0),
+                base_resp[f'{sub}_{roi}_{control}'], 0),
                 color='k', linewidth=2, label='Baseline')
             axs[r,c].fill_between(times,
-                ci_low_baseline_resp[f'{sub}_{roi}_{control}'],
-                ci_high_baseline_resp[f'{sub}_{roi}_{control}'],
+                ci_low_base_resp[f'{sub}_{roi}_{control}'],
+                ci_high_base_resp[f'{sub}_{roi}_{control}'],
                 color='k', alpha=.1)
 
             # Plot the significance markers
-            sig_bool = (p_val_bh[f'{sub}_{roi}_{control}'] < 0.05).astype(np.float32)
-            sig_early = sig_bool[t_min_early:t_max_early+1]
-            sig_late = sig_bool[t_min_late:t_max_late+1]
-            sig_early[sig_early==0] = np.nan
-            sig_late[sig_late==0] = np.nan
-            if control == 'early-drive_late-drive':
-                sig_early[sig_early==1] = 28
-                sig_late[sig_late==1] = 28
-            elif control == 'early-suppress_late-suppress':
-                sig_early[sig_early==1] = 9
-                sig_late[sig_late==1] = 9
-            elif control == 'early-drive_late-suppress':
-                sig_early[sig_early==1] = 28
-                sig_late[sig_late==1] = 9
-            elif control == 'early-suppress_late-drive':
-                sig_early[sig_early==1] = 9
-                sig_late[sig_late==1] = 28
-            sig = np.empty(len(times))
-            sig[:] = np.nan
-            sig[t_min_early:t_max_early+1] = sig_early
-            sig[t_min_late:t_max_late+1] = sig_late
-            axs[r,c].scatter(times, sig, s=100, color=colors[0])
+            # sig_bool = (p_val_bh[f'{sub}_{roi}_{control}'] < 0.05).astype(np.float32)
+            # sig_early = sig_bool[t_min_early:t_max_early+1]
+            # sig_late = sig_bool[t_min_late:t_max_late+1]
+            # sig_early[sig_early==0] = np.nan
+            # sig_late[sig_late==0] = np.nan
+            # if control == 'early-drive_late-drive':
+            #     sig_early[sig_early==1] = 28
+            #     sig_late[sig_late==1] = 28
+            # elif control == 'early-suppress_late-suppress':
+            #     sig_early[sig_early==1] = 9
+            #     sig_late[sig_late==1] = 9
+            # elif control == 'early-drive_late-suppress':
+            #     sig_early[sig_early==1] = 28
+            #     sig_late[sig_late==1] = 9
+            # elif control == 'early-suppress_late-drive':
+            #     sig_early[sig_early==1] = 9
+            #     sig_late[sig_late==1] = 28
+            # sig = np.empty(len(times))
+            # sig[:] = np.nan
+            # sig[t_min_early:t_max_early+1] = sig_early
+            # sig[t_min_late:t_max_late+1] = sig_late
+            # axs[r,c].scatter(times, sig, s=100, color=colors[0])
 
             # Title
             title = f'Subject {sub}, {roi},\n{control}'

@@ -43,12 +43,12 @@ from matplotlib.colors import hsv_to_rgb
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-alexnet')
-parser.add_argument('--fmri_subjects', default=[1], type=list) # !!! 1, 2, 3, 4, 5, 6, 7, 8
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=0, type=float)
 parser.add_argument('--FIELD_SIZE', type=float, default=8.4)
 parser.add_argument('--GRID_RES', type=int, default=40)
-parser.add_argument('--PROBE_SIGMA', type=float, default=0.5)
+parser.add_argument('--PROBE_SIGMA', type=float, default=0.25)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -88,18 +88,20 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     # Get the polar angle
     polar_angle_lh = results['polar_angle_lh_silico'][s]
     polar_angle_rh = results['polar_angle_rh_silico'][s]
-    # Rotate the polar angles by 150° for nicer color visualization
-    polar_angle_lh = (polar_angle_lh + 150) % 360
-    polar_angle_rh = (polar_angle_rh + 150) % 360
+    # Rotate the polar angles by 240° for nicer color visualization
+    polar_angle_lh = (polar_angle_lh + 240) % 360
+    polar_angle_rh = (polar_angle_rh + 240) % 360
 
     # Get the eccentricity
     eccentricity_lh = results['eccentricity_lh_silico'][s]
     eccentricity_rh = results['eccentricity_rh_silico'][s]
-    # Normalize the eccentricities to [0,1]
-    max_ecc = np.append(eccentricity_lh, eccentricity_rh).max()
-    max_ecc = 12 # !!! Check if this is true, and if so hard-code it so that it is constant across encoding models
-    eccentricity_lh_norm = eccentricity_lh / max_ecc
-    eccentricity_rh_norm = eccentricity_rh / max_ecc
+    # Clip the eccentricities to [0,6] (since the NSD stimuli were presented
+    # with a visual angle of 8.4° and subjects maintained central fixation, the
+    # maximum possible eccentricity values correspond the image corners which
+    # are at √((8.4/2)²+(8.4/2)²) ≈ 6°)
+    max_ecc = 6
+    eccentricity_lh = np.clip(eccentricity_lh, 0, max_ecc)
+    eccentricity_rh = np.clip(eccentricity_rh, 0, max_ecc)
 
     # Only retain vertices that have above threshold (i) NCSNR AND
     # (ii) encoding prediction accuracy.
@@ -110,7 +112,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     idx_encoding = lh_encoding >= args.encoding_threshold
     idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
     polar_angle_lh[idx_nan] = np.nan
-    eccentricity_lh_norm[idx_nan] = np.nan
+    eccentricity_lh[idx_nan] = np.nan
     # Right hemisphere
     rh_ncsnr = metadata['fmri']['rh_ncsnr']
     idx_ncsnr = rh_ncsnr >= args.ncsnr_threshold
@@ -118,7 +120,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     idx_encoding = rh_encoding >= args.encoding_threshold
     idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
     polar_angle_rh[idx_nan] = np.nan
-    eccentricity_rh_norm[idx_nan] = np.nan
+    eccentricity_rh[idx_nan] = np.nan
 
 
 # =============================================================================
@@ -165,7 +167,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # Plot the eccentricity results
 # =============================================================================
     # Append the results across left and right hemishperes
-    data = np.append(eccentricity_lh_norm, eccentricity_rh_norm)
+    data = np.append(eccentricity_lh, eccentricity_rh)
 
     # Create the flat brain surface
     subject = 'fsaverage_nsd_sub-0' + str(sub)
@@ -174,7 +176,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
         subject=subject,
         cmap='gist_rainbow',
         vmin=0,
-        vmax=1,
+        vmax=6,
         with_colorbar=True
         )
 
@@ -218,9 +220,9 @@ theta = np.degrees(np.arctan2(Y, X))  # range: -180 to 180
 # Mask outside the unit circle
 mask = R <= 1
 
-# Rotate by 240° (i.e. 90° to match the original brain maps + additional 150°
-# since the brain maps were also rotated by 150°)
-shift = 240 # (150° + 90°)
+# Rotate by 240° (since the brain maps were also rotated by 240° for nicer
+# color visualization)
+shift = 240
 # Convert to degrees in the range [0, 360) and apply the rotation
 theta_rot = (theta + shift) % 360
 
@@ -250,12 +252,13 @@ plt.close(fig)
 
 
 # =============================================================================
-# Plot the eccentricity map # !!!
+# Plot the eccentricity map
 # =============================================================================
 # Parameters
 size = 2000
 square_ecc = args.FIELD_SIZE
 cmap = "gist_rainbow"
+max_ecc = 6 * 2
 
 # Create coordinate grid
 x = np.linspace(-1, 1, size)

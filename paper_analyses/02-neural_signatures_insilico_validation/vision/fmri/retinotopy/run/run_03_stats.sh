@@ -12,9 +12,9 @@ declare -a GRID_RES_all
 declare -a PROBE_SIGMA_all
 declare -a BG_VALUE_all
 index=0
-for em in 'fmri-nsd_fsaverage-huze' ; do # !!! 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained'
-    for g in '40' '50' '60' ; do
-        for s in '0.25' '0.5' ; do # !!! '0.1' '0.25' '0.5'
+for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
+    for g in '40' ; do
+        for s in '0.25' ; do
             for b in '0.5' ; do
                 encoding_model_all[$index]=$em
                 GRID_RES_all[$index]=$g

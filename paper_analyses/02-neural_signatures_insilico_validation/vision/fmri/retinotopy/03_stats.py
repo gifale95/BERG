@@ -43,7 +43,7 @@ from scipy.stats import ttest_1samp
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-alexnet')
-parser.add_argument('--fmri_subjects', default=[1], type=list) # !!! 1, 2, 3, 4, 5, 6, 7, 8
+parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=0, type=float)
 parser.add_argument('--GRID_RES', type=int, default=40)
@@ -176,35 +176,17 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # =============================================================================
 # Correlate the in silico and in vivo retinotopic maps
 # =============================================================================
-    # Rotate the in silico polar angle maps counterclockwise by 90 degrees to
-    # match the in vivo polar angle maps
+    # Correlate the polar angle maps
     corr_polar_angle_silico_vivo.append(pearsonr(polar_angle_vivo,
-        (polar_angle_silico - 90) % 360)[0])
+        polar_angle_silico)[0])
 
-
-
-    # Check whether X/Y degree coordinates are correct (e.g., RH V1v histogram # !!!
-    # mostly mostly having negative X and negative Y values?):
-    # 'x0s_lh': x0s_lh,
-    # 'y0s_lh': y0s_lh,
-    # 'x0s_rh': x0s_rh,
-    # 'y0s_rh': y0s_rh,
-
-
-
-    # Clip the eccentricity values at 8.4 degrees of visual angle to avoid
-    # outliers (since the NSD stimuli were presented within a circular aperture
-    # of 8.4 degrees of visual)
+    # Clip the eccentricity values at 6° to avoid outliers (since the NSD
+    # stimuli were presented with a visual angle of 8.4° and subjects
+    # maintained central fixation, the maximum possible eccentricity values
+    # correspond the image corners which are at √((8.4/2)²+(8.4/2)²) ≈ 6°).
     corr_eccentricity_silico_vivo.append(pearsonr(
-        np.clip(eccentricity_vivo, 0, 8.4), # !!! Set to max_ecc=12 ???
-        np.clip(eccentricity_silico, 0, 8.4))[0])
-
-    # Plot the following x and y best coordinated on brain surfaces, to check
-    # why the max eccentricities are of only 5 degrees: # !!!
-    # 'x0s_lh': x0s_lh,
-    # 'y0s_lh': y0s_lh,
-    # 'x0s_rh': x0s_rh,
-    # 'y0s_rh': y0s_rh,
+        np.clip(eccentricity_vivo, 0, 6),
+        np.clip(eccentricity_silico, 0, 6))[0])
 
 
 # =============================================================================

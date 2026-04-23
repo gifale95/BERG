@@ -28,8 +28,6 @@ import random
 import numpy as np
 from tqdm import tqdm
 from sklearn.utils import resample
-from scipy.stats import ttest_1samp
-from statsmodels.stats.multitest import multipletests
 
 
 # =============================================================================
