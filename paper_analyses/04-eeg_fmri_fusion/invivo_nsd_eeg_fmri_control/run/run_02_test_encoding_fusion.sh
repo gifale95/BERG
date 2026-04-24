@@ -2,15 +2,15 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-01_test_encoding_fusion
 #SBATCH --mail-type=end
-#SBATCH --mem=5000
-#SBATCH --time=02:00:00
+#SBATCH --mem=10000
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a subject_all
 declare -a hemisphere_all
 index=0
-for s in '1' '2' '5' '7' ; do
+for s in '1' '5' '7' ; do
     for h in 'lh' 'rh' ; do
         subject_all[$index]=$s
         hemisphere_all[$index]=$h

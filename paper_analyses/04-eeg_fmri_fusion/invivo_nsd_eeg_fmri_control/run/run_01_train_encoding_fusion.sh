@@ -3,7 +3,7 @@
 #SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-01_train_encoding_fusion
 #SBATCH --mail-type=end
 #SBATCH --mem=75000
-#SBATCH --time=30:00:00
+#SBATCH --time=20:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

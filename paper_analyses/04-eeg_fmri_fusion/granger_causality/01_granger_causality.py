@@ -392,8 +392,7 @@ for roi in tqdm(rois):
 # =============================================================================
 rois = ['V1']
 
-rsa_alexnet_pearson = {}
-rsa_alexnet_cosyne = {}
+rsa_alexnet = {}
 
 for roi in tqdm(rois):
 
@@ -417,18 +416,13 @@ for roi in tqdm(rois):
 
         val = val[idx_triu]
 
-        rsa_alexnet_pearson[(roi, key)] = np.zeros((len(times)),
-            dtype=np.float32)
-        rsa_alexnet_cosyne[(roi, key)] = np.zeros((len(times)),
-            dtype=np.float32)
+        rsa_alexnet[(roi, key)] = np.zeros((len(times)), dtype=np.float32)
 
         # Loop across neural time points
         for t in range(len(times)):
 
             # Correlate neural and AlexNet RDMs
-            rsa_alexnet_pearson[(roi, key)][t] = pearsonr(val, rdm[:,t])[0]
-            rsa_alexnet_cosyne[(roi, key)][t] = np.dot(val, rdm[:,t]) / \
-                (np.linalg.norm(val) * np.linalg.norm(rdm[:,t]))
+            rsa_alexnet[(roi, key)][t] = pearsonr(val, rdm[:,t])[0]
 
 
 # =============================================================================
@@ -439,8 +433,7 @@ results = {
     'times': times,
     'times_target': times_target,
     'rsa_times': rsa_times,
-    'rsa_alexnet_pearson': rsa_alexnet_pearson,
-    'rsa_alexnet_cosyne': rsa_alexnet_cosyne
+    'rsa_alexnet': rsa_alexnet
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'granger_causality',

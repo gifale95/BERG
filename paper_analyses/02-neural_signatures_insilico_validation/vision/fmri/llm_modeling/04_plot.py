@@ -33,7 +33,7 @@ import matplotlib.pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-vit_b_32')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
 parser.add_argument('--encoding_threshold', default=0, type=float) # 20
@@ -69,9 +69,9 @@ metadata = results['metadata']
 for s in range(len(args.subjects)):
     for hemi in ['lh', 'rh']:
 
-        ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
+        ncsnr = results['metadata'][s]['fmri'][hemi+'_ncsnr']
         idx_ncsnr = ncsnr >= args.ncsnr_threshold
-        encoding = results['metadata']['encoding_models']\
+        encoding = results['metadata'][s]['encoding_models']\
             [hemi+'_explained_variance_nsdcore']
         idx_encoding = encoding >= args.encoding_threshold
         idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
@@ -105,7 +105,7 @@ data = np.append(np.nanmean(lh_rsa, 0), np.nanmean(rh_rsa, 0))
 vertex_data = cortex.Vertex(
     data,
     subject=subject,
-    cmap='afmhot',
+    cmap='afmhot', # !!! 'afmhot', 'RdBu_r'
     vmin=0,
     vmax=0.5,
     with_colorbar=True
