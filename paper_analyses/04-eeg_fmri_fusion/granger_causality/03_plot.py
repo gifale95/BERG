@@ -48,7 +48,6 @@ data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'granger_causality',
 gc = {}
 rsa_times = {}
 rsa_alexnet_pearson = {}
-rsa_alexnet_cosyne = {}
 
 for fs, fsub in enumerate(args.fmri_subjects):
 
@@ -61,7 +60,6 @@ for fs, fsub in enumerate(args.fmri_subjects):
     gc[fsub] = results['gc']
     rsa_times[fsub] = results['rsa_times']
     rsa_alexnet_pearson[fsub] = results['rsa_alexnet_pearson']
-    rsa_alexnet_cosyne[fsub] = results['rsa_alexnet_cosyne']
     times_target = results['times_target']
     times = results['times']
     del results

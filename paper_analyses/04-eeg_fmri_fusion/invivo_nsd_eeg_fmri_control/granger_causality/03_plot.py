@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subjects', default=[1, 2, 5, 7], type=int)
+parser.add_argument('--fmri_subjects', default=[1, 5, 7], type=int)
 parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -46,6 +46,8 @@ data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'invivo_nsd_eeg_fmri_control', 'granger_causality', 'gc_scores')
 
 gc = {}
+rsa_times = {}
+rsa_alexnet_pearson = {}
 
 for fs, fsub in enumerate(args.fmri_subjects):
 
@@ -55,7 +57,10 @@ for fs, fsub in enumerate(args.fmri_subjects):
         allow_pickle=True).item()
 
     gc[fsub] = results['gc']
+    rsa_times[fsub] = results['rsa_times']
+    rsa_alexnet_pearson[fsub] = results['rsa_alexnet_pearson']
     times_target = results['times_target']
+    times = results['times']
     del results
 
 
@@ -103,12 +108,12 @@ for s, fsub in enumerate(args.fmri_subjects):
         # Plot the feedforward GC results
         vlim = np.max(np.abs(gc[fsub][f'{roi_1}_to_{roi_2}'][:-2]))
         axs[r,0].imshow(gc[fsub][f'{roi_1}_to_{roi_2}'][:-2], cmap='RdGy_r',
-            aspect='auto', vmin=-vlim, vmax=vlim)
+            aspect='equal', vmin=-vlim, vmax=vlim)
 
         # Plot the feedback GC results
         vlim = np.max(np.abs(gc[fsub][f'{roi_2}_to_{roi_1}'][:-2]))
         axs[r,1].imshow(gc[fsub][f'{roi_2}_to_{roi_1}'][:-2], cmap='RdGy_r',
-            aspect='auto', vmin=-vlim, vmax=vlim)
+            aspect='equal', vmin=-vlim, vmax=vlim)
 
         # Title
         axs[r,0].set_title(f'Sub {fsub}, {roi_1} to {roi_2}', fontsize=fontsize)
@@ -127,7 +132,7 @@ for s, fsub in enumerate(args.fmri_subjects):
         yticks = [0, 5, 10, 15]
         ylabels = [-100, -75, -50, -25]
         axs[r,0].set_yticks(ticks=yticks, labels=ylabels)
-        axs[r,0].set_ylabel('Time source (ms)', fontsize=fontsize)
+        axs[r,0].set_ylabel('Time source\n(ms)', fontsize=fontsize)
     
     # Save the figure
     file_name = os.path.join(save_dir, f'gc_sub-{fsub}.svg')
@@ -151,12 +156,12 @@ for s, fsub in enumerate(args.fmri_subjects):
         # Plot the feedforward GC results
         vlim = np.max(np.abs(gc[fsub][f'{roi_1}_to_{roi_2}'][:-2]))
         axs[r,0].imshow(gc[fsub][f'{roi_1}_to_{roi_2}'][:-2], cmap='RdGy_r',
-            aspect='auto', vmin=-vlim, vmax=vlim)
+            aspect='equal', vmin=-vlim, vmax=vlim)
 
         # Plot the feedback GC results
         vlim = np.max(np.abs(gc[fsub][f'{roi_2}_to_{roi_1}'][:-2]))
         axs[r,1].imshow(gc[fsub][f'{roi_2}_to_{roi_1}'][:-2], cmap='RdGy_r',
-            aspect='auto', vmin=-vlim, vmax=vlim)
+            aspect='equal', vmin=-vlim, vmax=vlim)
 
         # Title
         axs[r,0].set_title(f'Sub {fsub}, {roi_1} to {roi_2}', fontsize=fontsize)
@@ -177,10 +182,10 @@ for s, fsub in enumerate(args.fmri_subjects):
         yticks = [0, 5, 10, 15]
         ylabels = [-100, -75, -50, -25]
         axs[r,0].set_yticks(ticks=yticks, labels=ylabels)
-        axs[r,0].set_ylabel('Time source (ms)', fontsize=fontsize)
+        axs[r,0].set_ylabel('Time source\n(ms)', fontsize=fontsize)
     
     # Save the figure
-    file_name = os.path.join(save_dir, f'gc_sub-{fsub}.svg')
+    file_name = os.path.join(save_dir, f'gc_sub-{fsub}_zoom.svg')
     fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
     plt.close()
 
@@ -202,7 +207,7 @@ for r, roi_2 in enumerate(other_rois):
         gc_sub.append(gc[fsub][f'{roi_1}_to_{roi_2}'][:-2])
     gc_sub = np.mean(gc_sub, 0)
     vlim = np.max(np.abs(gc_sub))
-    im = axs[r,0].imshow(gc_sub, cmap='RdGy_r', aspect='auto', vmin=-vlim,
+    im = axs[r,0].imshow(gc_sub, cmap='RdGy_r', aspect='equal', vmin=-vlim,
         vmax=vlim)
 
     # Plot the feedback GC results
@@ -211,7 +216,7 @@ for r, roi_2 in enumerate(other_rois):
         gc_sub.append(gc[fsub][f'{roi_2}_to_{roi_1}'][:-2])
     gc_sub = np.mean(gc_sub, 0)
     vlim = np.max(np.abs(gc_sub))
-    im = axs[r,1].imshow(gc_sub, cmap='RdGy_r', aspect='auto', vmin=-vlim,
+    im = axs[r,1].imshow(gc_sub, cmap='RdGy_r', aspect='equal', vmin=-vlim,
         vmax=vlim)
 
     # Title
@@ -231,9 +236,302 @@ for r, roi_2 in enumerate(other_rois):
     yticks = [0, 5, 10, 15]
     ylabels = [-100, -75, -50, -25]
     axs[r,0].set_yticks(ticks=yticks, labels=ylabels)
-    axs[r,0].set_ylabel('Time source (ms)', fontsize=fontsize)
+    axs[r,0].set_ylabel('Time source\n(ms)', fontsize=fontsize)
 
 # Save the figure
 file_name = os.path.join(save_dir, f'gc_sub-avg.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close()
+
+
+# =============================================================================
+# Plot the GC results (subject average - zoomed in on the early time points)
+# =============================================================================
+roi_1 = 'V1'
+other_rois = ['V2', 'V3', 'hV4', 'ventral', 'FFA', 'EBA', 'PPA']
+
+fig, axs = plt.subplots(len(other_rois), 2, sharex=True,
+    sharey=True, figsize=(20, 10)) # (10, 7.5)
+
+for r, roi_2 in enumerate(other_rois):
+
+    # Plot the feedforward GC results
+    gc_sub = []
+    for s, fsub in enumerate(args.fmri_subjects):
+        gc_sub.append(gc[fsub][f'{roi_1}_to_{roi_2}'][:-2])
+    gc_sub = np.mean(gc_sub, 0)
+    vlim = np.max(np.abs(gc_sub))
+    im = axs[r,0].imshow(gc_sub, cmap='RdGy_r', aspect='equal', vmin=-vlim,
+        vmax=vlim)
+
+    # Plot the feedback GC results
+    gc_sub = []
+    for s, fsub in enumerate(args.fmri_subjects):
+        gc_sub.append(gc[fsub][f'{roi_2}_to_{roi_1}'][:-2])
+    gc_sub = np.mean(gc_sub, 0)
+    vlim = np.max(np.abs(gc_sub))
+    im = axs[r,1].imshow(gc_sub, cmap='RdGy_r', aspect='equal', vmin=-vlim,
+        vmax=vlim)
+
+    # Title
+    axs[r,0].set_title(f'Sub-avg, {roi_1} to {roi_2}', fontsize=fontsize)
+    axs[r,1].set_title(f'Sub-avg, {roi_2} to {roi_1}', fontsize=fontsize)
+
+    # X-axis parameters # !!!
+    axs[r,0].set_xlim(left=0, right=60)
+    axs[r,1].set_xlim(left=0, right=60)
+    if r == len(other_rois) - 1:
+        xticks = [0, 10, 20, 30, 40, 50, 59]
+        xlabels = [0, 50, 100, 150, 200, 250, 300]
+        axs[r,0].set_xticks(ticks=xticks, labels=xlabels)
+        axs[r,0].set_xlabel('Time target (ms)', fontsize=fontsize)
+        axs[r,1].set_xticks(ticks=xticks, labels=xlabels)
+        axs[r,1].set_xlabel('Time target (ms)', fontsize=fontsize)
+
+    # Y-axis parameters
+    yticks = [0, 5, 10, 15]
+    ylabels = [-100, -75, -50, -25]
+    axs[r,0].set_yticks(ticks=yticks, labels=ylabels)
+    axs[r,0].set_ylabel('Time source\n(ms)', fontsize=fontsize)
+
+# Save the figure
+file_name = os.path.join(save_dir, f'gc_sub-avg_zoom.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close()
+
+
+# =============================================================================
+# Plot the between-time-point RSA results (subject-average)
+# =============================================================================
+# Plot parameters
+matplotlib.rcParams['axes.spines.left'] = False
+matplotlib.rcParams['axes.spines.bottom'] = False
+
+rois = ['V1']
+
+fig, axs = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(20, 7.5))
+
+for r, roi in enumerate(rois):
+
+    # Plot RSA results
+    rsa_times_sub = []
+    for s, fsub in enumerate(args.fmri_subjects):
+        rsa_times_sub.append(rsa_times[fsub][roi])
+    rsa_times_sub = np.mean(np.flip(rsa_times_sub, 1), 0)
+    vlim = np.max(np.abs(rsa_times_sub))
+    cax = axs.imshow(rsa_times_sub, cmap='inferno', aspect='equal',
+        vmin=0, vmax=vlim)
+    cbar = plt.colorbar(cax, shrink=0.75, ticks=[0, vlim/2, vlim],
+        label="Pearson\'s $r$", location='left')
+    
+    # Title
+    axs.set_title(f'{roi}', fontsize=fontsize)
+
+    # X-axis parameters # !!!
+    xticks = [20, 40, 60, 80, 100, 120]
+    xlabels = [0, 100, 200, 300, 400, 500]
+    axs.set_xticks(ticks=xticks, labels=xlabels)
+    axs.set_xlabel('Time (ms)', fontsize=fontsize)
+
+    # Y-axis parameters
+    yticks = abs(np.array(xticks) - len(times))
+    ylabels = [0, 100, 200, 300, 400, 500]
+    axs.set_yticks(ticks=yticks, labels=ylabels)
+    axs.set_ylabel('Time (ms)', fontsize=fontsize)
+
+# Save the figure
+file_name = os.path.join(save_dir, f'rsa_time_sub-avg.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close()
+
+
+# =============================================================================
+# Plot the between-time-point RSA results (subject-average - zoomed in on the early time points)
+# =============================================================================
+# Plot parameters
+matplotlib.rcParams['axes.spines.left'] = False
+matplotlib.rcParams['axes.spines.bottom'] = False
+
+rois = ['V1']
+
+fig, axs = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(20, 7.5))
+
+for r, roi in enumerate(rois):
+
+    # Plot RSA results
+    tmin = np.where(np.round(times, 3) == 0)[0][0]
+    tmax = np.where(np.round(times, 3) == 0.3)[0][0]
+    rsa_times_sub = []
+    for s, fsub in enumerate(args.fmri_subjects):
+        rsa_times_sub.append(rsa_times[fsub][roi][tmin:tmax,tmin:tmax])
+    rsa_times_sub = np.mean(np.flip(rsa_times_sub, 1), 0)
+    vlim = np.max(np.abs(rsa_times_sub))
+    cax = axs.imshow(rsa_times_sub, cmap='inferno', aspect='equal',
+        vmin=0, vmax=vlim)
+    cbar = plt.colorbar(cax, shrink=0.75, ticks=[0, vlim/2, vlim],
+        label="Pearson\'s $r$", location='left')
+
+    # Title
+    axs.set_title(f'{roi}', fontsize=fontsize)
+
+    # X-axis parameters # !!!
+    xticks = [0, 10, 20, 30, 40, 50, 59]
+    xlabels = [0, 50, 100, 150, 200, 250, 300]
+    axs.set_xticks(ticks=xticks, labels=xlabels)
+    axs.set_xlabel('Time (ms)', fontsize=fontsize)
+
+    # Y-axis parameters
+    yticks = abs(np.array(xticks) - len(times[tmin:tmax]))
+    ylabels = [0, 50, 100, 150, 200, 250, 300]
+    axs.set_yticks(ticks=yticks, labels=ylabels)
+    axs.set_ylabel('Time (ms)', fontsize=fontsize)
+
+# Save the figure
+file_name = os.path.join(save_dir, f'rsa_time_sub-avg_zoom.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close()
+
+
+# =============================================================================
+# Plot the AlexNet RSA results (subject-average)
+# =============================================================================
+# Get the plot colors
+def sample_cmap(N):
+    cmap = plt.cm.get_cmap('inferno')
+    values = np.linspace(0, 1, N+2)
+    colors = cmap(values)[1:-1]
+    return colors
+model_layers = [
+    'features.2',
+    'features.5',
+    'features.7',
+    'features.9',
+    'features.12',
+    'classifier.2',
+    'classifier.5',
+    'classifier.6'
+    ]
+colors = sample_cmap(len(model_layers))
+
+# Plot parameters
+matplotlib.rcParams['axes.spines.left'] = True
+matplotlib.rcParams['axes.spines.bottom'] = True
+
+rois = ['V1']
+
+fig, axs = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(10, 7.5))
+
+for r, roi in enumerate(rois):
+
+    # Plot the chance and stimulus onset dashed lines
+    axs.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
+        linewidth=2, alpha=.25, label='_nolegend_')
+
+    # Loop across model layers
+    for l, layer in enumerate(model_layers):
+
+        # Average the RSA results across subjects
+        rsa_alexnet_sub = []
+        for s, fsub in enumerate(args.fmri_subjects):
+            rsa_alexnet_sub.append(rsa_alexnet_pearson[fsub][(roi, layer)])
+        rsa_alexnet_sub = np.mean(rsa_alexnet_sub, 0)
+
+        # Plot the RSA subject-average results
+        axs.plot(times, rsa_alexnet_sub, color=colors[l], linewidth=2,
+            label=layer)
+
+    # x-axis parameters # !!!
+    axs.set_xlabel('Time (ms)', fontsize=fontsize)
+    xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+    xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+    plt.xticks(ticks=xticks, labels=xlabels)
+    axs.set_xlim(left=min(times), right=max(times))
+
+    # y-axis parameters
+    axs.set_ylabel("Pearson's $r$", fontsize=fontsize)
+    yticks = [0, 0.05, 0.1, 0.15, 0.2]
+    ylabels = [0, 0.05, 0.1, 0.15, 0.2]
+    # plt.yticks(ticks=yticks, labels=ylabels)
+    axs.set_ylim(bottom=-.05, top=.5)
+
+    # Legend
+    axs.legend(fontsize=15, ncol=1, loc=0, frameon=False)
+
+# Save the figure
+file_name = os.path.join(save_dir, f'rsa_time_sub-avg.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close()
+
+
+# =============================================================================
+# Plot the AlexNet RSA results (subject-average - zoomed in on the early time points)
+# =============================================================================
+# Get the plot colors
+def sample_cmap(N):
+    cmap = plt.cm.get_cmap('inferno')
+    values = np.linspace(0, 1, N+2)
+    colors = cmap(values)[1:-1]
+    return colors
+model_layers = [
+    'features.2',
+    'features.5',
+    'features.7',
+    'features.9',
+    'features.12',
+    'classifier.2',
+    'classifier.5',
+    'classifier.6'
+    ]
+colors = sample_cmap(len(model_layers))
+
+# Plot parameters
+matplotlib.rcParams['axes.spines.left'] = True
+matplotlib.rcParams['axes.spines.bottom'] = True
+
+rois = ['V1']
+
+fig, axs = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(10, 7.5))
+
+for r, roi in enumerate(rois):
+
+    tmin = np.where(np.round(times, 3) == 0)[0][0]
+    tmax = np.where(np.round(times, 3) == 0.3)[0][0]
+
+    # Plot the chance and stimulus onset dashed lines
+    axs.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
+        linewidth=2, alpha=.25, label='_nolegend_')
+
+    # Loop across model layers
+    for l, layer in enumerate(model_layers):
+
+        # Average the RSA results across subjects
+        rsa_alexnet_sub = []
+        for s, fsub in enumerate(args.fmri_subjects):
+            rsa_alexnet_sub.append(rsa_alexnet_pearson[fsub][(roi, layer)][tmin:tmax])
+        rsa_alexnet_sub = np.mean(rsa_alexnet_sub, 0)
+
+        # Plot the RSA subject-average results
+        axs.plot(times[tmin:tmax], rsa_alexnet_sub, color=colors[l], linewidth=2,
+            label=layer)
+
+    # x-axis parameters # !!!
+    axs.set_xlabel('Time (ms)', fontsize=fontsize)
+    xticks = [0, 0.05, .1, 0.15, 0.2, 0.25, 0.295]
+    xlabels = [0, 50, 100, 150, 200, 250, 300]
+    plt.xticks(ticks=xticks, labels=xlabels)
+    axs.set_xlim(left=min(times[tmin:tmax]), right=max(times[tmin:tmax]))
+
+    # y-axis parameters
+    axs.set_ylabel("Pearson's $r$", fontsize=fontsize)
+    yticks = [0, 0.05, 0.1, 0.15, 0.2]
+    ylabels = [0, 0.05, 0.1, 0.15, 0.2]
+    # plt.yticks(ticks=yticks, labels=ylabels)
+    axs.set_ylim(bottom=-.05, top=.5)
+
+    # Legend
+    axs.legend(fontsize=15, ncol=1, loc=0, frameon=False)
+
+# Save the figure
+file_name = os.path.join(save_dir, f'rsa_time_sub-avg_zoom.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

@@ -95,8 +95,7 @@ for fs, fsub in enumerate(tqdm(args.subjects)):
 
         # Load and store the correlation scores
         data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'encoding_fusion_accuracy',
-            f'source_dataset-{args.source_dataset}')
+            'invivo_nsd_eeg_fmri_control', 'encoding_fusion_accuracy')
         file_name = f'corr_sub-{fsub:02d}_hemi-{hemi}.npy'
         corr_tfmri_fmri[fs,h,idx_v] = np.load(os.path.join(
             data_dir, file_name), allow_pickle=True).item()['correlation']

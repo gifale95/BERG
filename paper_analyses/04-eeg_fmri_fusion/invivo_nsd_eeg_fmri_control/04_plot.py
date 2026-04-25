@@ -74,7 +74,7 @@ for t, time in enumerate(tqdm(times)):
         subject,
         cmap='afmhot',
         vmin=0,
-        vmax=1,
+        vmax=.5,
         with_colorbar=True)
 
     # Plot the flat brain surface
@@ -131,7 +131,7 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 
 # Define the ROIs to plot
-rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA', 'ventral']
+rois = ['V1', 'V2', 'V3', 'hV4', 'ventral']
 
 # Get the plot colors
 def sample_cmap(N):
@@ -179,10 +179,10 @@ plt.xlim(left=min(times), right=max(times))
 
 # y-axis parameters
 plt.ylabel("Pearson's $r$", fontsize=fontsize)
-yticks = [0, 0.2, 0.4, 0.6, 0.8]
-ylabels = [0, 0.2, 0.4, 0.6, 0.8]
+yticks = [0, 0.1, 0.2, 0.3]
+ylabels = [0, 0.1, 0.2, 0.3]
 plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylim(bottom=-.1, top=.8)
+plt.ylim(bottom=-.025, top=.3)
 
 # Legend
 plt.legend(fontsize=fontsize, loc=4, ncols=2, frameon=False)

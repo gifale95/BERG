@@ -39,7 +39,6 @@ from copy import copy
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import RidgeCV
 from scipy.stats import pearsonr
-from sklearn.metrics.pairwise import cosine_similarity
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subject', default=1, type=int)

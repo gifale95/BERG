@@ -34,12 +34,13 @@ from sklearn.utils import resample
 from copy import copy
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import RidgeCV
+from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', default=1, type=int)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--rois', default=['V1', 'V2', 'V3', 'hV4', 'ventral', 'FFA', 'EBA', 'PPA'], type=list)
+parser.add_argument('--rois', default=['V1', 'hV4', 'ventral'], type=list)
 parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -104,7 +105,7 @@ berg = BERG(berg_dir=args.berg_dir)
 # Load the fMRI metadata
 metadata_fmri = berg.get_model_metadata(
     'fmri-nsd_fsaverage-huze',
-    subject=args.fmri_subject
+    subject=args.subject
     )
 
 # Empty t-fMRI data dictionary
@@ -360,12 +361,83 @@ for roi_target in tqdm(args.rois):
 
 
 # =============================================================================
+# Compute RSA between neural time points
+# =============================================================================
+rois = ['V1']
+
+rsa_times = {}
+
+for roi in tqdm(rois):
+
+    # Empty result array
+    rsa_roi = np.zeros((len(rep_splits), len(times), len(times)),
+        dtype=np.float32)
+
+    # Loop across time points
+    for t1 in range(len(times)):
+        for t2 in range(len(times)):
+
+            # Loop across splits for cross-validation
+            idx_split = 0
+            for s in range(len(rep_splits)):
+
+                # Correlate the RDMs of two time points
+                rsa_roi[idx_split,t1,t2] = pearsonr(roi_rsms[roi][s][0][:,t1],
+                    roi_rsms[roi][s][1][:,t2])[0]
+
+    # Store the results
+    rsa_times[roi] = np.mean(rsa_roi, 0)
+    del rsa_roi
+
+
+# =============================================================================
+# RSA between neural responses and layerwise AlexNet activations
+# =============================================================================
+rois = ['V1']
+
+rsa_alexnet = {}
+
+for roi in tqdm(rois):
+
+    # Average the neural RSM across splits, and convert them to RDMs with
+    # "1 - RSM" (to match the AlexNet representations in RDM format)
+    rsm = []
+    for s in range(len(rep_splits)):
+        for r in range(len(rep_splits[s])):
+            rsm.append(roi_rsms[roi][s][r])
+    rsm = np.mean(rsm, 0)
+    rdm = 1 - rsm
+
+    # Load the DNN layerwise RDMs
+    data_dir = os.path.join(args.berg_dir,
+        'neural_signatures_insilico_validation', 'vision', 'fmri',
+        'dnn_layerwise_modeling', 'dnn_rdms', 'dnn_rdms_alexnet.npy')
+    dnn_rdms = np.load(data_dir, allow_pickle=True).item()
+
+    # Loop across DNN layers
+    for key, val in dnn_rdms.items():
+
+        val = val[idx_triu]
+
+        rsa_alexnet[(roi, key)] = np.zeros((len(times)), dtype=np.float32)
+
+        # Loop across neural time points
+        for t in range(len(times)):
+
+            # Correlate neural and AlexNet RDMs
+            rsa_alexnet[(roi, key)][t] = pearsonr(val, rdm[:,t])[0]
+
+
+
+# =============================================================================
 # Save the results
 # =============================================================================
 results = {
     'gc': gc,
     'times': times,
-    'times_target': times_target
+    'times_target': times_target,
+    'rsa_times': rsa_times,
+    'rsa_alexnet': rsa_alexnet
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
@@ -373,6 +445,6 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'gc_scores')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = (f'gc_sub-{args.fmri_subject:02d}_regression-{args.regression}.npy')
+file_name = (f'gc_sub-{args.subject:02d}_regression-{args.regression}.npy')
 
 np.save(os.path.join(save_dir, file_name), results)
