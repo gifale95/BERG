@@ -10,7 +10,7 @@
 declare -a subject_all
 declare -a hemisphere_all
 index=0
-for s in '1' '5' '7' ; do
+for s in '1' '4' '5' '6' '7' '8' ; do
     for h in 'lh' 'rh' ; do
         subject_all[$index]=$s
         hemisphere_all[$index]=$h

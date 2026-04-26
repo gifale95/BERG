@@ -17,9 +17,6 @@ hemisphere : str
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
 berg_dir : str
     Directory of the BERG.
-nsd_dir : str
-    Directory of the Natural Scenes Dataset.
-    https://naturalscenesdataset.org/
 tnsd_dir : str
     Directory of the Temporal Natural Scenes Dataset.
 
@@ -35,10 +32,9 @@ from tqdm import tqdm
 from sklearn.linear_model import RidgeCV
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--subject', default=2, type=int) # '1' '2' '5' '7'
-parser.add_argument('--hemisphere', default='lh', type=str) # 'lh' 'rh'
+parser.add_argument('--subject', default=1, type=int)
+parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--nsd_dir', default='/scratch/ccn_datasets/natural-scenes-dataset', type=str)
 parser.add_argument('--tnsd_dir', default='/scratch/giffordale95/datasets/temporal-natural-scenes-dataset', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -95,8 +91,7 @@ fmri_train = np.array(fmri_train)
 train_img_num += 1 # since the EEG image numbers are 1 based
 
 # Store the fMRI responses responses for the test images
-test_img_num = np.append(metadata_fmri['test_img_num'],
-    metadata_fmri['val_img_num'])
+test_img_num = metadata_fmri['test_img_num']
 test_img_num.sort()
 fmri_test = []
 for img_num in test_img_num:
@@ -165,7 +160,7 @@ eeg_test_dict = {
     'eeg_test': eeg_test,
     'test_img_num': test_img_num
 }
-np.save(os.path.join(save_dir_test, f'eeg_test_sub-{args.subject:02d}_.npy'),
+np.save(os.path.join(save_dir_test, f'eeg_test_sub-{args.subject:02d}.npy'),
     eeg_test_dict)
 del eeg, eeg_test, eeg_test_dict
 

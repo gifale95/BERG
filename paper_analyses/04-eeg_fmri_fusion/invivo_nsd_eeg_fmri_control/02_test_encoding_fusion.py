@@ -27,8 +27,8 @@ import gc
 from sklearn.linear_model import LinearRegression
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--subject', default=1, type=int) # '1' '2' '5' '7'
-parser.add_argument('--hemisphere', default='lh', type=str) # 'lh' 'rh'
+parser.add_argument('--subject', default=1, type=int)
+parser.add_argument('--hemisphere', default='lh', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -55,7 +55,7 @@ eps = 1e-8
 fmri_test_z = (fmri_test - fmri_test.mean(0)) /  (fmri_test.std(0) + eps)
 
 # Load the EEG responses
-file_name = f'eeg_test_sub-{args.subject:02d}_.npy'
+file_name = f'eeg_test_sub-{args.subject:02d}.npy'
 eeg_test_dict = np.load(os.path.join(data_dir, file_name),
     allow_pickle=True).item()
 eeg_test = np.mean(eeg_test_dict['eeg_test'], 1)

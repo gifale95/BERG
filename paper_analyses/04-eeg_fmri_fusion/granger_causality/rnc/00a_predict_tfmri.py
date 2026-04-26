@@ -1,5 +1,5 @@
 """Predict t-fMRI responses using in silico EEG responses for the ILSVRC-2012
-training images. The t-fMRI responses are then converted to univariate
+validation images. The t-fMRI responses are then converted to univariate
 responses by averaging across vertices within each ROI, for later use in the
 univariate RNC algorithm.
 
@@ -117,7 +117,7 @@ for roi in args.rois:
 
 
 # =============================================================================
-# Access the ILSVRC-2012 train split, and load the images for the current batch
+# Access the ILSVRC-2012 val split, and load the images for the current batch
 # =============================================================================
 # Define the image transform
 transform = trn.Compose([
@@ -126,8 +126,8 @@ transform = trn.Compose([
     trn.Lambda(lambda img: np.transpose(img, (2, 0, 1))) # HWC to CHW
 ])
 
-# Access the ILSVRC-2012 train split
-images = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='train',
+# Access the ILSVRC-2012 validation split
+images = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='val',
     transform=transform)
 
 # Select the images from the current batch

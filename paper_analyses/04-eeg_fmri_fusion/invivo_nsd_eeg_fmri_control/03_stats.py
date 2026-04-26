@@ -28,7 +28,7 @@ from berg import BERG
 from sklearn.utils import resample
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--subjects', default=[1, 5, 7], type=list)
+parser.add_argument('--subjects', default=[1, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
