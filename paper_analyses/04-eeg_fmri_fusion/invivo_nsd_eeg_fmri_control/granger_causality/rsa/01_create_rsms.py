@@ -52,7 +52,7 @@ np.random.seed(seed)
 # =============================================================================
 # Load the EEG responses
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'invivo_test_data')
+    'invivo_nsd_eeg_fmri_control', 'invivo_data')
 file_name = f'eeg_test_sub-{args.subject:02d}.npy'
 eeg_test_dict = np.load(os.path.join(data_dir, file_name),
     allow_pickle=True).item()
@@ -146,8 +146,8 @@ for h, hemi in enumerate(args.hemispheres):
     for t in tqdm(range(len(times))):
 
         # Load the EEG-fMRI encoding fusion models weights
-        file_name = (f'weights_sub-{args.subject:02d}_'
-            f'hemi-{hemi}_eeg_time-{t:03d}.npy')
+        file_name = (f'weights_sub-{args.subject:02d}_hemi-{hemi}_'
+            f'eeg_train_trials-all_eeg_time-{t:03d}.npy')
         reg_param = np.load(os.path.join(args.berg_dir, 'eeg_fmri_fusion',
             'invivo_nsd_eeg_fmri_control', 'encoding_fusion_weights',
             file_name), allow_pickle=True).item()
@@ -220,7 +220,8 @@ for s, split in enumerate(rep_splits):
         # Back to (images_X, images_Y, time)
         rsm = np.transpose(rsm, (1, 2, 0))
 
-        # Store the upper triangle of the RSMs without the main diagonal # !!! Use both upper and lower triangle
+        # Store the the RSMs without the main diagonal
+        # rsms_split.append(np.append(rsm[idx_triu], rsm[idx_tril], 0)) # !!!
         rsms_split.append(rsm[idx_triu])
         del X, Y, X_z, Y_z, X_t, Y_t, rsm
 
@@ -238,8 +239,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'granger_causality',
-    'roi_rsms')
+    'invivo_nsd_eeg_fmri_control', 'granger_causality', 'rsa', 'roi_rsms')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = (f'rsms_sub-{args.subject:02d}_roi-{args.roi}.npy')

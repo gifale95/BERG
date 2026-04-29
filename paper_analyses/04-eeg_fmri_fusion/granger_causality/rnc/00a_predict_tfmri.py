@@ -50,7 +50,7 @@ parser.add_argument('--rois', default=['V1', 'hV4', 'ventral'], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--eeg_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
-parser.add_argument('--tot_img_batches', default=100, type=int)
+parser.add_argument('--tot_img_batches', default=10, type=int)
 parser.add_argument('--current_batch', default=0, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)
@@ -145,6 +145,30 @@ for i in tqdm(np.arange(start_idx, end_idx)):
 
 
 # =============================================================================
+# Predict the in silico EEG responses
+# =============================================================================
+for es, esub in enumerate(args.eeg_subjects):
+
+    # Load the EEG encoding model
+    model = berg.get_encoding_model(
+        'eeg-things_eeg_2-vit_b_32',
+        subject=esub
+        )
+
+    # Predict the in silico EEG responses, and append them across subjects
+    # across the channels dimension
+    if es == 0:
+        eeg = berg.encode(model, images_batch)
+    else:
+        eeg = np.append(eeg, berg.encode(model, images_batch), 2)
+
+    # Remove the model from memory
+    del model
+    gc.collect()
+    torch.cuda.empty_cache()
+
+
+# =============================================================================
 # Loop across EEG time points
 # =============================================================================
 # Empty t-fMRI data dictionary
@@ -159,33 +183,6 @@ times = metadata_eeg['eeg']['times']
 
 # Loop across EEG time points
 for t in tqdm(range(len(times))):
-
-    timepoints = np.zeros(len(times), dtype=int)
-    timepoints[t] = 1
-
-
-# =============================================================================
-# Predict the in silico EEG responses for the current batch of images
-# =============================================================================
-    for es, esub in enumerate(args.eeg_subjects):
-
-        # Load the EEG encoding model
-        model = berg.get_encoding_model(
-            'eeg-things_eeg_2-vit_b_32',
-            subject=esub,
-            selection={'timepoints': timepoints}
-            )
-
-        # Predict the in silico EEG responses
-        if es == 0:
-            eeg = berg.encode(model, images_batch)
-        else:
-            eeg = np.append(eeg, berg.encode(model, images_batch), 2)
-        del model
-        gc.collect()
-        torch.cuda.empty_cache()
-
-    eeg = np.squeeze(eeg)
 
 
 # =============================================================================
@@ -218,7 +215,8 @@ for t in tqdm(range(len(times))):
             # Generate the t-fMRI responses for each of the 4 in silico EEG
             # trials
             for tr in range(eeg.shape[1]):
-                tfmri_hemi[:,tr] = np.expand_dims(reg.predict(eeg[:,tr]), 2)
+                tfmri_hemi[:,tr] = np.expand_dims(reg.predict(eeg[:,tr,:,t]),
+                    2)
             del reg_param, reg
 
             # Append the t-fMRI responses across hemispheres
@@ -235,6 +233,9 @@ for t in tqdm(range(len(times))):
         else:
             tfmri[roi] = np.append(tfmri[roi], np.mean(tfmri_time, 2), 2)
         del tfmri_time
+
+# Delete the EEG reponses
+del eeg
 
 
 # =============================================================================

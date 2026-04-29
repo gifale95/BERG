@@ -5,6 +5,10 @@ Parameters
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+eeg_train_trials : str
+    String indicating which training EEG response trials are used. Possible
+    values  are: 'all' (all trials), 'even' (even trials), and 'odd' (odd
+    trials).
 berg_dir : str
     Directory of the BERG.
 
@@ -20,6 +24,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
+parser.add_argument('--eeg_train_trials', default='odd', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -28,7 +33,8 @@ args, unknown = parser.parse_known_args()
 # Load the results
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'stats', 'stats.npy')
+    'invivo_nsd_eeg_fmri_control', 'stats',
+    f'stats_eeg_train_trials-{args.eeg_train_trials}.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
@@ -97,7 +103,9 @@ for t, time in enumerate(tqdm(times)):
     plt.title(title, fontsize=fontsize)
 
     # Save the plot
-    plot_file = os.path.join(save_dir, f'correlation_time-{t:03d}.png')
+    file_name = (f'correlation_eeg_train_trials-{args.eeg_train_trials}_'
+        f'time-{t:03d}.png')
+    plot_file = os.path.join(save_dir, file_name)
     plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
     plt.close()
 
@@ -190,6 +198,7 @@ plt.legend(fontsize=fontsize, loc=4, ncols=2, frameon=False)
 # Save the figure
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'invivo_nsd_eeg_fmri_control', 'plots')
-file_name = os.path.join(save_dir, 'roi_correlation.svg')
+file_name = os.path.join(save_dir,
+    f'roi_correlation_eeg_train_trials-{args.eeg_train_trials}.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

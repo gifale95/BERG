@@ -14,6 +14,10 @@ subject : int
 hemisphere : str
     String containing the hemisphere used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+eeg_train_trials : str
+    String indicating which training EEG response trials are used. Possible
+    values  are: 'all' (all trials), 'even' (even trials), and 'odd' (odd
+    trials).
 berg_dir : str
     Directory of the BERG.
 
@@ -29,6 +33,7 @@ from sklearn.linear_model import LinearRegression
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', default=1, type=int)
 parser.add_argument('--hemisphere', default='lh', type=str)
+parser.add_argument('--eeg_train_trials', default='all', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -43,7 +48,7 @@ for key, val in vars(args).items():
 # =============================================================================
 # Load the fMRI responses
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'invivo_test_data')
+    'invivo_nsd_eeg_fmri_control', 'invivo_data')
 file_name = f'fmri_test_sub-{args.subject:02d}_hemi-{args.hemisphere}.npy'
 fmri_test_dict = np.load(os.path.join(data_dir, file_name),
     allow_pickle=True).item()
@@ -85,7 +90,7 @@ for t in tqdm(range(len(times))):
 
     # Load the EEG-fMRI encoding fusion models weights
     file_name = (f'weights_sub-{args.subject:02d}_hemi-{args.hemisphere}_'
-        f'eeg_time-{t:03d}.npy')
+        f'eeg_train_trials-{args.eeg_train_trials}_eeg_time-{t:03d}.npy')
     reg_param = np.load(os.path.join(args.berg_dir, 'eeg_fmri_fusion',
         'invivo_nsd_eeg_fmri_control', 'encoding_fusion_weights',
         file_name), allow_pickle=True).item()
@@ -124,5 +129,6 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
 os.makedirs(save_dir, exist_ok=True)
 
 # Save the correlation scores
-file_name = f'corr_sub-{args.subject:02d}_hemi-{args.hemisphere}.npy'
+file_name = (f'corr_sub-{args.subject:02d}_hemi-{args.hemisphere}_'
+    f'eeg_train_trials-{args.eeg_train_trials}.npy')
 np.save(os.path.join(save_dir, file_name), results)

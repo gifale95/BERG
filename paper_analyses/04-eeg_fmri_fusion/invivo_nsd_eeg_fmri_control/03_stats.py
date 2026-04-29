@@ -12,6 +12,10 @@ hemispheres : list
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
+eeg_train_trials : str
+    String indicating which training EEG response trials are used. Possible
+    values  are: 'all' (all trials), 'even' (even trials), and 'odd' (odd
+    trials).
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
     distribution.
@@ -31,6 +35,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
+parser.add_argument('--eeg_train_trials', default='all', type=str)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -47,7 +52,8 @@ for key, val in vars(args).items():
 # Load the time points
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'invivo_nsd_eeg_fmri_control', 'encoding_fusion_accuracy')
-times = np.load(os.path.join(data_dir, 'corr_sub-01_hemi-lh.npy'),
+filename = 'corr_sub-01_hemi-lh_eeg_train_trials-all.npy'
+times = np.load(os.path.join(data_dir, filename),
     allow_pickle=True).item()['times']
 
 # Analysis parameters
@@ -96,7 +102,8 @@ for fs, fsub in enumerate(tqdm(args.subjects)):
         # Load and store the correlation scores
         data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
             'invivo_nsd_eeg_fmri_control', 'encoding_fusion_accuracy')
-        file_name = f'corr_sub-{fsub:02d}_hemi-{hemi}.npy'
+        file_name = (f'corr_sub-{fsub:02d}_hemi-{hemi}_'
+            f'eeg_train_trials-{args.eeg_train_trials}.npy')
         corr_tfmri_fmri[fs,h,idx_v] = np.load(os.path.join(
             data_dir, file_name), allow_pickle=True).item()['correlation']
 
@@ -198,6 +205,6 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'invivo_nsd_eeg_fmri_control', 'stats')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'stats.npy'
+file_name = f'stats_eeg_train_trials-{args.eeg_train_trials}.npy'
 
 np.save(os.path.join(save_dir, file_name), results)

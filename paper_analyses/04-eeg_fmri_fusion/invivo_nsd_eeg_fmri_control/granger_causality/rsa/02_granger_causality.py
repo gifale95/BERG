@@ -1,4 +1,5 @@
-"""Apply Granger Causality (GC) between the t-fMRI responses of two ROIs.
+"""Apply Granger Causality (GC) between the t-fMRI responses of two ROIs, using
+RSA.
 
 Parameters
 ----------
@@ -265,8 +266,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'granger_causality',
-    'gc_scores')
+    'invivo_nsd_eeg_fmri_control', 'granger_causality', 'rsa', 'gc_scores')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = (f'gc_sub-{args.subject:02d}_regression-{args.regression}.npy')

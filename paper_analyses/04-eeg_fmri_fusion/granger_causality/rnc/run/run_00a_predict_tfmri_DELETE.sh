@@ -10,8 +10,8 @@
 declare -a fmri_subject_all
 declare -a current_batch_all
 index=0
-for fs in `seq 1 8` ; do
-    for b in `seq 0 9` ; do
+for fs in '2' ; do
+    for b in '9' ; do
         fmri_subject_all[$index]=$fs
         current_batch_all[$index]=$b
         ((index=index+1))

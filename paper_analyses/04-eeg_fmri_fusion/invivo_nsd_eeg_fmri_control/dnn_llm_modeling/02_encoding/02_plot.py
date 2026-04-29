@@ -6,6 +6,9 @@ fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
     are integers from 1 to 8.
+eeg_train_trials : list
+    List indicating which training EEG response trials are used. Possible
+    values  are: 'even' (even trials), and 'odd' (odd trials).
 regression : str
     The type of regression to use for computing Granger Causality. If 'linear',
     use linear regression. If 'ridge', use RidgeCV regression.
@@ -25,7 +28,8 @@ import matplotlib.pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subjects', default=[1, 5, 7], type=int)
+parser.add_argument('--fmri_subjects', default=[1, 4, 5, 6, 7, 8], type=int)
+parser.add_argument('--eeg_train_trials', default=['even', 'odd'], type=list)
 parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -35,7 +39,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'granger_causality', 'plots')
+    'invivo_nsd_eeg_fmri_control', 'granger_causality', 'encoding', 'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -43,25 +47,30 @@ os.makedirs(save_dir, exist_ok=True)
 # Load the GC results
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'granger_causality', 'gc_scores')
+    'invivo_nsd_eeg_fmri_control', 'granger_causality', 'encoding',
+    'gc_scores')
 
 gc = {}
-rsa_times = {}
-rsa_alexnet_pearson = {}
 
 for fs, fsub in enumerate(args.fmri_subjects):
 
-    file_name = f'gc_sub-{fsub:02d}_regression-{args.regression}.npy'
+    gc_sub = []
 
-    results = np.load(os.path.join(data_dir, file_name),
-        allow_pickle=True).item()
+    for et, eeg_train_tr in enumerate(args.eeg_train_trials):
 
-    gc[fsub] = results['gc']
-    rsa_times[fsub] = results['rsa_times']
-    rsa_alexnet_pearson[fsub] = results['rsa_alexnet_pearson']
-    times_target = results['times_target']
-    times = results['times']
-    del results
+        file_name = (f'gc_sub-{fsub:02d}_eeg_train_trials-'
+            f'{eeg_train_tr}_regression-{args.regression}.npy')
+
+        results = np.load(os.path.join(data_dir, file_name),
+            allow_pickle=True).item()
+
+        gc_sub.append(results['gc'])
+        times_target = results['times_target']
+        times = results['times']
+        del results
+
+    gc[fsub] = np.mean(gc_sub, 0)
+    del gc_sub
 
 
 # =============================================================================
@@ -296,242 +305,5 @@ for r, roi_2 in enumerate(other_rois):
 
 # Save the figure
 file_name = os.path.join(save_dir, f'gc_sub-avg_zoom.svg')
-fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-plt.close()
-
-
-# =============================================================================
-# Plot the between-time-point RSA results (subject-average)
-# =============================================================================
-# Plot parameters
-matplotlib.rcParams['axes.spines.left'] = False
-matplotlib.rcParams['axes.spines.bottom'] = False
-
-rois = ['V1']
-
-fig, axs = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(20, 7.5))
-
-for r, roi in enumerate(rois):
-
-    # Plot RSA results
-    rsa_times_sub = []
-    for s, fsub in enumerate(args.fmri_subjects):
-        rsa_times_sub.append(rsa_times[fsub][roi])
-    rsa_times_sub = np.mean(np.flip(rsa_times_sub, 1), 0)
-    vlim = np.max(np.abs(rsa_times_sub))
-    cax = axs.imshow(rsa_times_sub, cmap='inferno', aspect='equal',
-        vmin=0, vmax=vlim)
-    cbar = plt.colorbar(cax, shrink=0.75, ticks=[0, vlim/2, vlim],
-        label="Pearson\'s $r$", location='left')
-    
-    # Title
-    axs.set_title(f'{roi}', fontsize=fontsize)
-
-    # X-axis parameters # !!!
-    xticks = [20, 40, 60, 80, 100, 120]
-    xlabels = [0, 100, 200, 300, 400, 500]
-    axs.set_xticks(ticks=xticks, labels=xlabels)
-    axs.set_xlabel('Time (ms)', fontsize=fontsize)
-
-    # Y-axis parameters
-    yticks = abs(np.array(xticks) - len(times))
-    ylabels = [0, 100, 200, 300, 400, 500]
-    axs.set_yticks(ticks=yticks, labels=ylabels)
-    axs.set_ylabel('Time (ms)', fontsize=fontsize)
-
-# Save the figure
-file_name = os.path.join(save_dir, f'rsa_time_sub-avg.svg')
-fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-plt.close()
-
-
-# =============================================================================
-# Plot the between-time-point RSA results (subject-average - zoomed in on the early time points)
-# =============================================================================
-# Plot parameters
-matplotlib.rcParams['axes.spines.left'] = False
-matplotlib.rcParams['axes.spines.bottom'] = False
-
-rois = ['V1']
-
-fig, axs = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(20, 7.5))
-
-for r, roi in enumerate(rois):
-
-    # Plot RSA results
-    tmin = np.where(np.round(times, 3) == 0)[0][0]
-    tmax = np.where(np.round(times, 3) == 0.3)[0][0]
-    rsa_times_sub = []
-    for s, fsub in enumerate(args.fmri_subjects):
-        rsa_times_sub.append(rsa_times[fsub][roi][tmin:tmax,tmin:tmax])
-    rsa_times_sub = np.mean(np.flip(rsa_times_sub, 1), 0)
-    vlim = np.max(np.abs(rsa_times_sub))
-    cax = axs.imshow(rsa_times_sub, cmap='inferno', aspect='equal',
-        vmin=0, vmax=vlim)
-    cbar = plt.colorbar(cax, shrink=0.75, ticks=[0, vlim/2, vlim],
-        label="Pearson\'s $r$", location='left')
-
-    # Title
-    axs.set_title(f'{roi}', fontsize=fontsize)
-
-    # X-axis parameters # !!!
-    xticks = [0, 10, 20, 30, 40, 50, 59]
-    xlabels = [0, 50, 100, 150, 200, 250, 300]
-    axs.set_xticks(ticks=xticks, labels=xlabels)
-    axs.set_xlabel('Time (ms)', fontsize=fontsize)
-
-    # Y-axis parameters
-    yticks = abs(np.array(xticks) - len(times[tmin:tmax]))
-    ylabels = [0, 50, 100, 150, 200, 250, 300]
-    axs.set_yticks(ticks=yticks, labels=ylabels)
-    axs.set_ylabel('Time (ms)', fontsize=fontsize)
-
-# Save the figure
-file_name = os.path.join(save_dir, f'rsa_time_sub-avg_zoom.svg')
-fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-plt.close()
-
-
-# =============================================================================
-# Plot the AlexNet RSA results (subject-average)
-# =============================================================================
-# Get the plot colors
-def sample_cmap(N):
-    cmap = plt.cm.get_cmap('inferno')
-    values = np.linspace(0, 1, N+2)
-    colors = cmap(values)[1:-1]
-    return colors
-model_layers = [
-    'features.2',
-    'features.5',
-    'features.7',
-    'features.9',
-    'features.12',
-    'classifier.2',
-    'classifier.5',
-    'classifier.6'
-    ]
-colors = sample_cmap(len(model_layers))
-
-# Plot parameters
-matplotlib.rcParams['axes.spines.left'] = True
-matplotlib.rcParams['axes.spines.bottom'] = True
-
-rois = ['V1']
-
-fig, axs = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(10, 7.5))
-
-for r, roi in enumerate(rois):
-
-    # Plot the chance and stimulus onset dashed lines
-    axs.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
-        linewidth=2, alpha=.25, label='_nolegend_')
-
-    # Loop across model layers
-    for l, layer in enumerate(model_layers):
-
-        # Average the RSA results across subjects
-        rsa_alexnet_sub = []
-        for s, fsub in enumerate(args.fmri_subjects):
-            rsa_alexnet_sub.append(rsa_alexnet_pearson[fsub][(roi, layer)])
-        rsa_alexnet_sub = np.mean(rsa_alexnet_sub, 0)
-
-        # Plot the RSA subject-average results
-        axs.plot(times, rsa_alexnet_sub, color=colors[l], linewidth=2,
-            label=layer)
-
-    # x-axis parameters # !!!
-    axs.set_xlabel('Time (ms)', fontsize=fontsize)
-    xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
-    xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
-    plt.xticks(ticks=xticks, labels=xlabels)
-    axs.set_xlim(left=min(times), right=max(times))
-
-    # y-axis parameters
-    axs.set_ylabel("Pearson's $r$", fontsize=fontsize)
-    yticks = [0, 0.05, 0.1, 0.15, 0.2]
-    ylabels = [0, 0.05, 0.1, 0.15, 0.2]
-    # plt.yticks(ticks=yticks, labels=ylabels)
-    axs.set_ylim(bottom=-.05, top=.5)
-
-    # Legend
-    axs.legend(fontsize=15, ncol=1, loc=0, frameon=False)
-
-# Save the figure
-file_name = os.path.join(save_dir, f'rsa_time_sub-avg.svg')
-fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-plt.close()
-
-
-# =============================================================================
-# Plot the AlexNet RSA results (subject-average - zoomed in on the early time points)
-# =============================================================================
-# Get the plot colors
-def sample_cmap(N):
-    cmap = plt.cm.get_cmap('inferno')
-    values = np.linspace(0, 1, N+2)
-    colors = cmap(values)[1:-1]
-    return colors
-model_layers = [
-    'features.2',
-    'features.5',
-    'features.7',
-    'features.9',
-    'features.12',
-    'classifier.2',
-    'classifier.5',
-    'classifier.6'
-    ]
-colors = sample_cmap(len(model_layers))
-
-# Plot parameters
-matplotlib.rcParams['axes.spines.left'] = True
-matplotlib.rcParams['axes.spines.bottom'] = True
-
-rois = ['V1']
-
-fig, axs = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(10, 7.5))
-
-for r, roi in enumerate(rois):
-
-    tmin = np.where(np.round(times, 3) == 0)[0][0]
-    tmax = np.where(np.round(times, 3) == 0.3)[0][0]
-
-    # Plot the chance and stimulus onset dashed lines
-    axs.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
-        linewidth=2, alpha=.25, label='_nolegend_')
-
-    # Loop across model layers
-    for l, layer in enumerate(model_layers):
-
-        # Average the RSA results across subjects
-        rsa_alexnet_sub = []
-        for s, fsub in enumerate(args.fmri_subjects):
-            rsa_alexnet_sub.append(rsa_alexnet_pearson[fsub][(roi, layer)][tmin:tmax])
-        rsa_alexnet_sub = np.mean(rsa_alexnet_sub, 0)
-
-        # Plot the RSA subject-average results
-        axs.plot(times[tmin:tmax], rsa_alexnet_sub, color=colors[l], linewidth=2,
-            label=layer)
-
-    # x-axis parameters # !!!
-    axs.set_xlabel('Time (ms)', fontsize=fontsize)
-    xticks = [0, 0.05, .1, 0.15, 0.2, 0.25, 0.295]
-    xlabels = [0, 50, 100, 150, 200, 250, 300]
-    plt.xticks(ticks=xticks, labels=xlabels)
-    axs.set_xlim(left=min(times[tmin:tmax]), right=max(times[tmin:tmax]))
-
-    # y-axis parameters
-    axs.set_ylabel("Pearson's $r$", fontsize=fontsize)
-    yticks = [0, 0.05, 0.1, 0.15, 0.2]
-    ylabels = [0, 0.05, 0.1, 0.15, 0.2]
-    # plt.yticks(ticks=yticks, labels=ylabels)
-    axs.set_ylim(bottom=-.05, top=.5)
-
-    # Legend
-    axs.legend(fontsize=15, ncol=1, loc=0, frameon=False)
-
-# Save the figure
-file_name = os.path.join(save_dir, f'rsa_time_sub-avg_zoom.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

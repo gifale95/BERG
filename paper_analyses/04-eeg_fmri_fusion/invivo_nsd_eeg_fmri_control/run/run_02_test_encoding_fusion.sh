@@ -9,12 +9,16 @@
 # Create the parameters combinations
 declare -a subject_all
 declare -a hemisphere_all
+declare -a eeg_train_trials_all
 index=0
 for s in '1' '4' '5' '6' '7' '8' ; do
     for h in 'lh' 'rh' ; do
-        subject_all[$index]=$s
-        hemisphere_all[$index]=$h
-        ((index=index+1))
+        for et in 'all' 'even' 'odd' ; do
+            subject_all[$index]=$s
+            hemisphere_all[$index]=$h
+            eeg_train_trials_all[$index]=$et
+            ((index=index+1))
+        done
     done
 done
 
@@ -22,8 +26,10 @@ done
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
 subject=${subject_all[$SLURM_ARRAY_TASK_ID]}
 hemisphere=${hemisphere_all[$SLURM_ARRAY_TASK_ID]}
+eeg_train_trials=${eeg_train_trials_all[$SLURM_ARRAY_TASK_ID]}
 echo subject: $subject
 echo hemisphere: $hemisphere
+echo eeg_train_trials: $eeg_train_trials
 
 # Change to the .py script directory
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/invivo_nsd_eeg_fmri_control
@@ -33,4 +39,4 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Run the job
-python 02_test_encoding_fusion.py --subject $subject --hemisphere $hemisphere
+python 02_test_encoding_fusion.py --subject $subject --hemisphere $hemisphere --eeg_train_trials $eeg_train_trials
