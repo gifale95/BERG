@@ -214,8 +214,8 @@ del eeg_train, eeg_test
 idx_t_start_target = np.where(times == 0)[0][0]
 times_target = times[idx_t_start_target:]
 
-# Define the test times (always up to 75 ms prior to the target time)
-offset = np.where(times == 0)[0][0] - np.where(times == -75)[0][0]
+# Define the test times (always up to 100 ms prior to the target time)
+offset = np.where(times == 0)[0][0] - np.where(times == -100)[0][0]
 
 # Loop across ROIs
 gc = {}

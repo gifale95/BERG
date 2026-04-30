@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-granger_causality-encoding-01_granger_causality
 #SBATCH --mail-type=end
-#SBATCH --mem=200000
+#SBATCH --mem=300000
 #SBATCH --time=40:00:00
 #SBATCH --qos=extended
 

@@ -12,6 +12,13 @@ subject : int
 hemisphere : str
     String containing the hemisphere used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+cv_split : int
+    Integer indicating which of two EEG splits are used for training or testing
+    the variance partitioning models. Possible values are 1 and 2.
+tot_time_splits : int
+    The total number of splits in which the EEG time points are divided.
+time_split : int
+    The time split used, out of the total time splits.
 criterion : str
     Criterion to define the searchlight neighborhood: 'radius' for all vertices
     within a geodesic radius, 'nearest' for k-nearest neighbors.
@@ -20,9 +27,6 @@ radius_mm : float
 k : int
     Number of nearest geodesic neighbors (default = 10), if criterion is
     'nearest'.
-dnn_model : str
-    Name of deep neural network model used to extract the image features.
-    Available options are 'alexnet' and 'resnet50'.
 berg_dir : str
     Directory of the BERG.
 
@@ -32,7 +36,6 @@ import argparse
 import os
 import numpy as np
 from tqdm import tqdm
-from scipy.stats import pearsonr
 import h5py
 from berg import BERG
 from sklearn.linear_model import LinearRegression
@@ -40,10 +43,12 @@ from sklearn.linear_model import LinearRegression
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', default=1, type=int)
 parser.add_argument('--hemisphere', default='lh', type=str)
+parser.add_argument('--cv_split', default=1, type=int)
+parser.add_argument('--tot_time_splits', default=10, type=int)
+parser.add_argument('--time_split', default=0, type=int)
 parser.add_argument('--criterion', default='nearest', type=str)
 parser.add_argument('--radius_mm', default=10, type=float)
 parser.add_argument('--k', default=100, type=int)
-parser.add_argument('--dnn_model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -103,24 +108,33 @@ llm_test = 1 - corr_matrix(llm_test.T)
 # Take the lower triangle of the RDM
 llm_test = llm_test[idx_tril]
 
+# Format the RDMs
+X_vision_dnn = np.reshape(vision_dnn_test, (-1, 1))
+X_llm = np.reshape(llm_test, (-1, 1))
+X_both = np.append(X_llm, X_vision_dnn, 1)
+
 
 # =============================================================================
-# Load the EEG test responses
+# Load the EEG responses
 # =============================================================================
 # Load the EEG responses
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'invivo_nsd_eeg_fmri_control', 'invivo_data')
 file_name = f'eeg_test_sub-{args.subject:02d}.npy'
-eeg_test = np.load(os.path.join(data_dir, file_name),
+eeg = np.load(os.path.join(data_dir, file_name),
     allow_pickle=True).item()['eeg_test']
 
 # Average the EEG responses into two splits (for later cross-validation in the
 # variance paritioning analysis)
-idx_even = np.arange(0, eeg_test.shape[1], 2)
-idx_odd = np.arange(1, eeg_test.shape[1], 2)
-eeg_test_1 = np.mean(eeg_test[:,idx_even], 1)
-eeg_test_2 = np.mean(eeg_test[:,idx_odd], 1)
-del eeg_test
+idx_even = np.arange(0, eeg.shape[1], 2)
+idx_odd = np.arange(1, eeg.shape[1], 2)
+if args.cv_split == 1:
+    eeg_train = np.mean(eeg[:,idx_even], 1)
+    eeg_test = np.mean(eeg[:,idx_odd], 1)
+elif args.cv_split == 2:
+    eeg_train = np.mean(eeg[:,idx_odd], 1)
+    eeg_test = np.mean(eeg[:,idx_even], 1)
+del eeg
 
 # Get the time points # !!! Use official time points
 n_times = 615
@@ -132,6 +146,12 @@ times = times + shift
 t_start = np.where(times == -100)[0][0]
 t_end = np.where(times == 600)[0][0]
 times = times[t_start:t_end+1]
+
+# Select the time points from the current time split
+times_per_split = int(np.ceil(len(times) / args.tot_time_splits))
+start_idx = args.time_split * times_per_split
+end_idx = min((args.time_split + 1) * times_per_split, len(times))
+times_new = times[start_idx:end_idx]
 
 
 # =============================================================================
@@ -168,20 +188,31 @@ geodesic_distances = h5py.File(data_dir, 'r')['geodesic_distances']
 # =============================================================================
 # Loop across EEG time points
 # =============================================================================
-# Empty RSA result array of shape:
+# Empty result arrays of shape:
 # (N fMRI vertices, EEG time points)
-rsa = np.zeros((n_vertices, len(times)), dtype=np.float32) # !!!
-rsa[:] = np.nan
+total_variance = np.zeros((n_vertices, len(times_new)), dtype=np.float32)
+total_variance_vision_dnn = np.zeros(total_variance.shape, dtype=np.float32)
+total_variance_llm = np.zeros(total_variance.shape, dtype=np.float32)
+unique_variance_vision_dnn = np.zeros(total_variance.shape, dtype=np.float32)
+unique_variance_llm = np.zeros(total_variance.shape, dtype=np.float32)
+shared_variance = np.zeros(total_variance.shape, dtype=np.float32)
+total_variance[:] = np.nan
+total_variance_vision_dnn[:] = np.nan
+total_variance_llm[:] = np.nan
+unique_variance_vision_dnn[:] = np.nan
+unique_variance_llm[:] = np.nan
+shared_variance[:] = np.nan
 
-for t in tqdm(range(len(times))):
+for t in tqdm(range(start_idx, end_idx)):
 
 
 # =============================================================================
 # Generate the t-fMRI responses
 # =============================================================================
-    # Empty t-fMRI response array of shape:
+    # Empty t-fMRI response arrays of shape:
     # (N Images, 163842 Vertices)
-    tfmri = np.zeros((2, len(eeg_test_1), n_vertices), dtype=np.float32)
+    tfmri_train = np.zeros((len(eeg_train), n_vertices), dtype=np.float32)
+    tfmri_test = np.zeros((len(eeg_test), n_vertices), dtype=np.float32)
 
     # Load the EEG-fMRI encoding fusion models weights
     file_name = (f'weights_sub-{args.subject:02d}_hemi-{args.hemisphere}_'
@@ -197,19 +228,19 @@ for t in tqdm(range(len(times))):
     reg.n_features_in_ = reg_param['n_features_in_']
 
     # Generate the t-fMRI responses for the test images with in vivo EEG
-    tfmri[0,:,idx_v] = reg.predict(eeg_test_1[:,:,t])
-    tfmri[1,:,idx_v] = reg.predict(eeg_test_2[:,:,t])
+    tfmri_train[:,idx_v] = reg.predict(eeg_train[:,:,t])
+    tfmri_test[:,idx_v] = reg.predict(eeg_test[:,:,t])
     del reg_param, reg
 
 
 # =============================================================================
 # Loop across fMRI vertices
 # =============================================================================
-    for v in idx_v:
+    for v in tqdm(idx_v):
 
 
 # =============================================================================
-# Create the t-fMRI RDM
+# Create the t-fMRI RDMs
 # =============================================================================
         # Select the neighborhood based on the chosen criterion
         if args.criterion == 'nearest':
@@ -220,58 +251,84 @@ for t in tqdm(range(len(times))):
             mask = geodesic_distances[v] <= args.radius_mm
             neighborhood = np.where(mask)[0]
 
-        # Create the fMRI RDM
-        tfmri_rdm = np.expand_dims(
-            1 - corr_matrix(tfmri[0,:,neighborhood].T), 0)
-        tfmri_rdm = np.append(np.expand_dims(
-            1 - corr_matrix(tfmri[1,:,neighborhood].T), 0), 0)
+        # Create the fMRI RDMs
+        tfmri_rdm_train = 1 - corr_matrix(tfmri_train[:,neighborhood].T)
+        tfmri_rdm_test = 1 - corr_matrix(tfmri_test[:,neighborhood].T)
+
+        # Take the lower triangle of the RDMs
+        tfmri_rdm_train = tfmri_rdm_train[idx_tril]
+        tfmri_rdm_test = tfmri_rdm_test[idx_tril]
 
 
 # =============================================================================
-# Perform searchlight RSA (variance partitioning) # !!!
+# Perform searchlight RSA (variance partitioning)
 # =============================================================================
-        # RSA with the vision DNN RDM
-        score_vision_dnn = np.zeros(len(tfmri_rdm))
-        for i in range(len(tfmri_rdm)):
-            # Train the regression
-            X = np.reshape(vision_dnn_test, (-1, 1))
-            y_train = np.reshape(tfmri_rdm[i], (-1, 1))
-            reg = LinearRegression()
-            reg.fit(X, y_train)
-            # Test the regression (cross-validation)
-            i_test = abs(i-1)
-            y_test = np.reshape(tfmri_rdm[i_test], (-1, 1))
-            score = np.mean((y_test - reg.predict(X)) ** 2)
-            # Compute R2 adjusted # !!!
-            score_vision_dnn[i] = 
+        # Format the fMRI train/test RDMs
+        y_train = np.reshape(tfmri_rdm_train, (-1, 1))
+        y_test = np.reshape(tfmri_rdm_test, (-1, 1))
 
-        # RSA with the LLM RDM # !!!
+        # Compute the total variance explained by vision DNNs
+        # Train the regression
+        reg = LinearRegression()
+        reg.fit(X_vision_dnn, y_train)
+        # Test the regression (cross-validation)
+        score = np.mean((y_test - reg.predict(X_vision_dnn)) ** 2)
+        # Adjust the R2 scores for the number predictors in the model
+        total_variance_vision_dnn[v,t] = score * (len(X_vision_dnn) - 1) / \
+            (len(X_vision_dnn) - X_vision_dnn.shape[1] - 1)
 
-        # RSA with both vision DNN and LLM RDMs # !!!
-        
+        # Compute the total variance explained by LLMs
+        # Train the regression
+        reg = LinearRegression()
+        reg.fit(X_llm, y_train)
+        # Test the regression (cross-validation)
+        score = np.mean((y_test - reg.predict(X_llm)) ** 2)
+        # Adjust the R2 scores for the number predictors in the model
+        total_variance_llm[v,t] = score * (len(X_llm) - 1) / \
+            (len(X_llm) - X_llm.shape[1] - 1)
 
-        # Compute the total unique and shared variance explained by the vision
-        # DNN and LLM RDMs # !!!
+        # Compute the total variance explained by vision DNNs and LLMs together
+        # Train the regression
+        reg = LinearRegression()
+        reg.fit(X_both, y_train)
+        # Test the regression (cross-validation)
+        score = np.mean((y_test - reg.predict(X_both)) ** 2)
+        # Adjust the R2 scores for the number predictors in the model
+        total_variance[v,t] = score * (len(X_both) - 1) / \
+            (len(X_both) - X_both.shape[1] - 1)
 
-
-
-
-
+        # Compute the unique and shared variance explained by the vision DNN
+        # and LLM RDMs
+        unique_variance_vision_dnn[v,t] = total_variance[v,t] - \
+            total_variance_llm[v,t]
+        unique_variance_llm[v,t] = total_variance[v,t] - \
+            total_variance_vision_dnn[v,t]
+        shared_variance[v,t] = total_variance[v,t] - \
+            unique_variance_vision_dnn[v,t] - unique_variance_llm[v,t]
+        # shared_variance[v,t] = total_variance_vision_dnn[v,t] + \
+        #     total_variance_llm[v,t] - total_variance[v,t]
 
 
 # =============================================================================
-# Save the results # !!!
+# Save the results
 # =============================================================================
 results = {
-    'rsa': rsa,
-    'metadata_fmri': metadata_fmri
+    'metadata_fmri': metadata_fmri,
+    'times': times,
+    'times_new': times_new,
+    'total_variance': total_variance,
+    'total_variance_vision_dnn': total_variance_vision_dnn,
+    'total_variance_llm': total_variance_llm,
+    'unique_variance_vision_dnn': unique_variance_vision_dnn,
+    'unique_variance_llm': unique_variance_llm,
+    'shared_variance': shared_variance
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'rsa', f'source_dataset-{args.source_dataset}')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'rsa_scores')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = (f'rsa_fmri_sub-{args.fmri_subject:02d}_{args.hemisphere}'
-             f'_dnn_model-{args.dnn_model}.npy')
+file_name = (f'rsa_sub-{args.subject:02d}_hemisphere-{args.hemisphere}_'
+    f'cv_split-{args.cv_split}_time_split-{args.time_split:02d}.npy')
 
 np.save(os.path.join(save_dir, file_name), results)

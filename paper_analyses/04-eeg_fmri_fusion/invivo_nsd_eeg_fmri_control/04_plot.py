@@ -2,9 +2,6 @@
 
 Parameters
 ----------
-hemispheres : list
-    List containing the hemispheres used for the analyses. Possible values 
-    are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
 eeg_train_trials : str
     String indicating which training EEG response trials are used. Possible
     values  are: 'all' (all trials), 'even' (even trials), and 'odd' (odd
@@ -23,7 +20,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--eeg_train_trials', default='odd', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
