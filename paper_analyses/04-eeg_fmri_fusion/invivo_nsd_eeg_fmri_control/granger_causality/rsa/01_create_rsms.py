@@ -192,7 +192,7 @@ idx_triu = np.triu_indices(len(tfmri), k=1)
 
 roi_rsms = []
 
-for s, split in enumerate(rep_splits):
+for s, split in enumerate(tqdm(rep_splits)):
 
     rsms_split = []
 
@@ -215,7 +215,7 @@ for s, split in enumerate(rep_splits):
         Y_t = np.transpose(Y_z, (2, 0, 1))  # (time, images_Y, vertices)
 
         # Cross-correlation via batch matmul
-        rsm = np.matmul(X_t, Y_t.transpose(0, 2, 1)) / (X.shape[1])
+        rsm = np.matmul(X_t, Y_t.transpose(0, 2, 1)) / (X.shape[1]).astype(np.float32)
 
         # Back to (images_X, images_Y, time)
         rsm = np.transpose(rsm, (1, 2, 0))

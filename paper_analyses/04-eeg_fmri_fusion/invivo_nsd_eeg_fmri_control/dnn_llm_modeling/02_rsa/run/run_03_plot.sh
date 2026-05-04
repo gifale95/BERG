@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-dnn_llm_modeling-RSA-03_plot
 #SBATCH --mail-type=end
-#SBATCH --mem=5000
-#SBATCH --time=05:00:00
+#SBATCH --mem=30000
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Activate the Anaconda environment

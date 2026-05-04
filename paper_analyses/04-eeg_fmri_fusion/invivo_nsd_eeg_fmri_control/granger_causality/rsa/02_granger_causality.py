@@ -60,7 +60,7 @@ rep_splits = [
     ]
 
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'granger_causality', 'roi_rsms')
+    'invivo_nsd_eeg_fmri_control', 'granger_causality', 'rsa', 'roi_rsms')
 
 roi_rsms = {}
 
@@ -109,26 +109,18 @@ for roi_target in tqdm(args.rois):
                         for r in range(len(rep_splits[s])):
 
                             # Get the train and test RSMs of the target and
-                            # source ROIs
-                            # Train
+                            # source ROIs (use a different repeat for the test
+                            # target than for the test predictors, to reduce
+                            # the effect of noise correlations)
                             rsm_roi_target_train = np.reshape(
                                 roi_rsms[roi_target][s][r][:,tt], (-1, 1))
-                            rsm_roi_target_past_train = np.reshape(
-                                roi_rsms[roi_target][s][r][:,ts], (-1, 1))
-                            rsm_roi_source_past_train = np.reshape(
-                                roi_rsms[roi_source][s][r][:,ts], (-1, 1))
-                            # Test (use a different repeat for the test target
-                            # than for the test predictors, to reduce the
-                            # effect of noise correlations)
                             rsm_roi_target_test = np.reshape(
                                 roi_rsms[roi_target][s][abs(r-1)][:,tt],
                                 (-1, 1))
-                            rsm_roi_target_past_test = np.reshape(
-                                roi_rsms[roi_target][s][r][:,ts],
-                                (-1, 1))
-                            rsm_roi_source_past_test = np.reshape(
-                                roi_rsms[roi_source][s][r][:,ts],
-                                (-1, 1))
+                            rsm_roi_target_past = np.reshape(
+                                roi_rsms[roi_target][s][r][:,ts], (-1, 1))
+                            rsm_roi_source_past = np.reshape(
+                                roi_rsms[roi_source][s][r][:,ts], (-1, 1))
 
                             # Fit the linear regressions for the full and
                             # reduced models
@@ -141,28 +133,26 @@ for roi_target in tqdm(args.rois):
                                     alpha_per_target=True)
                                 reg_full = RidgeCV(alphas=alphas, cv=None,
                                     alpha_per_target=True)
-                            reg_reduced.fit(rsm_roi_target_past_train,
+                            reg_reduced.fit(rsm_roi_target_past,
                                 rsm_roi_target_train)
-                            reg_full.fit(np.append(rsm_roi_target_past_train,
-                                rsm_roi_source_past_train, 1),
-                                rsm_roi_target_train)
+                            reg_full.fit(np.append(rsm_roi_target_past,
+                                rsm_roi_source_past, 1), rsm_roi_target_train)
 
                             # Compute the unexplained variance for the full and
                             # reduced models (MSE)
                             u_reduced = np.mean((
-                                reg_reduced.predict(rsm_roi_target_past_test) -
+                                reg_reduced.predict(rsm_roi_target_past) -
                                 rsm_roi_target_test) ** 2)
                             u_full = np.mean((reg_full.predict(np.append(
-                                rsm_roi_target_past_test,
-                                rsm_roi_source_past_test, 1)) -
+                                rsm_roi_target_past, rsm_roi_source_past, 1)) -
                                 rsm_roi_target_test) ** 2)
 
                             # Adjust the MSE scores for the number of
                             # predictors in the models
                             n = len(rsm_roi_target_test)
-                            p_reduced = rsm_roi_target_past_train.shape[1]
+                            p_reduced = rsm_roi_target_past.shape[1]
                             p_full = p_reduced + \
-                                rsm_roi_source_past_train.shape[1]
+                                rsm_roi_source_past.shape[1]
                             u_reduced = u_reduced * (n - 1) / \
                                 (n - p_reduced - 1)
                             u_full = u_full * (n - 1) / (n - p_full - 1)
@@ -176,12 +166,10 @@ for roi_target in tqdm(args.rois):
 
                             # Remove unused variables
                             del rsm_roi_target_train, \
-                                rsm_roi_target_past_train, \
-                                rsm_roi_source_past_train, \
                                 rsm_roi_target_test, \
-                                rsm_roi_target_past_test, \
-                                rsm_roi_source_past_test, reg_reduced, \
-                                reg_full, u_reduced, u_full
+                                rsm_roi_target_past, \
+                                rsm_roi_source_past, \
+                                reg_reduced, reg_full, u_reduced, u_full
 
             # Store the GC results in a dictionary
             gc[f'{roi_source}_to_{roi_target}'] = np.mean(gc_roi, 0)
@@ -219,10 +207,18 @@ for roi in tqdm(args.rois):
 # =============================================================================
 # RSA between neural responses and layerwise AlexNet activations
 # =============================================================================
-idx_triu = np.triu_indices(len(roi_rsms[args.rois[0]][0][0]), k=1)
+# Load the DNN layerwise RDMs, and take the upper triangle
+data_dir = os.path.join(args.berg_dir,
+    'neural_signatures_insilico_validation', 'vision', 'fmri',
+    'dnn_layerwise_modeling', 'dnn_rdms', 'dnn_rdms_alexnet.npy')
+dnn_rdms = np.load(data_dir, allow_pickle=True).item()
+n_test_img = len(dnn_rdms[list(dnn_rdms.keys())[0]])
+idx_triu = np.triu_indices(n_test_img, k=1)
+for key, val in dnn_rdms.items():
+    dnn_rdms[key] = val[idx_triu]
 
+# Loop across ROIs
 rsa_alexnet = {}
-
 for roi in tqdm(args.rois):
 
     # Average the neural RSM across splits, and convert them to RDMs with
@@ -234,16 +230,8 @@ for roi in tqdm(args.rois):
     rsm = np.mean(rsm, 0)
     rdm = 1 - rsm
 
-    # Load the DNN layerwise RDMs
-    data_dir = os.path.join(args.berg_dir,
-        'neural_signatures_insilico_validation', 'vision', 'fmri',
-        'dnn_layerwise_modeling', 'dnn_rdms', 'dnn_rdms_alexnet.npy')
-    dnn_rdms = np.load(data_dir, allow_pickle=True).item()
-
     # Loop across DNN layers
     for key, val in dnn_rdms.items():
-
-        val = val[idx_triu]
 
         rsa_alexnet[(roi, key)] = np.zeros((len(times)), dtype=np.float32)
 

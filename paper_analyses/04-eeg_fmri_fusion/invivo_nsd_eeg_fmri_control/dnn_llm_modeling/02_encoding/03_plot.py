@@ -1,5 +1,5 @@
-"""Plot the RSA-based variance partitioning results between t-fMRI responses
-and vision DNN features or LLM embeddings.
+"""Plot the encoding-based variance partitioning results between t-fMRI
+responses and vision DNN features or LLM embeddings.
 
 Parameters
 ----------
@@ -30,14 +30,14 @@ for key, val in vars(args).items():
 # Load the results
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'stats',
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding', 'stats',
     'stats.npy')
 results = np.load(results_dir, allow_pickle=True).item()
 times = results['times']
 
 # Create the plots save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'plots',
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding', 'plots',
     'variance_partitioning_surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
 
@@ -202,7 +202,7 @@ for i, (key, val) in enumerate(results['variance_partitioning_roi'].items()):
 
 # Save the figure
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'plots')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding', 'plots')
 file_name = os.path.join(save_dir, 'variance_partitioning.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

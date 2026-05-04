@@ -1,4 +1,5 @@
-"""Perform searchlight RSA between t-fMRI responses and vision DNN features.
+"""Perform a searchlight RSA variance partitioning analysis between t-fMRI
+responses and vision DNN features.
 
 To reduce computational load, the M/EEG-fMRI fusion encoding models are only
 trained, tested, and used for vertices falling within the NSD visual streams.
@@ -203,7 +204,7 @@ unique_variance_vision_dnn[:] = np.nan
 unique_variance_llm[:] = np.nan
 shared_variance[:] = np.nan
 
-for t in tqdm(range(start_idx, end_idx)):
+for t, t_idx in tqdm(enumerate(range(start_idx, end_idx))):
 
 
 # =============================================================================
@@ -216,7 +217,7 @@ for t in tqdm(range(start_idx, end_idx)):
 
     # Load the EEG-fMRI encoding fusion models weights
     file_name = (f'weights_sub-{args.subject:02d}_hemi-{args.hemisphere}_'
-        f'eeg_train_trials-all_eeg_time-{t:03d}.npy')
+        f'eeg_train_trials-all_eeg_time-{t_idx:03d}.npy')
     reg_param = np.load(os.path.join(args.berg_dir, 'eeg_fmri_fusion',
         'invivo_nsd_eeg_fmri_control', 'encoding_fusion_weights',
         file_name), allow_pickle=True).item()
@@ -228,8 +229,8 @@ for t in tqdm(range(start_idx, end_idx)):
     reg.n_features_in_ = reg_param['n_features_in_']
 
     # Generate the t-fMRI responses for the test images with in vivo EEG
-    tfmri_train[:,idx_v] = reg.predict(eeg_train[:,:,t])
-    tfmri_test[:,idx_v] = reg.predict(eeg_test[:,:,t])
+    tfmri_train[:,idx_v] = reg.predict(eeg_train[:,:,t_idx])
+    tfmri_test[:,idx_v] = reg.predict(eeg_test[:,:,t_idx])
     del reg_param, reg
 
 

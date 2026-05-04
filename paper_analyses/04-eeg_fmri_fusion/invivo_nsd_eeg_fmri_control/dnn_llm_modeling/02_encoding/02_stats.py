@@ -1,5 +1,5 @@
-"""Aggregate all serachlight variance partitioning results, and compute their
-ROI-based statistics with confidence intervals.
+"""Aggregate all variance partitioning results, and compute their ROI-based
+statistics with confidence intervals.
 
 Parameters
 ----------
@@ -13,9 +13,9 @@ hemispheres: list
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
-cv_splits : list
-    List of integers indicating which of two EEG splits are used for training
-    or testing the variance partitioning models. Possible values are 1 and 2.
+eeg_train_trials : list
+    List indicating which training EEG response trials are used. Possible
+    values  are: 'even' (even trials), and 'odd' (odd trials).
 tot_time_splits : int
     The total number of splits in which the EEG time points are divided.
 n_iter : int
@@ -38,7 +38,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--cv_splits', default=[1, 2], type=list)
+parser.add_argument('--eeg_train_trials', default=['even', 'odd'], type=list)
 parser.add_argument('--tot_time_splits', default=10, type=int)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -60,8 +60,10 @@ np.random.seed(seed)
 # =============================================================================
 # Load the time points
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'rsa_scores')
-filename = 'rsa_sub-01_hemisphere-lh_cv_split-1_time_split-00.npy'
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding',
+    'variance_partitioning')
+filename = (f'variance_partitioning_sub-01_hemisphere-lh_'
+    f'eeg_train_trials-even_time_split-00.npy')
 times = np.load(os.path.join(data_dir, filename),
     allow_pickle=True).item()['times']
 
@@ -87,14 +89,15 @@ for rt in result_types:
 
 
 # =============================================================================
-# Load the variance partitioning searchlight results
+# Load the variance partitioning results
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
 # Results parent directory
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'rsa_scores')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding',
+    'variance_partitioning')
 
 # Loop across fMRI subjects
 for s, sub in enumerate(tqdm(args.subjects)):
@@ -126,20 +129,21 @@ for s, sub in enumerate(tqdm(args.subjects)):
             end_idx = min((t + 1) * times_per_split, len(times))
 
             # Loop across cross-validations
-            for cv in args.cv_splits:
+            for et in args.eeg_train_trials:
 
                 # Load and store the result scores
-                file_name = (f'rsa_sub-{sub:02d}_hemisphere-{hemi}_'
-                    f'cv_split-{cv}_time_split-{t:02d}.npy')
+                file_name = (f'variance_partitioning_sub-{sub:02d}_'
+                    f'hemisphere-{hemi}_eeg_train_trials-{et}_'
+                    f'time_split-{t:02d}.npy')
                 results = np.load(os.path.join(data_dir, file_name),
                     allow_pickle=True).item()
                 for rt in result_types:
-                    variance_partitioning[rt][s,h,:,start_idx:end_idx] += \
-                        results[rt]
+                    variance_partitioning[rt][s,h,idx_v,start_idx:end_idx] += \
+                        results['variance_partitioning'][rt]
 
         # Divide the results by the number of CV splits
         for rt in result_types:
-            variance_partitioning[rt][s,h] /= len(args.cv_splits)
+            variance_partitioning[rt][s,h] /= len(args.eeg_train_trials)
 
         # NCSNR and visual stream vertex selection
         ncsnr = metadata[s]['fmri'][hemi+'_ncsnr']
@@ -251,7 +255,7 @@ results = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'stats')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding', 'stats')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'

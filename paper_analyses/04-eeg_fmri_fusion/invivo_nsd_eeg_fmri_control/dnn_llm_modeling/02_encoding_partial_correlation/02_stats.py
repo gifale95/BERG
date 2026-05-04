@@ -1,5 +1,5 @@
-"""Aggregate all serachlight variance partitioning results, and compute their
-ROI-based statistics with confidence intervals.
+"""Aggregate all partial correlation results, and compute their ROI-based
+statistics with confidence intervals.
 
 Parameters
 ----------
@@ -13,9 +13,9 @@ hemispheres: list
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
-cv_splits : list
-    List of integers indicating which of two EEG splits are used for training
-    or testing the variance partitioning models. Possible values are 1 and 2.
+eeg_train_trials : list
+    List indicating which training EEG response trials are used. Possible
+    values  are: 'even' (even trials), and 'odd' (odd trials).
 tot_time_splits : int
     The total number of splits in which the EEG time points are divided.
 n_iter : int
@@ -38,7 +38,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', default=[1, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--cv_splits', default=[1, 2], type=list)
+parser.add_argument('--eeg_train_trials', default=['even', 'odd'], type=list)
 parser.add_argument('--tot_time_splits', default=10, type=int)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -60,8 +60,10 @@ np.random.seed(seed)
 # =============================================================================
 # Load the time points
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'rsa_scores')
-filename = 'rsa_sub-01_hemisphere-lh_cv_split-1_time_split-00.npy'
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding_partial_correlation',
+    'partial_correlation')
+filename = (f'partial_correlation_sub-01_hemisphere-lh_'
+    f'eeg_train_trials-even_time_split-00.npy')
 times = np.load(os.path.join(data_dir, filename),
     allow_pickle=True).item()['times']
 
@@ -74,27 +76,27 @@ n_time = len(times)
 rois = ['V1', 'V2', 'V3', 'hV4', 'OFA', 'FFA', 'OWFA', 'VWFA', 'OPA', 'PPA',
     'RSC', 'EBA', 'FBA', 'early', 'intermediate', 'ventral', 'lateral',
     'parietal']
-result_types = ['total_variance', 'total_variance_vision_dnn',
-    'total_variance_llm', 'unique_variance_vision_dnn', 'unique_variance_llm',
-    'shared_variance']
+result_types = ['total_variance_vision_dnn', 'total_variance_llm',
+    'unique_variance_vision_dnn', 'unique_variance_llm']
 
 # Empty result arrays of shape:
 # (N subjects, 2 hemispheres, 163842 fMRI vertices, N EEG time points)
-variance_partitioning = {}
+partial_correlation = {}
 for rt in result_types:
-    variance_partitioning[rt] = np.zeros((n_sub, n_hemi, n_vertex, n_time),
+    partial_correlation[rt] = np.zeros((n_sub, n_hemi, n_vertex, n_time),
         dtype=np.float32)
 
 
 # =============================================================================
-# Load the variance partitioning searchlight results
+# Load the partial correlation results
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
 # Results parent directory
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'rsa_scores')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding_partial_correlation',
+    'partial_correlation')
 
 # Loop across fMRI subjects
 for s, sub in enumerate(tqdm(args.subjects)):
@@ -126,27 +128,28 @@ for s, sub in enumerate(tqdm(args.subjects)):
             end_idx = min((t + 1) * times_per_split, len(times))
 
             # Loop across cross-validations
-            for cv in args.cv_splits:
+            for et in args.eeg_train_trials:
 
                 # Load and store the result scores
-                file_name = (f'rsa_sub-{sub:02d}_hemisphere-{hemi}_'
-                    f'cv_split-{cv}_time_split-{t:02d}.npy')
+                file_name = (f'partial_correlation_sub-{sub:02d}_'
+                    f'hemisphere-{hemi}_eeg_train_trials-{et}_'
+                    f'time_split-{t:02d}.npy')
                 results = np.load(os.path.join(data_dir, file_name),
                     allow_pickle=True).item()
                 for rt in result_types:
-                    variance_partitioning[rt][s,h,:,start_idx:end_idx] += \
-                        results[rt]
+                    partial_correlation[rt][s,h,idx_v,start_idx:end_idx] += \
+                        results['partial_correlation'][rt]
 
         # Divide the results by the number of CV splits
         for rt in result_types:
-            variance_partitioning[rt][s,h] /= len(args.cv_splits)
+            partial_correlation[rt][s,h] /= len(args.eeg_train_trials)
 
         # NCSNR and visual stream vertex selection
         ncsnr = metadata[s]['fmri'][hemi+'_ncsnr']
         idx_nan = ncsnr < args.ncsnr_threshold
         for rt in result_types:
-            variance_partitioning[rt][s,h,idx_nan] = np.nan
-            variance_partitioning[rt][s,h,idx_v_nan] = np.nan
+            partial_correlation[rt][s,h,idx_nan] = np.nan
+            partial_correlation[rt][s,h,idx_v_nan] = np.nan
 
 
 # =============================================================================
@@ -154,11 +157,11 @@ for s, sub in enumerate(tqdm(args.subjects)):
 # =============================================================================
 # Empty ROI result array of shape:
 # (N fMRI subjects, N EEG time points)
-variance_partitioning_roi = {}
+partial_correlation_roi = {}
 for rt in result_types:
-    variance_partitioning_roi[rt] = {}
+    partial_correlation_roi[rt] = {}
     for roi in rois:
-        variance_partitioning_roi[rt][roi] = np.zeros((n_sub, n_time),
+        partial_correlation_roi[rt][roi] = np.zeros((n_sub, n_time),
             dtype=np.float32)
 
 # Loop across ROIs, subjects and hemispheres
@@ -192,33 +195,33 @@ for r, roi in enumerate(rois):
             # from the chosen ROI
             for rt in result_types:
                 if h == 0:
-                    score[rt] = variance_partitioning[rt][s,h,idx_roi]
+                    score[rt] = partial_correlation[rt][s,h,idx_roi]
                 else:
                     score[rt] = np.append(score[rt],
-                        variance_partitioning[rt][s,h,idx_roi], 0)
+                        partial_correlation[rt][s,h,idx_roi], 0)
 
         # Store the mean correlation across ROI vertices
         for rt in result_types:
-            variance_partitioning_roi[rt][roi][s] = np.nanmean(score[rt], 0)
+            partial_correlation_roi[rt][roi][s] = np.nanmean(score[rt], 0)
         del score
 
 
 # =============================================================================
 # Bootstrap the confidence intervals of the ROI-wise results
 # =============================================================================
-ci_variance_partitioning_roi = {}
-ci_variance_partitioning_roi_peak_lat = {}
+ci_partial_correlation_roi = {}
+ci_partial_correlation_roi_peak_lat = {}
 for rt in result_types:
-    ci_variance_partitioning_roi[rt] = {}
-    ci_variance_partitioning_roi_peak_lat[rt] = {}
+    ci_partial_correlation_roi[rt] = {}
+    ci_partial_correlation_roi_peak_lat[rt] = {}
     for roi in rois:
-        ci_variance_partitioning_roi[rt][roi] = np.zeros(((2, n_time)),
+        ci_partial_correlation_roi[rt][roi] = np.zeros(((2, n_time)),
             dtype=np.float32)
-        ci_variance_partitioning_roi_peak_lat[rt][roi] = np.zeros((2),
+        ci_partial_correlation_roi_peak_lat[rt][roi] = np.zeros((2),
             dtype=np.float32)
 
 for rt in tqdm(result_types):
-    for key, val in variance_partitioning_roi[rt].items():
+    for key, val in partial_correlation_roi[rt].items():
 
         score_dist = np.zeros((args.n_iter, n_time))
         peak_lat_dist = np.zeros((args.n_iter))
@@ -228,13 +231,13 @@ for rt in tqdm(result_types):
             score_dist[i] = np.mean(val[idx], 0)
             peak_lat_dist[i] = times[np.argmax(np.mean(val[idx], 0))]
 
-        ci_variance_partitioning_roi[rt][key][0] = np.percentile(
+        ci_partial_correlation_roi[rt][key][0] = np.percentile(
             score_dist, 2.5, 0)
-        ci_variance_partitioning_roi[rt][key][1] = np.percentile(
+        ci_partial_correlation_roi[rt][key][1] = np.percentile(
             score_dist, 97.5, 0)
-        ci_variance_partitioning_roi_peak_lat[rt][key][0] = np.percentile(
+        ci_partial_correlation_roi_peak_lat[rt][key][0] = np.percentile(
             peak_lat_dist, 2.5)
-        ci_variance_partitioning_roi_peak_lat[rt][key][1] = np.percentile(
+        ci_partial_correlation_roi_peak_lat[rt][key][1] = np.percentile(
             peak_lat_dist, 97.5)
 
 
@@ -244,14 +247,14 @@ for rt in tqdm(result_types):
 results = {
     'metadata': metadata,
     'times': times,
-    'variance_partitioning': variance_partitioning,
-    'variance_partitioning_roi': variance_partitioning_roi,
-    'ci_variance_partitioning_roi': ci_variance_partitioning_roi,
-    'ci_variance_partitioning_roi_peak_lat': ci_variance_partitioning_roi_peak_lat,
+    'partial_correlation': partial_correlation,
+    'partial_correlation_roi': partial_correlation_roi,
+    'ci_partial_correlation_roi': ci_partial_correlation_roi,
+    'ci_partial_correlation_roi_peak_lat': ci_partial_correlation_roi_peak_lat,
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'stats')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding_partial_correlation', 'stats')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'stats.npy'

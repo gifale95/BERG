@@ -22,13 +22,11 @@ import os
 import numpy as np
 from tqdm import tqdm
 import torch
-import torch.nn as nn
 import torchvision
 from torchvision import transforms as trn
 from torchvision.models.feature_extraction import create_feature_extractor, get_graph_node_names
 import h5py
 from PIL import Image
-from sentence_transformers import SentenceTransformer
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 

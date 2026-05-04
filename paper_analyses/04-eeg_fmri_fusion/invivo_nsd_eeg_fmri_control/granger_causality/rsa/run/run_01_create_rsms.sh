@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-granger_causality-RSA-01_create_rsms
 #SBATCH --mail-type=end
-#SBATCH --mem=75000
+#SBATCH --mem=750000
 #SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
@@ -11,7 +11,7 @@ declare -a subject_all
 declare -a roi_all
 index=0
 for fs in '1' '4' '5' '6' '7' '8' ; do
-    for r in 'ventral' ; do # !!! 'V1' 'hV4' 'ventral'
+    for r in 'V1' 'hV4' ; do
         subject_all[$index]=$fs
         roi_all[$index]=$r
         ((index=index+1))

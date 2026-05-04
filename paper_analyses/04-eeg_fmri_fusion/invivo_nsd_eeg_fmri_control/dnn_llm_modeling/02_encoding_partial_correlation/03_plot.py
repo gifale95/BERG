@@ -1,5 +1,5 @@
-"""Plot the RSA-based variance partitioning results between t-fMRI responses
-and vision DNN features or LLM embeddings.
+"""Plot the encoding-based variance partitioning results between t-fMRI
+responses and vision DNN features or LLM embeddings.
 
 Parameters
 ----------
@@ -30,20 +30,20 @@ for key, val in vars(args).items():
 # Load the results
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'stats',
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding_partial_correlation', 'stats',
     'stats.npy')
 results = np.load(results_dir, allow_pickle=True).item()
 times = results['times']
 
 # Create the plots save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'plots',
-    'variance_partitioning_surfaceplots')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding_partial_correlation', 'plots',
+    'partial_correlation_surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
-# Plot the variance partitioning results on brain surfaces (subject-average)
+# Plot the partial correlation results on brain surfaces (subject-average)
 # =============================================================================
 # Plot parameters
 fontsize = 40
@@ -57,7 +57,7 @@ plt.rcParams['svg.fonttype'] = 'none'
 subject = 'fsaverage_nsd_sub-01'
 
 # Loop over results types and EEG time points
-for key, val in tqdm(results['variance_partitioning'].items()):
+for key, val in tqdm(results['partial_correlation'].items()):
     for t, time in enumerate(times):
 
         # Average the results across subjects, and append them across left and
@@ -69,9 +69,9 @@ for key, val in tqdm(results['variance_partitioning'].items()):
         vertex_data = cortex.Vertex(
             data,
             subject,
-            cmap='afmhot',
-            vmin=???, # !!!
-            vmax=???, # !!!
+            cmap='RdGy_r', # !!! 'afmhot'
+            vmin=-0.9, # !!!
+            vmax=0.9, # !!!
             with_colorbar=True)
 
         # Plot the flat brain surface
@@ -101,7 +101,8 @@ for key, val in tqdm(results['variance_partitioning'].items()):
 
 
 # =============================================================================
-# Plot the ROI-wise correlations between t-fMRI and in silico fMRI responses
+# Plot the ROI-wise partial correlations between t-fMRI and in silico fMRI
+# responses
 # =============================================================================
 # Plot parameters
 fontsize = 25
@@ -140,15 +141,15 @@ def sample_cmap(N):
 colors = sample_cmap(len(rois))
 
 # Create the figure
-fig, axs = plt.subplots(2, 3, sharex=True, sharey=True, figsize=(20, 10)) # (10, 7.5) # !!!
+fig, axs = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(20, 10)) # (10, 7.5) # !!!
 axs = np.reshape(axs, -1)
 
 # Loop over result types
-for i, (key, val) in enumerate(results['variance_partitioning_roi'].items()):
+for i, (key, val) in enumerate(results['partial_correlation_roi'].items()):
 
     # Plot the stimulus onset and chance dashed line
-    axs[i].plot([-1000, 1000], [0, 0], 'k--', linewidth=2, alpha=.25,
-        label='_nolegend_')
+    axs[i].plot([0, 0], [-1, 1], 'k--', [-1000, 1000], [0, 0], 'k--',
+        linewidth=2, alpha=.25, label='_nolegend_')
 
     # Loop across ROIs
     for r, roi in enumerate(rois):
@@ -159,8 +160,8 @@ for i, (key, val) in enumerate(results['variance_partitioning_roi'].items()):
 
         # Plot the CIs
         axs[i].fill_between(times,
-            results['ci_variance_partitioning_roi'][key][roi][1],
-            results['ci_variance_partitioning_roi'][key][roi][0],
+            results['ci_partial_correlation_roi'][key][roi][1],
+            results['ci_partial_correlation_roi'][key][roi][0],
             color=colors[r], alpha=.1)
 
         # Plot the peak time point
@@ -169,29 +170,29 @@ for i, (key, val) in enumerate(results['variance_partitioning_roi'].items()):
         axs[i].scatter(peak, max_corr, color=colors[r], s=200, marker='o',
             edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
         ci_low = peak - \
-            results['ci_variance_partitioning_roi_peak_lat'][key][roi][0]
+            results['ci_partial_correlation_roi_peak_lat'][key][roi][0]
         ci_up = \
-            results['ci_variance_partitioning_roi_peak_lat'][key][roi][1] - peak
+            results['ci_partial_correlation_roi_peak_lat'][key][roi][1] - peak
         conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
         axs[i].errorbar(peak, max_corr, xerr=conf_int, fmt="none",
             ecolor='k', elinewidth=1, capsize=3)
 
     # x-axis parameters
-    if i in [3, 4, 5]:
+    if i in [2, 3]:
         axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
         axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
         xticks = [-100, 0, 100, 200, 300, 400, 500, 600]
         xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
-        # axs[i].set_xticks(ticks=xticks, labels=xlabels) # !!!
+        axs[i].set_xticks(ticks=xticks, labels=xlabels)
         axs[i].set_xlim(left=min(times), right=max(times))
 
     # y-axis parameters
-    if i in [0, 3]:
-        axs[i].set_ylabel("$R²$", fontsize=fontsize)
-        yticks = [0, 0.1, 0.2, 0.3]
-        ylabels = [0, 0.1, 0.2, 0.3]
-        # axs[i].set_yticks(ticks=yticks, labels=ylabels) # !!!
-        # axs[i].set_ylim(bottom=-.025, top=.3) # !!!
+    if i in [0, 2]:
+        axs[i].set_ylabel("Pearson's $r$", fontsize=fontsize)
+        yticks = [0, 0.2, 0.4, 0.6, 0.8, 1]
+        ylabels = [0, 0.2, 0.4, 0.6, 0.8, 1]
+        axs[i].set_yticks(ticks=yticks, labels=ylabels)
+        axs[i].set_ylim(bottom=-.05, top=0.9)
 
     # Legend
     if i == 0:
@@ -202,7 +203,7 @@ for i, (key, val) in enumerate(results['variance_partitioning_roi'].items()):
 
 # Save the figure
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'rsa', 'plots')
-file_name = os.path.join(save_dir, 'variance_partitioning.svg')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding_partial_correlation', 'plots')
+file_name = os.path.join(save_dir, 'partial_correlation_roi.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

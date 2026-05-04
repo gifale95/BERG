@@ -17,6 +17,10 @@ ncsnr_threshold : float
 eeg_train_trials : str
     String indicating which training EEG response trials are used. Possible
     values  are: 'even' (even trials), and 'odd' (odd trials).
+tot_time_splits : int
+    The total number of splits in which the EEG time points are divided.
+time_split : int
+    The time split used, out of the total time splits.
 regression : str
     The type of regression to use for computing Granger Causality. If 'linear',
     use linear regression. If 'ridge', use RidgeCV regression.
@@ -39,6 +43,8 @@ parser.add_argument('--rois', default=['V1', 'hV4', 'ventral'], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--eeg_train_trials', default='even', type=str)
+parser.add_argument('--tot_time_splits', default=10, type=int)
+parser.add_argument('--time_split', default=0, type=int)
 parser.add_argument('--regression', default='ridge', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -119,9 +125,22 @@ t_start = np.where(times == -100)[0][0]
 t_end = np.where(times == 600)[0][0]
 times = times[t_start:t_end+1]
 
-# Limit the analysis to the first 400 milliseconds to reduce compute time
-t_end = np.where(times == 399)[0][0]
-times = times[:t_end+1]
+# Define the target times (starting from time 0)
+idx_t_start_target = np.where(times == 0)[0][0]
+
+# Define the test time offset (always up to 100 ms prior to the target time)
+offset = np.where(times == 0)[0][0] - np.where(times == -100)[0][0]
+
+# Select the time points from the current time split
+target_times_per_split = int(np.ceil(len(
+    times[idx_t_start_target:]) / args.tot_time_splits))
+start_idx_target = (args.time_split * target_times_per_split) + \
+    idx_t_start_target
+end_idx = min(
+    (((args.time_split + 1) * target_times_per_split) + idx_t_start_target),
+    len(times))
+start_idx_source = start_idx_target - offset
+times_target = times[start_idx_target:end_idx]
 
 
 # =============================================================================
@@ -133,12 +152,19 @@ data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
 file_name_train = (f'eeg_train_sub-{args.subject:02d}_'
     f'trial_avg-{args.eeg_train_trials}.npy')
 eeg_train = np.load(os.path.join(data_dir, file_name_train),
-    allow_pickle=True).item()['eeg_train'][:,:,:t_end+1].astype(np.float32)
+    allow_pickle=True).item()['eeg_train'].astype(np.float32)
 
-# Load the EEG test responses, and average them across repeats
+# Load the EEG test responses
 file_name_test = f'eeg_test_sub-{args.subject:02d}.npy'
-eeg_test = np.mean(np.load(os.path.join(data_dir, file_name_test),
-    allow_pickle=True).item()['eeg_test'][:,:,:,:t_end+1], 1).astype(np.float32)
+eeg_test = np.load(os.path.join(data_dir, file_name_test),
+    allow_pickle=True).item()['eeg_test'].astype(np.float32)
+# Average the EEG responses into two splits using the repeats dimension (for
+# later cross-validation in the variance paritioning analysis)
+idx_even = np.arange(0, eeg_test.shape[1], 2)
+idx_odd = np.arange(1, eeg_test.shape[1], 2)
+eeg_test_1 = np.mean(eeg_test[:,idx_even], 1)
+eeg_test_2 = np.mean(eeg_test[:,idx_odd], 1)
+del eeg_test
 
 
 # =============================================================================
@@ -146,13 +172,14 @@ eeg_test = np.mean(np.load(os.path.join(data_dir, file_name_test),
 # =============================================================================
 # Empty t-fMRI data dictionary
 tfmri_train = {}
-tfmri_test = {}
+tfmri_test_1 = {}
+tfmri_test_2 = {}
 
 # Loop across EEG time points
-for t in tqdm(range(eeg_train.shape[2])):
+for t in tqdm(range(start_idx_source, end_idx)):
 
     # Loop across ROIs
-    for roi in tqdm(args.rois):
+    for roi in args.rois:
 
         # Loop across hemisphers
         for h, hemi in enumerate(args.hemispheres):
@@ -180,43 +207,46 @@ for t in tqdm(range(eeg_train.shape[2])):
             # Generate the t-fMRI responses
             tfmri_hemi_train = np.expand_dims(reg.predict(eeg_train[:,:,t]),
                 2).astype(dtype=np.float32)
-            tfmri_hemi_test = np.expand_dims(reg.predict(eeg_test[:,:,t]),
+            tfmri_hemi_test_1 = np.expand_dims(reg.predict(eeg_test_1[:,:,t]),
+                2).astype(dtype=np.float32)
+            tfmri_hemi_test_2 = np.expand_dims(reg.predict(eeg_test_2[:,:,t]),
                 2).astype(dtype=np.float32)
             del reg_param, reg
 
             # Append the t-fMRI responses across hemispheres
             if h == 0:
                 tfmri_time_train = tfmri_hemi_train
-                tfmri_time_test = tfmri_hemi_test
+                tfmri_time_test_1 = tfmri_hemi_test_1
+                tfmri_time_test_2 = tfmri_hemi_test_2
             else:
                 tfmri_time_train = np.append(tfmri_time_train,
                     tfmri_hemi_train, 1)
-                tfmri_time_test = np.append(tfmri_time_test, tfmri_hemi_test, 1)
-            del tfmri_hemi_train, tfmri_hemi_test
+                tfmri_time_test_1 = np.append(tfmri_time_test_1,
+                    tfmri_hemi_test_1, 1)
+                tfmri_time_test_2 = np.append(tfmri_time_test_2,
+                    tfmri_hemi_test_2, 1)
+            del tfmri_hemi_train, tfmri_hemi_test_1, tfmri_hemi_test_2
 
         # Store the t-fMRI responses
-        if t == 0:
+        if t == start_idx_source:
             tfmri_train[roi] = tfmri_time_train
-            tfmri_test[roi] = tfmri_time_test
+            tfmri_test_1[roi] = tfmri_time_test_1
+            tfmri_test_2[roi] = tfmri_time_test_2
         else:
             tfmri_train[roi] = np.append(tfmri_train[roi], tfmri_time_train, 2)
-            tfmri_test[roi] = np.append(tfmri_test[roi], tfmri_time_test, 2)
-        del tfmri_time_train, tfmri_time_test
+            tfmri_test_1[roi] = np.append(tfmri_test_1[roi],
+                tfmri_time_test_1, 2)
+            tfmri_test_2[roi] = np.append(tfmri_test_2[roi],
+                tfmri_time_test_2, 2)
+        del tfmri_time_train, tfmri_time_test_1, tfmri_time_test_2
 
 # Delete the EEG responses
-del eeg_train, eeg_test
+del eeg_train, eeg_test_1, eeg_test_2
 
 
 # =============================================================================
 # Compute the Granger Causality
 # =============================================================================
-# Define the target times (starting from time 0)
-idx_t_start_target = np.where(times == 0)[0][0]
-times_target = times[idx_t_start_target:]
-
-# Define the test times (always up to 100 ms prior to the target time)
-offset = np.where(times == 0)[0][0] - np.where(times == -100)[0][0]
-
 # Loop across ROIs
 gc = {}
 for roi_target in tqdm(args.rois):
@@ -228,7 +258,7 @@ for roi_target in tqdm(args.rois):
 
             # Loop across time points of the target's present time point to be
             # predicted
-            for tt_idx, tt in enumerate(range(idx_t_start_target, len(times))): # time target
+            for tt_idx, tt in enumerate(range(offset, offset+len(times_target))): # time target
 
                 # Loop across time points of the target and source past time
                 # points used for the prediction
@@ -253,19 +283,33 @@ for roi_target in tqdm(args.rois):
 
                     # Compute the unexplained variance for the full and
                     # reduced models (MSE)
-                    u_reduced = np.mean((
-                        reg_reduced.predict(tfmri_test[roi_target][:,:,ts]) -
-                        tfmri_test[roi_target][:,:,tt]) ** 2)
-                    u_full = np.mean((reg_full.predict(np.append(
-                        tfmri_test[roi_target][:,:,ts],
-                        tfmri_test[roi_source][:,:,ts], 1)) -
-                        tfmri_test[roi_target][:,:,tt]) ** 2)
+                    u_reduced = []
+                    u_full = []
+                    for i in range(2):
+                        if i == 0:
+                            u_reduced.append(np.mean((reg_reduced.predict(
+                                tfmri_test_1[roi_target][:,:,ts]) -
+                                tfmri_test_2[roi_target][:,:,tt]) ** 2))
+                            u_full.append(np.mean((reg_full.predict(np.append(
+                                tfmri_test_1[roi_target][:,:,ts],
+                                tfmri_test_1[roi_source][:,:,ts], 1)) -
+                                tfmri_test_2[roi_target][:,:,tt]) ** 2))
+                        elif i == 1:
+                             u_reduced.append(np.mean((reg_reduced.predict(
+                                tfmri_test_2[roi_target][:,:,ts]) -
+                                tfmri_test_1[roi_target][:,:,tt]) ** 2))
+                             u_full.append(np.mean((reg_full.predict(np.append(
+                                tfmri_test_2[roi_target][:,:,ts],
+                                tfmri_test_2[roi_source][:,:,ts], 1)) -
+                                tfmri_test_1[roi_target][:,:,tt]) ** 2))
+                    u_reduced = np.mean(u_reduced)
+                    u_full = np.mean(u_full)
 
                     # Adjust the MSE scores for the number of
                     # predictors in the models
-                    n = len(tfmri_test[roi_target])
-                    p_reduced = tfmri_test[roi_target].shape[1]
-                    p_full = p_reduced + tfmri_test[roi_source].shape[1]
+                    n = len(tfmri_test_1[roi_target])
+                    p_reduced = tfmri_test_1[roi_target].shape[1]
+                    p_full = p_reduced + tfmri_test_1[roi_source].shape[1]
                     u_reduced = u_reduced * (n - 1) / \
                         (n - p_reduced - 1)
                     u_full = u_full * (n - 1) / (n - p_full - 1)
@@ -298,6 +342,7 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = (f'gc_sub-{args.subject:02d}_eeg_train_trials-'
-    f'{args._eeg_train_trials}_regression-{args.regression}.npy')
+    f'{args.eeg_train_trials}_regression-{args.regression}'
+    f'_time_split-{args.time_split:02d}.npy')
 
 np.save(os.path.join(save_dir, file_name), results)

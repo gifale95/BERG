@@ -3,7 +3,7 @@
 #SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-dnn_llm_modeling-RSA-01_rsa
 #SBATCH --mail-type=end
 #SBATCH --mem=20000
-#SBATCH --time=20:00:00
+#SBATCH --time=15:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -15,7 +15,7 @@ index=0
 for fs in '1' '4' '5' '6' '7' '8' ; do
     for h in 'lh' 'rh' ; do
         for cv in '1' '2' ; do
-            for t in `seq 0 9` ; do
+            for t in `seq 1 9` ; do # !!! `seq 0 9`
                 subject_all[$index]=$fs
                 hemisphere_all[$index]=$h
                 cv_split_all[$index]=$cv
