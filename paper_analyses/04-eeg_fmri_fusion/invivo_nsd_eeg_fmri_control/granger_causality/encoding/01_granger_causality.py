@@ -5,9 +5,10 @@ Parameters
 ----------
 subject : int
     Subject identifiers. Valid subject identifiers are integers from 1 to 8.
-rois : list
-    List containing the ROIs used for the Granger Causality analysis. All ROIs
-    are tested in a pairwise fashion.
+roi_source : str
+    Source ROI used for the Granger Causality analysis.
+roi_target : str
+    Target ROI used for the Granger Causality analysis.
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
@@ -31,6 +32,7 @@ berg_dir : str
 
 import argparse
 import os
+import sys
 import numpy as np
 from tqdm import tqdm
 from berg import BERG
@@ -39,7 +41,8 @@ from sklearn.linear_model import RidgeCV
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', default=1, type=int)
-parser.add_argument('--rois', default=['V1', 'hV4', 'ventral'], type=list)
+parser.add_argument('--roi_source', default='V1', type=str)
+parser.add_argument('--roi_target', default='hV4', type=str)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--eeg_train_trials', default='even', type=str)
@@ -56,6 +59,14 @@ for key, val in vars(args).items():
 
 
 # =============================================================================
+# Exit if source and target ROIs are the same
+# =============================================================================
+if args.roi_source == args.roi_target:
+    print('Source and target ROIs are the same. Skipping analysis.')
+    sys.exit(0)
+
+
+# =============================================================================
 # Get the fMRI ROI indices
 # =============================================================================
 # Load the fMRI metadata
@@ -68,7 +79,7 @@ metadata_fmri = berg.get_model_metadata(
 idx_v = {}
 
 # Loop across ROIs
-for roi in args.rois:
+for roi in [args.roi_source, args.roi_target]:
 
     # Loop across hemisphers
     for h, hemi in enumerate(args.hemispheres):
@@ -179,7 +190,7 @@ tfmri_test_2 = {}
 for t in tqdm(range(start_idx_source, end_idx)):
 
     # Loop across ROIs
-    for roi in args.rois:
+    for roi in [args.roi_source, args.roi_target]:
 
         # Loop across hemisphers
         for h, hemi in enumerate(args.hemispheres):
@@ -247,84 +258,74 @@ del eeg_train, eeg_test_1, eeg_test_2
 # =============================================================================
 # Compute the Granger Causality
 # =============================================================================
-# Loop across ROIs
-gc = {}
-for roi_target in tqdm(args.rois):
-    for roi_source in args.rois:
-        if roi_target != roi_source:
+# Empty result array
+gc = np.zeros((offset, len(times_target)), dtype=np.float32)
 
-            # Empty result array
-            gc_roi = np.zeros((offset, len(times_target)), dtype=np.float32)
+# Loop across time points of the target's present time point to be
+# predicted
+for tt_idx, tt in enumerate(tqdm(range(offset, offset+len(times_target)))): # time target
 
-            # Loop across time points of the target's present time point to be
-            # predicted
-            for tt_idx, tt in enumerate(range(offset, offset+len(times_target))): # time target
+    # Loop across time points of the target and source past time
+    # points used for the prediction
+    for ts_idx, ts in enumerate(range(tt-offset, tt)): # time source
 
-                # Loop across time points of the target and source past time
-                # points used for the prediction
-                for ts_idx, ts in enumerate(range(tt-offset, tt)): # time source
+        # Fit the linear regressions for the full and reduced
+        # models
+        if args.regression == 'linear':
+            reg_reduced = LinearRegression()
+            reg_full = LinearRegression()
+        elif args.regression == 'ridge':
+            alphas = np.logspace(-6, 10, 17)
+            reg_reduced = RidgeCV(alphas=alphas, cv=None,
+                alpha_per_target=True)
+            reg_full = RidgeCV(alphas=alphas, cv=None,
+                alpha_per_target=True)
+        reg_reduced.fit(tfmri_train[args.roi_target][:,:,ts],
+            tfmri_train[args.roi_target][:,:,tt])
+        reg_full.fit(np.append(tfmri_train[args.roi_target][:,:,ts],
+            tfmri_train[args.roi_source][:,:,ts], 1),
+            tfmri_train[args.roi_target][:,:,tt])
 
-                    # Fit the linear regressions for the full and reduced
-                    # models
-                    if args.regression == 'linear':
-                        reg_reduced = LinearRegression()
-                        reg_full = LinearRegression()
-                    elif args.regression == 'ridge':
-                        alphas = np.logspace(-6, 10, 17)
-                        reg_reduced = RidgeCV(alphas=alphas, cv=None,
-                            alpha_per_target=True)
-                        reg_full = RidgeCV(alphas=alphas, cv=None,
-                            alpha_per_target=True)
-                    reg_reduced.fit(tfmri_train[roi_target][:,:,ts],
-                        tfmri_train[roi_target][:,:,tt])
-                    reg_full.fit(np.append(tfmri_train[roi_target][:,:,ts],
-                        tfmri_train[roi_source][:,:,ts], 1),
-                        tfmri_train[roi_target][:,:,tt])
+        # Compute the unexplained variance for the full and
+        # reduced models (MSE)
+        u_reduced = []
+        u_full = []
+        # Test the first split
+        u_reduced.append(np.mean((reg_reduced.predict(
+            tfmri_test_1[args.roi_target][:,:,ts]) -
+            tfmri_test_2[args.roi_target][:,:,tt]) ** 2))
+        u_full.append(np.mean((reg_full.predict(np.append(
+            tfmri_test_1[args.roi_target][:,:,ts],
+            tfmri_test_1[args.roi_source][:,:,ts], 1)) -
+            tfmri_test_2[args.roi_target][:,:,tt]) ** 2))
+            # Test the second split
+        u_reduced.append(np.mean((reg_reduced.predict(
+            tfmri_test_2[args.roi_target][:,:,ts]) -
+            tfmri_test_1[args.roi_target][:,:,tt]) ** 2))
+        u_full.append(np.mean((reg_full.predict(np.append(
+            tfmri_test_2[args.roi_target][:,:,ts],
+            tfmri_test_2[args.roi_source][:,:,ts], 1)) -
+            tfmri_test_1[args.roi_target][:,:,tt]) ** 2))
+        # Average the results across the two splits
+        u_reduced = np.mean(u_reduced)
+        u_full = np.mean(u_full)
 
-                    # Compute the unexplained variance for the full and
-                    # reduced models (MSE)
-                    u_reduced = []
-                    u_full = []
-                    for i in range(2):
-                        if i == 0:
-                            u_reduced.append(np.mean((reg_reduced.predict(
-                                tfmri_test_1[roi_target][:,:,ts]) -
-                                tfmri_test_2[roi_target][:,:,tt]) ** 2))
-                            u_full.append(np.mean((reg_full.predict(np.append(
-                                tfmri_test_1[roi_target][:,:,ts],
-                                tfmri_test_1[roi_source][:,:,ts], 1)) -
-                                tfmri_test_2[roi_target][:,:,tt]) ** 2))
-                        elif i == 1:
-                             u_reduced.append(np.mean((reg_reduced.predict(
-                                tfmri_test_2[roi_target][:,:,ts]) -
-                                tfmri_test_1[roi_target][:,:,tt]) ** 2))
-                             u_full.append(np.mean((reg_full.predict(np.append(
-                                tfmri_test_2[roi_target][:,:,ts],
-                                tfmri_test_2[roi_source][:,:,ts], 1)) -
-                                tfmri_test_1[roi_target][:,:,tt]) ** 2))
-                    u_reduced = np.mean(u_reduced)
-                    u_full = np.mean(u_full)
+        # Adjust the MSE scores for the number of
+        # predictors in the models
+        n = len(tfmri_test_1[args.roi_target])
+        p_reduced = tfmri_test_1[args.roi_target].shape[1]
+        p_full = p_reduced + tfmri_test_1[args.roi_source].shape[1]
+        u_reduced = u_reduced * (n - 1) / \
+            (n - p_reduced - 1)
+        u_full = u_full * (n - 1) / (n - p_full - 1)
 
-                    # Adjust the MSE scores for the number of
-                    # predictors in the models
-                    n = len(tfmri_test_1[roi_target])
-                    p_reduced = tfmri_test_1[roi_target].shape[1]
-                    p_full = p_reduced + tfmri_test_1[roi_source].shape[1]
-                    u_reduced = u_reduced * (n - 1) / \
-                        (n - p_reduced - 1)
-                    u_full = u_full * (n - 1) / (n - p_full - 1)
+        # Compute the GC score as the log ratio of the
+        # unexplained variance of the reduced and full
+        # models
+        gc[ts_idx,tt_idx] = np.log(u_reduced / u_full)
 
-                    # Compute the GC score as the log ratio of the
-                    # unexplained variance of the reduced and full
-                    # models
-                    gc_roi[ts_idx,tt_idx] = np.log(u_reduced / u_full)
-
-                    # Remove unused variables
-                    del reg_reduced, reg_full, u_reduced, u_full
-
-            # Store the GC results in a dictionary
-            gc[f'{roi_source}_to_{roi_target}'] = gc_roi
-            del gc_roi
+        # Remove unused variables
+        del reg_reduced, reg_full, u_reduced, u_full
 
 
 # =============================================================================
@@ -341,8 +342,8 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'gc_scores')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = (f'gc_sub-{args.subject:02d}_eeg_train_trials-'
-    f'{args.eeg_train_trials}_regression-{args.regression}'
-    f'_time_split-{args.time_split:02d}.npy')
+file_name = (f'gc_sub-{args.subject:02d}_roi_source-{args.roi_source}_'
+    f'roi_target-{args.roi_target}_eeg_train_trials-{args.eeg_train_trials}_'
+    f'regression-{args.regression}_time_split-{args.time_split:02d}.npy')
 
 np.save(os.path.join(save_dir, file_name), results)

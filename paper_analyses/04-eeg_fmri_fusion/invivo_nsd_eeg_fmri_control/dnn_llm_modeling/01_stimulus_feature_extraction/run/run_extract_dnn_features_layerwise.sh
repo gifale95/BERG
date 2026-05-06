@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-dnn_llm_modeling-stimulus_feature_extraction-extract_llm_embeddings
+#SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-dnn_llm_modeling-stimulus_feature_extraction-extract_vision_dnn_features_layerwise
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
-#SBATCH --time=10:00:00
+#SBATCH --mem=40000
+#SBATCH --time=02:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -27,4 +27,4 @@ conda activate berg
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/invivo_nsd_eeg_fmri_control/dnn_llm_modeling/01_stimulus_feature_extraction
 
 # Run the job
-python extract_llm_embeddings.py --subject $subject
+python extract_vision_dnn_features_layerwise.py --subject $subject

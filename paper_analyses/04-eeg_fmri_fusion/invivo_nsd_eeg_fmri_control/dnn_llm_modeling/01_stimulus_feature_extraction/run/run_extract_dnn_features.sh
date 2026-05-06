@@ -2,14 +2,14 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-dnn_llm_modeling-stimulus_feature_extraction-extract_vision_dnn_features
 #SBATCH --mail-type=end
-#SBATCH --mem=30000
-#SBATCH --time=00:30:00
+#SBATCH --mem=40000
+#SBATCH --time=02:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a subject_all
 index=0
-for s in '1' '4' '5' '6' '7' '8' ; do
+for s in '1' '2' '3' '4' '5' '6' '7' '8' ; do
     subject_all[$index]=$s
     ((index=index+1))
 done

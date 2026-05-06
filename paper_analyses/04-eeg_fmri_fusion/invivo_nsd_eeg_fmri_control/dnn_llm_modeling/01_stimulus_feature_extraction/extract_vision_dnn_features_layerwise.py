@@ -1,6 +1,7 @@
-"""Extract vision DNN (AlexNet) features for the NSD stimuli of each subject,
-and reduce  them to N principal components using PCA, where N corresponds to
-the number of principal components that explain 95% of the variance.
+"""Extract layerwise vision DNN (AlexNet) features for the NSD stimuli of each 
+ubject, and reduce them to N principal components using PCA, where N
+corresponds to the number of principal components that explain 95% of the
+variance.
 
 Parameters
 ----------
@@ -111,7 +112,9 @@ test_img_num.sort()
 # Extract the vision DNN features
 # =============================================================================
 # Train stimuli
-vision_dnn_features_train = []
+vision_dnn_features_train = {}
+for layer in model_layers:
+    vision_dnn_features_train[layer] = []
 with torch.no_grad():
     for img in tqdm(train_img_num):
         # Preprocess the images
@@ -121,15 +124,18 @@ with torch.no_grad():
         # Extract the features
         ft = feature_extractor(img)
         # Format the features
-        vision_dnn_features_train.append(
-            np.concatenate([v.ravel() for v in ft.values()]))
+        for layer, v in ft.items():
+            vision_dnn_features_train[layer].append(v.ravel().detach().numpy())
         del ft
 # Format the features to numpy array
-vision_dnn_features_train = np.array(
-    vision_dnn_features_train).astype(np.float32)
+for layer in model_layers:
+    vision_dnn_features_train[layer] = np.array(
+        vision_dnn_features_train[layer]).astype(np.float32)
 
 # Test stimuli
-vision_dnn_features_test = []
+vision_dnn_features_test = {}
+for layer in model_layers:
+    vision_dnn_features_test[layer] = []
 with torch.no_grad():
     for img in tqdm(test_img_num):
         # Preprocess the images
@@ -139,35 +145,43 @@ with torch.no_grad():
         # Extract the features
         ft = feature_extractor(img)
         # Format the features
-        vision_dnn_features_test.append(
-            np.concatenate([v.ravel() for v in ft.values()]))
+        for layer, v in ft.items():
+            vision_dnn_features_test[layer].append(v.ravel().detach().numpy())
         del ft
 # Format the features to numpy array
-vision_dnn_features_test = np.array(
-    vision_dnn_features_test).astype(np.float32)
+for layer in model_layers:
+    vision_dnn_features_test[layer] = np.array(
+        vision_dnn_features_test[layer]).astype(np.float32)
 
 
 # =============================================================================
 # Downsample the vision DNN features to 250 dimensions using PCA
 # =============================================================================
 # Z-score the image features
-scaler = StandardScaler()
-scaler.fit(vision_dnn_features_train)
-vision_dnn_features_train = scaler.transform(vision_dnn_features_train)
-vision_dnn_features_test = scaler.transform(vision_dnn_features_test)
+for layer in model_layers:
+    scaler = StandardScaler()
+    scaler.fit(vision_dnn_features_train[layer])
+    vision_dnn_features_train[layer] = scaler.transform(
+        vision_dnn_features_train[layer])
+    vision_dnn_features_test[layer] = scaler.transform(
+        vision_dnn_features_test[layer])
 
-# Downsample the features with PCA
-pca = PCA(random_state=20200220)
-pca.fit(vision_dnn_features_train)
-vision_dnn_features_train = pca.transform(vision_dnn_features_train)
-vision_dnn_features_test = pca.transform(vision_dnn_features_test)
+    # Downsample the features with PCA
+    pca = PCA(random_state=20200220)
+    pca.fit(vision_dnn_features_train[layer])
+    vision_dnn_features_train[layer] = pca.transform(
+        vision_dnn_features_train[layer])
+    vision_dnn_features_test[layer] = pca.transform(
+        vision_dnn_features_test[layer])
 
-# Only retain the N principal components that explain 95% of the variance
-explained_variance_ratio = pca.explained_variance_ratio_
-cumulative_explained_variance = np.cumsum(explained_variance_ratio)
-n_components_95 = np.where(cumulative_explained_variance >= 0.95)[0][0] + 1
-vision_dnn_features_train = vision_dnn_features_train[:,:n_components_95]
-vision_dnn_features_test = vision_dnn_features_test[:,:n_components_95]
+    # Only retain the N principal components that explain 95% of the variance
+    explained_variance_ratio = pca.explained_variance_ratio_
+    cumulative_explained_variance = np.cumsum(explained_variance_ratio)
+    n_components_95 = np.where(cumulative_explained_variance >= 0.95)[0][0] + 1
+    vision_dnn_features_train[layer] = \
+        vision_dnn_features_train[layer][:,:n_components_95]
+    vision_dnn_features_test[layer] = \
+        vision_dnn_features_test[layer][:,:n_components_95]
 
 
 # =============================================================================
@@ -182,6 +196,6 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'stimulus_features')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = f'vision_dnn_features_sub-{args.subject:02d}.npy'
+file_name = f'vision_dnn_features_layerwise_sub-{args.subject:02d}.npy'
 
 np.save(os.path.join(save_dir, file_name), results)

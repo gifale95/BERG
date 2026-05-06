@@ -47,7 +47,7 @@ data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
 
 gc = {}
 rsa_times = {}
-rsa_alexnet_pearson = {}
+rsa_alexnet = {}
 
 for fs, fsub in enumerate(args.fmri_subjects):
 
@@ -58,7 +58,7 @@ for fs, fsub in enumerate(args.fmri_subjects):
 
     gc[fsub] = results['gc']
     rsa_times[fsub] = results['rsa_times']
-    rsa_alexnet_pearson[fsub] = results['rsa_alexnet_pearson']
+    rsa_alexnet[fsub] = results['rsa_alexnet']
     times_target = results['times_target']
     times = results['times']
     del results
@@ -119,9 +119,9 @@ for s, fsub in enumerate(args.fmri_subjects):
         axs[r,0].set_title(f'Sub {fsub}, {roi_1} to {roi_2}', fontsize=fontsize)
         axs[r,1].set_title(f'Sub {fsub}, {roi_2} to {roi_1}', fontsize=fontsize)
 
-        # X-axis parameters # !!!
+        # X-axis parameters
         if r == len(other_rois) - 1:
-            xticks = [0, 20, 40, 60, 80, 100, 119]
+            xticks = [0, 51, 102, 153, 205, 256, 307]
             xlabels = [0, 100, 200, 300, 400, 500, 600]
             axs[r,0].set_xticks(ticks=xticks, labels=xlabels)
             axs[r,0].set_xlabel('Time target (ms)', fontsize=fontsize)
@@ -129,7 +129,7 @@ for s, fsub in enumerate(args.fmri_subjects):
             axs[r,1].set_xlabel('Time target (ms)', fontsize=fontsize)
 
         # Y-axis parameters
-        yticks = [0, 5, 10, 15]
+        yticks = [0, 12, 24, 36]
         ylabels = [-100, -75, -50, -25]
         axs[r,0].set_yticks(ticks=yticks, labels=ylabels)
         axs[r,0].set_ylabel('Time source\n(ms)', fontsize=fontsize)
@@ -171,15 +171,15 @@ for s, fsub in enumerate(args.fmri_subjects):
         axs[r,0].set_xlim(left=0, right=40)
         axs[r,1].set_xlim(left=0, right=40)
         if r == len(other_rois) - 1:
-            xticks = [0, 5, 10, 15, 20, 25, 30, 35, 39]
-            xlabels = [0, 25, 50, 75, 100, 125, 150, 175, 200]
+            xticks = [0, 51, 102, 153, 205, 256, 307]
+            xlabels = [0, 100, 200, 300, 400, 500, 600]
             axs[r,0].set_xticks(ticks=xticks, labels=xlabels)
             axs[r,0].set_xlabel('Time target (ms)', fontsize=fontsize)
             axs[r,1].set_xticks(ticks=xticks, labels=xlabels)
             axs[r,1].set_xlabel('Time target (ms)', fontsize=fontsize)
 
         # Y-axis parameters
-        yticks = [0, 5, 10, 15]
+        yticks = [0, 12, 24, 36]
         ylabels = [-100, -75, -50, -25]
         axs[r,0].set_yticks(ticks=yticks, labels=ylabels)
         axs[r,0].set_ylabel('Time source\n(ms)', fontsize=fontsize)
@@ -194,10 +194,10 @@ for s, fsub in enumerate(args.fmri_subjects):
 # Plot the results (subject average)
 # =============================================================================
 roi_1 = 'V1'
-other_rois = ['V2', 'V3', 'hV4', 'ventral', 'FFA', 'EBA', 'PPA']
+other_rois = ['ventral', 'hV4']
 
-fig, axs = plt.subplots(len(other_rois), 2, sharex=True,
-    sharey=True, figsize=(20, 20)) # (10, 7.5)
+fig, axs = plt.subplots(2, len(other_rois), sharex=True,
+    sharey=True, figsize=(20, 12)) # (10, 7.5)
 
 for r, roi_2 in enumerate(other_rois):
 
@@ -207,7 +207,9 @@ for r, roi_2 in enumerate(other_rois):
         gc_sub.append(gc[fsub][f'{roi_1}_to_{roi_2}'][:-2])
     gc_sub = np.mean(gc_sub, 0)
     vlim = np.max(np.abs(gc_sub))
-    im = axs[r,0].imshow(gc_sub, cmap='RdGy_r', aspect='equal', vmin=-vlim,
+    # im = axs[0,r].imshow(gc_sub, cmap='RdGy_r', aspect='auto', vmin=-vlim,
+    #     vmax=vlim)
+    im = axs[0,r].imshow(gc_sub, cmap='Reds', aspect='auto', vmin=0,
         vmax=vlim)
 
     # Plot the feedback GC results
@@ -216,27 +218,29 @@ for r, roi_2 in enumerate(other_rois):
         gc_sub.append(gc[fsub][f'{roi_2}_to_{roi_1}'][:-2])
     gc_sub = np.mean(gc_sub, 0)
     vlim = np.max(np.abs(gc_sub))
-    im = axs[r,1].imshow(gc_sub, cmap='RdGy_r', aspect='equal', vmin=-vlim,
+    # im = axs[1,r].imshow(gc_sub, cmap='RdGy_r', aspect='auto', vmin=-vlim,
+    #     vmax=vlim)
+    im = axs[1,r].imshow(gc_sub, cmap='Reds', aspect='auto', vmin=0,
         vmax=vlim)
 
     # Title
-    axs[r,0].set_title(f'Sub {fsub}, {roi_1} to {roi_2}', fontsize=fontsize)
-    axs[r,1].set_title(f'Sub {fsub}, {roi_2} to {roi_1}', fontsize=fontsize)
+    axs[0,r].set_title(f'Sub-avg, {roi_1} to {roi_2}', fontsize=fontsize)
+    axs[1,r].set_title(f'Sub-avg, {roi_2} to {roi_1}', fontsize=fontsize)
 
-    # X-axis parameters # !!!
-    if r == len(other_rois) - 1:
-        xticks = [0, 20, 40, 60, 80, 100, 119]
-        xlabels = [0, 100, 200, 300, 400, 500, 600]
-        axs[r,0].set_xticks(ticks=xticks, labels=xlabels)
-        axs[r,0].set_xlabel('Time target (ms)', fontsize=fontsize)
-        axs[r,1].set_xticks(ticks=xticks, labels=xlabels)
-        axs[r,1].set_xlabel('Time target (ms)', fontsize=fontsize)
+    # X-axis parameters
+    xticks = [0, 51, 102, 153, 205, 256, 307]
+    xlabels = [0, 100, 200, 300, 400, 500, 600]
+    axs[1,r].set_xticks(ticks=xticks, labels=xlabels)
+    axs[1,r].set_xlabel('Time target (ms)', fontsize=fontsize)
 
     # Y-axis parameters
-    yticks = [0, 5, 10, 15]
-    ylabels = [-100, -75, -50, -25]
-    axs[r,0].set_yticks(ticks=yticks, labels=ylabels)
-    axs[r,0].set_ylabel('Time source\n(ms)', fontsize=fontsize)
+    if r == 0:
+        yticks = [0, 12, 24, 36]
+        ylabels = [-100, -75, -50, -25]
+        axs[0,r].set_yticks(ticks=yticks, labels=ylabels)
+        axs[0,r].set_ylabel('Time source (ms)\n[relative to target time]', fontsize=fontsize)
+        axs[1,r].set_yticks(ticks=yticks, labels=ylabels)
+        axs[1,r].set_ylabel('Time source (ms)\n[relative to target time]', fontsize=fontsize)
 
 # Save the figure
 file_name = os.path.join(save_dir, f'gc_sub-avg.svg')
@@ -281,15 +285,15 @@ for r, roi_2 in enumerate(other_rois):
     axs[r,0].set_xlim(left=0, right=60)
     axs[r,1].set_xlim(left=0, right=60)
     if r == len(other_rois) - 1:
-        xticks = [0, 10, 20, 30, 40, 50, 59]
-        xlabels = [0, 50, 100, 150, 200, 250, 300]
+        xticks = [0, 51, 102, 153, 205, 256, 307]
+        xlabels = [0, 100, 200, 300, 400, 500, 600]
         axs[r,0].set_xticks(ticks=xticks, labels=xlabels)
         axs[r,0].set_xlabel('Time target (ms)', fontsize=fontsize)
         axs[r,1].set_xticks(ticks=xticks, labels=xlabels)
         axs[r,1].set_xlabel('Time target (ms)', fontsize=fontsize)
 
     # Y-axis parameters
-    yticks = [0, 5, 10, 15]
+    yticks = [0, 12, 24, 36]
     ylabels = [-100, -75, -50, -25]
     axs[r,0].set_yticks(ticks=yticks, labels=ylabels)
     axs[r,0].set_ylabel('Time source\n(ms)', fontsize=fontsize)
@@ -327,15 +331,15 @@ for r, roi in enumerate(rois):
     # Title
     axs.set_title(f'{roi}', fontsize=fontsize)
 
-    # X-axis parameters # !!!
-    xticks = [20, 40, 60, 80, 100, 120]
-    xlabels = [0, 100, 200, 300, 400, 500]
+    # X-axis parameters
+    xticks = [0, 51, 102, 153, 205, 256, 307]
+    xlabels = [0, 100, 200, 300, 400, 500, 600]
     axs.set_xticks(ticks=xticks, labels=xlabels)
     axs.set_xlabel('Time (ms)', fontsize=fontsize)
 
     # Y-axis parameters
     yticks = abs(np.array(xticks) - len(times))
-    ylabels = [0, 100, 200, 300, 400, 500]
+    ylabels = [0, 100, 200, 300, 400, 500, 600]
     axs.set_yticks(ticks=yticks, labels=ylabels)
     axs.set_ylabel('Time (ms)', fontsize=fontsize)
 
@@ -424,7 +428,7 @@ fig, axs = plt.subplots(1, 1, sharex=True, sharey=True, figsize=(10, 7.5))
 for r, roi in enumerate(rois):
 
     # Plot the chance and stimulus onset dashed lines
-    axs.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
+    axs.plot([-1000, 1000], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
         linewidth=2, alpha=.25, label='_nolegend_')
 
     # Loop across model layers
@@ -433,16 +437,16 @@ for r, roi in enumerate(rois):
         # Average the RSA results across subjects
         rsa_alexnet_sub = []
         for s, fsub in enumerate(args.fmri_subjects):
-            rsa_alexnet_sub.append(rsa_alexnet_pearson[fsub][(roi, layer)])
+            rsa_alexnet_sub.append(rsa_alexnet[fsub][(roi, layer)])
         rsa_alexnet_sub = np.mean(rsa_alexnet_sub, 0)
 
         # Plot the RSA subject-average results
         axs.plot(times, rsa_alexnet_sub, color=colors[l], linewidth=2,
             label=layer)
 
-    # x-axis parameters # !!!
+    # x-axis parameters
     axs.set_xlabel('Time (ms)', fontsize=fontsize)
-    xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
+    xticks = [-100, 0, 100, 200, 300, 400, 500, 600]
     xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
     plt.xticks(ticks=xticks, labels=xlabels)
     axs.set_xlim(left=min(times), right=max(times))
@@ -452,7 +456,10 @@ for r, roi in enumerate(rois):
     yticks = [0, 0.05, 0.1, 0.15, 0.2]
     ylabels = [0, 0.05, 0.1, 0.15, 0.2]
     # plt.yticks(ticks=yticks, labels=ylabels)
-    axs.set_ylim(bottom=-.05, top=.5)
+    axs.set_ylim(bottom=-.01, top=.25)
+
+    # Title
+    axs.set_title(f'{roi} - RSA with AlexNet layers', fontsize=fontsize)
 
     # Legend
     axs.legend(fontsize=15, ncol=1, loc=0, frameon=False)

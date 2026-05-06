@@ -31,20 +31,21 @@ for key, val in vars(args).items():
 # Load the results
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding_partial_correlation', 'stats',
-    'stats.npy')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling',
+    'dnn_layerwise_modeling', 'stats', 'stats.npy')
 results = np.load(results_dir, allow_pickle=True).item()
 times = results['times']
+model_layers = results['model_layers']
 
 # Create the plots save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding_partial_correlation', 'plots',
-    'partial_correlation_surfaceplots')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling',
+    'dnn_layerwise_modeling', 'plots', 'correlation_surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
-# Plot the partial correlation results on brain surfaces (subject-average)
+# Plot the correlation results on brain surfaces (subject-average)
 # =============================================================================
 # Plot parameters
 fontsize = 40
@@ -65,7 +66,7 @@ warnings.filterwarnings(
 )
 
 # Loop over results types and EEG time points
-for key, val in tqdm(results['partial_correlation'].items()):
+for key, val in tqdm(results['correlation'].items()):
     for t, time in enumerate(times):
 
         # Average the results across subjects, and append them across left and
@@ -109,8 +110,7 @@ for key, val in tqdm(results['partial_correlation'].items()):
 
 
 # =============================================================================
-# Plot the ROI-wise partial correlations between t-fMRI and in silico fMRI
-# responses
+# Plot the ROI-wise correlations
 # =============================================================================
 # Plot parameters
 fontsize = 25
@@ -138,7 +138,8 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 
 # Define the ROIs to plot
-rois = ['V1', 'V2', 'V3', 'hV4', 'ventral', 'lateral', 'parietal']
+rois = ['V1', 'V2', 'V3', 'hV4', 'intermediate', 'ventral', 'lateral',
+    'parietal']
 
 # Get the plot colors
 def sample_cmap(N):
@@ -149,44 +150,44 @@ def sample_cmap(N):
 colors = sample_cmap(len(rois))
 
 # Create the figure
-fig, axs = plt.subplots(2, 2, sharex=True, sharey=True, figsize=(20, 10)) # (10, 7.5) # !!!
+fig, axs = plt.subplots(2, 4, sharex=True, sharey=True, figsize=(20, 10)) # (10, 7.5) # !!!
 axs = np.reshape(axs, -1)
 
-# Loop over result types
-for i, (key, val) in enumerate(results['partial_correlation_roi'].items()):
+# Loop over ROIs
+for i, (roi, val) in enumerate(results['partial_correlation_roi'].items()):
 
     # Plot the stimulus onset and chance dashed line
     axs[i].plot([0, 0], [-1, 1], 'k--', [-1000, 1000], [0, 0], 'k--',
         linewidth=2, alpha=.25, label='_nolegend_')
 
-    # Loop across ROIs
-    for r, roi in enumerate(rois):
+    # Loop across DNN layers
+    for l, layer in enumerate(model_layers):
 
         # Plot the correlation
-        axs[i].plot(times, np.mean(val[roi], 0), color=colors[r], linewidth=2,
-            label=roi)
+        axs[i].plot(times, np.mean(val[layer], 0), color=colors[l],
+            linewidth=2, label=layer)
 
         # Plot the CIs
         axs[i].fill_between(times,
-            results['ci_partial_correlation_roi'][key][roi][1],
-            results['ci_partial_correlation_roi'][key][roi][0],
-            color=colors[r], alpha=.1)
+            results['ci_partial_correlation_roi'][roi][layer][1],
+            results['ci_partial_correlation_roi'][roi][layer][0],
+            color=colors[l], alpha=.1)
 
         # Plot the peak time point
-        peak = times[np.argmax(np.mean(val[roi], 0))]
-        max_corr = max(np.mean(val[roi], 0))
-        axs[i].scatter(peak, max_corr, color=colors[r], s=200, marker='o',
+        peak = times[np.argmax(np.mean(val[layer], 0))]
+        max_corr = max(np.mean(val[layer], 0))
+        axs[i].scatter(peak, max_corr, color=colors[l], s=200, marker='o',
             edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
         ci_low = peak - \
-            results['ci_partial_correlation_roi_peak_lat'][key][roi][0]
+            results['ci_partial_correlation_roi_peak_lat'][roi][layer][0]
         ci_up = \
-            results['ci_partial_correlation_roi_peak_lat'][key][roi][1] - peak
+            results['ci_partial_correlation_roi_peak_lat'][roi][layer][1] - peak
         conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
         axs[i].errorbar(peak, max_corr, xerr=conf_int, fmt="none",
             ecolor='k', elinewidth=1, capsize=3)
 
     # x-axis parameters
-    if i in [2, 3]:
+    if i in [4, 5, 6, 7]:
         axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
         axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
         xticks = [-100, 0, 100, 200, 300, 400, 500, 600]
@@ -195,7 +196,7 @@ for i, (key, val) in enumerate(results['partial_correlation_roi'].items()):
         axs[i].set_xlim(left=min(times), right=max(times))
 
     # y-axis parameters
-    if i in [0, 2]:
+    if i in [0, 4]:
         axs[i].set_ylabel("Pearson's $r$", fontsize=fontsize)
         yticks = [0, 0.2, 0.4, 0.6, 0.8, 1]
         ylabels = [0, 0.2, 0.4, 0.6, 0.8, 1]
@@ -211,7 +212,8 @@ for i, (key, val) in enumerate(results['partial_correlation_roi'].items()):
 
 # Save the figure
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'encoding_partial_correlation', 'plots')
-file_name = os.path.join(save_dir, 'partial_correlation_roi.svg')
+    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling',
+    'dnn_layerwise_modeling', 'plots')
+file_name = os.path.join(save_dir, 'correlation_roi.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

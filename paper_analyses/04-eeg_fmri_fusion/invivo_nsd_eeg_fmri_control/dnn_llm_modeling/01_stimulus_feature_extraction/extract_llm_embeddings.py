@@ -1,5 +1,6 @@
 """Extract LLM embeddings for the NSD stimuli of each subject, and reduce them
-to 250 principal components using PCA.
+to N principal components using PCA, where N corresponds to the number of
+principal components that explain 95% of the variance.
 
 Parameters
 ----------
@@ -115,7 +116,7 @@ llm_embeddings_test = np.array(llm_embeddings_test).astype(np.float32)
 
 
 # =============================================================================
-# Downsample the LLM embeddings to 250 dimensions using PCA
+# Downsample the LLM embeddings using PCA
 # =============================================================================
 # Z-score the image features
 scaler = StandardScaler()
@@ -124,11 +125,17 @@ llm_embeddings_train = scaler.transform(llm_embeddings_train)
 llm_embeddings_test = scaler.transform(llm_embeddings_test)
 
 # Downsample the features with PCA
-n_components = 250
-pca = PCA(n_components=n_components, random_state=20200220)
+pca = PCA(random_state=20200220)
 pca.fit(llm_embeddings_train)
 llm_embeddings_train = pca.transform(llm_embeddings_train)
 llm_embeddings_test = pca.transform(llm_embeddings_test)
+
+# Only retain the N principal components that explain 95% of the variance
+explained_variance_ratio = pca.explained_variance_ratio_
+cumulative_explained_variance = np.cumsum(explained_variance_ratio)
+n_components_95 = np.where(cumulative_explained_variance >= 0.95)[0][0] + 1
+llm_embeddings_train = llm_embeddings_train[:,:n_components_95]
+llm_embeddings_test = llm_embeddings_test[:,:n_components_95]
 
 
 # =============================================================================
