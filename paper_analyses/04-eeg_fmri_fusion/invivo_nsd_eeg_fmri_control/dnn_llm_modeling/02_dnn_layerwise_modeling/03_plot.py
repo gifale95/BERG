@@ -138,8 +138,7 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 
 # Define the ROIs to plot
-rois = ['V1', 'V2', 'V3', 'hV4', 'intermediate', 'ventral', 'lateral',
-    'parietal']
+rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
 
 # Get the plot colors
 def sample_cmap(N):
@@ -147,14 +146,14 @@ def sample_cmap(N):
     values = np.linspace(0, 1, N+2)
     colors = cmap(values)[1:-1]
     return colors
-colors = sample_cmap(len(rois))
+colors = sample_cmap(len(model_layers))
 
 # Create the figure
-fig, axs = plt.subplots(2, 4, sharex=True, sharey=True, figsize=(20, 10)) # (10, 7.5) # !!!
+fig, axs = plt.subplots(2, 3, sharex=True, sharey=True, figsize=(30, 15)) # (10, 7.5) # !!!
 axs = np.reshape(axs, -1)
 
 # Loop over ROIs
-for i, (roi, val) in enumerate(results['partial_correlation_roi'].items()):
+for i, roi in enumerate(rois):
 
     # Plot the stimulus onset and chance dashed line
     axs[i].plot([0, 0], [-1, 1], 'k--', [-1000, 1000], [0, 0], 'k--',
@@ -164,30 +163,29 @@ for i, (roi, val) in enumerate(results['partial_correlation_roi'].items()):
     for l, layer in enumerate(model_layers):
 
         # Plot the correlation
-        axs[i].plot(times, np.mean(val[layer], 0), color=colors[l],
-            linewidth=2, label=layer)
+        val = results['correlation_roi'][roi][layer]
+        axs[i].plot(times, np.mean(val, 0), color=colors[l], linewidth=2,
+            label=layer)
 
         # Plot the CIs
         axs[i].fill_between(times,
-            results['ci_partial_correlation_roi'][roi][layer][1],
-            results['ci_partial_correlation_roi'][roi][layer][0],
+            results['ci_correlation_roi'][roi][layer][1],
+            results['ci_correlation_roi'][roi][layer][0],
             color=colors[l], alpha=.1)
 
         # Plot the peak time point
-        peak = times[np.argmax(np.mean(val[layer], 0))]
-        max_corr = max(np.mean(val[layer], 0))
+        peak = times[np.argmax(np.mean(val, 0))]
+        max_corr = max(np.mean(val, 0))
         axs[i].scatter(peak, max_corr, color=colors[l], s=200, marker='o',
             edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
-        ci_low = peak - \
-            results['ci_partial_correlation_roi_peak_lat'][roi][layer][0]
-        ci_up = \
-            results['ci_partial_correlation_roi_peak_lat'][roi][layer][1] - peak
+        ci_low = peak - results['ci_correlation_roi_peak_lat'][roi][layer][0]
+        ci_up = results['ci_correlation_roi_peak_lat'][roi][layer][1] - peak
         conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
         axs[i].errorbar(peak, max_corr, xerr=conf_int, fmt="none",
             ecolor='k', elinewidth=1, capsize=3)
 
     # x-axis parameters
-    if i in [4, 5, 6, 7]:
+    if i in [3, 4, 5]:
         axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
         axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
         xticks = [-100, 0, 100, 200, 300, 400, 500, 600]
@@ -196,19 +194,19 @@ for i, (roi, val) in enumerate(results['partial_correlation_roi'].items()):
         axs[i].set_xlim(left=min(times), right=max(times))
 
     # y-axis parameters
-    if i in [0, 4]:
+    if i in [0, 3]:
         axs[i].set_ylabel("Pearson's $r$", fontsize=fontsize)
-        yticks = [0, 0.2, 0.4, 0.6, 0.8, 1]
-        ylabels = [0, 0.2, 0.4, 0.6, 0.8, 1]
+        yticks = [0, 0.1, 0.2, 0.3]
+        ylabels = [0, 0.1, 0.2, 0.3]
         axs[i].set_yticks(ticks=yticks, labels=ylabels)
-        axs[i].set_ylim(bottom=-.05, top=0.9)
+        axs[i].set_ylim(bottom=-.05, top=0.3)
 
     # Legend
     if i == 0:
-        axs[i].legend(fontsize=fontsize, loc=4, ncols=2, frameon=False)
+        axs[i].legend(fontsize=15, loc=0, ncols=2, frameon=False)
 
     # Title
-    axs[i].set_title(key, fontsize=fontsize)
+    axs[i].set_title(roi, fontsize=fontsize)
 
 # Save the figure
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',

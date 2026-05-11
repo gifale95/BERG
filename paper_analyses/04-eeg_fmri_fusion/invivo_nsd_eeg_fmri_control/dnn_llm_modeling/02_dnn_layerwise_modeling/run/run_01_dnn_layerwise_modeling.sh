@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-dnn_llm_modeling-02_dnn_layerwise_modeling-02_dnn_layerwise_modeling
+#SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-dnn_llm_modeling-02_dnn_layerwise_modeling-01_dnn_layerwise_modeling
 #SBATCH --mail-type=end
 #SBATCH --mem=15000
-#SBATCH --time=20:00:00
+#SBATCH --time=60:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -15,7 +15,7 @@ index=0
 for fs in '1' '4' '5' '6' '7' '8' ; do
     for h in 'lh' 'rh' ; do
         for eeg_train_trials in 'even' 'odd' ; do
-            for t in `seq 0 9` ; do
+            for t in `seq 0 29` ; do
                 subject_all[$index]=$fs
                 hemisphere_all[$index]=$h
                 eeg_train_trials_all[$index]=$eeg_train_trials

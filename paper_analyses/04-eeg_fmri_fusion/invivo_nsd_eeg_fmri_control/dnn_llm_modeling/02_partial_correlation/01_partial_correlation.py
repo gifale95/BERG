@@ -145,7 +145,7 @@ total_variance_llm = np.zeros((n_vertices, len(times_new)), dtype=np.float32)
 # =============================================================================
 # Loop across EEG time points
 # =============================================================================
-for t, t_idx in tqdm(enumerate(range(start_idx, end_idx))):
+for t, t_idx in enumerate(tqdm(range(start_idx, end_idx))):
 
 
 # =============================================================================

@@ -10,10 +10,10 @@ fmri_subjects : list
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
-source_dataset : str
-    If 'things_eeg_2', the source dataset is THINGS EEG2. If 'things_meg_1',
-    the source dataset  is THINGS MEG1. (The source dataset is the dataset that
-    is mapped onto fMRI responses.)
+eeg_train_trials : str
+    String indicating which training EEG response trials are used. Possible
+    values  are: 'all' (all trials), 'even' (even trials), and 'odd' (odd
+    trials).
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
@@ -38,7 +38,7 @@ from sklearn.utils import resample
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
-parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
+parser.add_argument('--eeg_train_trials', default='all', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=0, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
@@ -57,7 +57,7 @@ for key, val in vars(args).items():
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
-# Load the M/EEG time points
+# Load the EEG time points
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
     subject=1
@@ -75,7 +75,7 @@ rois = ['V1', 'V2', 'V3', 'hV4', 'OFA', 'FFA', 'OWFA', 'VWFA', 'OPA', 'PPA',
     'parietal']
 
 # Empty correlation array of shape:
-# (N fMRI subjects, 2 hemispheres, 163842 fMRI vertices, 140 M/EEG time points)
+# (N fMRI subjects, 2 hemispheres, 163842 fMRI vertices, 140 EEG time points)
 corr_tfmri_fmri = np.zeros((n_fsub, n_hemi, n_vertex, n_time),
     dtype=np.float32)
 corr_tfmri_fmri[:] = np.nan
@@ -106,8 +106,9 @@ for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
 
         # Load and store the correlation scores
         data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-            'encoding_fusion_accuracy', f'source_dataset-{args.source_dataset}')
-        file_name = f'corr_fmri_sub-{fsub:02d}_hemi-{hemi}.npy'
+            'encoding_fusion_accuracy')
+        file_name = (f'corr_fmri_sub-{fsub:02d}_hemi-{hemi}_eeg_train_trials-'
+            f'{args.eeg_train_trials}.npy')
         corr_tfmri_fmri[fs,h,idx_v] = np.load(os.path.join(data_dir, file_name))
 
         # NCSNR and encoding accuracy vertex selection
@@ -208,10 +209,9 @@ results = {
     'ci_corr_tfmri_fmri_roi_peak_lat': ci_corr_tfmri_fmri_roi_peak_lat
 }
 
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats',
-    f'source_dataset-{args.source_dataset}')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = 'stats.npy'
+file_name = f'stats_eeg_train_trials-{args.eeg_train_trials}.npy'
 
 np.save(os.path.join(save_dir, file_name), results)

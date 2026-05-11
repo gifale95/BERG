@@ -17,6 +17,7 @@ nsd_dir : str
 coco_dir : str
     Directory of the COCO dataset.
     https://cocodataset.org/
+
 """
 
 import argparse
@@ -155,7 +156,7 @@ for layer in model_layers:
 
 
 # =============================================================================
-# Downsample the vision DNN features to 250 dimensions using PCA
+# Downsample the vision DNN features using PCA
 # =============================================================================
 # Z-score the image features
 for layer in model_layers:

@@ -7,9 +7,8 @@ fmri_subject : int
     The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
     integers from 1 to 8.
-rois : list
-    List containing the ROIs used for  which the t-fMRI responses are
-    predicted.
+roi : str
+    Used ROI.
 tot_img_batches : int
     The total number of batches in which the images are divided.
 berg_dir : str
@@ -25,7 +24,7 @@ from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subject', default=1, type=int)
-parser.add_argument('--rois', default=['V1', 'hV4', 'ventral'], type=list)
+parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--tot_img_batches', default=10, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)
@@ -40,32 +39,27 @@ for key, val in vars(args).items():
 # =============================================================================
 # Load and aggregate the t-fMRI univariate responses across image batches
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'granger_causality',
-    'rnc', 'tfmri_responses')
-
-tfmri = {}
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc',
+    'tfmri_responses')
 
 for b in tqdm(range(args.tot_img_batches)):
 
-    file_name = f'tfmri_sub-{args.fmri_subject:02d}_batch-{b:02d}.npy'
+    file_name = (f'tfmri_sub-{args.fmri_subject:02d}_roi-{args.roi}'
+        f'_batch-{b:02d}.npy')
 
-    tfmri_batch = np.load(os.path.join(data_dir, file_name),
-        allow_pickle=True).item()
+    tfmri_batch = np.load(os.path.join(data_dir, file_name)).astype(np.float32)
 
-    # Loop across ROIs
-    for roi in args.rois:
-        if b == 0:
-            tfmri[roi] = tfmri_batch[roi]
-        else:
-            tfmri[roi] = np.append(tfmri[roi], tfmri_batch[roi], 0)
+    if b == 0:
+        tfmri = tfmri_batch
+    else:
+        tfmri = np.append(tfmri, tfmri_batch, 0)
+    del tfmri_batch
 
 
 # =============================================================================
 # Save the t-fMRI univariate responses
 # =============================================================================
-for roi in args.rois:
+file_name = f'tfmri_sub-{args.fmri_subject:02d}_roi-{args.roi}.h5'
 
-    file_name = f'tfmri_sub-{args.fmri_subject:02d}_roi-{roi}.npy'
-
-    with h5py.File(os.path.join(data_dir, file_name), 'w') as f:
-	    f.create_dataset('tfmri', data=tfmri[roi], dtype=np.float32)
+with h5py.File(os.path.join(data_dir, file_name), 'w') as f:
+    f.create_dataset('tfmri', data=tfmri, dtype=np.float32)

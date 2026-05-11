@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-dnn_llm_modeling-partial_correlation-01_partial_correlation
+#SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-dnn_llm_modeling-02_partial_correlation-01_partial_correlation
 #SBATCH --mail-type=end
 #SBATCH --mem=15000
-#SBATCH --time=10:00:00
+#SBATCH --time=30:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

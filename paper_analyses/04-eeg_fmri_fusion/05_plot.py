@@ -1,14 +1,14 @@
-"""Plot the encoding accuracy of the M/EEG-fMRI fusion encoding models.
+"""Plot the encoding accuracy of the EEG-fMRI fusion encoding models.
 
 Parameters
 ----------
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
-source_dataset : str
-    If 'things_eeg_2', the source dataset is THINGS EEG2. If 'things_meg_1',
-    the source dataset  is THINGS MEG1. (The source dataset is the dataset that
-    is mapped onto fMRI responses.)
+eeg_train_trials : str
+    String indicating which training EEG response trials are used. Possible
+    values  are: 'all' (all trials), 'even' (even trials), and 'odd' (odd
+    trials).
 berg_dir : str
     Directory of the BERG.
 
@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
-parser.add_argument('--source_dataset', default='things_eeg_2', type=str)
+parser.add_argument('--eeg_train_trials', default='odd', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -33,7 +33,7 @@ args, unknown = parser.parse_known_args()
 # Load the results
 # =============================================================================
 results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats',
-    f'source_dataset-{args.source_dataset}', 'stats.npy')
+    f'stats_eeg_train_trials-{args.eeg_train_trials}.npy')
 
 results = np.load(results_dir, allow_pickle=True).item()
 
@@ -46,7 +46,8 @@ ci_corr_tfmri_fmri_roi_peak_lat = results['ci_corr_tfmri_fmri_roi_peak_lat']
 
 # Create the plots save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
-    f'source_dataset-{args.source_dataset}', 'encoding_accuracy_surfaceplots')
+    f'eeg_train_trials-{args.eeg_train_trials}',
+    'encoding_accuracy_surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -136,7 +137,7 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 
 # Define the ROIs to plot
-rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA']
+rois = ['V1', 'V2', 'V3', 'hV4', 'ventral', 'lateral', 'parietal']
 
 # Get the plot colors
 def sample_cmap(N):
@@ -194,7 +195,7 @@ plt.legend(fontsize=fontsize, loc=4, ncols=2, frameon=False)
 
 # Save the figure
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
-    f'source_dataset-{args.source_dataset}')
+    f'eeg_train_trials-{args.eeg_train_trials}')
 file_name = os.path.join(save_dir, 'roi_correlation.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

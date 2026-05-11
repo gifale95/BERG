@@ -7,17 +7,17 @@
 #SBATCH --qos=extended
 
 # Create the parameters combinations
-declare -a source_dataset_all
+declare -a eeg_train_trials_all
 index=0
-for d in 'things_eeg_2' ; do
-    source_dataset_all[$index]=$d
+for t in 'all' 'even' 'odd' ; do
+    eeg_train_trials_all[$index]=$t
     ((index=index+1))
 done
 
 # Extract the parameters
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
-source_dataset=${source_dataset_all[$SLURM_ARRAY_TASK_ID]}
-echo source_dataset: $source_dataset
+eeg_train_trials=${eeg_train_trials_all[$SLURM_ARRAY_TASK_ID]}
+echo eeg_train_trials: $eeg_train_trials
 
 # Change to the .py script directory
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion
@@ -27,4 +27,4 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Run the job
-python 04_stats.py --source_dataset $source_dataset
+python 04_stats.py --eeg_train_trials $eeg_train_trials

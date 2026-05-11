@@ -3,14 +3,16 @@ layerwise vision DNN features.
 
 Parameters
 ----------
-subject : int
-    Subject identifiers. Valid subject identifiers are integers from 1 to 8.
-rois : list
-    List containing the ROIs used for the Granger Causality analysis. All ROIs
-    are tested in a pairwise fashion.
+fmri_subject : int
+    The subject identifier for the fMRI encoding models. Since the used
+    encoding models are trained on NSD data, valid subject identifiers are
+    integers from 1 to 8.
 hemisphere : str
     String containing the hemisphere used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
+eeg_subjects : list
+    List containing the subject identifiers for the THINGS EEG2 subjects. Valid
+    subject identifiers are integers from 1 to 10.
 eeg_train_trials : str
     String indicating which training EEG response trials are used. Possible
     values  are: 'even' (even trials), and 'odd' (odd trials).
@@ -26,14 +28,17 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
+from berg import BERG
 from tqdm import tqdm
+import h5py
 from sklearn.linear_model import LinearRegression
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--subject', default=1, type=int)
+parser.add_argument('--fmri_subject', default=1, type=int)
 parser.add_argument('--hemisphere', default='lh', type=str)
+parser.add_argument('--eeg_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
 parser.add_argument('--eeg_train_trials', default='even', type=str)
-parser.add_argument('--tot_time_splits', default=30, type=int)
+parser.add_argument('--tot_time_splits', default=20, type=int)
 parser.add_argument('--time_split', default=0, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -49,55 +54,46 @@ for key, val in vars(args).items():
 # =============================================================================
 # Vision DNN
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'stimulus_features',
-    f'vision_dnn_features_layerwise_sub-{args.subject:02d}.npy')
+    'dnn_layerwise_modeling', 'stimulus_features',
+    'alexnet_layerwise_stimulus_features.npy')
 data = np.load(data_dir, allow_pickle=True).item()
-vision_dnn_test = data['vision_dnn_features_test']
-vision_dnn_train = data['vision_dnn_features_train']
+ft_train = data['ft_train']
+ft_test = data['ft_test']
 
 
 # =============================================================================
-# Load the train EEG responses
+# Load and append the in vivo EEG train responses across subjects
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'invivo_data')
-file_name_train = (f'eeg_train_sub-{args.subject:02d}_'
-    f'trial_avg-{args.eeg_train_trials}.npy')
-eeg_train = np.load(os.path.join(data_dir, file_name_train),
-    allow_pickle=True).item()['eeg_train'].astype(np.float32)
+# Loop across subjects
+for es, esub in enumerate(tqdm(args.eeg_subjects)):
 
+    # Load the EEG responses, and average them across repeats
+    eeg_train_dir = os.path.join(args.berg_dir, 'model_training_datasets',
+        'train_dataset-things_eeg_2', f'eeg_sub-{esub:02d}_split-train.h5')
+    eeg_train_sub = h5py.File(eeg_train_dir, 'r')['eeg']
+    if args.eeg_train_trials == 'even':
+        eeg_train_sub = np.mean(eeg_train_sub[:,::2], 1).astype(np.float32)
+    elif args.eeg_train_trials == 'odd':
+        eeg_train_sub = np.mean(eeg_train_sub[:,1::2], 1).astype(np.float32)
 
-# =============================================================================
-# Load the test fMRI responses
-# =============================================================================
-data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'invivo_data')
-file_name = f'fmri_test_sub-{args.subject:02d}_hemi-{args.hemisphere}.npy'
-fmri_test_dict = np.load(os.path.join(data_dir, file_name),
-    allow_pickle=True).item()
-y = np.mean(fmri_test_dict['fmri_test'], 1).astype(np.float32)
-del fmri_test_dict
-
-# Normalize the responses for later correlation
-y_z = (y - y.mean(0)) / y.std(0)
-del y
+    # Append the EEG channel responses across subjects
+    if es == 0:
+        eeg_train = eeg_train_sub
+    else:
+        eeg_train = np.append(eeg_train, eeg_train_sub, 1)
+    del eeg_train_sub
 
 
 # =============================================================================
 # Time point selection
 # =============================================================================
-# Get the time points # !!! Use official time points
-n_times = 615
-times = np.round(np.linspace(-200, 1000, n_times)).astype(int)
-
-# Account for the 50ms shift in the EEG responses # !!!
-shift = -50
-times = times + shift
-
-# Only select time points between -100ms and 600ms
-t_start = np.where(times == -100)[0][0]
-t_end = np.where(times == 600)[0][0]
-times = times[t_start:t_end+1]
+# Load the EEG time points
+berg = BERG(berg_dir=args.berg_dir)
+metadata_eeg = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    subject=1
+)
+times = metadata_eeg['eeg']['times']
 
 # Select the time points from the current time split
 times_per_split = int(np.ceil(len(times) / args.tot_time_splits))
@@ -107,29 +103,47 @@ times_new = times[start_idx:end_idx]
 
 
 # =============================================================================
-# Get the vertex number
+# Load the in silico fMRI test responses
 # =============================================================================
+# Load the fMRI responses
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-     'invivo_nsd_eeg_fmri_control', 'encoding_fusion_weights',
-    f'weights_sub-{args.subject:02d}_hemi-{args.hemisphere}_'
-    f'eeg_train_trials-all_eeg_time-000.npy')
+    'insilico_fmri_responses', 'imageset-things_eeg_2')
+file_name = f'fmri_sub-{args.fmri_subject:02d}_{args.hemisphere}_split-test.h5'
+y = h5py.File(os.path.join(data_dir, file_name), 'r')['fmri']
 
-reg_param = np.load(data_dir, allow_pickle=True).item()
-n_vertices = len(reg_param['intercept_'])
+# Load the metadata
+berg = BERG(berg_dir=args.berg_dir)
+metadata_fmri = berg.get_model_metadata(
+    'fmri-nsd_fsaverage-huze',
+    subject=args.fmri_subject
+    )
 
-del reg_param
+# Only select vertices falling within the NSD visual streams
+idx_v = np.zeros(y.shape[1], dtype=int)
+streams = ['early', 'midventral', 'midlateral', 'midparietal', 'ventral',
+    'lateral', 'parietal']
+for stream in streams:
+    idx_v[metadata_fmri['fmri'][f'{args.hemisphere}_fsaverage_rois'][stream]] = 1
+idx_v = np.where(idx_v == 1)[0]
+y = y[:,idx_v].astype(np.float32)
+
+# Center and normalize the test fMRI responses (for later correlation)
+eps = 1e-8
+y_z = (y - y.mean(0)) /  (y.std(0) + eps)
+del y
 
 
 # =============================================================================
 # Empty result arrays
 # =============================================================================
-model_layers = list(vision_dnn_train.keys())
+model_layers = list(ft_train.keys())
 
 # Empty result arrays of shape:
 # (N fMRI vertices, EEG time points)
-vision_dnn_layerwise_correlation = {}
+n_vertices = y_z.shape[1]
+dnn_layerwise_correlation = {}
 for layer in model_layers:
-    vision_dnn_layerwise_correlation[layer] = np.zeros(
+    dnn_layerwise_correlation[layer] = np.zeros(
         (n_vertices, len(times_new)), dtype=np.float32)
 
 
@@ -150,11 +164,11 @@ for t, t_idx in enumerate(tqdm(range(start_idx, end_idx))):
         weights_eeg_train_trials = 'odd'
     elif args.eeg_train_trials == 'odd':
         weights_eeg_train_trials = 'even'
-    file_name = (f'weights_sub-{args.subject:02d}_hemi-{args.hemisphere}_'
-        f'eeg_train_trials-{weights_eeg_train_trials}_eeg_time-{t_idx:03d}.npy')
+    file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_hemi-'
+        f'{args.hemisphere}_eeg_train_trials-{weights_eeg_train_trials}_'
+        f'eeg_time-{t_idx:03d}.npy')
     reg_param = np.load(os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-        'invivo_nsd_eeg_fmri_control', 'encoding_fusion_weights',
-        file_name), allow_pickle=True).item()
+        'encoding_fusion_weights', file_name), allow_pickle=True).item()
 
     # Instantiate the fusion regression model
     reg = LinearRegression()
@@ -173,12 +187,12 @@ for t, t_idx in enumerate(tqdm(range(start_idx, end_idx))):
     # Loop across DNN layers
     for layer in model_layers:
 
-        # Train the encoding models
+        # Train the DNN layerwise encoding models
         reg = LinearRegression()
-        reg.fit(vision_dnn_train[layer], tfmri_train)
+        reg.fit(ft_train[layer], tfmri_train)
 
         # Compute the predictions of the encoding models on the test set
-        X = reg.predict(vision_dnn_test[layer]).astype(dtype=np.float32)
+        X = reg.predict(ft_test[layer]).astype(dtype=np.float32)
         del reg
 
         # Normalize the predicted responses for later correlation
@@ -189,7 +203,7 @@ for t, t_idx in enumerate(tqdm(range(start_idx, end_idx))):
 # =============================================================================
 # Compute the encoding model's accuracy through correlation
 # =============================================================================
-        vision_dnn_layerwise_correlation[layer][:,t] = np.mean(y_z * X_z, 0)
+        dnn_layerwise_correlation[layer][:,t] = np.mean(y_z * X_z, 0)
         del X_z
 
 
@@ -200,15 +214,14 @@ results = {
     'times': times,
     'times_new': times_new,
     'model_layers': model_layers,
-    'vision_dnn_layerwise_correlation': vision_dnn_layerwise_correlation
+    'dnn_layerwise_correlation': dnn_layerwise_correlation
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling',
     'dnn_layerwise_modeling', 'correlation_results')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = (f'correlation_sub-{args.subject:02d}_hemisphere-'
+file_name = (f'correlation_fmri_sub-{args.fmri_subject:02d}_hemisphere-'
     f'{args.hemisphere}_eeg_train_trials-{args.eeg_train_trials}_'
     f'time_split-{args.time_split:02d}.npy')
 

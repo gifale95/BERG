@@ -139,8 +139,8 @@ times = times[t_start:t_end+1]
 # Define the target times (starting from time 0)
 idx_t_start_target = np.where(times == 0)[0][0]
 
-# Define the test time offset (always up to 100 ms prior to the target time)
-offset = np.where(times == 0)[0][0] - np.where(times == -100)[0][0]
+# Define the test time offset (always up to N ms prior to the target time)
+offset = np.where(times == 0)[0][0] - np.where(times == -41)[0][0]
 
 # Select the time points from the current time split
 target_times_per_split = int(np.ceil(len(
@@ -170,7 +170,7 @@ file_name_test = f'eeg_test_sub-{args.subject:02d}.npy'
 eeg_test = np.load(os.path.join(data_dir, file_name_test),
     allow_pickle=True).item()['eeg_test'].astype(np.float32)
 # Average the EEG responses into two splits using the repeats dimension (for
-# later cross-validation in the variance paritioning analysis)
+# later cross-validation in the Granger causality analysis)
 idx_even = np.arange(0, eeg_test.shape[1], 2)
 idx_odd = np.arange(1, eeg_test.shape[1], 2)
 eeg_test_1 = np.mean(eeg_test[:,idx_even], 1)
@@ -298,7 +298,7 @@ for tt_idx, tt in enumerate(tqdm(range(offset, offset+len(times_target)))): # ti
             tfmri_test_1[args.roi_target][:,:,ts],
             tfmri_test_1[args.roi_source][:,:,ts], 1)) -
             tfmri_test_2[args.roi_target][:,:,tt]) ** 2))
-            # Test the second split
+        # Test the second split
         u_reduced.append(np.mean((reg_reduced.predict(
             tfmri_test_2[args.roi_target][:,:,ts]) -
             tfmri_test_1[args.roi_target][:,:,tt]) ** 2))

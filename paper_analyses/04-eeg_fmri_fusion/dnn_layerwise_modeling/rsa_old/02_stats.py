@@ -1,11 +1,11 @@
-"""Aggregate all correlation results, and compute their ROI-based statistics
-with confidence intervals.
+"""Aggregate all RSA results, and compute their ROI-based statistics with
+confidence intervals.
 
 Parameters
 ----------
 fmri_subjects : list
-    List containing the subject identifiers for the fMRI encoding models. Since
-    the used encoding models are trained on NSD data, valid subject identifiers
+    List of subject identifiers for the fMRI encoding models. Since the used
+    encoding models are trained on NSD data, valid subject identifiers
     are integers from 1 to 8.
 hemispheres: list
     List containing the hemispheres used for the analyses. Possible values 
@@ -13,9 +13,6 @@ hemispheres: list
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
-eeg_train_trials : list
-    List indicating which training EEG response trials are used. Possible
-    values  are: 'even' (even trials), and 'odd' (odd trials).
 tot_time_splits : int
     The total number of splits in which the EEG time points are divided.
 n_iter : int
@@ -38,8 +35,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--eeg_train_trials', default=['even', 'odd'], type=list)
-parser.add_argument('--tot_time_splits', default=20, type=int)
+parser.add_argument('--tot_time_splits', default=10, type=int)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -60,9 +56,8 @@ np.random.seed(seed)
 # =============================================================================
 # Load the time points
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'correlation_results')
-filename = (f'correlation_fmri_sub-01_hemisphere-lh_'
-    f'eeg_train_trials-even_time_split-00.npy')
+    'dnn_layerwise_modeling', 'rsa')
+filename = 'rsa_fmri_sub-01_hemisphere-lh_time_split-00.npy'
 data = np.load(os.path.join(data_dir, filename), allow_pickle=True).item()
 times = data['times']
 model_layers = data['model_layers']
@@ -79,17 +74,21 @@ rois = ['V1', 'V2', 'V3', 'hV4', 'OFA', 'FFA', 'OWFA', 'VWFA', 'OPA', 'PPA',
 
 # Empty result arrays of shape:
 # (N subjects, 2 hemispheres, 163842 fMRI vertices, N EEG time points)
-correlation = {}
+rsa = {}
 for layer in model_layers:
-    correlation[layer] = np.zeros((n_sub, n_hemi, n_vertex, n_time),
-        dtype=np.float32)
+    rsa[layer] = np.zeros((n_sub, n_hemi, n_vertex, n_time), dtype=np.float32)
+    rsa[layer][:] = np.nan
 
 
 # =============================================================================
-# Load the DNN layerwise modeling correlation results
+# Load the RSA results
 # =============================================================================
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
+
+# Results parent directory
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'dnn_layerwise_modeling', 'rsa')
 
 # Loop across fMRI subjects
 for s, sub in enumerate(tqdm(args.fmri_subjects)):
@@ -103,15 +102,6 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     # Loop across fMRI hemispheres
     for h, hemi in enumerate(args.hemispheres):
 
-        # Only select vertices falling within the NSD visual streams
-        idx_streams = np.zeros(n_vertex, dtype=int)
-        streams = ['early', 'midventral', 'midlateral', 'midparietal',
-            'ventral', 'lateral', 'parietal']
-        for stream in streams:
-            idx_streams[metadata[s]['fmri'][f'{hemi}_fsaverage_rois'][stream]] = 1
-        idx_v = np.where(idx_streams == 1)[0]
-        idx_v_nan = np.where(idx_streams != 1)[0]
-
         # Loop across EEG time points
         for t in range(args.tot_time_splits):
 
@@ -120,28 +110,19 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
             start_idx = t * times_per_split
             end_idx = min((t + 1) * times_per_split, len(times))
 
-            # Loop across cross-validations
-            for et in args.eeg_train_trials:
-
-                # Load and store the result scores
-                file_name = (f'correlation_fmri_sub-{sub:02d}_hemisphere-'
-                    f'{hemi}_eeg_train_trials-{et}_time_split-{t:02d}.npy')
-                results = np.load(os.path.join(data_dir, file_name),
-                    allow_pickle=True).item()
-                for layer in model_layers:
-                    correlation[layer][s,h,idx_v,start_idx:end_idx] += \
-                        results['dnn_layerwise_correlation'][layer]
-
-        # Divide the results by the number of CV splits
-        for layer in model_layers:
-            correlation[layer][s,h] /= len(args.eeg_train_trials)
+            # Load and store the result scores
+            file_name = (f'rsa_fmri_sub-{sub:02d}_hemisphere-{hemi}_'
+                f'time_split-{t:02d}.npy')
+            results = np.load(os.path.join(data_dir, file_name),
+                allow_pickle=True).item()
+            for layer in model_layers:
+                rsa[layer][s,h,:,start_idx:end_idx] = results['rsa'][layer]
 
         # NCSNR and visual stream vertex selection
         ncsnr = metadata[s]['fmri'][hemi+'_ncsnr']
         idx_nan = ncsnr < args.ncsnr_threshold
         for layer in model_layers:
-            correlation[layer][s,h,idx_nan] = np.nan
-            correlation[layer][s,h,idx_v_nan] = np.nan
+            rsa[layer][s,h,idx_nan] = np.nan
 
 
 # =============================================================================
@@ -149,12 +130,11 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # =============================================================================
 # Empty ROI result array of shape:
 # (N fMRI subjects, N EEG time points)
-correlation_roi = {}
+rsa_roi = {}
 for roi in rois:
-    correlation_roi[roi] = {}
+    rsa_roi[roi] = {}
     for layer in model_layers:
-        correlation_roi[roi][layer] = np.zeros((n_sub, n_time),
-            dtype=np.float32)
+        rsa_roi[roi][layer] = np.zeros((n_sub, n_time), dtype=np.float32)
 
 # Loop across ROIs, subjects and hemispheres
 for r, roi in enumerate(rois):
@@ -183,37 +163,36 @@ for r, roi in enumerate(rois):
             else:
                 idx_roi = metadata[s]['fmri'][f'{hemi}_fsaverage_rois'][roi]
 
-            # Get the correlation scores from the chosen ROI
+            # Get the correlation scores of the above threshold vertices
+            # from the chosen ROI
             for layer in model_layers:
                 if h == 0:
-                    score[layer] = correlation[layer][s,h,idx_roi]
+                    score[layer] = rsa[layer][s,h,idx_roi]
                 else:
                     score[layer] = np.append(score[layer],
-                        correlation[layer][s,h,idx_roi], 0)
+                        rsa[layer][s,h,idx_roi], 0)
 
         # Store the mean correlation across ROI vertices
         for layer in model_layers:
-            correlation_roi[roi][layer][s] = np.nanmean(score[layer], 0)
+            rsa_roi[roi][layer][s] = np.nanmean(score[layer], 0)
         del score
 
 
 # =============================================================================
 # Bootstrap the confidence intervals of the ROI-wise results
 # =============================================================================
-ci_correlation_roi = {}
-ci_correlation_roi_peak_lat = {}
+ci_rsa_roi = {}
+ci_rsa_roi_peak_lat = {}
 
 for roi in rois:
-    ci_correlation_roi[roi] = {}
-    ci_correlation_roi_peak_lat[roi] = {}
+    ci_rsa_roi[roi] = {}
+    ci_rsa_roi_peak_lat[roi] = {}
     for layer in model_layers:
-        ci_correlation_roi[roi][layer] = np.zeros(((2, n_time)),
-            dtype=np.float32)
-        ci_correlation_roi_peak_lat[roi][layer] = np.zeros((2),
-            dtype=np.float32)
+        ci_rsa_roi[roi][layer] = np.zeros(((2, n_time)), dtype=np.float32)
+        ci_rsa_roi_peak_lat[roi][layer] = np.zeros((2), dtype=np.float32)
 
 for roi in tqdm(rois):
-    for key, val in correlation_roi[roi].items():
+    for key, val in rsa_roi[roi].items():
 
         score_dist = np.zeros((args.n_iter, n_time))
         peak_lat_dist = np.zeros((args.n_iter))
@@ -223,13 +202,13 @@ for roi in tqdm(rois):
             score_dist[i] = np.mean(val[idx], 0)
             peak_lat_dist[i] = times[np.argmax(np.mean(val[idx], 0))]
 
-        ci_correlation_roi[roi][key][0] = np.percentile(
+        ci_rsa_roi[roi][key][0] = np.percentile(
             score_dist, 2.5, 0)
-        ci_correlation_roi[roi][key][1] = np.percentile(
+        ci_rsa_roi[roi][key][1] = np.percentile(
             score_dist, 97.5, 0)
-        ci_correlation_roi_peak_lat[roi][key][0] = np.percentile(
+        ci_rsa_roi_peak_lat[roi][key][0] = np.percentile(
             peak_lat_dist, 2.5)
-        ci_correlation_roi_peak_lat[roi][key][1] = np.percentile(
+        ci_rsa_roi_peak_lat[roi][key][1] = np.percentile(
             peak_lat_dist, 97.5)
 
 
@@ -240,10 +219,10 @@ results = {
     'metadata': metadata,
     'model_layers': model_layers,
     'times': times,
-    'correlation': correlation,
-    'correlation_roi': correlation_roi,
-    'ci_correlation_roi': ci_correlation_roi,
-    'ci_correlation_roi_peak_lat': ci_correlation_roi_peak_lat,
+    'rsa': rsa,
+    'rsa_roi': rsa_roi,
+    'ci_rsa_roi': ci_rsa_roi,
+    'ci_rsa_roi_peak_lat': ci_rsa_roi_peak_lat,
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',

@@ -1,25 +1,25 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_eeg_fmri_fusion-dnn_layerwise_modeling-02_rsa
+#SBATCH --job-name=eeg_fmri_fusion-dnn_layerwise_modeling-02_dnn_layerwise_modeling
 #SBATCH --mail-type=end
-#SBATCH --mem=30000
-#SBATCH --time=40:00:00
+#SBATCH --mem=15000
+#SBATCH --time=60:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a fmri_subject_all
 declare -a hemisphere_all
-declare -a source_dataset_all
-declare -a dnn_model_all
+declare -a eeg_train_trials_all
+declare -a time_split_all
 index=0
-for s in `seq 1 8` ; do
+for fs in `seq 1 8` ; do
     for h in 'lh' 'rh' ; do
-        for d in 'things_meg_1' ; do
-            for m in 'alexnet' ; do
-                fmri_subject_all[$index]=$s
+        for eeg_train_trials in 'even' 'odd' ; do
+            for t in `seq 0 19` ; do
+                fmri_subject_all[$index]=$fs
                 hemisphere_all[$index]=$h
-                source_dataset_all[$index]=$d
-                dnn_model_all[$index]=$m
+                eeg_train_trials_all[$index]=$eeg_train_trials
+                time_split_all[$index]=$t
                 ((index=index+1))
             done
         done
@@ -30,15 +30,12 @@ done
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
 fmri_subject=${fmri_subject_all[$SLURM_ARRAY_TASK_ID]}
 hemisphere=${hemisphere_all[$SLURM_ARRAY_TASK_ID]}
-dnn_model=${dnn_model_all[$SLURM_ARRAY_TASK_ID]}
-source_dataset=${source_dataset_all[$SLURM_ARRAY_TASK_ID]}
+eeg_train_trials=${eeg_train_trials_all[$SLURM_ARRAY_TASK_ID]}
+time_split=${time_split_all[$SLURM_ARRAY_TASK_ID]}
 echo fmri_subject: $fmri_subject
 echo hemisphere: $hemisphere
-echo dnn_model: $dnn_model
-echo source_dataset: $source_dataset
-
-# Wait a bit so it doesn't crash
-sleep 8
+echo eeg_train_trials: $eeg_train_trials
+echo time_split: $time_split
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
@@ -48,4 +45,4 @@ conda activate berg
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/dnn_layerwise_modeling
 
 # Run the job
-python 02_rsa.py --fmri_subject $fmri_subject --hemisphere $hemisphere --dnn_model $dnn_model --source_dataset $source_dataset
+python 02_dnn_layerwise_modeling.py --fmri_subject $fmri_subject --hemisphere $hemisphere --eeg_train_trials $eeg_train_trials --time_split $time_split

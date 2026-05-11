@@ -39,7 +39,7 @@ parser.add_argument('--subjects', default=[1, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--eeg_train_trials', default=['even', 'odd'], type=list)
-parser.add_argument('--tot_time_splits', default=10, type=int)
+parser.add_argument('--tot_time_splits', default=30, type=int)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -130,14 +130,13 @@ for s, sub in enumerate(tqdm(args.subjects)):
             for et in args.eeg_train_trials:
 
                 # Load and store the result scores
-                file_name = (f'partial_correlation_sub-{sub:02d}_'
-                    f'hemisphere-{hemi}_eeg_train_trials-{et}_'
-                    f'time_split-{t:02d}.npy')
+                file_name = (f'correlation_sub-{sub:02d}_hemisphere-{hemi}_'
+                    f'eeg_train_trials-{et}_time_split-{t:02d}.npy')
                 results = np.load(os.path.join(data_dir, file_name),
                     allow_pickle=True).item()
                 for layer in model_layers:
                     correlation[layer][s,h,idx_v,start_idx:end_idx] += \
-                        results['partial_correlation'][layer]
+                        results['vision_dnn_layerwise_correlation'][layer]
 
         # Divide the results by the number of CV splits
         for layer in model_layers:

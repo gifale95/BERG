@@ -1,5 +1,5 @@
-"""Plot the encoding-based DNN layerwise modeling results between t-fMRI
-responses and AlexNet features.
+"""Plot the RSA results between t-fMRI responses and layerwise vision DNN
+features.
 
 Parameters
 ----------
@@ -38,77 +38,77 @@ model_layers = results['model_layers']
 
 # Create the plots save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'plots', 'correlation_surfaceplots')
+    'dnn_layerwise_modeling', 'plots', 'rsa_surfaceplots')
 os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
-# Plot the correlation results on brain surfaces (subject-average)
+# Plot the RSA results on brain surfaces (subject-average)
 # =============================================================================
-# Plot parameters
-fontsize = 40
-matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
-matplotlib.rcParams['font.size'] = fontsize
-plt.rc('xtick', labelsize=19)
-plt.rc('ytick', labelsize=19)
-matplotlib.use("svg")
-plt.rcParams["text.usetex"] = False
-plt.rcParams['svg.fonttype'] = 'none'
-subject = 'fsaverage_nsd_sub-01'
+# # Plot parameters
+# fontsize = 40
+# matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+# matplotlib.rcParams['font.size'] = fontsize
+# plt.rc('xtick', labelsize=19)
+# plt.rc('ytick', labelsize=19)
+# matplotlib.use("svg")
+# plt.rcParams["text.usetex"] = False
+# plt.rcParams['svg.fonttype'] = 'none'
+# subject = 'fsaverage_nsd_sub-01'
 
-# Ignore warnings
-warnings.filterwarnings(
-    "ignore",
-    category=RuntimeWarning,
-    message="Mean of empty slice"
-)
+# # Ignore warnings
+# warnings.filterwarnings(
+#     "ignore",
+#     category=RuntimeWarning,
+#     message="Mean of empty slice"
+# )
 
-# Loop over results types and EEG time points
-for key, val in tqdm(results['correlation'].items()):
-    for t, time in enumerate(times):
+# # Loop over results types and EEG time points
+# for key, val in tqdm(results['rsa'].items()):
+#     for t, time in enumerate(times):
 
-        # Average the results across subjects, and append them across left and
-        # right hemishperes
-        data = np.append(np.nanmean(val[:,0,:,t], 0),
-            np.nanmean(val[:,1,:,t], 0))
+#         # Average the results across subjects, and append them across left and
+#         # right hemishperes
+#         data = np.append(np.nanmean(val[:,0,:,t], 0),
+#             np.nanmean(val[:,1,:,t], 0))
 
-        # Create the flat brain surface
-        vertex_data = cortex.Vertex(
-            data,
-            subject,
-            cmap='afmhot', # inferno
-            vmin=0,
-            vmax=???, # !!!
-            with_colorbar=True)
+#         # Create the flat brain surface
+#         vertex_data = cortex.Vertex(
+#             data,
+#             subject,
+#             cmap='afmhot', # inferno
+#             vmin=0,
+#             vmax=0.9,
+#             with_colorbar=True)
 
-        # Plot the flat brain surface
-        fig = cortex.quickshow(
-            vertex_data,
-            #height=2000, # Increase resolution of map and ROI contours
-            with_curvature=True,
-            with_rois=True,
-            roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-            linewidth=3,
-            linecolor=(1, 1, 1),
-            with_labels=True,
-            labelsize=25,
-            curvature_brightness=0.4,
-            with_colorbar=True
-            )
+#         # Plot the flat brain surface
+#         fig = cortex.quickshow(
+#             vertex_data,
+#             #height=2000, # Increase resolution of map and ROI contours
+#             with_curvature=True,
+#             with_rois=True,
+#             roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
+#             linewidth=3,
+#             linecolor=(1, 1, 1),
+#             with_labels=True,
+#             labelsize=25,
+#             curvature_brightness=0.4,
+#             with_colorbar=True
+#             )
 
-        # Add title
-        title = f'Time (ms): {time}'
-        plt.title(title, fontsize=fontsize)
+#         # Add title
+#         title = f'Time (ms): {time}'
+#         plt.title(title, fontsize=fontsize)
 
-        # Save the plot
-        file_name = f'{key}_time-{t:03d}.png'
-        plot_file = os.path.join(save_dir, file_name)
-        plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
-        plt.close()
+#         # Save the plot
+#         file_name = f'{key}_time-{t:03d}.png'
+#         plot_file = os.path.join(save_dir, file_name)
+#         plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
+#         plt.close()
 
 
 # =============================================================================
-# Plot the ROI-wise correlations
+# Plot the ROI-wise RSA results
 # =============================================================================
 # Plot parameters
 fontsize = 25
@@ -145,10 +145,10 @@ def sample_cmap(N):
     values = np.linspace(0, 1, N+2)
     colors = cmap(values)[1:-1]
     return colors
-colors = sample_cmap(len(model_layers))
+colors = sample_cmap(len(rois))
 
 # Create the figure
-fig, axs = plt.subplots(2, 4, sharex=True, sharey=True, figsize=(40, 15)) # (10, 7.5) # !!!
+fig, axs = plt.subplots(2, 4, sharex=True, sharey=True, figsize=(20, 10)) # (10, 7.5) # !!!
 axs = np.reshape(axs, -1)
 
 # Loop over ROIs
@@ -162,26 +162,25 @@ for i, roi in enumerate(rois):
     for l, layer in enumerate(model_layers):
 
         # Plot the correlation
-        val = results['correlation_roi'][roi][layer]
-        axs[i].plot(times, np.mean(val, 0), color=colors[l], linewidth=2,
-            label=layer)
+        axs[i].plot(times, np.mean(results['rsa_roi'][roi][layer], 0), color=colors[l],
+            linewidth=2, label=layer)
 
         # Plot the CIs
         axs[i].fill_between(times,
-            results['ci_correlation_roi'][roi][layer][1],
-            results['ci_correlation_roi'][roi][layer][0],
+            results['ci_rsa_roi'][roi][layer][1],
+            results['ci_rsa_roi'][roi][layer][0],
             color=colors[l], alpha=.1)
 
         # Plot the peak time point
-        peak = times[np.argmax(np.mean(val, 0))]
-        max_corr = max(np.mean(val, 0))
+        peak = times[np.argmax(np.mean(results['rsa_roi'][roi][layer], 0))]
+        max_corr = max(np.mean(results['rsa_roi'][roi][layer], 0))
         axs[i].scatter(peak, max_corr, color=colors[l], s=200, marker='o',
             edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
-        ci_low = peak - results['ci_correlation_roi_peak_lat'][roi][layer][0]
-        ci_up = results['ci_correlation_roi_peak_lat'][roi][layer][1] - peak
+        ci_low = peak - results['ci_rsa_roi_peak_lat'][roi][layer][0]
+        ci_up = results['ci_rsa_roi_peak_lat'][roi][layer][1] - peak
         conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
         # axs[i].errorbar(peak, max_corr, xerr=conf_int, fmt="none",
-        #     ecolor='k', elinewidth=1, capsize=3) # !!!
+        #     ecolor='k', elinewidth=1, capsize=3)
 
     # x-axis parameters
     if i in [4, 5, 6, 7]:
@@ -198,18 +197,18 @@ for i, roi in enumerate(rois):
         yticks = [0, 0.2, 0.4, 0.6, 0.8, 1]
         ylabels = [0, 0.2, 0.4, 0.6, 0.8, 1]
         axs[i].set_yticks(ticks=yticks, labels=ylabels)
-        axs[i].set_ylim(bottom=-.05, top=0.8)
+        axs[i].set_ylim(bottom=-.05, top=0.3)
 
     # Legend
     if i == 0:
-        axs[i].legend(fontsize=15, loc=0, ncols=2, frameon=False)
+        axs[i].legend(fontsize=fontsize, loc=4, ncols=2, frameon=False)
 
     # Title
     axs[i].set_title(roi, fontsize=fontsize)
 
 # Save the figure
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'dnn_layerwise_modeling', 'plots')
-file_name = os.path.join(save_dir, 'correlation_roi.svg')
+    'dnn_layerwise_modeling', 'plots', 'plots')
+file_name = os.path.join(save_dir, 'rsa_roi.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()

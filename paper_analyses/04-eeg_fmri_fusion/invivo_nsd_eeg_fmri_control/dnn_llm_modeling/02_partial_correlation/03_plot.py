@@ -137,7 +137,7 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 
 # Define the ROIs to plot
-rois = ['V1', 'V2', 'V3', 'hV4', 'ventral', 'lateral', 'parietal']
+rois = ['early', 'intermediate', 'ventral', 'lateral', 'parietal']
 
 # Get the plot colors
 def sample_cmap(N):
@@ -196,14 +196,14 @@ for i, (key, val) in enumerate(results['partial_correlation_roi'].items()):
     # y-axis parameters
     if i in [0, 2]:
         axs[i].set_ylabel("Pearson's $r$", fontsize=fontsize)
-        yticks = [0, 0.2, 0.4, 0.6, 0.8, 1]
-        ylabels = [0, 0.2, 0.4, 0.6, 0.8, 1]
+        yticks = [0, 0.1, 0.2, 0.3]
+        ylabels = [0, 0.1, 0.2, 0.3]
         axs[i].set_yticks(ticks=yticks, labels=ylabels)
-        axs[i].set_ylim(bottom=-.05, top=0.9)
+        axs[i].set_ylim(bottom=-.05, top=0.3)
 
     # Legend
-    if i == 0:
-        axs[i].legend(fontsize=fontsize, loc=4, ncols=2, frameon=False)
+    if i == 2:
+        axs[i].legend(fontsize=20, loc=0, ncols=2, frameon=False)
 
     # Title
     axs[i].set_title(key, fontsize=fontsize)
@@ -213,5 +213,5 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'invivo_nsd_eeg_fmri_control', 'dnn_llm_modeling', 'partial_correlation',
     'plots')
 file_name = os.path.join(save_dir, 'partial_correlation_roi.svg')
-fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=False, format='svg')
 plt.close()

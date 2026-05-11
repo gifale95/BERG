@@ -1,8 +1,8 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion-dnn_layerwise_modeling-04_plot
+#SBATCH --job-name=eeg_fmri_fusion-dnn_layerwise_modeling-01_extract_stimulus_features
 #SBATCH --mail-type=end
-#SBATCH --mem=25000
+#SBATCH --mem=50000
 #SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
@@ -14,4 +14,4 @@ conda activate berg
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/dnn_layerwise_modeling
 
 # Run the job
-python 04_plot.py
+python 01_extract_stimulus_features.py

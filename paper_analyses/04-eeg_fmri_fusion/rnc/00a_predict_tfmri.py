@@ -9,9 +9,8 @@ fmri_subject : int
     The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
     integers from 1 to 8.
-rois : list
-    List containing the ROIs used for  which the t-fMRI responses are
-    predicted.
+roi : str
+    Used ROI.
 hemispheres : list
     List containing the hemispheres used for the analyses. Possible values 
     are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
@@ -46,7 +45,7 @@ from sklearn.linear_model import LinearRegression
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subject', default=1, type=int)
-parser.add_argument('--rois', default=['V1', 'hV4', 'ventral'], type=list)
+parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--eeg_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
@@ -74,46 +73,43 @@ metadata_fmri = berg.get_model_metadata(
 
 idx_v = {}
 
-# Loop across ROIs
-for roi in args.rois:
+# Loop across hemisphers
+for h, hemi in enumerate(args.hemispheres):
 
-    # Loop across hemisphers
-    for h, hemi in enumerate(args.hemispheres):
+    # Only select vertices falling within the NSD visual streams
+    n_vertices = 163842
+    idx_streams = np.zeros(n_vertices, dtype=bool)
+    streams = ['early', 'midventral', 'midlateral', 'midparietal',
+        'ventral', 'lateral', 'parietal']
+    for stream in streams:
+        idx_streams[metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][stream]] = 1
+    idx_streams = np.where(idx_streams)[0]
 
-        # Only select vertices falling within the NSD visual streams
-        n_vertices = 163842
-        idx_streams = np.zeros(n_vertices, dtype=bool)
-        streams = ['early', 'midventral', 'midlateral', 'midparietal',
-            'ventral', 'lateral', 'parietal']
-        for stream in streams:
-            idx_streams[metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][stream]] = 1
-        idx_streams = np.where(idx_streams)[0]
+    # Only select stream vertices with NCSNR above threshold
+    ncsnr = metadata_fmri['fmri'][f'{hemi}_ncsnr']
+    idx_ncsnr = np.where(ncsnr[idx_streams] >= args.ncsnr_threshold)[0]
 
-        # Only select stream vertices with NCSNR above threshold
-        ncsnr = metadata_fmri['fmri'][f'{hemi}_ncsnr']
-        idx_ncsnr = np.where(ncsnr[idx_streams] >= args.ncsnr_threshold)[0]
+    # Only select stream vertices of the chosen ROI
+    if args.roi in ['V1', 'V2', 'V3']:
+        idx_r = np.append(
+            metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{args.roi}v'],
+            metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{args.roi}d'])
+        idx_r.sort()
+    elif args.roi in ['FFA', 'VWFA', 'FBA']:
+        idx_r = np.append(
+            metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{args.roi}-1'],
+            metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{args.roi}-2'])
+        idx_r.sort()
+    else:
+        idx_r = metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{args.roi}']
+        idx_r.sort()
+    idx_roi = np.zeros(n_vertices, dtype=bool)
+    idx_roi[idx_r] = 1
+    idx_roi = idx_roi[idx_streams]
+    idx_roi = np.where(idx_roi)[0]
 
-        # Only select stream vertices of the chosen ROI
-        if roi in ['V1', 'V2', 'V3']:
-            idx_r = np.append(
-                metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}v'],
-                metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}d'])
-            idx_r.sort()
-        elif roi in ['FFA', 'VWFA', 'FBA']:
-            idx_r = np.append(
-                metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}-1'],
-                metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{roi}-2'])
-            idx_r.sort()
-        else:
-            idx_r = metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][roi]
-            idx_r.sort()
-        idx_roi = np.zeros(n_vertices, dtype=bool)
-        idx_roi[idx_r] = 1
-        idx_roi = idx_roi[idx_streams]
-        idx_roi = np.where(idx_roi)[0]
-
-        # Get the indices of ROI vertices with NCSNR above threshold
-        idx_v[(roi, hemi)] = np.intersect1d(idx_roi, idx_ncsnr)
+    # Get the indices of ROI vertices with NCSNR above threshold
+    idx_v[(args.roi, hemi)] = np.intersect1d(idx_roi, idx_ncsnr)
 
 
 # =============================================================================
@@ -171,9 +167,6 @@ for es, esub in enumerate(args.eeg_subjects):
 # =============================================================================
 # Loop across EEG time points
 # =============================================================================
-# Empty t-fMRI data dictionary
-tfmri = {}
-
 # Get the EEG time points
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
@@ -188,51 +181,46 @@ for t in tqdm(range(len(times))):
 # =============================================================================
 # Generate the t-fMRI responses
 # =============================================================================
-    # Loop across ROIs
-    for roi in tqdm(args.rois):
+    # Loop across hemisphers
+    for h, hemi in enumerate(args.hemispheres):
 
-        # Loop across hemisphers
-        for h, hemi in enumerate(args.hemispheres):
+        # Load the EEG-fMRI encoding fusion models weights
+        file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
+            f'hemi-{hemi}_eeg_train_trials-all_eeg_time-{t:03d}.npy')
+        reg_param = np.load(os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+            'encoding_fusion_weights', file_name), allow_pickle=True).item()
 
-            # Load the EEG-fMRI encoding fusion models weights
-            file_name = (f'weights_fmri_sub-{args.fmri_subject:02d}_'
-                f'hemi-{hemi}_eeg_time-{t:03d}.npy')
-            reg_param = np.load(os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-                'encoding_fusion_weights', f'source_dataset-things_eeg_2',
-                file_name), allow_pickle=True).item()
+        # Instantiate the fusion regression model
+        reg = LinearRegression()
+        reg.coef_ = reg_param['coef_'][idx_v[(args.roi, hemi)]]
+        reg.intercept_ = reg_param['intercept_'][idx_v[(args.roi, hemi)]]
+        reg.n_features_in_ = reg_param['n_features_in_']
 
-            # Instantiate the fusion regression model
-            reg = LinearRegression()
-            reg.coef_ = reg_param['coef_'][idx_v[(roi, hemi)]]
-            reg.intercept_ = reg_param['intercept_'][idx_v[(roi, hemi)]]
-            reg.n_features_in_ = reg_param['n_features_in_']
+        # Empty t-fMRI response array of shape:
+        # (N Images, N Pseudo Trials, N Vertices, 1 Time point)
+        tfmri_hemi = np.zeros((len(eeg), eeg.shape[1],
+            len(idx_v[(args.roi, hemi)]), 1), dtype=np.float32)
 
-            # Empty t-fMRI response array of shape:
-            # (N Images, N Pseudo Trials, N Vertices, 1 Time point)
-            tfmri_hemi = np.zeros((len(eeg), eeg.shape[1],
-                len(idx_v[(roi, hemi)]), 1), dtype=np.float32)
+        # Generate the t-fMRI responses for each of the 4 in silico EEG
+        # trials
+        for tr in range(eeg.shape[1]):
+            tfmri_hemi[:,tr] = np.expand_dims(reg.predict(eeg[:,tr,:,t]), 2)
+        del reg_param, reg
 
-            # Generate the t-fMRI responses for each of the 4 in silico EEG
-            # trials
-            for tr in range(eeg.shape[1]):
-                tfmri_hemi[:,tr] = np.expand_dims(reg.predict(eeg[:,tr,:,t]),
-                    2)
-            del reg_param, reg
-
-            # Append the t-fMRI responses across hemispheres
-            if h == 0:
-                tfmri_time = tfmri_hemi
-            else:
-                tfmri_time = np.append(tfmri_time, tfmri_hemi, 2)
-            del tfmri_hemi
-
-        # Average the t-fMRI responses across vertices to create the ROI
-        # univariate responses, and store them
-        if t == 0:
-            tfmri[roi] = np.mean(tfmri_time, 2)
+        # Append the t-fMRI responses across hemispheres
+        if h == 0:
+            tfmri_time = tfmri_hemi
         else:
-            tfmri[roi] = np.append(tfmri[roi], np.mean(tfmri_time, 2), 2)
-        del tfmri_time
+            tfmri_time = np.append(tfmri_time, tfmri_hemi, 2)
+        del tfmri_hemi
+
+    # Average the t-fMRI responses across vertices to create the ROI
+    # univariate responses, and store them
+    if t == 0:
+        tfmri = np.mean(tfmri_time, 2)
+    else:
+        tfmri = np.append(tfmri, np.mean(tfmri_time, 2), 2)
+    del tfmri_time
 
 # Delete the EEG reponses
 del eeg
@@ -241,11 +229,11 @@ del eeg
 # =============================================================================
 # Save the results
 # =============================================================================
-save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'granger_causality',
-    'rnc', 'tfmri_responses')
+save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc',
+    'tfmri_responses')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = (f'tfmri_sub-{args.fmri_subject:02d}_'
+file_name = (f'tfmri_sub-{args.fmri_subject:02d}_roi-{args.roi}_'
     f'batch-{args.current_batch:02d}.npy')
 
 np.save(os.path.join(save_dir, file_name), tfmri)

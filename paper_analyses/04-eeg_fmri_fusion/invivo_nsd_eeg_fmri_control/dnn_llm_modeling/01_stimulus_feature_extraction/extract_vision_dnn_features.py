@@ -148,7 +148,7 @@ vision_dnn_features_test = np.array(
 
 
 # =============================================================================
-# Downsample the vision DNN features to 250 dimensions using PCA
+# Downsample the vision DNN features using PCA
 # =============================================================================
 # Z-score the image features
 scaler = StandardScaler()
