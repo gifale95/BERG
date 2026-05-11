@@ -17,7 +17,7 @@ description: |
      - Conda: ``conda install -c conda-forge ffmpeg``
   2. Install the HuggingFace CLI: ``pip install huggingface_hub``
   3. Request access to LLaMA-3.2-3B at https://huggingface.co/meta-llama/Llama-3.2-3B
-  4. Authenticate: ``hf auth login``
+  4. Authenticate: ``hf auth login`` # !!! Say that you  have to add username and password; might not work unless you run "pip install --upgrade click typer" first.
 
   GPU with >= 16 GB VRAM is recommended. CPU inference is supported but very slow.
 
@@ -84,7 +84,7 @@ input:
     • Audio input → audio + text features (speech is transcribed)
     • Text input  → audio + text features (text is first synthesized to speech)
 
-    Exactly one file path must be provided per call.
+    Exactly one file path must be provided per call. # !!! Can the stimuli be of any duration? How are they split into chunks of 1 seconds? Specify that the model can work with video input only (where the video also includes audio track), and the model will then generate the text using the audio track.
   type: "str (file path)"
   supported_formats:
     video:
@@ -94,7 +94,7 @@ input:
       extensions: [".wav", ".mp3", ".flac", ".ogg"]
       description: "Audio files. Speech is automatically transcribed for text features."
     text:
-      extensions: [".txt"]
+      extensions: [".txt"] # !!! How does the program know how long (fast/slow) the the speach should be when converted to audio? How does the program link the text to the audio/video?
       description: "Plain text files. Text is converted to speech via gTTS, then processed as audio+text."
 
 # Output information
@@ -102,7 +102,7 @@ output:
   description: |
     The output is a 2D array containing predicted fMRI activity on the fsaverage5
     cortical surface. Shape is (n_timesteps, n_vertices), where n_timesteps depends
-    on stimulus duration (1 TR = 1 second) and n_vertices depends on ROI selection.
+    on stimulus duration (1 TR = 1 second) and n_vertices depends on ROI selection. # !!! How are the timesteps determined, and is each fMRI TR only predicted using the sitmuli of the corresponding chunk, or also of previous chunks? Note this down, and tell users that there is not a 1-to-1 correspondence between stimulus chunks and predicted fMRI TRs due to the hemodynamic response (for this, maybe use text from the Algo2025 challenge tutorial).
   type: "numpy.ndarray"
   shape: "[n_timesteps, n_vertices]"
   dimensions:
