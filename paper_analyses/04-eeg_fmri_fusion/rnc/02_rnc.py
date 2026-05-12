@@ -201,8 +201,8 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc',
 os.makedirs(save_dir, exist_ok=True)
 
 if args.cv == 0:
-    file_name = 'image_ranking.npy'
+    file_name = f'image_ranking_roi-{args.roi}.npy'
 elif args.cv == 1:
-    file_name = f'image_ranking_cv_subject-{args.cv_subject:02d}.npy'
+    file_name = f'image_ranking_cv_subject-{args.cv_subject:02d}_roi-{args.roi}.npy'
 
 np.save(os.path.join(save_dir, file_name), data_dict)

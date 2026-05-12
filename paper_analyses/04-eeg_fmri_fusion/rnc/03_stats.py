@@ -386,6 +386,6 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc',
 if os.path.isdir(save_dir) == False:
     os.makedirs(save_dir)
 
-file_name = 'stats.npy'
+file_name = f'stats_roi-{args.roi}.npy'
 
 np.save(os.path.join(save_dir, file_name), stats)

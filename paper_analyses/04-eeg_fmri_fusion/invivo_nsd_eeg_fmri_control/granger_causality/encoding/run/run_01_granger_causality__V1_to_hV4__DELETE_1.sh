@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-granger_causality-encoding-01_granger_causality__V1_to_hV4
+#SBATCH --job-name=eeg_fmri_fusion-invivo_nsd_eeg_fmri_control-granger_causality-encoding-01_granger_causality__V1_to_hV4__DELETE_1
 #SBATCH --mail-type=end
 #SBATCH --mem=25000
-#SBATCH --time=40:00:00
+#SBATCH --time=60:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -14,11 +14,11 @@ declare -a eeg_train_trials_all
 declare -a regression_all
 declare -a time_split_all
 index=0
-for fs in '1' '4' '5' '6' '7' '8' ; do
+for fs in '1' ; do
     for rs in 'V1' ; do
         for rt in 'hV4' ; do
             for tr in 'even' 'odd' ; do
-                for r in 'linear' 'ridge' ; do
+                for r in 'ridge' ; do
                     for t in `seq 0 9` ; do
                         subject_all[$index]=$fs
                         roi_source_all[$index]=$rs
