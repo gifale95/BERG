@@ -1,7 +1,7 @@
 # Basic metadata
 model_id: fmri-dascoli_2026-tribe_v2
 modality: fMRI
-training_dataset: d'Ascioli et al. (2026) (CNeuroMod, BoldMoments, Lebel2023, Wen2017)
+training_dataset: d'Ascoli et al. (2026) (CNeuroMod, BoldMoments, Lebel2023, Wen2017)
 species: Human
 stimuli: Video, Audio, Text
 model_type: Multimodal Transformer (TRIBE v2)
@@ -17,7 +17,8 @@ description: |
      - Conda: ``conda install -c conda-forge ffmpeg``
   2. Install the HuggingFace CLI: ``pip install huggingface_hub``
   3. Request access to LLaMA-3.2-3B at https://huggingface.co/meta-llama/Llama-3.2-3B
-  4. Authenticate: ``hf auth login`` # !!! Say that you  have to add username and password; might not work unless you run "pip install --upgrade click typer" first.
+  4. Authenticate: ``hf auth login``
+  5. Enter your HuggingFace username and access token when prompted.
 
   GPU with >= 16 GB VRAM is recommended. CPU inference is supported but very slow.
 
@@ -44,7 +45,8 @@ description: |
   the video track, (2) transcribes speech with WhisperX to get word-level timings, (3) extracts visual
   features from V-JEPA2-Giant (64 frames spanning 4 seconds per time bin), audio features from
   Wav2Vec-BERT-2.0, and text features from LLaMA-3.2-3B with 1,024 tokens of preceding context. When
-  given text only, it first synthesizes speech via gTTS and then runs the same audio+text pipeline.
+  given text only, it first synthesizes speech via gTTS and then runs the same audio+text pipeline. Which means,
+  you provide only one file to the model, where a video file triggers the whole pipeline.
 
   **Output.** Predictions are time-resolved fMRI activity at 1 Hz (1 TR = 1 second) across 20,484
   cortical vertices on the fsaverage5 surface mesh. ROI selection is available via the Glasser
@@ -76,7 +78,7 @@ metadata: |
 # Input stimulus information
 input:
   description: |
-    The input is a single file path (string) to a video, audio, or text file.
+    The input is a single file path (string) to a video, audio, or text file of any duration.
     The file type is auto-detected from the extension, and determines which
     modalities are activated:
 
@@ -84,7 +86,12 @@ input:
     • Audio input → audio + text features (speech is transcribed)
     • Text input  → audio + text features (text is first synthesized to speech)
 
-    Exactly one file path must be provided per call. # !!! Can the stimuli be of any duration? How are they split into chunks of 1 seconds? Specify that the model can work with video input only (where the video also includes audio track), and the model will then generate the text using the audio track.
+    Exactly one file path must be provided per call. Audio and text are automatically
+    extracted from the video file.
+
+    Stimuli are processed as temporal sequences. Features are extracted at 2 Hz and
+    predictions are returned at 1 Hz, producing one predicted fMRI sample per second
+    of stimulus duration.
   type: "str (file path)"
   supported_formats:
     video:
@@ -94,15 +101,18 @@ input:
       extensions: [".wav", ".mp3", ".flac", ".ogg"]
       description: "Audio files. Speech is automatically transcribed for text features."
     text:
-      extensions: [".txt"] # !!! How does the program know how long (fast/slow) the the speach should be when converted to audio? How does the program link the text to the audio/video?
-      description: "Plain text files. Text is converted to speech via gTTS, then processed as audio+text."
+      extensions: [".txt"] 
+      description: "Plain text files. Text is converted to speech via gTTS, then processed as audio+text. The timing of the speech is determined by gTTS."
 
 # Output information
 output:
   description: |
     The output is a 2D array containing predicted fMRI activity on the fsaverage5
     cortical surface. Shape is (n_timesteps, n_vertices), where n_timesteps depends
-    on stimulus duration (1 TR = 1 second) and n_vertices depends on ROI selection. # !!! How are the timesteps determined, and is each fMRI TR only predicted using the sitmuli of the corresponding chunk, or also of previous chunks? Note this down, and tell users that there is not a 1-to-1 correspondence between stimulus chunks and predicted fMRI TRs due to the hemodynamic response (for this, maybe use text from the Algo2025 challenge tutorial).
+    on stimulus duration (1 TR = 1 second) and n_vertices depends on ROI selection. However, these predictions 
+    should not be interpreted as a direct one-to-one mapping from a single stimulus second to the same fMRI second, 
+    because fMRI responses are delayed and temporally blurred by the hemodynamic response. 
+    TRIBE v2 also uses temporal context, so each prediction can depend on surrounding/preceding stimulus information, not only the current second.
   type: "numpy.ndarray"
   shape: "[n_timesteps, n_vertices]"
   dimensions:
