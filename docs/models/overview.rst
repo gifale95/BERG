@@ -308,6 +308,30 @@ Encoding models trained on extracellular electrophysiology recordings from macaq
      - Images
      - `BrainScore leaderboard <https://www.brain-score.org/vision/leaderboard/>`_
 
+modality-ecog
+~~~~~~~~~~~~~
+Encoding models trained on neural responses recorded with electrocorticography (ECoG).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 3 60 40 20 10 10 10
+   :class: wrap-table
+
+   * - Best model
+     - Model ID
+     - Description
+     - Training dataset
+     - Species
+     - Stimuli
+     - Encoding accuracy
+   * - ✅
+     - :doc:`model_cards/ecog-zada2025-gpt2_xl`
+     - Linear mapping of GPT-2 XL contextual word embeddings onto time-resolved high-gamma ECoG activity during natural speech comprehension.
+     - `Zada et al., 2025 <https://doi.org/10.1038/s41597-025-05462-2>`_
+     - Human
+     - Text
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-ecog/train_dataset-zada2025/model-gpt2_xl/encoding_models_accuracy/>`_
+
 .. raw:: html
 
    <style>
