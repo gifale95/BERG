@@ -165,7 +165,14 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Text
      - `BrainScore leaderboard <https://www.brain-score.org>`_
-
+   * - ✅
+     - :doc:`model_cards/fmri-lebel2023-opt_1_3b`
+     - OPT-1.3B–based linear encoding model (contextual LLM embeddings + ridge regression) predicting brain responses to spoken narratives, following `Antonello et al., 2023 <https://arxiv.org/abs/2305.11863>`_.
+     - `LeBel et al., 2023 <https://doi.org/10.1038/s41597-023-02437-z>`_
+     - Human
+     - Text
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-lebel2023/model-opt_1_3b_ridge/encoding_models_accuracy/>`_
+  
 
 modality-eeg
 ~~~~~~~~~~~~

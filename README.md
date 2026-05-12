@@ -99,6 +99,7 @@ The following table shows BERG's most accurate encoding models for each dataset 
 | [brainscore_language][brainscore_language] | [Pereira et al., 2018][pereira_2018] | fMRI | Human | Text | [BrainScore leaderboard (language)][bs_leaderboard_language] |
 | [brainscore_vision][brainscore_vision] | [Freeman et al., 2013][freeman_2013]; [Majaj et al., 2015][majaj_2015] | Ephys | Macaque | Images | [BrainScore leaderboard (vision)][bs_leaderboard_vision] |
 | [ecog-zada2025-gpt2_xl][ecog-zada2025-gpt2_xl] | [Zada et al., 2025][zada_2025] | ECoG | Human | Text | [Accuracy plots][acc-ecog-zada2025-gpt2_xl] |
+| [fmri-lebel2023-opt_1_3b][fmri-lebel2023-opt_1_3b] | [LeBel et al., 2023][lebel_2023] | fMRI | Human | Text | [Accuracy plots][acc-fmri-lebel2023-opt_1_3b] |
 
 ### ✨ BERG functions
 
@@ -284,3 +285,6 @@ If you use BERG, please cite:
 [ecog-zada2025-gpt2_xl]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/ecog-zada2025-gpt2_xl.md
 [zada_2025]: https://doi.org/10.1038/s41597-025-05462-2
 [acc-ecog-zada2025-gpt2_xl]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-ecog/train_dataset-zada2025/model-gpt2_xl/encoding_models_accuracy/
+[fmri-lebel2023-opt_1_3b]: https://gifale95.github.io/BERG/model_cards/fmri-lebel2023-opt_1_3b.html
+[lebel_2023]: https://doi.org/10.1038/s41597-023-02437-z
+[acc-fmri-lebel2023-opt_1_3b]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-lebel2023/model-opt_1_3b_ridge/encoding_models_accuracy/

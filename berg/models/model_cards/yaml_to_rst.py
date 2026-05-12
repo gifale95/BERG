@@ -982,6 +982,7 @@ if __name__ == "__main__":
 
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/ecog-zada2025-gpt2_xl.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-cneuromod_algo2025-vibe.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-lebel2023-opt_1_3b.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-cneuromod_algo2025-text2fmri.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/brainscore_language.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/brainscore_vision.yaml
