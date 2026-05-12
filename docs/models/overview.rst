@@ -172,7 +172,14 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Video + Audio + Text
      - `TRIBE v2 paper <https://ai.meta.com/research/publications/a-foundation-model-of-vision-audition-and-language-for-in-silico-neuroscience/>`_
-
+   * - ✅
+     - :doc:`model_cards/fmri-lebel2023-opt_1_3b`
+     - OPT-1.3B–based linear encoding model (contextual LLM embeddings + ridge regression) predicting brain responses to spoken narratives, following `Antonello et al., 2023 <https://arxiv.org/abs/2305.11863>`_.
+     - `LeBel et al., 2023 <https://doi.org/10.1038/s41597-023-02437-z>`_
+     - Human
+     - Text
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-lebel2023/model-opt_1_3b_ridge/encoding_models_accuracy/>`_
+  
 
 modality-eeg
 ~~~~~~~~~~~~
@@ -307,6 +314,30 @@ Encoding models trained on extracellular electrophysiology recordings from macaq
      - Macaque
      - Images
      - `BrainScore leaderboard <https://www.brain-score.org/vision/leaderboard/>`_
+
+modality-ecog
+~~~~~~~~~~~~~
+Encoding models trained on neural responses recorded with electrocorticography (ECoG).
+
+.. list-table::
+   :header-rows: 1
+   :widths: 3 60 40 20 10 10 10
+   :class: wrap-table
+
+   * - Best model
+     - Model ID
+     - Description
+     - Training dataset
+     - Species
+     - Stimuli
+     - Encoding accuracy
+   * - ✅
+     - :doc:`model_cards/ecog-zada2025-gpt2_xl`
+     - Linear mapping of GPT-2 XL contextual word embeddings onto time-resolved high-gamma ECoG activity during natural speech comprehension.
+     - `Zada et al., 2025 <https://doi.org/10.1038/s41597-025-05462-2>`_
+     - Human
+     - Text
+     - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-ecog/train_dataset-zada2025/model-gpt2_xl/encoding_models_accuracy/>`_
 
 .. raw:: html
 
