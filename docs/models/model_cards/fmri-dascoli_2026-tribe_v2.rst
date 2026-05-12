@@ -12,7 +12,7 @@ Model Summary
    * - Modality
      - fMRI
    * - Training Dataset
-     - d'Ascioli et al. (2026) (CNeuroMod, BoldMoments, Lebel2023, Wen2017)
+     - d'Ascoli et al. (2026) (CNeuroMod, BoldMoments, Lebel2023, Wen2017)
    * - Species
      - Human
    * - Stimuli
@@ -34,6 +34,7 @@ Description
 2. Install the HuggingFace CLI: ``pip install huggingface_hub``
 3. Request access to LLaMA-3.2-3B at https://huggingface.co/meta-llama/Llama-3.2-3B
 4. Authenticate: ``hf auth login``
+5. Enter your HuggingFace username and access token when prompted.
 
 GPU with >= 16 GB VRAM is recommended. CPU inference is supported but very slow.
 
@@ -60,7 +61,8 @@ Wen2017 (3 subjects, 35h — silent videos).
 the video track, (2) transcribes speech with WhisperX to get word-level timings, (3) extracts visual
 features from V-JEPA2-Giant (64 frames spanning 4 seconds per time bin), audio features from
 Wav2Vec-BERT-2.0, and text features from LLaMA-3.2-3B with 1,024 tokens of preceding context. When
-given text only, it first synthesizes speech via gTTS and then runs the same audio+text pipeline.
+given text only, it first synthesizes speech via gTTS and then runs the same audio+text pipeline. Which means,
+you provide only one file to the model, where a video file triggers the whole pipeline.
 
 **Output.** Predictions are time-resolved fMRI activity at 1 Hz (1 TR = 1 second) across 20,484
 cortical vertices on the fsaverage5 surface mesh. ROI selection is available via the Glasser
@@ -108,7 +110,7 @@ Input
    * - Type
      - ``str (file path)``
    * - Description
-     - | The input is a single file path (string) to a video, audio, or text file.
+     - | The input is a single file path (string) to a video, audio, or text file of any duration.
        | The file type is auto-detected from the extension, and determines which
        | modalities are activated:
        | 
@@ -116,7 +118,12 @@ Input
        | • Audio input → audio + text features (speech is transcribed)
        | • Text input  → audio + text features (text is first synthesized to speech)
        | 
-       | Exactly one file path must be provided per call.
+       | Exactly one file path must be provided per call. Audio and text are automatically
+       | extracted from the video file.
+       | 
+       | Stimuli are processed as temporal sequences. Features are extracted at 2 Hz and
+       | predictions are returned at 1 Hz, producing one predicted fMRI sample per second
+       | of stimulus duration.
 
 Output
 ------
@@ -132,7 +139,10 @@ Output
    * - Description
      - | The output is a 2D array containing predicted fMRI activity on the fsaverage5
        | cortical surface. Shape is (n_timesteps, n_vertices), where n_timesteps depends
-       | on stimulus duration (1 TR = 1 second) and n_vertices depends on ROI selection.
+       | on stimulus duration (1 TR = 1 second) and n_vertices depends on ROI selection. However, these predictions
+       | should not be interpreted as a direct one-to-one mapping from a single stimulus second to the same fMRI second,
+       | because fMRI responses are delayed and temporally blurred by the hemodynamic response.
+       | TRIBE v2 also uses temporal context, so each prediction can depend on surrounding/preceding stimulus information, not only the current second.
 
 **Dimensions:**
 
@@ -260,7 +270,7 @@ Example Usage
 .. code-block:: python
 
     from berg import BERG
-
+    
     # Initialize BERG
     berg = BERG(berg_dir="path/to/brain-encoding-response-generator")
 
@@ -270,7 +280,7 @@ Example Usage
 
     # Load the model with ROI and/or vertex selection
     model = berg.get_encoding_model(
-        "fmri-multi_study-tribe_v2",
+        "fmri-dascoli_2026-tribe_v2",
         selection={
             "roi": ["V1", "V2", "FFC"],
             "vertices": vertex_mask,
