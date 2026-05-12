@@ -19,7 +19,6 @@ berg_dir : str
 import argparse
 import os
 import h5py
-import numpy as np
 from tqdm import tqdm
 from PIL import Image
 
