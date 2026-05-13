@@ -166,6 +166,13 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Text
      - `BrainScore leaderboard <https://www.brain-score.org>`_
    * - ✅
+     - :doc:`model_cards/fmri-dascoli_2026-tribe_v2`
+     - Tri-modal (video, audio, language) Transformer encoding model predicting whole-brain fMRI (20,484 vertices). First place in Algonauts 2025 (263 teams).
+     - `Multi-study naturalistic fMRI <https://github.com/facebookresearch/tribev2>`_
+     - Human
+     - Video + Audio + Text
+     - `TRIBE v2 paper <https://ai.meta.com/research/publications/a-foundation-model-of-vision-audition-and-language-for-in-silico-neuroscience/>`_
+   * - ✅
      - :doc:`model_cards/fmri-lebel2023-opt_1_3b`
      - OPT-1.3B–based linear encoding model (contextual LLM embeddings + ridge regression) predicting brain responses to spoken narratives, following `Antonello et al., 2023 <https://arxiv.org/abs/2305.11863>`_.
      - `LeBel et al., 2023 <https://doi.org/10.1038/s41597-023-02437-z>`_

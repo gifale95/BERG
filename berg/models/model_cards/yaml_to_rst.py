@@ -980,6 +980,8 @@ if __name__ == "__main__":
     yaml_to_rst(args.yaml_file, output_file)
     print(f"Converted {args.yaml_file} to {output_file}")
 
+
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-dascoli_2026-tribe_v2.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/ecog-zada2025-gpt2_xl.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-cneuromod_algo2025-vibe.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-lebel2023-opt_1_3b.yaml
