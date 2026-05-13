@@ -88,10 +88,10 @@ Input
    * - Type
      - ``list[str] or numpy.ndarray``
    * - Description
-     - List or array of natural language sentences to encode.
-       
-       While the model accepts sentences of any length, it was trained exclusively on
-       six-word sentences. Performance may vary for sentences of different lengths.
+     - | List or array of natural language sentences to encode.
+       | 
+       | While the model accepts sentences of any length, it was trained exclusively on
+       | six-word sentences. Performance may vary for sentences of different lengths.
    * - Example
      - ["Taste that fowl and those fish.", 
        "I'm progressive and you fall right."]
@@ -108,34 +108,17 @@ Output
    * - Shape
      - ``(n_sentences, n_rois)``
    * - Description
-     - The output is a numpy array containing predicted z-scored BOLD response magnitudes 
-       for the left-hemisphere language network.
-       Each row corresponds to one input sentence (in input order), and each column
-       corresponds to one language network ROI (or a subset if ROI selection is applied).
-       
-       **ROI ordering:**
-       - When no selection is used: ROIs appear in their default order (see below)
-       - When selection is used: ROIs appear in the order specified in the selection parameter
-
-**Dimensions:**
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - n_sentences
-     - Number of input sentences.
-   * - n_rois
-     - | Number of ROIs in the output (6 by default, or fewer if ROI selection is applied).
-       | Default ROI order (when no selection is specified):
-       | - lang_LH_AntTemp: Anterior temporal lobe
-       | - lang_LH_IFG: Inferior frontal gyrus
-       | - lang_LH_IFGorb: Inferior frontal gyrus orbitalis
-       | - lang_LH_MFG: Middle frontal gyrus
-       | - lang_LH_PostTemp: Posterior temporal lobe
-       | - lang_LH_netw: Network average across all five fROIs
+     - | The output is a numpy array containing predicted z-scored BOLD response magnitudes 
+       | for the left-hemisphere language network.
+       | Each row corresponds to one input sentence (in input order), and each column
+       | corresponds to one language network ROI (or a subset if ROI selection is applied).
+       | 
+       | **ROI ordering:**
+       | - When no selection is used: ROIs appear in their default order (see below)
+       | - When selection is used: ROIs appear in the order specified in the selection parameter
+   * - Dimensions
+     - | **n_sentences**: Number of input sentences.
+       | **n_rois**: Number of ROIs in the output (6 by default, or fewer if ROI selection is applied). Default ROI order (when no selection is specified): - lang_LH_AntTemp: Anterior temporal lobe - lang_LH_IFG: Inferior frontal gyrus - lang_LH_IFGorb: Inferior frontal gyrus orbitalis - lang_LH_MFG: Middle frontal gyrus - lang_LH_PostTemp: Posterior temporal lobe - lang_LH_netw: Network average across all five fROIs
 
 Parameters
 ---------

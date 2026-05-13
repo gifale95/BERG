@@ -39,7 +39,7 @@ sensors.
 **Model training partition.** Single-trial responses to approximately 22,000 unique naturalistic images were
 used for training. One set of encoding models are trained on the full training data. Another set of encoding
 models are trained on four independent training data random splits (of 5,562 trials each), therefore generating
-four different in silico MEG response predictions (i.e., repetitions) per image.
+four different in silico MEG response predictions (i.e., repetitions) per image. A unique PCA random seed is derived for each combination of subject and training split, ensuring independent PCA bases across encoding models.
 
 **Model testing partition.** 200 test images, each repeated 12 times, were used for evaluation; the
 target responses correspond to the average MEG activity across repetitions.
@@ -162,23 +162,11 @@ Output
      - ``[batch_size, n_sensors, n_timepoints] or [batch_size, repeats, n_sensors, n_timepoints]``
    * - Description
      - The output is a 3D or 4D array containing in silico MEG responses.
-
-**Dimensions:**
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - batch_size
-     - Number of stimuli in the batch.
-   * - repeats
-     - Number of simulated repetitions of the same stimulus (always 4; only applies when using the encoding models trained on single training data splits).
-   * - n_sensors
-     - Number of MEG sensors (up to 271, based on the number of sensors selected).
-   * - n_timepoints
-     - Number of time points in the MEG epoch (up to 281, based on the number of time points selected).
+   * - Dimensions
+     - | **batch_size**: Number of stimuli in the batch.
+       | **repeats**: Number of simulated repetitions of the same stimulus (always 4; only applies when using the encoding models trained on single training data splits).
+       | **n_sensors**: Number of MEG sensors (up to 271, based on the number of sensors selected).
+       | **n_timepoints**: Number of time points in the MEG epoch (up to 281, based on the number of time points selected).
 
 Parameters
 ---------

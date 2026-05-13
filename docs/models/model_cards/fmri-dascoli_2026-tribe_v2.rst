@@ -143,19 +143,9 @@ Output
        | should not be interpreted as a direct one-to-one mapping from a single stimulus second to the same fMRI second,
        | because fMRI responses are delayed and temporally blurred by the hemodynamic response.
        | TRIBE v2 also uses temporal context, so each prediction can depend on surrounding/preceding stimulus information, not only the current second.
-
-**Dimensions:**
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - n_timesteps
-     - Number of seconds of predicted brain activity (1 per second, depends on stimulus duration)
-   * - n_vertices
-     - Number of cortical vertices in the selection (up to 20,484)
+   * - Dimensions
+     - | **n_timesteps**: Number of seconds of predicted brain activity (1 per second, depends on stimulus duration)
+       | **n_vertices**: Number of cortical vertices in the selection (up to 20,484)
 
 Parameters
 ---------

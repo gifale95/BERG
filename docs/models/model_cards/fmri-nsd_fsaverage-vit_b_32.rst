@@ -53,13 +53,13 @@ Metadata
 
 **fmri**
 
-    **lh_ncsnr** : ``(163842,)`` - Left hemisphere noise-ceiling signal-to-noise ratio per vertex (computed on NSD-core)
+    **lh_ncsnr** : ``(163842,)`` - Left hemisphere noise ceiling signal-to-noise ratio per vertex (computed on NSD-core)
 
-    **rh_ncsnr** : ``(163842,)`` - Right hemisphere noise-ceiling signal-to-noise ratio per vertex (computed on NSD-core)
+    **rh_ncsnr** : ``(163842,)`` - Right hemisphere noise ceiling signal-to-noise ratio per vertex (computed on NSD-core)
 
-    **lh_ncsnr_nsdsynthetic** : ``(163842,)`` - Left hemisphere noise-ceiling signal-to-noise ratio per vertex (computed on NSD-synthetic)
+    **lh_ncsnr_nsdsynthetic** : ``(163842,)`` - Left hemisphere noise ceiling signal-to-noise ratio per vertex (computed on NSD-synthetic)
 
-    **rh_ncsnr_nsdsynthetic** : ``(163842,)`` - Right hemisphere noise-ceiling signal-to-noise ratio per vertex (computed on NSD-synthetic)
+    **rh_ncsnr_nsdsynthetic** : ``(163842,)`` - Right hemisphere noise ceiling signal-to-noise ratio per vertex (computed on NSD-synthetic)
 
     **lh_fsaverage_rois** : ``dict`` - Left hemisphere ROI definitions on fsaverage surface
         **V1v** : ``(710,)`` - Visual area 1 ventral
@@ -260,23 +260,12 @@ Output
    * - Shape
      - ``([batch_size, lh_vertices], [batch_size, rh_vertices])``
    * - Description
-     - The output is a tuple containing the left hemisphere (LH) and right hemisphere (RH) in silico fMRI
-       responses for the batch images.
-
-**Dimensions:**
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - batch_size
-     - Number of stimuli in the batch.
-   * - lh_vertices
-     - Number of selected LH vertices for which the in silico fMRI responses are generated.
-   * - rh_vertices
-     - Number of selected RH vertices for which the in silico fMRI responses are generated.
+     - | The output is a tuple containing the left hemisphere (LH) and right hemisphere (RH) in silico fMRI
+       | responses for the batch images.
+   * - Dimensions
+     - | **batch_size**: Number of stimuli in the batch.
+       | **lh_vertices**: Number of selected LH vertices for which the in silico fMRI responses are generated.
+       | **rh_vertices**: Number of selected RH vertices for which the in silico fMRI responses are generated.
 
 Parameters
 ---------

@@ -94,19 +94,9 @@ Output
      - ``['num_timepoints', 'num_rois']``
    * - Description
      - The predicted fMRI activity for the given stimulus.
-
-**Dimensions:**
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - num_timepoints
-     - Number of TRs (timepoints) in the input stimulus.
-   * - num_rois
-     - Number of Regions of Interest (1000 parcels from Schaefer 2018 atlas).
+   * - Dimensions
+     - | **num_timepoints**: Number of TRs (timepoints) in the input stimulus.
+       | **num_rois**: Number of Regions of Interest (1000 parcels from Schaefer 2018 atlas).
 
 Parameters
 ---------

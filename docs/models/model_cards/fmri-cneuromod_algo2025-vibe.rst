@@ -114,19 +114,9 @@ Output
      - ``['num_timepoints', 'num_parcels']``
    * - Description
      - Predicted fMRI activity for each TR.
-
-**Dimensions:**
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - num_timepoints
-     - Number of predicted TRs.
-   * - num_parcels
-     - Number of parcels (up to 1000 Schaefer parcels, or selected subset).
+   * - Dimensions
+     - | **num_timepoints**: Number of predicted TRs.
+       | **num_parcels**: Number of parcels (up to 1000 Schaefer parcels, or selected subset).
 
 Parameters
 ---------

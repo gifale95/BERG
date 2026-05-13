@@ -140,72 +140,71 @@ Metadata
 Input
 -----
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``[n_frames, height, width] or [n_batches, n_frames, height, width]``  
-**Description**: The input should be a sequence of grayscale video frames, or a batch of video sequences.
-- Single video: shape [n_frames, height, width]
-- Batch of videos: shape [n_batches, n_frames, height, width]
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
 
-
-**Constraints:**
-
-* Frame values should be integers in range [0, 255].
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``[n_frames, height, width] or [n_batches, n_frames, height, width]``
+   * - Description
+     - | The input should be a sequence of grayscale video frames, or a batch of video sequences.
+       | - Single video: shape [n_frames, height, width]
+       | - Batch of videos: shape [n_batches, n_frames, height, width]
+   * - Constraints
+     - * Frame values should be integers in range [0, 255].
 
 Output
 ------
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``[n_frames, n_neurons] or [n_batches, n_frames, n_neurons]``  
-**Description**:  
-The output is a 2D or 3D array containing in silico calcium imaging responses.
-* Single video: shape [n_frames, n_neurons]
-* Batch of videos: shape [n_batches, n_frames, n_neurons]
-
-The last dimension (n_neurons) corresponds to the number of neurons in the selected
-session/scan and ROI combination.
-
-Neuron counts vary by session and scan:
-
-* Session 4, Scan 7:  7,493 neurons
-
-* Session 5, Scan 6:  8,592 neurons
-
-* Session 5, Scan 7:  8,138 neurons
-
-* Session 6, Scan 2:  8,158 neurons
-
-* Session 6, Scan 4:  8,221 neurons
-
-* Session 6, Scan 6:  7,971 neurons
-
-* Session 6, Scan 7:  7,887 neurons
-
-* Session 7, Scan 3:  8,618 neurons
-
-* Session 7, Scan 5:  8,194 neurons
-
-* Session 8, Scan 5:  9,941 neurons
-
-* Session 9, Scan 3:  7,973 neurons
-
-* Session 9, Scan 4:  7,855 neurons
-
-* Session 9, Scan 6:  5,130 neurons
-
-**Dimensions:**
-
 .. list-table::
-   :widths: 30 70
-   :header-rows: 1
+   :widths: 20 80
+   :stub-columns: 1
 
-   * - Name
-     - Description
-   * - n_batches
-     - Number of batches chosen for inference
-   * - n_frames
-     - Number of video frames in the sequence
-   * - n_neurons
-     - Number of neurons in the selected session/scan and ROI
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``[n_frames, n_neurons] or [n_batches, n_frames, n_neurons]``
+   * - Description
+     - | The output is a 2D or 3D array containing in silico calcium imaging responses.
+       | - Single video: shape [n_frames, n_neurons]
+       | - Batch of videos: shape [n_batches, n_frames, n_neurons]
+       | 
+       | The last dimension (n_neurons) corresponds to the number of neurons in the selected
+       | session/scan and ROI combination.
+       | 
+       | Neuron counts vary by session and scan:
+       | 
+       |   - Session 4, Scan 7:  7,493 neurons
+       | 
+       |   - Session 5, Scan 6:  8,592 neurons
+       | 
+       |   - Session 5, Scan 7:  8,138 neurons
+       | 
+       |   - Session 6, Scan 2:  8,158 neurons
+       | 
+       |   - Session 6, Scan 4:  8,221 neurons
+       | 
+       |   - Session 6, Scan 6:  7,971 neurons
+       | 
+       |   - Session 6, Scan 7:  7,887 neurons
+       | 
+       |   - Session 7, Scan 3:  8,618 neurons
+       | 
+       |   - Session 7, Scan 5:  8,194 neurons
+       | 
+       |   - Session 8, Scan 5:  9,941 neurons
+       | 
+       |   - Session 9, Scan 3:  7,973 neurons
+       | 
+       |   - Session 9, Scan 4:  7,855 neurons
+       | 
+       |   - Session 9, Scan 6:  5,130 neurons
+   * - Dimensions
+     - | **n_batches**: Number of batches chosen for inference
+       | **n_frames**: Number of video frames in the sequence
+       | **n_neurons**: Number of neurons in the selected session/scan and ROI
 
 Parameters
 ---------
@@ -350,12 +349,12 @@ Example Usage
     
     # Prepare the stimulus images
     # Image shape should be [batch_size, 3 RGB channels, height, width]
-    images = np.random.randint(0, 255, (100, 3, 256, 256))
+    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
     
-    # Generates the in silico neural responses to images using the encoding model previously loaded
+    # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(
         model,
-        images,
+        stimulus,
         show_progress=True
     )
     
@@ -369,7 +368,7 @@ Example Usage
     # Generate in silico neural responses with metadata
     responses, metadata = berg.encode(
         model,
-        images,
+        stimulus,
         return_metadata=True
     )
     

@@ -134,39 +134,40 @@ Metadata
 Input
 -----
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 3, 'height', 'width']``  
-**Description**: The input should be a batch of RGB images.
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
 
-**Constraints:**
-
-* Image values should be integers in range [0, 255].
-* Image dimensions (height, width) should be equal (square).
-* Minimum recommended image size: 224×224 pixels.
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``['batch_size', 3, 'height', 'width']``
+   * - Description
+     - The input should be a batch of RGB images.
+   * - Constraints
+     - * Image values should be integers in range [0, 255].
+       * Image dimensions (height, width) should be equal (square).
+       * Minimum recommended image size: 224×224 pixels.
 
 Output
 ------
 
-**Type**: ``dict``  
-**Shape**: ``{dataset_name: {subject_id: [batch_size, n_vertices], ...}, ...}``  
-**Description**:  
-Nested dictionary with structure organized by dataset and subject:
-{"BOLD5000": {"sub-01": array, "sub-02": array},
-"NaturalScenesDataset": {"sub-01": array, "sub-02": array}, ...}
-where each array has shape [batch_size, n_vertices] and dtype float32.
-
-**Dimensions:**
-
 .. list-table::
-   :widths: 30 70
-   :header-rows: 1
+   :widths: 20 80
+   :stub-columns: 1
 
-   * - Name
-     - Description
-   * - batch_size
-     - Number of stimuli in the batch.
-   * - n_vertices
-     - Number of visual cortex vertices (up to 7,831, based on ROI/vertex selection).
+   * - Type
+     - ``dict``
+   * - Shape
+     - ``{dataset_name: {subject_id: [batch_size, n_vertices], ...}, ...}``
+   * - Description
+     - | Nested dictionary with structure organized by dataset and subject:
+       | {"BOLD5000": {"sub-01": array, "sub-02": array},
+       |  "NaturalScenesDataset": {"sub-01": array, "sub-02": array}, ...}
+       | where each array has shape [batch_size, n_vertices] and dtype float32.
+   * - Dimensions
+     - | **batch_size**: Number of stimuli in the batch.
+       | **n_vertices**: Number of visual cortex vertices (up to 7,831, based on ROI/vertex selection).
 
 Parameters
 ---------
@@ -335,12 +336,12 @@ Example Usage
     
     # Prepare the stimulus images
     # Image shape should be [batch_size, 3 RGB channels, height, width]
-    images = np.random.randint(0, 255, (100, 3, 256, 256))
+    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
     
-    # Generates the in silico neural responses to images using the encoding model previously loaded
+    # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(
         model,
-        images,
+        stimulus,
         show_progress=True
     )
     
@@ -352,7 +353,7 @@ Example Usage
     # Generate in silico neural responses with metadata
     responses, metadata = berg.encode(
         model,
-        images,
+        stimulus,
         return_metadata=True
     )
     
