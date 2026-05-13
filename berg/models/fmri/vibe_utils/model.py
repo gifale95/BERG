@@ -118,7 +118,7 @@ class VIBEModel(nn.Module):
 
         head_dim = fused_dim // self.config.predictor_transformer_num_heads
 
-        use_flash = (self.device == "cuda" and torch.cuda.is_available())
+        use_flash = False  # self.device == "cuda" and torch.cuda.is_available())
         self.predictor = Encoder(
             dim=fused_dim,
             depth=self.config.predictor_transformer_num_layers,
@@ -166,7 +166,7 @@ class VIBEModel(nn.Module):
             filename="model.safetensors",
             cache_dir=cache_dir
         )
-        state_dict = load_file(weights_path, device=self.device)
+        state_dict = load_file(weights_path, device="cpu")
         if any(k.startswith("module.") for k in state_dict):
             state_dict = {k.replace("module.", "", 1): v for k, v in state_dict.items()}
         state_dict.pop("n_averaged", None)

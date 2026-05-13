@@ -43,9 +43,13 @@ dependencies = [
     "fnn @ git+https://github.com/cajal/fnn.git",
     "transformers>=4.46.3",
     "huggingface-hub>=0.36.0",
-    "x-transformers>=2.0.0",
+    "x-transformers==1.27.0",
+    "tribev2 @ git+https://github.com/facebookresearch/tribev2.git",
+    "uv",
+    "tables",
     "eva-decord==0.6.1",
     "safetensors>=0.5.3",
+    "himalaya"
 ]
 
 [project.optional-dependencies]
