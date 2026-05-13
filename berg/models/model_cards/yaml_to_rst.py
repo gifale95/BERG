@@ -998,5 +998,6 @@ if __name__ == "__main__":
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-nsd-fwrf.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/fmri-things_fmri_1-vit_b_32.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/meg-things_meg_1-vit_b_32.yaml
-# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/utah_array-tvsd-vit_b_32.yaml# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/meg-things_meg_1-vit_b_32.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/utah_array-tvsd-vit_b_32.yaml
+# python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/meg-things_meg_1-vit_b_32.yaml
 # python berg/models/model_cards/yaml_to_rst.py berg/models/model_cards/utah_array-tvsd-vit_b_32.yaml
