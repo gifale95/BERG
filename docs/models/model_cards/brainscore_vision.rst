@@ -115,19 +115,9 @@ Output
      - ``['batch_size', 'n_units']``
    * - Description
      - Neural responses for specified recording target
-
-**Dimensions:**
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - batch_size
-     - Number of stimuli
-   * - n_units
-     - Number of neural units (varies by model and recording target)
+   * - Dimensions
+     - | **batch_size**: Number of stimuli
+       | **n_units**: Number of neural units (varies by model and recording target)
 
 Parameters
 ---------

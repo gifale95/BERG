@@ -94,19 +94,9 @@ Output
      - ``['n_sentences', 'n_voxels']``
    * - Description
      - Predicted BOLD voxel responses for each sentence
-
-**Dimensions:**
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - n_sentences
-     - Number of input sentences
-   * - n_voxels
-     - ~1,350 voxel per subject
+   * - Dimensions
+     - | **n_sentences**: Number of input sentences
+       | **n_voxels**: ~1,350 voxel per subject
 
 Parameters
 ---------

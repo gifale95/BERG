@@ -95,36 +95,37 @@ Metadata
 Input
 -----
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 3, 'height', 'width']``  
-**Description**: The input should be a batch of RGB images.
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
 
-**Constraints:**
-
-* Image values should be integers in range [0, 255].
-* Image dimensions (height, width) should be equal (square).
-* Minimum recommended image size: 224×224 pixels.
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``['batch_size', 3, 'height', 'width']``
+   * - Description
+     - The input should be a batch of RGB images.
+   * - Constraints
+     - * Image values should be integers in range [0, 255].
+       * Image dimensions (height, width) should be equal (square).
+       * Minimum recommended image size: 224×224 pixels.
 
 Output
 ------
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 'n_voxels']``  
-**Description**:  
-The output is a 2D array containing in silico fMRI responses.
-
-**Dimensions:**
-
 .. list-table::
-   :widths: 30 70
-   :header-rows: 1
+   :widths: 20 80
+   :stub-columns: 1
 
-   * - Name
-     - Description
-   * - batch_size
-     - Number of stimuli in the batch.
-   * - n_voxels
-     - Number of voxels (up to 211,339, based on ROI selection).
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``['batch_size', 'n_voxels']``
+   * - Description
+     - The output is a 2D array containing in silico fMRI responses.
+   * - Dimensions
+     - | **batch_size**: Number of stimuli in the batch.
+       | **n_voxels**: Number of voxels (up to 211,339, based on ROI selection).
 
 Parameters
 ---------
@@ -268,12 +269,12 @@ Example Usage
     
     # Prepare the stimulus images
     # Image shape should be [batch_size, 3 RGB channels, height, width]
-    images = np.random.randint(0, 255, (100, 3, 256, 256))
+    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
     
-    # Generates the in silico neural responses to images using the encoding model previously loaded
+    # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(
         model,
-        images,
+        stimulus,
         show_progress=True
     )
     
@@ -285,7 +286,7 @@ Example Usage
     # Generate in silico neural responses with metadata
     responses, metadata = berg.encode(
         model,
-        images,
+        stimulus,
         return_metadata=True
     )
     

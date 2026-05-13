@@ -59,7 +59,6 @@ Metadata
     **ncsnr** : ``(63, 140)`` - Noise ceiling signal-to-noise ratio
 
     **noise_ceiling** : ``(63, 140)`` - Noise ceiling
-
 **encoding_models**
 
     **correlation_averaged_repetitions** : ``(63, 140)`` - Correlation scores across channels and time (averaged over repetitions)
@@ -83,40 +82,39 @@ Metadata
 Input
 -----
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 3, 'height', 'width']``  
-**Description**: The input should be a batch of RGB images.
+.. list-table::
+   :widths: 20 80
+   :stub-columns: 1
 
-**Constraints:**
-
-* Image values should be integers in range [0, 255].
-* Image dimensions (height, width) should be equal (square).
-* Minimum recommended image size: 224×224 pixels.
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``['batch_size', 3, 'height', 'width']``
+   * - Description
+     - The input should be a batch of RGB images.
+   * - Constraints
+     - * Image values should be integers in range [0, 255].
+       * Image dimensions (height, width) should be equal (square).
+       * Minimum recommended image size: 224×224 pixels.
 
 Output
 ------
 
-**Type**: ``numpy.ndarray``  
-**Shape**: ``['batch_size', 'n_repetitions', 'n_channels', 'n_timepoints']``  
-**Description**:  
-The output is a 4D array containing in silico EEG responses.
-
-**Dimensions:**
-
 .. list-table::
-   :widths: 30 70
-   :header-rows: 1
+   :widths: 20 80
+   :stub-columns: 1
 
-   * - Name
-     - Description
-   * - batch_size
-     - Number of stimuli in the batch.
-   * - n_repetitions
-     - Number of simulated repetitions of the same stimulus (always 4).
-   * - n_channels
-     - Number of EEG channels (up to 63, based on the number of channels selected).
-   * - n_timepoints
-     - Number of time points in the EEG epoch (up to 140, based on the number of time points selected).
+   * - Type
+     - ``numpy.ndarray``
+   * - Shape
+     - ``['batch_size', 'n_repetitions', 'n_channels', 'n_timepoints']``
+   * - Description
+     - The output is a 4D array containing in silico EEG responses.
+   * - Dimensions
+     - | **batch_size**: Number of stimuli in the batch.
+       | **n_repetitions**: Number of simulated repetitions of the same stimulus (always 4).
+       | **n_channels**: Number of EEG channels (up to 63, based on the number of channels selected).
+       | **n_timepoints**: Number of time points in the EEG epoch (up to 140, based on the number of time points selected).
 
 Parameters
 ---------
@@ -251,16 +249,16 @@ Example Usage
     
     # Prepare the stimulus images
     # Image shape should be [batch_size, 3 RGB channels, height, width]
-    images = np.random.randint(0, 255, (100, 3, 256, 256))
+    stimulus = np.random.randint(0, 255, (100, 3, 256, 256))
     
-    # Generates the in silico neural responses to images using the encoding model previously loaded
+    # Generates the in silico neural responses using the encoding model previously loaded
     responses = berg.encode(
         model,
-        images,
+        stimulus,
         show_progress=True
     )
     
-    # The in silico EEG responses will be a numpy.ndarray of shape:
+    # The in silico fMRI responses will be a numpy.ndarray of shape:
     # ['batch_size', 'n_repetitions', 'n_channels', 'n_timepoints']
     # where:
     # - n_repetitions: Number of simulated repetitions of the same stimulus (always 4).
@@ -270,7 +268,7 @@ Example Usage
     # Generate in silico neural responses with metadata
     responses, metadata = berg.encode(
         model,
-        images,
+        stimulus,
         return_metadata=True
     )
     

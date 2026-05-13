@@ -43,7 +43,7 @@ More detailed preprocessing steps are described in the TVSD paper.
 **Model training partition.** Single-trial spiking responses to 22,248 unique images from the THINGS database, each
 presented once during passive fixation, were used for training. One set of encoding models are trained on the full training data. Another set of encoding
 models are trained on four independent training data random splits (of 5,562 trials each), therefore generating
-four different in silico spiking response predictions (i.e., repetitions) per image.
+four different in silico spiking response predictions (i.e., repetitions) per image. A unique PCA random seed is derived for each combination of monkey and training split, ensuring independent PCA bases across encoding models.
 
 **Model testing partition.** Spiking responses to 100 unique images, each repeated 30 times.
 
@@ -157,41 +157,29 @@ Output
    * - Shape
      - ``[batch_size, n_electrodes, n_timepoints] or [batch_size, repeats, n_electrodes, n_timepoints]``
    * - Description
-     - The output is a 3D or 4D array containing in silico utah-array responses.
-       The second dimension varies based on train_splits parameter:
-       - When train_splits="all": shape is [batch_size, n_electrodes, n_timepoints]
-       - When train_splits="single": shape is [batch_size, repeats, n_electrodes, n_timepoints]
-       
-       The n_electrodes dimension corresponds to the number of electrodes in the selected ROI,
-       which varies by ROI and monkey.
-       The third dimension corresponds to the timepoints (300).
-       
-       Monkey N electrode count:
-       - V1: 448
-       - V4: 256
-       - IT: 256
-       
-       Monkey F electrode count:
-       - V1: 512
-       - V4: 192
-       - IT: 320
-
-**Dimensions:**
-
-.. list-table::
-   :widths: 30 70
-   :header-rows: 1
-
-   * - Name
-     - Description
-   * - batch_size
-     - Number of stimuli in the batch
-   * - repeats
-     - Number of simulated repetitions of the same stimulus (always 4; only applies when using the encoding models trained on single training data splits)
-   * - n_electrodes
-     - Number of electrodes in the selection
-   * - timepoints
-     - Timepoints of recording
+     - | The output is a 3D or 4D array containing in silico utah-array responses.
+       | The second dimension varies based on train_splits parameter:
+       |   - When train_splits="all": shape is [batch_size, n_electrodes, n_timepoints]
+       |   - When train_splits="single": shape is [batch_size, repeats, n_electrodes, n_timepoints]
+       | 
+       | The n_electrodes dimension corresponds to the number of electrodes in the selected ROI,
+       | which varies by ROI and monkey.
+       | The third dimension corresponds to the timepoints (300).
+       | 
+       | Monkey N electrode count:
+       |   - V1: 448
+       |   - V4: 256
+       |   - IT: 256
+       | 
+       | Monkey F electrode count:
+       |   - V1: 512
+       |   - V4: 192
+       |   - IT: 320
+   * - Dimensions
+     - | **batch_size**: Number of stimuli in the batch
+       | **repeats**: Number of simulated repetitions of the same stimulus (always 4; only applies when using the encoding models trained on single training data splits)
+       | **n_electrodes**: Number of electrodes in the selection
+       | **timepoints**: Timepoints of recording
 
 Parameters
 ---------
