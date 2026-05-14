@@ -382,9 +382,7 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc',
     'stats', f'cv-{args.cv}', (f'time_window_1-{args.time_window_1_start}_'
     f'{args.time_window_1_end}__time_window_2-{args.time_window_2_start}_'
     f'{args.time_window_2_end}'))
-
-if os.path.isdir(save_dir) == False:
-    os.makedirs(save_dir)
+os.makedirs(save_dir, exist_ok=True)
 
 file_name = f'stats_roi-{args.roi}.npy'
 
