@@ -7,7 +7,7 @@ name = "BERG"
 dynamic = ["version"]
 description = "Brain Encoding Response Generator"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 license = {text = "MIT"}  # Update this to your actual license
 maintainers = [
     {name = "Alessandro Gifford", email = "alessandro.gifford@gmail.com"}
@@ -43,8 +43,7 @@ dependencies = [
     "fnn @ git+https://github.com/cajal/fnn.git",
     "transformers>=4.46.3",
     "huggingface-hub>=0.36.0",
-    "x-transformers==1.27.0",
-    "tribev2 @ git+https://github.com/facebookresearch/tribev2.git",
+    "x-transformers==1.27.20",
     "uv",
     "tables",
     "eva-decord==0.6.1",
@@ -53,6 +52,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+full = [
+    "tribev2 @ git+https://github.com/facebookresearch/tribev2.git",
+]
 brainscore = [
     "brainscore-vision",
     "brainscore-language",
