@@ -7,6 +7,7 @@ from berg.core.model_registry import (
     get_model_class
 )
 from berg.interfaces.base_model import BaseModelInterface
+import importlib.util
 
 
 class BERG:
@@ -100,6 +101,13 @@ class BERG:
         """
         import sys
         models = get_available_models()
+        
+        if importlib.util.find_spec("tribev2") is None:
+            print(
+                "[TRIBEv2] TRIBEv2 is not installed.\n"
+                "  To install: pip install berg[full]\n"
+                "  Note: TRIBEv2 and BrainScore cannot coexist due to a NumPy version conflict.\n"
+            )
 
         if expand_brainscore_vision and "brainscore_vision" in models:
             try:

@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import torch
 import yaml
+import importlib.util
 
 from berg.core.exceptions import (
     InvalidParameterError,
@@ -46,20 +47,21 @@ def load_model_info():
 
 model_info = load_model_info()
 
-register_model(
-    model_id=model_info["model_id"],
-    module_path="berg.models.fmri.dascoli_2026_tribe_v2",
-    class_name="TribeV2EncodingModel",
-    modality=model_info.get("modality", "fmri"),
-    training_dataset=model_info.get("training_dataset", "dascoli_2026"),
-    yaml_path=os.path.join(
-        os.path.dirname(__file__),
-        "..",
-        "model_cards",
-        "fmri-dascoli_2026-tribe_v2.yaml",
-    ),
-)
 
+if importlib.util.find_spec("tribev2") is not None:
+    register_model(
+        model_id=model_info["model_id"],
+        module_path="berg.models.fmri.dascoli_2026_tribe_v2",
+        class_name="TribeV2EncodingModel",
+        modality=model_info.get("modality", "fmri"),
+        training_dataset=model_info.get("training_dataset", "dascoli_2026"),
+        yaml_path=os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "model_cards",
+            "fmri-dascoli_2026-tribe_v2.yaml",
+        ),
+    )
 
 # =============================================================================
 # Supported stimulus file extensions

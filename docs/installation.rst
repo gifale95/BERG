@@ -4,26 +4,33 @@ This guide covers how to install the Brain Encoding Response Generator (BERG) `P
 
 Install BERG
 ------------
-Install BERG from GitHub using pip:
-
-.. code-block:: bash
-
-   pip install -U git+https://github.com/gifale95/BERG.git
-
-Install BrainScore Models (Optional)
------------------------------
-BERG integrates with `BrainScore <https://www.brain-score.org>`_, giving you access to hundreds of vision models scored against macaque electrophysiology recordings (V1, V2, V4, IT), as well as GPT-family language models scored against human fMRI data.
 
 .. note::
 
-   BrainScore requires **Python 3.11** specifically. If you are on a different Python version, the rest of BERG will work normally — only BrainScore models will be unavailable.
+   BERG requires **Python ≥ 3.11**.
 
-To install BERG with BrainScore support, run both of the following commands:
+Recommended (includes TRIBEv2)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. code-block:: bash
 
-   pip install -U git+https://github.com/gifale95/BERG.git
-   pip install berg[brainscore]
+   pip install -U "berg[full] @ git+https://github.com/gifale95/BERG.git"
+
+We recommend creating a dedicated conda environment:
+
+.. code-block:: bash
+
+   conda create -n berg python=3.11
+   conda activate berg
+   pip install -U "berg[full] @ git+https://github.com/gifale95/BERG.git"
+
+BrainScore (optional, replaces TRIBEv2)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+BERG integrates with `BrainScore <https://www.brain-score.org>`_, giving you access to hundreds of vision models scored against macaque electrophysiology recordings (V1, V2, V4, IT), as well as GPT-family language models scored against human fMRI data.
+
+.. code-block:: bash
+
+   pip install -U "berg[brainscore] @ git+https://github.com/gifale95/BERG.git"
 
 We recommend creating a dedicated conda environment for this:
 
@@ -31,8 +38,29 @@ We recommend creating a dedicated conda environment for this:
 
    conda create -n berg_brainscore python=3.11
    conda activate berg_brainscore
-   pip install -U git+https://github.com/gifale95/BERG.git
-   pip install berg[brainscore]
+   pip install -U "berg[brainscore] @ git+https://github.com/gifale95/BERG.git"
+
+.. note::
+
+   TRIBEv2 and BrainScore cannot be installed together due to a NumPy version conflict. Choose one depending on your use case. BrainScore requires **Python = 3.11** specifically.
+
+Switching between versions
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+If you already have one version installed and want to switch, uninstall the conflicting packages first:
+
+**Full → BrainScore:**
+
+.. code-block:: bash
+
+   pip uninstall tribev2 neuralset neuraltrain -y
+   pip install -e ".[brainscore]"
+
+**BrainScore → Full:**
+
+.. code-block:: bash
+
+   pip uninstall brainscore-vision brainscore-language -y
+   pip install -e ".[full]"
 
 Verify Installation
 -------------------
