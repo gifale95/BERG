@@ -58,6 +58,7 @@ full = [
 brainscore = [
     "brainscore-vision",
     "brainscore-language",
+    "pandas<2.2",
 ]
 
 [project.urls]

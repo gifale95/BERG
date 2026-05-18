@@ -43,6 +43,22 @@ pip install -U "berg[brainscore] @ git+https://github.com/gifale95/BERG.git"
 
 > **Note:** TRIBEv2 and BrainScore cannot be installed together due to a NumPy version conflict. Choose one depending on your use case. BrainScore requires Python = 3.11 specifically.
 
+#### Switching between versions
+
+If you already have one version installed and want to switch, uninstall the conflicting packages first:
+
+**Full → BrainScore:**
+```shell
+pip uninstall tribev2 neuralset neuraltrain -y
+pip install -e ".[brainscore]"
+```
+
+**BrainScore → Full:**
+```shell
+pip uninstall brainscore-vision brainscore-language -y
+pip install -e ".[full]"
+```
+
 
 
 ## 🕹️ How to use
