@@ -1,6 +1,6 @@
-"""Test whether the controlling images found using the t-fMRI responses of one
-subject generalize to the in t-fMRI responses of the other subject. Stats
-include confidence intervals and significance.
+"""Test whether the controlling images found using the t-fMRI responses of the
+train subjects generalize to the in t-fMRI responses of the left-out subject.
+Stats include confidence intervals and significance.
 
 Parameters
 ----------
@@ -9,14 +9,8 @@ cv : int
     cross-validation, if '0' univariate RNC uses the data of all subjects.
 roi: str
     Used ROI.
-time_window_1_start: float
-    The starting point, in seconds, of first time window of interest.
-time_window_1_end: float
-    The ending point, in seconds, of first time window of interest.
-time_window_2_start: float
-    The starting point, in seconds, of second time window of interest.
-time_window_2_end: float
-    The ending point, in seconds, of second time window of interest.
+time_window_pair: str
+    A string specifying the two time windows of interest.
 n_images: int
     Number of retained controlling or baseline images.
 n_iter : int
@@ -39,12 +33,9 @@ from statsmodels.stats.multitest import multipletests
 from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cv', type=int, default=0)
+parser.add_argument('--cv', type=int, default=1)
 parser.add_argument('--roi', default='V1', type=str)
-parser.add_argument('--time_window_1_start', default=0.06, type=float)
-parser.add_argument('--time_window_1_end', default=0.1, type=float)
-parser.add_argument('--time_window_2_start', default=0.1, type=float)
-parser.add_argument('--time_window_2_end', default=0.2, type=float)
+parser.add_argument('--time_window_pair', default='0.05-0.10__0.10-0.15', type=str)
 parser.add_argument('--n_images', default=100, type=int)
 parser.add_argument('--n_iter', type=int, default=100000)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -59,6 +50,15 @@ for key, val in vars(args).items():
 seed = 20200220
 random.seed(seed)
 np.random.seed(seed)
+
+
+# =============================================================================
+# Break down the time windows
+# =============================================================================
+time_window_1_start, time_window_1_end = map(
+    float, args.time_window_pair.split('__')[0].split('-'))
+time_window_2_start, time_window_2_end = map(
+    float, args.time_window_pair.split('__')[1].split('-'))
 
 
 # =============================================================================
@@ -92,14 +92,14 @@ metadata_eeg = berg.get_model_metadata(
 times = np.round(metadata_eeg['eeg']['times'], 3)
 
 # Get the time window indices
-t_min_1 = np.where(times == args.time_window_1_start)[0][0]
-t_max_1 = np.where(times == args.time_window_1_end)[0][0]
-t_min_2 = np.where(times == args.time_window_2_start)[0][0]
-t_max_2 = np.where(times == args.time_window_2_end)[0][0]
+t_min_1 = np.where(times == time_window_1_start)[0][0]
+t_max_1 = np.where(times == time_window_1_end)[0][0]
+t_min_2 = np.where(times == time_window_2_start)[0][0]
+t_max_2 = np.where(times == time_window_2_end)[0][0]
 
 # Average the t-fMRI responses within the two time windows of interest
-tfmri_1 = np.mean(tfmri[:,:,t_min_1:t_max_1+1], 2)
-tfmri_2 = np.mean(tfmri[:,:,t_min_2:t_max_2+1], 2)
+tfmri_1 = np.mean(tfmri[:,:,t_min_1:t_max_1], 2)
+tfmri_2 = np.mean(tfmri[:,:,t_min_2:t_max_2], 2)
 
 
 # =============================================================================
@@ -110,12 +110,10 @@ control_types = ['high_1_high_2', 'low_1_low_2', 'high_1_low_2',
 controlling_images = {}
 
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc',
-    'quantitative_results', f'cv-{args.cv}', (f'time_window_1-'
-    f'{args.time_window_1_start}_{args.time_window_1_end}__time_window_2-'
-    f'{args.time_window_2_start}_{args.time_window_2_end}'))
+    'quantitative_results', f'cv-{args.cv}', args.time_window_pair)
 
 if args.cv == 0:
-    file_name = 'image_ranking.npy'
+    file_name = f'image_ranking_roi-{args.roi}.npy'
     data_dict = np.load(os.path.join(data_dir, file_name),
         allow_pickle=True).item()
     times = data_dict['times']
@@ -127,7 +125,7 @@ elif args.cv == 1:
     for ct in control_types:
         controlling_images[ct] = []
     for s in all_subjects:
-        file_name = f'image_ranking_cv_subject-{s:02d}.npy'
+        file_name = f'image_ranking_cv_subject-{s:02d}_roi-{args.roi}.npy'
         data_dict = np.load(os.path.join(data_dir, file_name),
             allow_pickle=True).item()
         times = data_dict['times']
@@ -142,9 +140,7 @@ elif args.cv == 1:
 # Load the univariate RNC baseline images
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc', 'baseline',
-    f'cv-{args.cv}', (f'time_window_1-{args.time_window_1_start}_'
-    f'{args.time_window_1_end}__time_window_2-{args.time_window_2_start}_'
-    f'{args.time_window_2_end}'))
+    f'cv-{args.cv}', args.time_window_pair)
 baseline_images = {}
 
 if args.cv == 0:
@@ -337,10 +333,10 @@ elif args.cv == 1:
 if args.cv == 0:
     stats = {
         'times': times,
-        'time_window_1_start': args.time_window_1_start,
-        'time_window_1_end': args.time_window_1_end,
-        'time_window_2_start': args.time_window_2_start,
-        'time_window_2_end': args.time_window_2_end,
+        'time_window_1_start': time_window_1_start,
+        'time_window_1_end': time_window_1_end,
+        'time_window_2_start': time_window_2_start,
+        'time_window_2_end': time_window_2_end,
         'tfmri_1': tfmri_1,
         'tfmri_2': tfmri_2,
         'control_types': control_types,
@@ -352,10 +348,10 @@ if args.cv == 0:
 elif args.cv == 1:
     stats = {
         'times': times,
-        'time_window_1_start': args.time_window_1_start,
-        'time_window_1_end': args.time_window_1_end,
-        'time_window_2_start': args.time_window_2_start,
-        'time_window_2_end': args.time_window_2_end,
+        'time_window_1_start': time_window_1_start,
+        'time_window_1_end': time_window_1_end,
+        'time_window_2_start': time_window_2_start,
+        'time_window_2_end': time_window_2_end,
         'tfmri_1': tfmri_1,
         'tfmri_2': tfmri_2,
         'control_types': control_types,
@@ -379,9 +375,7 @@ elif args.cv == 1:
         }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc',
-    'stats', f'cv-{args.cv}', (f'time_window_1-{args.time_window_1_start}_'
-    f'{args.time_window_1_end}__time_window_2-{args.time_window_2_start}_'
-    f'{args.time_window_2_end}'))
+    'stats', f'cv-{args.cv}', args.time_window_pair)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = f'stats_roi-{args.roi}.npy'

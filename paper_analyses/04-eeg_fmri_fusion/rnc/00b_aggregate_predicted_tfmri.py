@@ -1,4 +1,4 @@
-"""Aggregate the t-fMRI univariate responses for the ILSVRC-2012 training
+"""Aggregate the t-fMRI univariate responses for the ILSVRC-2012 validation
 images into h5py files.
 
 Parameters

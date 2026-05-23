@@ -18,14 +18,8 @@ cv_subject : int
     subjects.
 roi: str
     Used ROI.
-time_window_1_start: float
-    The starting point, in seconds, of first time window of interest.
-time_window_1_end: float
-    The ending point, in seconds, of first time window of interest.
-time_window_2_start: float
-    The starting point, in seconds, of second time window of interest.
-time_window_2_end: float
-    The ending point, in seconds, of second time window of interest.
+time_window_pair: str
+    A string specifying the two time windows of interest.
 n_images: int
     Number of retained controlling or baseline images.
 n_iter : int
@@ -49,10 +43,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, default=1)
 parser.add_argument('--cv_subject', type=int, default=1)
 parser.add_argument('--roi', default='V1', type=str)
-parser.add_argument('--time_window_1_start', default=0.06, type=float)
-parser.add_argument('--time_window_1_end', default=0.1, type=float)
-parser.add_argument('--time_window_2_start', default=0.1, type=float)
-parser.add_argument('--time_window_2_end', default=0.2, type=float)
+parser.add_argument('--time_window_pair', default='0.05-0.10__0.10-0.15', type=str)
 parser.add_argument('--n_images', default=100, type=int)
 parser.add_argument('--n_iter', type=int, default=100000)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -67,6 +58,15 @@ for key, val in vars(args).items():
 seed = 20200220
 random.seed(seed)
 np.random.seed(seed)
+
+
+# =============================================================================
+# Break down the time windows
+# =============================================================================
+time_window_1_start, time_window_1_end = map(
+    float, args.time_window_pair.split('__')[0].split('-'))
+time_window_2_start, time_window_2_end = map(
+    float, args.time_window_pair.split('__')[1].split('-'))
 
 
 # =============================================================================
@@ -113,24 +113,24 @@ metadata_eeg = berg.get_model_metadata(
 times = np.round(metadata_eeg['eeg']['times'], 3)
 
 # Get the time window indices
-t_min_1 = np.where(times == args.time_window_1_start)[0][0]
-t_max_1 = np.where(times == args.time_window_1_end)[0][0]
-t_min_2 = np.where(times == args.time_window_2_start)[0][0]
-t_max_2 = np.where(times == args.time_window_2_end)[0][0]
+t_min_1 = np.where(times == time_window_1_start)[0][0]
+t_max_1 = np.where(times == time_window_1_end)[0][0]
+t_min_2 = np.where(times == time_window_2_start)[0][0]
+t_max_2 = np.where(times == time_window_2_end)[0][0]
 
 # Average the t-fMRI responses and baseline scores within the two time windows
 # of interest
 if args.cv == 0:
     tfmri = {}
-    tfmri['time_window_1'] = np.mean(tfmri_mean[:,t_min_1:t_max_1+1], 1)
-    tfmri['time_window_2'] = np.mean(tfmri_mean[:,t_min_2:t_max_2+1], 1)
+    tfmri['time_window_1'] = np.mean(tfmri_mean[:,t_min_1:t_max_1], 1)
+    tfmri['time_window_2'] = np.mean(tfmri_mean[:,t_min_2:t_max_2], 1)
 elif args.cv == 1:
     tfmri_train = {}
     tfmri_test = {}
-    tfmri_train['time_window_1'] = np.mean(tfmri_tr[:,t_min_1:t_max_1+1], 1)
-    tfmri_train['time_window_2'] = np.mean(tfmri_tr[:,t_min_2:t_max_2+1], 1)
-    tfmri_test['time_window_1'] = np.mean(tfmri_te[:,t_min_1:t_max_1+1], 1)
-    tfmri_test['time_window_2'] = np.mean(tfmri_te[:,t_min_2:t_max_2+1], 1)
+    tfmri_train['time_window_1'] = np.mean(tfmri_tr[:,t_min_1:t_max_1], 1)
+    tfmri_train['time_window_2'] = np.mean(tfmri_tr[:,t_min_2:t_max_2], 1)
+    tfmri_test['time_window_1'] = np.mean(tfmri_te[:,t_min_1:t_max_1], 1)
+    tfmri_test['time_window_2'] = np.mean(tfmri_te[:,t_min_2:t_max_2], 1)
     del tfmri_tr, tfmri_te
 
 
@@ -205,9 +205,7 @@ elif args.cv == 1:
     }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc', 'baseline',
-    f'cv-{args.cv}', (f'time_window_1-{args.time_window_1_start}_'
-    f'{args.time_window_1_end}__time_window_2-{args.time_window_2_start}_'
-    f'{args.time_window_2_end}'))
+    f'cv-{args.cv}', args.time_window_pair)
 os.makedirs(save_dir, exist_ok=True)
 
 if args.cv == 0:

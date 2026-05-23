@@ -8,16 +8,22 @@
 
 # Create the parameters combinations
 declare -a roi_all
+declare -a time_window_pair_all
 index=0
 for r in 'V1' 'hV4' 'ventral' ; do
-    roi_all[$index]=$r
-    ((index=index+1))
+    for t in '0.05-0.10__0.10-0.15' '0.05-0.10__0.15-0.20' '0.05-0.10__0.20-0.25' '0.10-0.15__0.15-0.20' '0.10-0.15__0.20-0.25' '0.15-0.20__0.20-0.25' ; do
+        roi_all[$index]=$r
+        time_window_pair_all[$index]=$t
+        ((index=index+1))
+    done
 done
 
 # Extract the parameters
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
 roi=${roi_all[$SLURM_ARRAY_TASK_ID]}
+time_window_pair=${time_window_pair_all[$SLURM_ARRAY_TASK_ID]}
 echo roi: $roi
+echo time_window_pair: $time_window_pair
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
@@ -27,4 +33,4 @@ conda activate berg
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/rnc
 
 # Run the job
-python 01_rnc_baseline.py --cv '0' --roi $roi
+python 01_rnc_baseline.py --cv '0' --roi $roi --time_window_pair $time_window_pair

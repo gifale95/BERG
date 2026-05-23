@@ -12,14 +12,8 @@ cv_subject : int
     subjects.
 roi: str
     Used ROI.
-time_window_1_start: float
-    The starting point, in seconds, of first time window of interest.
-time_window_1_end: float
-    The ending point, in seconds, of first time window of interest.
-time_window_2_start: float
-    The starting point, in seconds, of second time window of interest.
-time_window_2_end: float
-    The ending point, in seconds, of second time window of interest.
+time_window_pair: str
+    A string specifying the two time windows of interest.
 n_images: int
     Number of retained controlling or baseline images.
 berg_dir : str
@@ -34,13 +28,10 @@ from berg import BERG
 import h5py
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cv', type=int, default=0)
+parser.add_argument('--cv', type=int, default=1)
 parser.add_argument('--cv_subject', type=int, default=1)
 parser.add_argument('--roi', default='V1', type=str)
-parser.add_argument('--time_window_1_start', default=0.06, type=float)
-parser.add_argument('--time_window_1_end', default=0.1, type=float)
-parser.add_argument('--time_window_2_start', default=0.1, type=float)
-parser.add_argument('--time_window_2_end', default=0.2, type=float)
+parser.add_argument('--time_window_pair', default='0.05-0.10__0.10-0.15', type=str)
 parser.add_argument('--n_images', default=100, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -49,6 +40,15 @@ print('>>> Univariate RNC <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
+
+
+# =============================================================================
+# Break down the time windows
+# =============================================================================
+time_window_1_start, time_window_1_end = map(
+    float, args.time_window_pair.split('__')[0].split('-'))
+time_window_2_start, time_window_2_end = map(
+    float, args.time_window_pair.split('__')[1].split('-'))
 
 
 # =============================================================================
@@ -61,9 +61,7 @@ all_subjects = [1, 2, 3, 4, 5, 6, 7, 8]
 # Load the univariante RNC baseline scores, and average them across images
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc', 'baseline',
-    f'cv-{args.cv}', (f'time_window_1-{args.time_window_1_start}_'
-    f'{args.time_window_1_end}__time_window_2-{args.time_window_2_start}_'
-    f'{args.time_window_2_end}'))
+    f'cv-{args.cv}', args.time_window_pair)
 
 if args.cv == 0:
     file_name = f'baseline_roi-{args.roi}.npy'
@@ -115,14 +113,14 @@ metadata_eeg = berg.get_model_metadata(
 times = np.round(metadata_eeg['eeg']['times'], 3)
 
 # Get the time window indices
-t_min_1 = np.where(times == args.time_window_1_start)[0][0]
-t_max_1 = np.where(times == args.time_window_1_end)[0][0]
-t_min_2 = np.where(times == args.time_window_2_start)[0][0]
-t_max_2 = np.where(times == args.time_window_2_end)[0][0]
+t_min_1 = np.where(times == time_window_1_start)[0][0]
+t_max_1 = np.where(times == time_window_1_end)[0][0]
+t_min_2 = np.where(times == time_window_2_start)[0][0]
+t_max_2 = np.where(times == time_window_2_end)[0][0]
 
 # Average the t-fMRI responses within the two time windows of interest
-tfmri_1 = np.mean(tfmri_mean[:,t_min_1:t_max_1+1], 1)
-tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2+1], 1)
+tfmri_1 = np.mean(tfmri_mean[:,t_min_1:t_max_1], 1)
+tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2], 1)
 
 
 # =============================================================================
@@ -180,10 +178,10 @@ low_1_high_2 = low_1_high_2[~np.isnan(low_1_high_2)].astype(np.int32)
 # =============================================================================
 data_dict = {
     'times': times,
-    'time_window_1_start': args.time_window_1_start,
-    'time_window_1_end': args.time_window_1_end,
-    'time_window_2_start': args.time_window_2_start,
-    'time_window_2_end': args.time_window_2_end,
+    'time_window_1_start': time_window_1_start,
+    'time_window_1_end': time_window_1_end,
+    'time_window_2_start': time_window_2_start,
+    'time_window_2_end': time_window_2_end,
     'tfmri_1': tfmri_1,
     'tfmri_2': tfmri_2,
     'controlling_images': {
@@ -195,9 +193,7 @@ data_dict = {
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc',
-    'quantitative_results', f'cv-{args.cv}', (f'time_window_1-'
-    f'{args.time_window_1_start}_{args.time_window_1_end}__time_window_2-'
-    f'{args.time_window_2_start}_{args.time_window_2_end}'))
+    'quantitative_results', f'cv-{args.cv}', args.time_window_pair)
 os.makedirs(save_dir, exist_ok=True)
 
 if args.cv == 0:

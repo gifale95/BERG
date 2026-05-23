@@ -9,6 +9,10 @@ fmri_subjects : list
 eeg_train_trials : list
     List indicating which training EEG response trials are used. Possible
     values  are: 'even' (even trials), and 'odd' (odd trials).
+rois : list
+    List of ROIs used for the Granger Causality analysis.
+tot_time_splits : int
+    The total number of splits in which the EEG time points are divided.
 regression : str
     The type of regression to use for computing Granger Causality. If 'linear',
     use linear regression. If 'ridge', use RidgeCV regression.
@@ -30,6 +34,8 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--eeg_train_trials', default=['even', 'odd'], type=list)
+parser.add_argument('--rois', default=['V1', 'hV4'], type=list)
+parser.add_argument('--tot_time_splits', default=10, type=int)
 parser.add_argument('--regression', default='linear', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -54,23 +60,34 @@ gc = {}
 
 for fs, fsub in enumerate(args.fmri_subjects):
 
-    gc_sub = []
+    gc[fsub] = {}
 
-    for et, eeg_train_tr in enumerate(args.eeg_train_trials):
+    for roi_1 in args.rois:
+        for roi_2 in args.rois:
+            if roi_1 != roi_2:
 
-        file_name = (f'gc_sub-{fsub:02d}_eeg_train_trials-'
-            f'{eeg_train_tr}_regression-{args.regression}.npy')
+                gc_sub = []
 
-        results = np.load(os.path.join(data_dir, file_name),
-            allow_pickle=True).item()
+                for et, eeg_train_tr in enumerate(args.eeg_train_trials):
+                    for t, ts in enumerate(range(args.tot_time_splits)):
 
-        gc_sub.append(results['gc'])
-        times_target = results['times_target']
-        times = results['times']
-        del results
+                        file_name = (f'gc_sub-{fsub:02d}_roi_source-{roi_1}_'
+                            f'roi_target-{roi_2}_eeg_train_trials-{eeg_train_tr}_'
+                            f'regression-{args.regression}_time_split-{ts:02d}.npy')
 
-    gc[fsub] = np.mean(gc_sub, 0)
-    del gc_sub
+                        results = np.load(os.path.join(data_dir, file_name),
+                            allow_pickle=True).item()
+
+                        if t == 0:
+                            gc_t = results['gc']
+                        else:
+                            gc_t = np.append(gc_t, results['gc'], 1)
+                        
+                    gc_sub.append(gc_t)
+                    del gc_t
+
+                gc[fsub][(roi_1, roi_2)] = np.mean(gc_sub, 0)
+                del gc_sub
 
 
 # =============================================================================
@@ -203,52 +220,57 @@ for s, fsub in enumerate(args.fmri_subjects):
 # Plot the results (subject average)
 # =============================================================================
 roi_1 = 'V1'
-other_rois = ['V2', 'V3', 'hV4', 'ventral', 'FFA', 'EBA', 'PPA']
+other_rois = ['hV4']
 
-fig, axs = plt.subplots(len(other_rois), 2, sharex=True,
-    sharey=True, figsize=(20, 20)) # (10, 7.5)
+fig, axs = plt.subplots(2, len(other_rois), sharex=True,
+    sharey=True, figsize=(20, 12)) # (10, 7.5)
 
 for r, roi_2 in enumerate(other_rois):
 
     # Plot the feedforward GC results
     gc_sub = []
     for s, fsub in enumerate(args.fmri_subjects):
-        gc_sub.append(gc[fsub][f'{roi_1}_to_{roi_2}'][:-2])
+        gc_sub.append(gc[fsub][(roi_1, roi_2)][:-2])
     gc_sub = np.mean(gc_sub, 0)
     vlim = np.max(np.abs(gc_sub))
-    im = axs[r,0].imshow(gc_sub, cmap='RdGy_r', aspect='equal', vmin=-vlim,
+    # im = axs[0].imshow(gc_sub, cmap='RdGy_r', aspect='auto', vmin=-vlim,
+    #     vmax=vlim)
+    im = axs[0].imshow(gc_sub, cmap='Reds', aspect='auto', vmin=0,
         vmax=vlim)
 
     # Plot the feedback GC results
     gc_sub = []
     for s, fsub in enumerate(args.fmri_subjects):
-        gc_sub.append(gc[fsub][f'{roi_2}_to_{roi_1}'][:-2])
+        gc_sub.append(gc[fsub][(roi_2, roi_1)][:-2])
     gc_sub = np.mean(gc_sub, 0)
     vlim = np.max(np.abs(gc_sub))
-    im = axs[r,1].imshow(gc_sub, cmap='RdGy_r', aspect='equal', vmin=-vlim,
+    # im = axs[1].imshow(gc_sub, cmap='RdGy_r', aspect='auto', vmin=-vlim,
+    #     vmax=vlim)
+    im = axs[1].imshow(gc_sub, cmap='Reds', aspect='auto', vmin=0,
         vmax=vlim)
 
     # Title
-    axs[r,0].set_title(f'Sub {fsub}, {roi_1} to {roi_2}', fontsize=fontsize)
-    axs[r,1].set_title(f'Sub {fsub}, {roi_2} to {roi_1}', fontsize=fontsize)
+    axs[0].set_title(f'Sub-avg, {roi_1} to {roi_2}', fontsize=fontsize)
+    axs[1].set_title(f'Sub-avg, {roi_2} to {roi_1}', fontsize=fontsize)
 
-    # X-axis parameters # !!!
-    if r == len(other_rois) - 1:
-        xticks = [0, 20, 40, 60, 80, 100, 119]
-        xlabels = [0, 100, 200, 300, 400, 500, 600]
-        axs[r,0].set_xticks(ticks=xticks, labels=xlabels)
-        axs[r,0].set_xlabel('Time target (ms)', fontsize=fontsize)
-        axs[r,1].set_xticks(ticks=xticks, labels=xlabels)
-        axs[r,1].set_xlabel('Time target (ms)', fontsize=fontsize)
+    # X-axis parameters
+    xticks = [0, 51, 102, 153, 205, 256, 307]
+    xlabels = [0, 100, 200, 300, 400, 500, 600]
+    axs[1].set_xticks(ticks=xticks, labels=xlabels)
+    axs[1].set_xlabel('Time target (ms)', fontsize=fontsize)
 
     # Y-axis parameters
-    yticks = [0, 5, 10, 15]
-    ylabels = [-100, -75, -50, -25]
-    axs[r,0].set_yticks(ticks=yticks, labels=ylabels)
-    axs[r,0].set_ylabel('Time source\n(ms)', fontsize=fontsize)
+    if r == 0:
+        yticks = [0, 12, 24, 36]
+        ylabels = [-100, -75, -50, -25]
+        axs[0].set_yticks(ticks=yticks, labels=ylabels)
+        axs[0].set_ylabel('Time source (ms)\n[relative to target time]', fontsize=fontsize)
+        axs[1].set_yticks(ticks=yticks, labels=ylabels)
+        axs[1].set_ylabel('Time source (ms)\n[relative to target time]', fontsize=fontsize)
+plt.show()
 
 # Save the figure
-file_name = os.path.join(save_dir, f'gc_sub-avg.svg')
+file_name = os.path.join(save_dir, f'gc_sub-avg_regression-{args.regression}.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close()
 
