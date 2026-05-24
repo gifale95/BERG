@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=univariate_rnc_rotem-00c_predict_fmri__roi-V1__B200
 #SBATCH --mail-type=end
-#SBATCH --mem=75000
-#SBATCH --time=20:00:00
+#SBATCH --mem=30000
+#SBATCH --time=03:00:00
 #SBATCH --qos=extended
 #SBATCH --partition=agcichy
 #SBATCH --nodelist=g017

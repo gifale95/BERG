@@ -1,4 +1,4 @@
-"""Predict fMRI responses for the ILSVRC-2012 images.
+"""Predict fMRI responses for the THINGS images.
 
 Parameters
 ----------
@@ -14,10 +14,6 @@ hemispheres : list
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
-imagenet_split : str
-    Whether to use the 'train' or 'val' split of ILSVRC-2012.
-tot_img_batches : int
-    The total number of batches in which the images are divided.
 berg_dir : str
     Directory of the BERG.
 
@@ -27,22 +23,13 @@ import argparse
 import os
 import numpy as np
 from berg import BERG
-from tqdm import tqdm
 import h5py
-import torch
-
-print(torch.cuda.get_device_name(0))
-print(torch.__version__)
-print(torch.version.cuda)
-print(torch.cuda.get_device_capability(0))
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subject', default=1, type=int)
 parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--imagenet_split', default='train', type=str)
-parser.add_argument('--tot_img_batches', default=100, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -110,35 +97,23 @@ model = berg.get_encoding_model(
 
 
 # =============================================================================
-# Access the ILSVRC-2012 images
+# Access the THINGS images
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'images',
-    f'imagenet_split-{args.imagenet_split}.h5')
-images = h5py.File(data_dir, 'r')['images']
+    'things.h5')
+images = h5py.File(data_dir, 'r')['images'][:]
 
 
 # =============================================================================
-# Predict the fMRI responses to images, in batches
+# Predict the fMRI responses to images
 # =============================================================================
-# Empty fMRI univariate response array
-fmri_uni = np.zeros((len(images)), dtype=np.float32)
+# Predict the fMRI responses
+fmri = berg.encode(model, images)
 
-# Loop across image batches
-imgs_per_batch = int(np.ceil(len(images) / args.tot_img_batches))
-for i in tqdm(np.arange(args.tot_img_batches)):
-
-    # Define the images from the current batch
-    start_idx = i * imgs_per_batch
-    end_idx = min((i + 1) * imgs_per_batch, len(images))
-    images_batch = images[start_idx:end_idx]
-
-    # Predict the fMRI responses
-    fmri = berg.encode(model, images_batch)
-
-    # Average the predicted fMRI responses across the vertices from the same
-    # ROI, to get that ROIs univariate response
-    fmri_uni[start_idx:end_idx] = np.mean(np.append(fmri[0], fmri[1], 1), 1)
-    del images_batch, fmri
+# Average the predicted fMRI responses across the vertices from the same
+# ROI, to get that ROIs univariate response
+fmri_uni= np.mean(np.append(fmri[0], fmri[1], 1), 1)
+del images, fmri
 
 
 # =============================================================================
@@ -147,7 +122,6 @@ for i in tqdm(np.arange(args.tot_img_batches)):
 save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'fmri_responses')
 os.makedirs(save_dir, exist_ok=True)
 
-file_name = (f'fmri_sub-{args.fmri_subject:02d}_roi-{args.roi}_'
-    f'imagenet_split-{args.imagenet_split}.npy')
+file_name = f'fmri_sub-{args.fmri_subject:02d}_roi-{args.roi}_things.npy'
 
 np.save(os.path.join(save_dir, file_name), fmri_uni)

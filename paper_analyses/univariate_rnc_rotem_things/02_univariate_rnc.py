@@ -11,8 +11,6 @@ cv_subject : int
     subjects.
 roi_pair : str
     Used pairwise ROI combination.
-imagenet_split : str
-    Whether to use the 'train' or 'val' split of ILSVRC-2012.
 n_categories: int
     Number of retained image categories.
 n_exemplars: int
@@ -20,9 +18,9 @@ n_exemplars: int
     condition.
 berg_dir : str
     Directory of the BERG.
-imagenet_dir : str
-    Directory of the ImageNet image set.
-    https://www.image-net.org/challenges/LSVRC/2012/index.php
+things_dir : str
+    Directory of the THINGS database.
+    https://osf.io/jum2f/
 
 """
 
@@ -35,11 +33,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, default=0)
 parser.add_argument('--cv_subject', type=int, default=1)
 parser.add_argument('--roi_pair', default='V1-ventral', type=str)
-parser.add_argument('--imagenet_split', default='train', type=str)
 parser.add_argument('--n_categories', default=10, type=int)
 parser.add_argument('--n_exemplars', default=4, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)
+parser.add_argument('--things_dir', default='/scratch/ccn_datasets/things_database', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Univariate RNC <<<')
@@ -66,8 +63,8 @@ rois = [roi_1, roi_2]
 # =============================================================================
 # Load the univariante RNC baseline scores, and average them across images
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
-    f'imagenet_split-{args.imagenet_split}', 'baseline', f'cv-{args.cv}')
+data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'things',
+    'baseline', f'cv-{args.cv}')
 
 base = {}
 for roi in rois:
@@ -96,8 +93,7 @@ for roi in rois:
     data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
         'fmri_responses')
     for sub in all_subjects:
-        file_name = (f'fmri_sub-{sub:02d}_roi-{roi}_imagenet_split-'
-            f'{args.imagenet_split}.npy')
+        file_name = f'fmri_sub-{sub:02d}_roi-{roi}_things.npy'
         fmri.append(np.load(os.path.join(data_dir, file_name)))
     fmri = np.array(fmri)
 
@@ -113,7 +109,7 @@ for roi in rois:
 
 
 # =============================================================================
-# Rank the images based on their fMRI univariate responses
+# Rank the images based on their in silico univariate fMRI responses
 # =============================================================================
 # Univariate response score margin used to constrain the selection of the
 # control images
@@ -169,8 +165,13 @@ low_1_high_2_rank[idx_bad_2] = np.nan
 
 # =============================================================================
 # Select the image categories that rank best across all four neural control
-# conditions
+# conditions # !!!
 # =============================================================================
+# Get the image category labels # !!!
+data_dir = os.path.join(args.things_dir, '01_image-level', 'image-paths.csv')
+image_paths = pd.read_csv(data_dir, header=None).values.tolist()
+
+
 # Get the image category labels
 images = torchvision.datasets.ImageNet(root=args.imagenet_dir,
     split=args.imagenet_split)
@@ -240,9 +241,8 @@ data_dict = {
     'controlling_images': controlling_images
 }
 
-save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
-    f'imagenet_split-{args.imagenet_split}', 'quantitative_results',
-    f'cv-{args.cv}')
+save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'things',
+    'quantitative_results', f'cv-{args.cv}')
 os.makedirs(save_dir, exist_ok=True)
 
 if args.cv == 0:

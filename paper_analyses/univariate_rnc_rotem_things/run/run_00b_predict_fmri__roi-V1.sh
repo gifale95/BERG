@@ -1,12 +1,11 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=univariate_rnc_rotem-00c_predict_fmri__roi-V1__h100
+#SBATCH --job-name=univariate_rnc_rotem_things-00b_predict_fmri__roi-V1
 #SBATCH --mail-type=end
-#SBATCH --mem=75000
-#SBATCH --time=20:00:00
+#SBATCH --mem=60000
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
-#SBATCH --partition=scavenger
-#SBATCH --nodelist=g016
+#SBATCH --partition=agcichy
 #SBATCH --gres=gpu:1 # number of GPUs
 
 # CUDA module
@@ -36,7 +35,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/univariate_rnc_rotem
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/univariate_rnc_rotem_things
 
 # Run the job
-python 00c_predict_fmri.py --fmri_subject $fmri_subject --roi $roi --berg_dir '/scratch/giffordale95/projects/brain-encoding-response-generator'
+python 00b_predict_fmri.py --fmri_subject $fmri_subject --roi $roi --berg_dir '/scratch/giffordale95/projects/brain-encoding-response-generator'

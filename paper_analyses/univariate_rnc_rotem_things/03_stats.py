@@ -9,8 +9,6 @@ cv : int
     cross-validation, if '0' univariate RNC uses the data of all subjects.
 roi_pair : str
     Used pairwise ROI combination.
-imagenet_split : str
-    Whether to use the 'train' or 'val' split of ILSVRC-2012.
 n_categories: int
     Number of retained image categories.
 n_exemplars: int
@@ -29,7 +27,6 @@ from scipy.stats import pearsonr
 parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, default=1)
 parser.add_argument('--roi_pair', default='V1-ventral', type=str)
-parser.add_argument('--imagenet_split', default='train', type=str)
 parser.add_argument('--n_categories', default=10, type=int)
 parser.add_argument('--n_exemplars', default=4, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -59,8 +56,8 @@ rois = [roi_1, roi_2]
 # =============================================================================
 # Load the univariate RNC baseline images
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
-    f'imagenet_split-{args.imagenet_split}', 'baseline', f'cv-{args.cv}')
+data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'things',
+    'baseline', f'cv-{args.cv}')
 baseline_images = {}
 
 for roi in rois:
@@ -85,9 +82,8 @@ for roi in rois:
 # =============================================================================
 control_types = ['high_1_high_2', 'low_1_low_2', 'high_1_low_2',
     'low_1_high_2']
-data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
-    f'imagenet_split-{args.imagenet_split}', 'quantitative_results',
-    f'cv-{args.cv}')
+data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'things',
+    'quantitative_results', f'cv-{args.cv}')
 
 if args.cv == 0:
     file_name = f'image_ranking_{args.roi_pair}.npy'
@@ -114,8 +110,7 @@ for roi in rois:
     data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
         'fmri_responses')
     for sub in all_subjects:
-        file_name = (f'fmri_sub-{sub:02d}_roi-{roi}_imagenet_split-'
-            f'{args.imagenet_split}.npy')
+        file_name = f'fmri_sub-{sub:02d}_roi-{roi}_things.npy'
         fmri_roi.append(np.load(os.path.join(data_dir, file_name)))
     fmri[roi] = np.array(fmri_roi)
     del fmri_roi
@@ -191,8 +186,8 @@ elif args.cv == 1:
         'roi_pair_corr': roi_pair_corr
         }
 
-save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
-    f'imagenet_split-{args.imagenet_split}', 'stats', f'cv-{args.cv}')
+save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'things',
+    'stats', f'cv-{args.cv}')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = f'stats_{args.roi_pair}.npy'

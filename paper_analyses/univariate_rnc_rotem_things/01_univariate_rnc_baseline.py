@@ -1,7 +1,7 @@
 """Get the fMRI responses for a randomly selected batch of N images (out of
-all ILSVRC-2012 images), and then average these univariate responses across
-images. This will result in one score indicating the mean fMRI univariate fMRI
-response for that image batch.
+all THINGS images), and then average these univariate responses across images.
+This will result in one score indicating the mean fMRI univariate fMRI response
+for that image batch.
 
 # Repeating this step X times will create the null  distribution, from which
 # the N images from the batch with score closest to the distribution's mean are
@@ -18,8 +18,6 @@ cv_subject : int
     subjects.
 roi: str
     Used ROI.
-imagenet_split : str
-    Whether to use the 'train' or 'val' split of ILSVRC-2012.
 n_images: int
     Number of retained controlling or baseline images.
 n_iter : int
@@ -41,7 +39,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, default=1)
 parser.add_argument('--cv_subject', type=int, default=1)
 parser.add_argument('--roi', default='V1', type=str)
-parser.add_argument('--imagenet_split', default='train', type=str)
 parser.add_argument('--n_images', default=100, type=int)
 parser.add_argument('--n_iter', type=int, default=100000)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -65,14 +62,13 @@ all_subjects = [1, 2, 3, 4, 5, 6, 7, 8]
 
 
 # =============================================================================
-# Load the fMRI responses for the ILSVRC-2012 images
+# Load the fMRI responses for the THINGS images
 # =============================================================================
 # Load the fMRI responses of all subjects
 fmri = []
 data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'fmri_responses')
 for sub in all_subjects:
-    file_name = (f'fmri_sub-{sub:02d}_roi-{args.roi}_imagenet_split-'
-        f'{args.imagenet_split}.npy')
+    file_name = f'fmri_sub-{sub:02d}_roi-{args.roi}_things.npy'
     fmri.append(np.load(os.path.join(data_dir, file_name)))
 fmri = np.array(fmri)
 n_images = fmri.shape[1]
@@ -158,8 +154,8 @@ elif args.cv == 1:
         'baseline_resp_test': baseline_resp_test
     }
 
-save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
-    f'imagenet_split-{args.imagenet_split}', 'baseline', f'cv-{args.cv}')
+save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'things',
+    'baseline', f'cv-{args.cv}')
 os.makedirs(save_dir, exist_ok=True)
 
 if args.cv == 0:

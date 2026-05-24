@@ -42,9 +42,8 @@ rois = [roi_1, roi_2]
 # =============================================================================
 # Load the neural control results
 # =============================================================================
-data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
-    f'imagenet_split-{args.imagenet_split}', 'stats', 'cv-1',
-    f'stats_{args.roi_pair}.npy')
+data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'things',
+    'stats', 'cv-1', f'stats_{args.roi_pair}.npy')
 
 res = np.load(data_dir, allow_pickle=True).item()
 
@@ -52,8 +51,8 @@ res = np.load(data_dir, allow_pickle=True).item()
 # =============================================================================
 # Create the plot save directory
 # =============================================================================
-save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
-    f'imagenet_split-{args.imagenet_split}', 'plots')
+save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem', 'things',
+    'plots')
 os.makedirs(save_dir, exist_ok=True)
 
 
