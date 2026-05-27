@@ -3,7 +3,7 @@
 #SBATCH --job-name=univariate_rnc_rotem-01_univariate_rnc_baseline__cv-0
 #SBATCH --mail-type=end
 #SBATCH --mem=1000
-#SBATCH --time=02:00:00
+#SBATCH --time=03:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

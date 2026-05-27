@@ -27,7 +27,7 @@ things_dir : str
 import argparse
 import os
 import numpy as np
-import torchvision
+import pandas as pd
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, default=0)
@@ -83,7 +83,7 @@ for roi in rois:
 
 
 # =============================================================================
-# Load the fMRI responses for the ILSVRC-2012 images
+# Load the fMRI responses for the THINGS images
 # =============================================================================
 fmri_mean = {}
 for roi in rois:
@@ -165,19 +165,22 @@ low_1_high_2_rank[idx_bad_2] = np.nan
 
 # =============================================================================
 # Select the image categories that rank best across all four neural control
-# conditions # !!!
+# conditions
 # =============================================================================
-# Get the image category labels # !!!
+# Get the image category labels
 data_dir = os.path.join(args.things_dir, '01_image-level', 'image-paths.csv')
 image_paths = pd.read_csv(data_dir, header=None).values.tolist()
-
-
-# Get the image category labels
-images = torchvision.datasets.ImageNet(root=args.imagenet_dir,
-    split=args.imagenet_split)
-targets = np.array(images.targets)
-classes_white_spaces = images.classes
-classes = [c[0].replace(" ", "_") for c in classes_white_spaces]
+targets = []
+classes = []
+idx = -1
+for img_path in image_paths:
+    obj_class = img_path[0].split('/')[1]
+    if obj_class not in classes:
+        classes.append(obj_class)
+        idx += 1
+    targets.append(idx)
+targets = np.array(targets)
+classes = np.array(classes)
 
 # Loop across categories
 scores_high_1_high_2 = []
@@ -189,7 +192,7 @@ for cat in np.unique(targets):
     # Get the indices of the images from the current category
     idx_cat = np.where(targets == cat)[0]
 
-    # Average the ranks across the best N image examplars from each category
+    # Average the ranks across the best N image exemplars from each category
     scores_high_1_high_2.append(np.mean(np.sort(
         high_1_high_2_rank[idx_cat])[:args.n_exemplars]))
     scores_low_1_low_2.append(np.mean(np.sort(

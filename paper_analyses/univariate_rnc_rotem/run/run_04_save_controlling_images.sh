@@ -3,7 +3,7 @@
 #SBATCH --job-name=univariate_rnc_rotem-04_save_controlling_images
 #SBATCH --mail-type=end
 #SBATCH --mem=1000
-#SBATCH --time=01:00:00
+#SBATCH --time=06:00:00
 #SBATCH --qos=extended
 
 # Activate the Anaconda environment

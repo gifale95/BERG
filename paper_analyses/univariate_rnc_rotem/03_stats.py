@@ -27,10 +27,10 @@ import numpy as np
 from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--cv', type=int, default=1)
+parser.add_argument('--cv', type=int, default=0)
 parser.add_argument('--roi_pair', default='V1-ventral', type=str)
 parser.add_argument('--imagenet_split', default='train', type=str)
-parser.add_argument('--n_categories', default=10, type=int)
+parser.add_argument('--n_categories', default=40, type=int)
 parser.add_argument('--n_exemplars', default=4, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -122,13 +122,40 @@ for roi in rois:
 
 
 # =============================================================================
-# Validate the neural control conditions across subjects (only for cv==1)
+# Validate the neural control conditions across subjects
 # =============================================================================
 # Get the test subject in silico univariate fMRI responses for the controlling
 # images from the four neural control conditions, as well as for the baseline
 # images.
 
-if args.cv == 1:
+if args.cv == 0:
+
+    # Get the in silico univariate fMRI responses for the controlling images
+    cv_resp_roi_1 = []
+    cv_resp_roi_2 = []
+    for s in range(len(all_subjects)):
+        cv_resp_roi_1_sub = {}
+        cv_resp_roi_2_sub = {}
+        for key, val in controlling_images.items():
+            cv_resp_roi_1_sub[key] = {}
+            cv_resp_roi_2_sub[key] = {}
+            for ct in control_types:
+                cv_resp_roi_1_sub[key][ct] = \
+                    fmri[roi_1][s,controlling_images[key][ct]]
+                cv_resp_roi_2_sub[key][ct] = \
+                    fmri[roi_2][s,controlling_images[key][ct]]
+        cv_resp_roi_1.append(cv_resp_roi_1_sub)
+        cv_resp_roi_2.append(cv_resp_roi_2_sub)
+        del cv_resp_roi_1_sub, cv_resp_roi_2_sub
+
+    # Get the in silico univariate fMRI responses for the baseline images
+    base_resp = {}
+    for roi in rois:
+        base_resp[roi] = []
+        for s in range(len(all_subjects)):
+            base_resp[roi].append(fmri[roi][s,baseline_images[roi]])
+
+elif args.cv == 1:
 
     # Get the in silico univariate fMRI responses for the controlling images
     cv_resp_roi_1 = []
@@ -157,39 +184,50 @@ if args.cv == 1:
 
 
 # =============================================================================
-# Correlate the in silico univariate fMRI responses of thw two ROIs, across
-# all images (only for cv==1)
+# Correlate the in silico univariate fMRI responses of the two ROIs, across
+# all images
 # =============================================================================
-if args.cv == 1:
+roi_pair_corr_all_img = np.zeros((len(all_subjects)))
 
-    roi_pair_corr = np.zeros((len(all_subjects)))
+for s in range(len(all_subjects)):
+    roi_pair_corr_all_img[s] = pearsonr(fmri[roi_1][s], fmri[roi_2][s])[0]
+
+
+# =============================================================================
+# Correlate the in silico univariate fMRI responses of the two ROIs, across
+# the controlling images (only for cv-0)
+# =============================================================================
+if args.cv == 0:
+
+    roi_pair_corr_control_img = np.zeros((len(all_subjects)))
 
     for s in range(len(all_subjects)):
-        roi_pair_corr[s] = pearsonr(fmri[roi_1][s], fmri[roi_2][s])[0]
+        idx = []
+        for key in controlling_images.keys():
+            for ct in control_types:
+                idx.append(controlling_images[key][ct])
+        idx = np.array(idx).flatten()
+        idx.sort()
+        roi_pair_corr_control_img[s] = pearsonr(fmri[roi_1][s][idx],
+            fmri[roi_2][s][idx])[0]
 
 
 # =============================================================================
 # Save the results
 # =============================================================================
-if args.cv == 0:
-    stats = {
-        'fmri': fmri,
-        'control_types': control_types,
-        'controlling_images': controlling_images,
-        'baseline_images': baseline_images
-        }
+stats = {
+    'fmri': fmri,
+    'control_types': control_types,
+    'controlling_images': controlling_images,
+    'baseline_images': baseline_images,
+    'cv_resp_roi_1': cv_resp_roi_1,
+    'cv_resp_roi_2': cv_resp_roi_2,
+    'base_resp': base_resp,
+    'roi_pair_corr_all_img': roi_pair_corr_all_img
+    }
 
-elif args.cv == 1:
-    stats = {
-        'fmri': fmri,
-        'control_types': control_types,
-        'controlling_images': controlling_images,
-        'baseline_images': baseline_images,
-        'cv_resp_roi_1': cv_resp_roi_1,
-        'cv_resp_roi_2': cv_resp_roi_2,
-        'base_resp': base_resp,
-        'roi_pair_corr': roi_pair_corr
-        }
+if args.cv == 0:
+    stats['roi_pair_corr_control_img'] = roi_pair_corr_control_img
 
 save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
     f'imagenet_split-{args.imagenet_split}', 'stats', f'cv-{args.cv}')

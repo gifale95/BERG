@@ -30,13 +30,15 @@ import argparse
 import os
 import numpy as np
 import torchvision
+from itertools import combinations
+from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, default=0)
 parser.add_argument('--cv_subject', type=int, default=1)
 parser.add_argument('--roi_pair', default='V1-ventral', type=str)
 parser.add_argument('--imagenet_split', default='train', type=str)
-parser.add_argument('--n_categories', default=40, type=int)
+parser.add_argument('--n_categories', default=10, type=int)
 parser.add_argument('--n_exemplars', default=4, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)
@@ -117,7 +119,8 @@ for roi in rois:
 # =============================================================================
 # Univariate response score margin used to constrain the selection of the
 # control images
-margin = 0.15 # !!!
+margin = 0.15
+margin = 0.1 # !!!
 
 # Rank the images based on their alignment of univariate fMRI responses of the
 # two ROIs (i.e., that lead to both ROIs having either high or low univariate
@@ -136,10 +139,8 @@ low_1_low_2_rank = np.argsort(np.argsort(response_sum)).astype(np.float32)
 # Ignore image conditions with fMRI responses above the baseline scores
 idx_bad_1 = np.where(fmri_mean[roi_1] > base[roi_1]-margin)[0]
 idx_bad_2 = np.where(fmri_mean[roi_2] > base[roi_2]-margin)[0]
-idx_bad_1_man = np.where(fmri_mean[roi_1] < -0.4)[0] # !!! MANUAL THRESHOLD
 low_1_low_2_rank[idx_bad_1] = np.nan
 low_1_low_2_rank[idx_bad_2] = np.nan
-low_1_low_2_rank[idx_bad_1_man] = np.nan
 
 # Rank the images based on their disentanglement of univariate fMRI responses
 # of the two ROIs (i.e., that lead to one ROI having high responses and the
@@ -167,8 +168,8 @@ low_1_high_2_rank[idx_bad_2] = np.nan
 
 
 # =============================================================================
-# Select the image categories that rank best across all four neural control
-# conditions
+# Pre-select the N image categories that rank best across all four neural
+# control conditions
 # =============================================================================
 # Get the image category labels
 images = torchvision.datasets.ImageNet(root=args.imagenet_dir,
@@ -187,7 +188,7 @@ for cat in np.unique(targets):
     # Get the indices of the images from the current category
     idx_cat = np.where(targets == cat)[0]
 
-    # Average the ranks across the best N image examplars from each category
+    # Average the ranks across the best n image examplars from each category
     scores_high_1_high_2.append(np.mean(np.sort(
         high_1_high_2_rank[idx_cat])[:args.n_exemplars]))
     scores_low_1_low_2.append(np.mean(np.sort(
@@ -201,9 +202,82 @@ for cat in np.unique(targets):
 scores_all = np.array(scores_high_1_high_2) + np.array(scores_low_1_low_2) + \
     np.array(scores_high_1_low_2) + np.array(scores_low_1_high_2)
 
-# Select the N categories with lowest scores across all four neural control
-# conditions
-idx_cat_best = np.argsort(scores_all)[:args.n_categories]
+# Pre-select the N best object categories with lowest scores across all four
+# neural control conditions
+n_nonnan_cat = sum(~np.isnan(scores_all))
+n_nonnan_cat = 25 # !!! DELETE?
+idx_presel_cats = np.argsort(scores_all)[:n_nonnan_cat]
+
+
+# =============================================================================
+# Select the best image exemplars from the pre-selected categories
+# =============================================================================
+control_types = ['high_1_high_2', 'low_1_low_2', 'high_1_low_2',
+    'low_1_high_2']
+
+# Get the pre-selected controlling images and corresponding fMRI responses
+best_images = np.zeros((n_nonnan_cat, len(control_types), args.n_exemplars),
+    dtype=int)
+fmri = {}
+fmri[roi_1] = np.zeros((best_images.shape), dtype=np.float32)
+fmri[roi_2] = np.zeros((best_images.shape), dtype=np.float32)
+
+for i, cat in enumerate(idx_presel_cats):
+
+    # Get the indices of the images from the current category
+    idx_cat = np.where(targets == cat)[0]
+
+    # Loop across neural control types
+    for j, control in enumerate(control_types):
+
+        # Select the best N image exemplars from each category and neural
+        # control condition
+        if control == 'high_1_high_2':
+            best_images[i,j] = idx_cat[np.argsort(
+                high_1_high_2_rank[idx_cat])[:args.n_exemplars]]
+        elif control == 'low_1_low_2':
+            best_images[i,j] = idx_cat[np.argsort(
+                low_1_low_2_rank[idx_cat])[:args.n_exemplars]]
+        elif control == 'high_1_low_2':
+            best_images[i,j] = idx_cat[np.argsort(
+                high_1_low_2_rank[idx_cat])[:args.n_exemplars]]
+        elif control == 'low_1_high_2':
+            best_images[i,j] = idx_cat[np.argsort(
+                low_1_high_2_rank[idx_cat])[:args.n_exemplars]]
+
+        # Get the fMRI responses for the pre-selected controlling images
+        fmri[roi_1][i,j] = fmri_mean[roi_1][best_images[i,j]]
+        fmri[roi_2][i,j] = fmri_mean[roi_2][best_images[i,j]]
+
+
+# =============================================================================
+# Choose, from the N pre-selected categories, the top k categories that best
+# decorrelate the fMRI responses of the two ROIs
+# =============================================================================
+# Loop across all possible combinations of k categories out of the N
+# pre-selected categories
+best_corr_score = 1
+for combo in combinations(range(n_nonnan_cat), args.n_categories):
+    combo = np.array(combo)
+
+    # Correlate the fMRI responses of the two ROIs
+    corr = pearsonr(
+        fmri[roi_1][combo].flatten(),
+        fmri[roi_2][combo].flatten()
+        )[0]
+
+    # Store the categories that best decorrelate the two ROIs
+    if abs(corr) < best_corr_score:
+        best_corr_score = corr
+        idx_cat_best = idx_presel_cats[combo]
+        print(f'Best correlation score: {best_corr_score}')
+        if best_corr_score < 0.01:
+            break
+    del combo
+
+# In the 25 choose 10 combinations setting, I can try all combinations in
+# ~16 minutees and obtain a minimum correlation of 0.22 (from an otherwise
+# correlation of 0.31). => Use this approach if everything else fails.
 
 
 # =============================================================================

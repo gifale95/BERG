@@ -2,6 +2,9 @@
 
 Parameters
 ----------
+cv : int
+    If '1' univariate RNC leaves the data of one subject out for
+    cross-validation, if '0' univariate RNC uses the data of all subjects.
 roi_pair : str
     Used pairwise ROI combination.
 imagenet_split : str
@@ -18,6 +21,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--cv', type=int, default=0)
 parser.add_argument('--roi_pair', default='V1-ventral', type=str)
 parser.add_argument('--imagenet_split', default='train', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -43,7 +47,7 @@ rois = [roi_1, roi_2]
 # Load the neural control results
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
-    f'imagenet_split-{args.imagenet_split}', 'stats', 'cv-1',
+    f'imagenet_split-{args.imagenet_split}', 'stats', f'cv-{args.cv}',
     f'stats_{args.roi_pair}.npy')
 
 res = np.load(data_dir, allow_pickle=True).item()
@@ -88,7 +92,7 @@ colors = [(4/255, 178/255, 153/255), (130/255, 201/255, 240/255),
 # =============================================================================
 # Plot the univariate responses for the controlling images on scatterplots
 # =============================================================================
-fig, axs = plt.subplots(1, 1, sharex=False, sharey=False, figsize=(6, 6))
+fig, axs = plt.subplots(1, 1, sharex=False, sharey=False, figsize=(10, 10))
 axs = np.reshape(axs, (-1))
 
 # Diagonal dashed line
@@ -104,9 +108,9 @@ axs[0].plot([-3, 3], [base_2, base_2], '--w', linewidth=2, alpha=.6,
     label='_nolegend_')
 
 # Univariate responses for all images
-# for s in range(len(all_subjects)):
-#     axs[0].scatter(res['fmri'][roi_1][s], res['fmri'][roi_2][s], c='w',
-#         alpha=.1, edgecolors='k', label='_nolegend_')
+for s in range(len(all_subjects)):
+    axs[0].scatter(res['fmri'][roi_1][s], res['fmri'][roi_2][s], c='w',
+        alpha=.1, edgecolors='k', label='_nolegend_')
 
 # Univariate responses for the controlling images
 for s in range(len(all_subjects)):
@@ -115,48 +119,55 @@ for s in range(len(all_subjects)):
         axs[0].scatter(
             np.mean(res['cv_resp_roi_1'][s][key]['high_1_high_2']),
             np.mean(res['cv_resp_roi_2'][s][key]['high_1_high_2']),
-            c=colors[0], s=400, alpha=0.8)
+            c=colors[0], s=200, alpha=0.8)
         # 2. low_1_low_2
-        axs[0].scatter(np.mean(res['cv_resp_roi_1'][s][key]['low_1_low_2']),
+        axs[0].scatter(
+            np.mean(res['cv_resp_roi_1'][s][key]['low_1_low_2']),
             np.mean(res['cv_resp_roi_2'][s][key]['low_1_low_2']),
-            c=colors[1], s=400, alpha=0.8)
+            c=colors[1], s=200, alpha=0.8)
         # 3. high_1_low_2
-        axs[0].scatter(np.mean(res['cv_resp_roi_1'][s][key]['high_1_low_2']),
+        axs[0].scatter(
+            np.mean(res['cv_resp_roi_1'][s][key]['high_1_low_2']),
             np.mean(res['cv_resp_roi_2'][s][key]['high_1_low_2']),
-            c=colors[2], s=400, alpha=0.8)
+            c=colors[2], s=200, alpha=0.8)
         # 4. low_1_high_2
-        axs[0].scatter(np.mean(res['cv_resp_roi_1'][s][key]['low_1_high_2']),
+        axs[0].scatter(
+            np.mean(res['cv_resp_roi_1'][s][key]['low_1_high_2']),
             np.mean(res['cv_resp_roi_2'][s][key]['low_1_high_2']),
-            c=colors[3], s=400, alpha=0.8)
+            c=colors[3], s=200, alpha=0.8)
 
 # Add the correlation scores the two ROI responses for all images
-x = -0.2
-y = 0.2
-s = '$r$=' + str(np.round(np.mean(res['roi_pair_corr']), 2))
-axs[0].text(x, y, s, fontsize=fontsize)
+if args.cv == 0:
+    x = -1.8
+    y = 0.6
+    s = '$r$=' + str(np.round(np.mean(res['roi_pair_corr_control_img']), 2))
+    axs[0].text(x, y, s, fontsize=fontsize)
 
 # x-axis parameters
 xlabel = f'Univariate response\n{roi_1}'
 axs[0].set_xlabel(xlabel, fontsize=fontsize)
-xticks = [-0.2, 0, 0.2]
-xlabels = [-0.2, 0, 0.2]
+xticks = [-1.5, 0, 1.5]
+xlabels = [-1.5, 0, 1.5]
 axs[0].set_xticks(ticks=xticks, labels=xlabels)
-axs[0].set_xlim(left=-.25, right=.25)
+axs[0].set_xlim(left=-2, right=2)
 
 # y-axis parameters
 ylabel = f'Univariate response\n{roi_2}'
 axs[0].set_ylabel(ylabel, fontsize=fontsize)
-yticks = [-0.2, 0, 0.2]
-ylabels = [-0.2, 0, 0.2]
+yticks = [-.5, 0, .5]
+ylabels = [-.5, 0, .5]
 axs[0].set_yticks(ticks=yticks, labels=ylabels)
-axs[0].set_ylim(bottom=-.25, top=.25)
+axs[0].set_ylim(bottom=-1, top=1)
 
 # Aspect
 axs[0].set_aspect('equal')
+
+# Title
+axs[0].set_title('ILSVRC-2012 (train)\n(10 cats, 4 imgs per control condition)', fontsize=fontsize)
 plt.show()
 
 # Save the figure
-file_name = f'univariate_rnc_scatterplots_{args.roi_pair}.png'
+file_name = f'univariate_rnc_scatterplots_cv-{args.cv}_imagenet-{args.imagenet_split}_{args.roi_pair}.png'
 fig.savefig(os.path.join(save_dir, file_name), bbox_inches='tight',
     transparent=False, format='png')
 plt.close()

@@ -36,7 +36,7 @@ parser.add_argument('--cv', type=int, default=0)
 parser.add_argument('--cv_subject', type=int, default=1)
 parser.add_argument('--roi_pair', default='V1-ventral', type=str)
 parser.add_argument('--imagenet_split', default='train', type=str)
-parser.add_argument('--n_categories', default=40, type=int)
+parser.add_argument('--n_categories', default=10, type=int)
 parser.add_argument('--n_exemplars', default=4, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)
@@ -117,7 +117,10 @@ for roi in rois:
 # =============================================================================
 # Univariate response score margin used to constrain the selection of the
 # control images
-margin = 0.15 # !!!
+if args.cv == 1:
+    margin = 0.15
+elif args.cv == 0:
+    margin = 0.15
 
 # Rank the images based on their alignment of univariate fMRI responses of the
 # two ROIs (i.e., that lead to both ROIs having either high or low univariate
@@ -136,10 +139,8 @@ low_1_low_2_rank = np.argsort(np.argsort(response_sum)).astype(np.float32)
 # Ignore image conditions with fMRI responses above the baseline scores
 idx_bad_1 = np.where(fmri_mean[roi_1] > base[roi_1]-margin)[0]
 idx_bad_2 = np.where(fmri_mean[roi_2] > base[roi_2]-margin)[0]
-idx_bad_1_man = np.where(fmri_mean[roi_1] < -0.4)[0] # !!! MANUAL THRESHOLD
 low_1_low_2_rank[idx_bad_1] = np.nan
 low_1_low_2_rank[idx_bad_2] = np.nan
-low_1_low_2_rank[idx_bad_1_man] = np.nan
 
 # Rank the images based on their disentanglement of univariate fMRI responses
 # of the two ROIs (i.e., that lead to one ROI having high responses and the

@@ -30,7 +30,7 @@ from tqdm import tqdm
 parser = argparse.ArgumentParser()
 parser.add_argument('--roi_pair', default='V1-ventral', type=str)
 parser.add_argument('--imagenet_split', default='train', type=str)
-parser.add_argument('--n_categories', default=10, type=int)
+parser.add_argument('--n_categories', default=50, type=int)
 parser.add_argument('--n_exemplars', default=4, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)
@@ -86,7 +86,7 @@ for c, (cat, val) in enumerate(tqdm(controlling_images.items())):
     # Loop across neural control types
     control_types = ['high_1_high_2', 'low_1_low_2', 'high_1_low_2',
         'low_1_high_2']
-    for ct in tqdm(control_types):
+    for ct in control_types:
         if ct == 'high_1_high_2':
             ct_roi = f'high_{roi_1}_high_{roi_2}'
         elif ct == 'low_1_low_2':
@@ -97,7 +97,7 @@ for c, (cat, val) in enumerate(tqdm(controlling_images.items())):
             ct_roi = f'low_{roi_1}_high_{roi_2}'
 
         # Loop across images
-        for i in tqdm(range(args.n_exemplars)):
+        for i in range(args.n_exemplars):
 
             # Get and preprocess the controlling images
             img, _ = imageset.__getitem__(val[ct][i])
@@ -107,5 +107,5 @@ for c, (cat, val) in enumerate(tqdm(controlling_images.items())):
                 trn.Resize((425,425))
                 ])
             img = transform(img)
-            img_name = f'{c+1:02d}_{cat}__{ct_roi}__img-{i+1:02d}.png'
+            img_name = f'{cat}__{ct_roi}__img-{i+1:02d}.png'
             img.save(os.path.join(save_dir, img_name))
