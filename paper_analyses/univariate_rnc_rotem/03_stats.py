@@ -213,6 +213,99 @@ if args.cv == 0:
 
 
 # =============================================================================
+# Filter the univariate resposnes of the images selected by Rotem
+# =============================================================================
+if args.cv == 0:
+
+    # Kept images
+    cat_rotem = {
+        '01_Granny_Smith': {
+            'high_1_high_2': np.array([0, 1, 3]),
+            'high_1_low_2': np.array([0, 1, 3]),
+            'low_1_high_2': np.array([0, 2, 3]),
+            'low_1_low_2': np.array([1, 2, 3])
+        },
+        '04_lemon': {
+            'high_1_high_2': np.array([0, 1, 2]),
+            'high_1_low_2': np.array([0, 1, 3]),
+            'low_1_high_2': np.array([0, 1, 3]),
+            'low_1_low_2': np.array([0, 1, 2])
+        },
+        '08_butternut_squash': {
+            'high_1_high_2': np.array([1, 2, 3]),
+            'high_1_low_2': np.array([0, 1, 3]),
+            'low_1_high_2': np.array([0, 1, 3]),
+            'low_1_low_2': np.array([1, 2, 3])
+        },
+        '10_mountain_tent': {
+            'high_1_high_2': np.array([1, 2, 3]),
+            'high_1_low_2': np.array([0, 1, 3]),
+            'low_1_high_2': np.array([0, 1, 2]),
+            'low_1_low_2': np.array([0, 1, 2])
+        },
+        '16_pot': {
+            'high_1_high_2': np.array([1, 2, 3]),
+            'high_1_low_2': np.array([0, 1, 3]),
+            'low_1_high_2': np.array([0, 1, 2]),
+            'low_1_low_2': np.array([0, 2, 3])
+        },
+        '11_baseball': {
+            'high_1_high_2': np.array([0, 1, 3]),
+            'high_1_low_2': np.array([0, 1, 2]),
+            'low_1_high_2': np.array([0, 1, 2]),
+            'low_1_low_2': np.array([1, 2, 3])
+        },
+        '06_weasel': {
+            'high_1_high_2': np.array([0, 2, 3]),
+            'high_1_low_2': np.array([0, 1, 2]),
+            'low_1_high_2': np.array([0, 1, 2]),
+            'low_1_low_2': np.array([0, 1, 2])
+        },
+        '20_house_finch': {
+            'high_1_high_2': np.array([0, 2, 3]),
+            'high_1_low_2': np.array([0, 1, 2]),
+            'low_1_high_2': np.array([0, 2, 3]),
+            'low_1_low_2': np.array([0, 1, 2])
+        },
+        '17_hognose_snake': {
+            'high_1_high_2': np.array([0, 2, 3]),
+            'high_1_low_2': np.array([0, 1, 2]),
+            'low_1_high_2': np.array([0, 1, 2]),
+            'low_1_low_2': np.array([0, 1, 3])
+        }
+    }
+
+    # Filter the univariate fMRI responses
+    cv_resp_roi_1_rotem = []
+    cv_resp_roi_2_rotem = []
+    for s in range(len(all_subjects)):
+        cv_resp_roi_1_sub = {}
+        cv_resp_roi_2_sub = {}
+        for key, val in cat_rotem.items():
+            cv_resp_roi_1_sub[key] = {}
+            cv_resp_roi_2_sub[key] = {}
+            for ct in control_types:
+                cv_resp_roi_1_sub[key][ct] = cv_resp_roi_1[s][key][ct][val[ct]]
+                cv_resp_roi_2_sub[key][ct] = cv_resp_roi_2[s][key][ct][val[ct]]
+        cv_resp_roi_1_rotem.append(cv_resp_roi_1_sub)
+        cv_resp_roi_2_rotem.append(cv_resp_roi_2_sub)
+        del cv_resp_roi_1_sub, cv_resp_roi_2_sub
+
+    # Correlate the fMRI resposnes of the two ROIs for the selected images
+    roi_pair_corr_control_img_rotem = np.zeros((len(all_subjects)))
+    for s in range(len(all_subjects)):
+        fmri_roi_1 = []
+        fmri_roi_2 = []
+        for key in cat_rotem.keys():
+            for ct in control_types:
+                fmri_roi_1.append(cv_resp_roi_1_rotem[s][key][ct])
+                fmri_roi_2.append(cv_resp_roi_2_rotem[s][key][ct])
+        fmri_roi_1 = np.array(fmri_roi_1).flatten()
+        fmri_roi_2 = np.array(fmri_roi_2).flatten()
+        roi_pair_corr_control_img_rotem[s] = pearsonr(fmri_roi_1, fmri_roi_2)[0]
+
+
+# =============================================================================
 # Save the results
 # =============================================================================
 stats = {
@@ -228,6 +321,9 @@ stats = {
 
 if args.cv == 0:
     stats['roi_pair_corr_control_img'] = roi_pair_corr_control_img
+    stats['cv_resp_roi_1_rotem'] = cv_resp_roi_1_rotem
+    stats['cv_resp_roi_2_rotem'] = cv_resp_roi_2_rotem
+    stats['roi_pair_corr_control_img_rotem'] = roi_pair_corr_control_img_rotem
 
 save_dir = os.path.join(args.berg_dir, 'univariate_rnc_rotem',
     f'imagenet_split-{args.imagenet_split}', 'stats', f'cv-{args.cv}')

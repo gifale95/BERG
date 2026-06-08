@@ -171,3 +171,88 @@ file_name = f'univariate_rnc_scatterplots_cv-{args.cv}_imagenet-{args.imagenet_s
 fig.savefig(os.path.join(save_dir, file_name), bbox_inches='tight',
     transparent=False, format='png')
 plt.close()
+
+
+# =============================================================================
+# Plot the univariate responses for the controlling images on scatterplots
+# (Rotem-selected images)
+# =============================================================================
+fig, axs = plt.subplots(1, 1, sharex=False, sharey=False, figsize=(10, 10))
+axs = np.reshape(axs, (-1))
+
+# Diagonal dashed line
+axs[0].plot(np.arange(-3,3), np.arange(-3,3), '--k', linewidth=2, alpha=.4,
+    label='_nolegend_')
+
+# Baseline images dashed lines
+base_1 = np.mean(res['base_resp'][roi_1])
+axs[0].plot([base_1, base_1], [-3, 3], '--w', linewidth=2, alpha=.6,
+    label='_nolegend_')
+base_2 = np.mean(res['base_resp'][roi_2])
+axs[0].plot([-3, 3], [base_2, base_2], '--w', linewidth=2, alpha=.6,
+    label='_nolegend_')
+
+# Univariate responses for all images
+for s in range(len(all_subjects)):
+    axs[0].scatter(res['fmri'][roi_1][s], res['fmri'][roi_2][s], c='w',
+        alpha=.1, edgecolors='k', label='_nolegend_')
+
+# Univariate responses for the controlling images
+for s in range(len(all_subjects)):
+    for key in res['cv_resp_roi_1_rotem'][s].keys():
+        # 1. high_1_high_2
+        axs[0].scatter(
+            np.mean(res['cv_resp_roi_1_rotem'][s][key]['high_1_high_2']),
+            np.mean(res['cv_resp_roi_2_rotem'][s][key]['high_1_high_2']),
+            c=colors[0], s=200, alpha=0.8)
+        # 2. low_1_low_2
+        axs[0].scatter(
+            np.mean(res['cv_resp_roi_1_rotem'][s][key]['low_1_low_2']),
+            np.mean(res['cv_resp_roi_2_rotem'][s][key]['low_1_low_2']),
+            c=colors[1], s=200, alpha=0.8)
+        # 3. high_1_low_2
+        axs[0].scatter(
+            np.mean(res['cv_resp_roi_1_rotem'][s][key]['high_1_low_2']),
+            np.mean(res['cv_resp_roi_2_rotem'][s][key]['high_1_low_2']),
+            c=colors[2], s=200, alpha=0.8)
+        # 4. low_1_high_2
+        axs[0].scatter(
+            np.mean(res['cv_resp_roi_1_rotem'][s][key]['low_1_high_2']),
+            np.mean(res['cv_resp_roi_2_rotem'][s][key]['low_1_high_2']),
+            c=colors[3], s=200, alpha=0.8)
+
+# Add the correlation scores the two ROI responses for all images
+if args.cv == 0:
+    x = -1.8
+    y = 0.6
+    s = '$r$=' + str(np.round(np.mean(res['roi_pair_corr_control_img_rotem']), 2))
+    axs[0].text(x, y, s, fontsize=fontsize)
+
+# x-axis parameters
+xlabel = f'Univariate response\n{roi_1}'
+axs[0].set_xlabel(xlabel, fontsize=fontsize)
+xticks = [-1.5, 0, 1.5]
+xlabels = [-1.5, 0, 1.5]
+axs[0].set_xticks(ticks=xticks, labels=xlabels)
+axs[0].set_xlim(left=-2, right=2)
+
+# y-axis parameters
+ylabel = f'Univariate response\n{roi_2}'
+axs[0].set_ylabel(ylabel, fontsize=fontsize)
+yticks = [-.5, 0, .5]
+ylabels = [-.5, 0, .5]
+axs[0].set_yticks(ticks=yticks, labels=ylabels)
+axs[0].set_ylim(bottom=-1, top=1)
+
+# Aspect
+axs[0].set_aspect('equal')
+
+# Title
+axs[0].set_title('ILSVRC-2012 (train)\n(10 cats, 4 imgs per control condition)', fontsize=fontsize)
+plt.show()
+
+# Save the figure
+file_name = f'univariate_rnc_scatterplots_cv-{args.cv}_imagenet-{args.imagenet_split}_{args.roi_pair}_rotem_images.png'
+fig.savefig(os.path.join(save_dir, file_name), bbox_inches='tight',
+    transparent=False, format='png')
+plt.close()
