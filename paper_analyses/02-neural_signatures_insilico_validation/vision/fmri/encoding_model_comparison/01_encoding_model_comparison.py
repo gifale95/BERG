@@ -156,7 +156,7 @@ for m, model in enumerate(args.encoding_models):
         insilico_validation_scores['diff_behavioral_rsa_high_early'] = []
     results_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'fmri',
-        'llm_modeling', 'stats', model, 'stats.npy')
+        'behavioral_modeling', 'stats', model, 'stats.npy')
     results = np.load(results_dir, allow_pickle=True).item()
     insilico_validation_scores['diff_behavioral_rsa_high_early'].append(
         np.array(results['diff_rsa_high_early']))

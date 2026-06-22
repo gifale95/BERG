@@ -18,7 +18,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--roi', default='ventral', type=str)
+parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--time_window_pairs', default=['0.05-0.10__0.10-0.15', '0.05-0.10__0.15-0.20', '0.05-0.10__0.20-0.25', '0.10-0.15__0.15-0.20', '0.10-0.15__0.20-0.25', '0.15-0.20__0.20-0.25'], type=list)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -79,6 +79,15 @@ colors = [(4/255, 178/255, 153/255), (130/255, 201/255, 240/255),
 # =============================================================================
 fig, axs = plt.subplots(2, 3, sharex=False, sharey=False, figsize=(20, 30))
 axs = np.reshape(axs, (-1))
+
+titles = [
+    '0.05-0.10 s\nvs.\n0.10-0.15 s',
+    '0.05-0.10 s\nvs.\n0.15-0.20 s',
+    '0.05-0.10 s\nvs.\n0.20-0.25 s',
+    '0.10-0.15 s\nvs.\n0.15-0.20 s',
+    '0.10-0.15 s\nvs.\n0.20-0.25 s',
+    '0.15-0.20 s\nvs.\n0.20-0.25 s'
+]
 
 for t, tw in enumerate(args.time_window_pairs):
 
@@ -149,16 +158,15 @@ for t, tw in enumerate(args.time_window_pairs):
     # axs[t].set_ylim(bottom=-1, top=.75)
 
     # Title
-    axs[t].set_title(tw, fontsize=fontsize)
+    axs[t].set_title(titles[t], fontsize=fontsize)
 
     # Aspect
     axs[t].set_aspect('equal')
-plt.show()
 
 # Save the figure
-file_name = f'univariate_rnc_scatterplots_roi-{args.roi}.svg'
+file_name = f'univariate_rnc_scatterplots_roi-{args.roi}.png'
 fig.savefig(os.path.join(save_dir, file_name), bbox_inches='tight',
-    transparent=True, format='svg')
+    transparent=True, format='png')
 plt.close()
 
 
@@ -339,6 +347,6 @@ for roi_pair in args.roi_pairs:
     # Save the figure
     file_name = 'univariate_rnc_significance_encoding_models_train_dataset-' + \
         args.encoding_models_train_dataset + '_imageset-' + args.imageset + \
-        '_' + roi_pair + '.svg'
-    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+        '_' + roi_pair + '.png'
+    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='png')
     plt.close()
