@@ -7,7 +7,6 @@ from pathlib import Path
 from typing import Any, Dict, List, Union
 
 import numpy as np
-import pandas as pd
 import yaml
 from PIL import Image
 
@@ -326,6 +325,7 @@ class BrainScoreGateway(BaseModelInterface):
             Neural responses, shape (n_images, n_neurons)
         """
         from brainscore_core.supported_data_standards.brainio.stimuli import StimulusSet
+        import pandas as pd
 
         if isinstance(stimulus, np.ndarray):
             # Convert numpy array to temporary image files
