@@ -21,14 +21,14 @@ dependencies = [
     "h5py",
     "joblib",
     "nibabel",
+    "nilearn",
     "numpy",
     "Pillow",
     "scipy",
-    "scikit-learn",
+    "scikit-learn>=1.3",
     "torch",
     "torchvision",
     "tqdm",
-    "sphinx-rtd-theme",
     "pyyaml",
     "torchextractor",
     "ftfy",
@@ -60,6 +60,12 @@ brainscore = [
     "brainscore-language",
     "pandas<2.2",
 ]
+test = [
+    "pytest>=7",
+]
+docs = [
+    "sphinx-rtd-theme",
+]
 
 [project.urls]
 Homepage = "https://github.com/gifale95/BERG"
@@ -72,3 +78,12 @@ zip-safe = false
 
 [tool.setuptools.dynamic]
 version = {attr = "berg._version.__version__"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "heavy: downloads a torchvision/HF backbone (no S3 weights); slower CI tier",
+    "weights: requires real BERG weights via BERG_DIR (integration tier only)",
+]
+# By default, skip the integration tests that need real S3 weights.
+addopts = "-m 'not weights'"
