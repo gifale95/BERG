@@ -32,6 +32,23 @@ def _images(n=2):
     return np.random.RandomState(0).randint(0, 256, (n, 3, 224, 224)).astype(np.uint8)
 
 
+# Skip a case only when the weights are genuinely missing. A ModelLoadError for
+# any other reason (bad format, wrong key, ...) is a real bug and must fail, not
+# silently skip.
+_MISSING_HINTS = ("no such file", "not found", "cannot find", "does not exist")
+
+
+def _load_or_skip(fn, model_id):
+    try:
+        return fn()
+    except FileNotFoundError as exc:
+        pytest.skip(f"weights for {model_id} not present in BERG_DIR ({exc})")
+    except ModelLoadError as exc:
+        if any(h in str(exc).lower() for h in _MISSING_HINTS):
+            pytest.skip(f"weights for {model_id} not present in BERG_DIR ({exc})")
+        raise
+
+
 # One row per model. Fields:
 #   kwargs    : args for get_encoding_model (subject, ...)
 #   stimulus  : callable returning a valid stimulus batch
@@ -43,6 +60,19 @@ INTEGRATION_SPECS = {
     "eeg-things_eeg_2-vit_b_32": {
         "kwargs": {"subject": 1}, "stimulus": _images,
         "sel_axes": {"timepoints": -1},                       # (B, reps, ch, time)
+        "rep_axis": 1,   # 4 EEG repetitions must not be identical (per-rep PCAs)
+    },
+    # The two alexnet EEG models share the per-rep-PCA pipeline that hit the
+    # stale-weights bug, so they get the same per-rep distinctness guard.
+    "eeg-things_eeg_2-alexnet": {
+        "kwargs": {"subject": 1}, "stimulus": _images,
+        "sel_axes": {"timepoints": -1},
+        "rep_axis": 1,
+    },
+    "eeg-things_eeg_2-alexnet_untrained": {
+        "kwargs": {"subject": 1}, "stimulus": _images,
+        "sel_axes": {"timepoints": -1},
+        "rep_axis": 1,
     },
     "meg-things_meg_1-vit_b_32": {
         "kwargs": {"subject": 1}, "stimulus": _images,
@@ -69,9 +99,22 @@ INTEGRATION_SPECS = {
             "slicer": lambda meta, roi: np.asarray(meta["roi"][roi]),
         },
     },
-    # TODO (extend coverage): nsd_fsaverage-{vit_b_32,alexnet}, nsd-fwrf,
-    # bmd-s3d (video), text models (lebel/tuckute/zada, brainscore_language).
-    # Each needs its subject/selection kwargs and stimulus type filled in.
+    # Minimal coverage: load + encode + invariants + metadata. Its lh/rh-vertex
+    # selection layout is more involved, so selection/ROI slice-equality is left
+    # out here (no sel_axes/roi) rather than encoded incorrectly.
+    "fmri-nsd_fsaverage-vit_b_32": {
+        "kwargs": {"subject": 1}, "stimulus": _images,
+    },
+    "fmri-nsd_fsaverage-alexnet": {
+        "kwargs": {"subject": 1}, "stimulus": _images,
+    },
+    "fmri-nsd_fsaverage-alexnet_untrained": {
+        "kwargs": {"subject": 1}, "stimulus": _images,
+    },
+    # TODO (extend coverage): nsd_fsaverage selection (lh/rh vertices, roi),
+    # nsd-fwrf, bmd-s3d (video), text models (lebel/tuckute/zada,
+    # brainscore_language). Each needs its subject/selection kwargs and stimulus
+    # type filled in.
 }
 
 
@@ -117,16 +160,46 @@ def _roi_spec_ids():
 def test_model_runs_end_to_end(model_id):
     spec = INTEGRATION_SPECS[model_id]
     b = berg.BERG(berg_dir=BERG_DIR)
-    try:
-        model = b.get_encoding_model(model_id, **spec["kwargs"])
-    except (FileNotFoundError, ModelLoadError) as exc:
-        pytest.skip(f"weights for {model_id} not present in BERG_DIR ({exc})")
+    model = _load_or_skip(lambda: b.get_encoding_model(model_id, **spec["kwargs"]), model_id)
 
     stimulus = spec["stimulus"]()
     responses = b.encode(model, stimulus, return_metadata=False)
 
-    assert responses.shape[0] == len(stimulus)
-    assert np.isfinite(responses).all()
+    # Some models (e.g. nsd_fsaverage) return a tuple of arrays — one per
+    # hemisphere. Normalise to a list so the invariants apply uniformly.
+    arrays = list(responses) if isinstance(responses, tuple) else [responses]
+
+    for i, arr in enumerate(arrays):
+        tag = f"{model_id}[{i}]" if len(arrays) > 1 else model_id
+        # Shape, dtype, finiteness.
+        assert arr.shape[0] == len(stimulus), f"{tag}: batch dim != n stimuli"
+        assert np.issubdtype(arr.dtype, np.floating), (
+            f"{tag}: expected floating-point responses, got {arr.dtype}"
+        )
+        assert np.isfinite(arr).all(), f"{tag}: responses contain NaN/Inf"
+
+    # Determinism: a stateless encoder must return identical output for the same
+    # input. A model that accidentally introduces nondeterminism (dropout left
+    # on, uninitialised buffers, ...) fails here.
+    again = b.encode(model, stimulus, return_metadata=False)
+    again_arrays = list(again) if isinstance(again, tuple) else [again]
+    for arr, arr2 in zip(arrays, again_arrays):
+        assert np.array_equal(arr, arr2), f"{model_id}: encode is nondeterministic"
+
+    # Multi-repetition models must not collapse to identical repeats. This is the
+    # direct guard for the stale/flattened-PCA class of bug: a single shared PCA
+    # (or copied weights) would make every repetition equal.
+    rep_axis = spec.get("rep_axis")
+    if rep_axis is not None:
+        assert len(arrays) == 1, f"{model_id}: rep_axis set on a multi-array output"
+        resp = arrays[0]
+        n_reps = resp.shape[rep_axis]
+        assert n_reps > 1, f"{model_id}: rep_axis {rep_axis} has only {n_reps} rep"
+        first = np.take(resp, 0, axis=rep_axis)
+        assert any(
+            not np.array_equal(first, np.take(resp, r, axis=rep_axis))
+            for r in range(1, n_reps)
+        ), f"{model_id}: all {n_reps} repetitions are identical (PCA/weights bug?)"
 
 
 @requires_berg_dir
@@ -137,10 +210,7 @@ def test_selection_matches_sliced_full_output(model_id, sel_key, axis):
     first K. K comes from the full output, so nothing is hard-coded."""
     spec = INTEGRATION_SPECS[model_id]
     b = berg.BERG(berg_dir=BERG_DIR)
-    try:
-        full_model = b.get_encoding_model(model_id, **spec["kwargs"])
-    except (FileNotFoundError, ModelLoadError) as exc:
-        pytest.skip(f"weights for {model_id} not present in BERG_DIR ({exc})")
+    full_model = _load_or_skip(lambda: b.get_encoding_model(model_id, **spec["kwargs"]), model_id)
 
     stimulus = spec["stimulus"]()
     full = b.encode(full_model, stimulus, return_metadata=False)
@@ -176,11 +246,8 @@ def test_roi_selection_matches_metadata_slice(model_id):
     roi_cfg = spec["roi"]
     axis = roi_cfg["axis"]
     b = berg.BERG(berg_dir=BERG_DIR)
-    try:
-        full_model = b.get_encoding_model(model_id, **spec["kwargs"])
-        meta = b.get_model_metadata(model_id, **spec["kwargs"])
-    except (FileNotFoundError, ModelLoadError) as exc:
-        pytest.skip(f"weights for {model_id} not present in BERG_DIR ({exc})")
+    full_model = _load_or_skip(lambda: b.get_encoding_model(model_id, **spec["kwargs"]), model_id)
+    meta = _load_or_skip(lambda: b.get_model_metadata(model_id, **spec["kwargs"]), model_id)
 
     stimulus = spec["stimulus"]()
     full = b.encode(full_model, stimulus, return_metadata=False)
@@ -209,10 +276,7 @@ def test_roi_selection_matches_metadata_slice(model_id):
 def test_metadata_roundtrip(model_id):
     spec = INTEGRATION_SPECS[model_id]
     b = berg.BERG(berg_dir=BERG_DIR)
-    try:
-        meta = b.get_model_metadata(model_id, **spec["kwargs"])
-    except (FileNotFoundError, ModelLoadError) as exc:
-        pytest.skip(f"metadata for {model_id} not present in BERG_DIR ({exc})")
+    meta = _load_or_skip(lambda: b.get_model_metadata(model_id, **spec["kwargs"]), model_id)
     assert isinstance(meta, dict)
 
 

@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  pull_request:
+  workflow_dispatch:        # manual trigger — the only way to run the integration (real-weights) job
+
+# Minimal runtime deps needed to import berg and run the weight-free tests.
+# Installed explicitly (with `pip install --no-deps -e .`) so CI does NOT pull
+# the heavy / git-based / optional packages from pyproject. Models whose
+# optional deps are absent simply skip registration (see berg/models/_loader.py).
+env:
+  # torchextractor is a (lightweight) base dep used by the THINGS vit_b_32
+  # models for feature extraction; including it lets those models register.
+  CORE_DEPS: "numpy pyyaml scikit-learn scipy h5py tqdm Pillow torchextractor pytest"
+
+jobs:
+  # -------------------------------------------------------------------------
+  # Tier 0 — fast smoke + unit tests on a minimal install. Required for merge.
+  # No model weights, no network beyond pip.
+  # -------------------------------------------------------------------------
+  smoke:
+    name: smoke (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install CPU torch + minimal deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install $CORE_DEPS
+          pip install --no-deps -e .
+      - name: Run fast tests
+        run: pytest -m "not heavy and not weights" -q
+
+  # -------------------------------------------------------------------------
+  # Tier 1 — real torchvision backbone (downloaded + cached). No S3 weights.
+  # -------------------------------------------------------------------------
+  feature-extraction:
+    name: feature-extraction
+    runs-on: ubuntu-latest
+    needs: smoke
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Cache torch hub / torchvision weights
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/torch
+          key: torch-backbones-${{ runner.os }}
+      - name: Install CPU torch + minimal deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install $CORE_DEPS
+          pip install --no-deps -e .
+      - name: Run heavy (backbone) tests
+        run: pytest -m "heavy and not weights" -q
+
+  # -------------------------------------------------------------------------
+  # Tier 2 — true end-to-end with REAL weights from the public S3 bucket.
+  # Runs ONLY on manual dispatch (workflow_dispatch) — never on PRs, so PR CI
+  # stays fast. To keep it cheap it downloads only 3 representative models
+  # (one each for EEG / MEG / fMRI); the test auto-skips any model whose weights
+  # aren't present, so you can widen coverage just by downloading more.
+  # No AWS credentials needed (public bucket, --no-sign-request).
+  # -------------------------------------------------------------------------
+  integration:
+    name: integration (real weights, 3 models)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    env:
+      BUCKET: s3://brain-encoding-response-generator/encoding_models
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install CPU torch + minimal deps + awscli
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+          pip install $CORE_DEPS awscli
+          pip install --no-deps -e .
+      - name: Download 3 representative models (one subject each, minimal files)
+        run: |
+          set -eux
+          # EEG — subject 01: weights_subject-01.npy + metadata_subject-01.npy (~1.9 GB)
+          aws s3 cp --no-sign-request --recursive \
+            --exclude "*" --include "*subject-01.npy" \
+            "$BUCKET/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32" \
+            "berg_dir/encoding_models/modality-eeg/train_dataset-things_eeg_2/model-vit_b_32"
+          # MEG — subject P1: only the default 'all_training_splits' weights + metadata (~570 MB)
+          aws s3 cp --no-sign-request --recursive \
+            --exclude "*" \
+            --include "*weights_P1_all_training_splits.npy" --include "*metadata_P1.npy" \
+            "$BUCKET/modality-meg/train_dataset-things_meg_1/model-vit_b_32" \
+            "berg_dir/encoding_models/modality-meg/train_dataset-things_meg_1/model-vit_b_32"
+          # fMRI — subject sub-01: weights_sub-01.npy + metadata_sub-01.npy (~710 MB)
+          aws s3 cp --no-sign-request --recursive \
+            --exclude "*" --include "*sub-01.npy" \
+            "$BUCKET/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32" \
+            "berg_dir/encoding_models/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32"
+      - name: Run integration tests
+        env:
+          BERG_DIR: ${{ github.workspace }}/berg_dir
+        run: pytest -m weights -q
