@@ -303,6 +303,6 @@ If you use BERG, please cite:
 [ecog-zada2025-gpt2_xl]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/ecog-zada2025-gpt2_xl.md
 [zada_2025]: https://doi.org/10.1038/s41597-025-05462-2
 [acc-ecog-zada2025-gpt2_xl]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-ecog/train_dataset-zada2025/model-gpt2_xl/encoding_models_accuracy/
-[fmri-lebel2023-opt_1_3b]: https://gifale95.github.io/BERG/model_cards/fmri-lebel2023-opt_1_3b.html
+[fmri-lebel2023-opt_1_3b]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-lebel2023-opt_1_3b.html
 [lebel_2023]: https://doi.org/10.1038/s41597-023-02437-z
 [acc-fmri-lebel2023-opt_1_3b]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-lebel2023/model-opt_1_3b_ridge/encoding_models_accuracy/
