@@ -12,7 +12,7 @@ Model Summary
    * - Modality
      - ECoG
    * - Training Dataset
-     - Zadal et al. (2025)
+     - Zada et al. (2025)
    * - Species
      - Human
    * - Stimuli
