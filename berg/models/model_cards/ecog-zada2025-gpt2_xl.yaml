@@ -1,7 +1,7 @@
 # Basic metadata
 model_id: ecog-zada2025-gpt2_xl
 modality: ECoG
-training_dataset: Zadal et al. (2025)
+training_dataset: Zada et al. (2025)
 species: Human
 stimuli: Text (natural speech transcript)
 model_type: GPT2-XL
