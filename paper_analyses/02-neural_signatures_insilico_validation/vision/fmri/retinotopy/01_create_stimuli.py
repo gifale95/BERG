@@ -77,8 +77,9 @@ sdataset = sf.get('imgBrick')
 # =============================================================================
 # Define grid of probe centers (x,y) in degrees
 # =============================================================================
-coords = np.linspace(-args.FIELD_SIZE/2, args.FIELD_SIZE/2, args.GRID_RES)
-xx, yy = np.meshgrid(coords, coords, indexing="xy")
+coords_x = np.linspace(-args.FIELD_SIZE/2, args.FIELD_SIZE/2, args.GRID_RES)
+coords_y = np.linspace(args.FIELD_SIZE/2, -args.FIELD_SIZE/2, args.GRID_RES)
+xx, yy = np.meshgrid(coords_x, coords_y, indexing="xy")
 centers = np.stack([xx.ravel(), yy.ravel()], axis=1)  # shape [n_probes, 2]
 n_probes = len(centers)
 
@@ -92,7 +93,7 @@ def make_gaussian_masks(center, sigma_deg=args.PROBE_SIGMA,
     """Return a 2D Gaussian mask centered at (x_deg, y_deg) in visual
     coordinates."""
     x = np.linspace(-field_size/2, field_size/2, img_size)
-    y = np.linspace(-field_size/2, field_size/2, img_size)
+    y = np.linspace(field_size/2, -field_size/2, img_size)
     X, Y = np.meshgrid(x, y, indexing="xy")
     x0, y0 = center
     mask = np.exp(-((X - x0)**2 + (Y - y0)**2) / (2 * sigma_deg**2))
