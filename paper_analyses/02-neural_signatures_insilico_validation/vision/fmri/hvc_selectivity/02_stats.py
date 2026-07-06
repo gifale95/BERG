@@ -31,14 +31,13 @@ from berg import BERG
 from tqdm import tqdm
 from nsdcode.nsd_mapdata import NSDmapdata
 from scipy.stats import pearsonr
-from scipy.stats import ttest_1samp
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--encoding_threshold', default=0, type=float)
-parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--nsd_dir', default='/scratch/ccn_datasets/natural-scenes-dataset', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -175,17 +174,6 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 
 
 # =============================================================================
-# Compute the significance
-# =============================================================================
-p_val_corr_tval_silico_vivo = {}
-
-for cat in ['face', 'body', 'house']:
-
-    p_val_corr_tval_silico_vivo[cat] = ttest_1samp(
-        np.array(corr_tval_silico_vivo[cat]), 0, alternative='greater')
-
-
-# =============================================================================
 # Save the results
 # =============================================================================
 results = {
@@ -195,8 +183,7 @@ results = {
     'rh_tval_vivo': rh_tval_vivo,
     'lh_floc_r2_vivo': lh_floc_r2_vivo,
     'rh_floc_r2_vivo': rh_floc_r2_vivo,
-    ' ': corr_tval_silico_vivo,
-    'p_val_corr_tval_silico_vivo': p_val_corr_tval_silico_vivo,
+    'corr_tval_silico_vivo': corr_tval_silico_vivo,
     'metadata': metadata
     }
 

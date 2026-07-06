@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-hvc_selectivity-01_test_hvc_selectivity
+#SBATCH --job-name=berg_insilico_validation-hvc_selectivity-01_test_hvc_selectivity_GPU
 #SBATCH --mail-type=end
 #SBATCH --mem=25000
 #SBATCH --time=00:30:00
@@ -15,7 +15,7 @@ module add CUDA/12.4.0
 declare -a encoding_model_all
 declare -a subject_all
 index=0
-for em in 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained' ; do
+for em in 'fmri-nsd_fsaverage-huze' ; do
     for s in `seq 1 8` ; do
         encoding_model_all[$index]=$em
         subject_all[$index]=$s

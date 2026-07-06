@@ -78,11 +78,6 @@ for sub in args.subjects:
         lh_tval_sub[key][idx_nan_lh] = np.nan
         rh_tval_sub[key][idx_nan_rh] = np.nan
 
-    # Threshold based on significance and store the results
-    # for key in lh_tval_sub.keys():
-    #     lh_tval_sub[key][~data['lh_sig'][key]] = np.nan
-    #     rh_tval_sub[key][~data['rh_sig'][key]] = np.nan
-
     # Store the results
     lh_tval.append(lh_tval_sub)
     rh_tval.append(rh_tval_sub)

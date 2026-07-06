@@ -59,7 +59,7 @@ for cat in tqdm(categories):
         img = np.array(img)
         img_cat.append(img)
     img_cat = np.array(img_cat)
-    img_cat = np.swapaxes(img_cat, 1, 3)  # BHWC to BCHW
+    img_cat = np.transpose(img_cat, (0, 3, 1, 2))  # BHWC to BCHW
     images[cat] = img_cat
     del img_cat
 
