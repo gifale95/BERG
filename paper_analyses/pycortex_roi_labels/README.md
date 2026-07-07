@@ -40,8 +40,7 @@ vertex_data = cortex.Vertex(
     subject=subject,
     cmap='coolwarm',
     vmin=None,
-    vmax=None,
-    with_colorbar=True
+    vmax=None
     )
 
 # Plot the flat brain surface
