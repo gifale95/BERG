@@ -38,7 +38,7 @@ args, unknown = parser.parse_known_args()
 # Create the plots save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'plots', args.encoding_model)
+    'vision', 'fmri', 'hvc_selectivity_nsd_floc_stimuli', 'plots', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 
@@ -53,7 +53,7 @@ for sub in args.subjects:
     # Load the results
     data_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'fmri',
-        'hvc_selectivity', 't_values', args.encoding_model,
+        'hvc_selectivity_nsd_floc_stimuli', 't_values', args.encoding_model,
         f'results_sub-{sub:02d}.npy')
     data = np.load(data_dir, allow_pickle=True).item()
     lh_tval_sub = data['lh_tval']
@@ -90,17 +90,17 @@ plt.rcParams['svg.fonttype'] = 'none'
 # =============================================================================
 # Loop across subjects and categories
 for s, sub in enumerate(tqdm(args.subjects)):
-    for cat in lh_tval[s].keys():
+    for cat in ['bodies', 'faces', 'objects', 'places']:
 
         # Select the ROIs to plot
-        if cat == 'face':
+        if cat == 'faces':
             roi_list = ['OFA', 'FFA-1', 'FFA-2', 'mTL-faces', 'aTL-faces']
-        if cat == 'body':
+        if cat == 'bodies':
             roi_list = ['EBA', 'FBA-1', 'FBA-2', 'mTL-bodies']
-        elif cat == 'house':
+        elif cat == 'places':
             roi_list = ['OPA', 'PPA', 'RSC']
-        elif cat == 'food':
-            roi_list = ['FFA-1', 'FFA-2', 'EBA', 'PPA']
+        elif cat == 'objects':
+            roi_list = ['EBA', 'FFA-1', 'FFA-2', 'RSC', 'PPA', 'OPA']
 
         # Append the results across left and right hemishperes
         data = np.append(lh_tval[s][cat], rh_tval[s][cat])

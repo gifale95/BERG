@@ -67,10 +67,10 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     # Load the functional localizer t-value maps
     data_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'fmri',
-        'hvc_selectivity', 't_values', args.encoding_model,
+        'hvc_selectivity_nsd_floc_stimuli', 't_values', args.encoding_model,
         f'results_sub-{sub:02d}.npy')
     data = np.load(data_dir, allow_pickle=True).item()
-    for cat in ['face', 'body', 'house', 'food']:
+    for cat in ['bodies', 'characters', 'faces', 'objects', 'places']:
         if s == 0:
             lh_tval_silico[cat] = []
             rh_tval_silico[cat] = []
@@ -87,7 +87,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # =============================================================================
 # Load the functional localizer t-value maps defined in vivo from NSD
 # =============================================================================
-    for cat in ['face', 'body', 'house']:
+    for cat in ['bodies', 'characters', 'faces', 'places']:
         if s == 0:
             lh_tval_vivo[cat] = []
             rh_tval_vivo[cat] = []
@@ -98,18 +98,22 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 
     # Convert the functional localizer t-value maps from subject native surface
     # space to fsaverage
-    lh_tval_vivo['face'].append(np.squeeze(nsd.fit(sub, 'lh.white', 'fsaverage',
-        os.path.join(data_dir, 'lh.floc-faces.mgz'))))
-    rh_tval_vivo['face'].append(np.squeeze(nsd.fit(sub, 'rh.white', 'fsaverage',
-        os.path.join(data_dir, 'rh.floc-faces.mgz'))))
-    lh_tval_vivo['body'].append(np.squeeze(nsd.fit(sub, 'lh.white', 'fsaverage',
-        os.path.join(data_dir, 'lh.floc-bodies.mgz'))))
-    rh_tval_vivo['body'].append(np.squeeze(nsd.fit(sub, 'rh.white', 'fsaverage',
-        os.path.join(data_dir, 'rh.floc-bodies.mgz'))))
-    lh_tval_vivo['house'].append(np.squeeze(nsd.fit(sub, 'lh.white', 'fsaverage',
-        os.path.join(data_dir, 'lh.floc-places.mgz'))))
-    rh_tval_vivo['house'].append(np.squeeze(nsd.fit(sub, 'rh.white', 'fsaverage',
-        os.path.join(data_dir, 'rh.floc-places.mgz'))))
+    lh_tval_vivo['faces'].append(np.squeeze(nsd.fit(sub, 'lh.white',
+        'fsaverage', os.path.join(data_dir, 'lh.floc-faces.mgz'))))
+    rh_tval_vivo['faces'].append(np.squeeze(nsd.fit(sub, 'rh.white',
+        'fsaverage', os.path.join(data_dir, 'rh.floc-faces.mgz'))))
+    lh_tval_vivo['bodies'].append(np.squeeze(nsd.fit(sub, 'lh.white',
+        'fsaverage', os.path.join(data_dir, 'lh.floc-bodies.mgz'))))
+    rh_tval_vivo['bodies'].append(np.squeeze(nsd.fit(sub, 'rh.white',
+        'fsaverage', os.path.join(data_dir, 'rh.floc-bodies.mgz'))))
+    lh_tval_vivo['places'].append(np.squeeze(nsd.fit(sub, 'lh.white',
+        'fsaverage', os.path.join(data_dir, 'lh.floc-places.mgz'))))
+    rh_tval_vivo['places'].append(np.squeeze(nsd.fit(sub, 'rh.white',
+        'fsaverage', os.path.join(data_dir, 'rh.floc-places.mgz'))))
+    lh_tval_vivo['characters'].append(np.squeeze(nsd.fit(sub, 'lh.white',
+        'fsaverage', os.path.join(data_dir, 'lh.floc-words.mgz'))))
+    rh_tval_vivo['characters'].append(np.squeeze(nsd.fit(sub, 'rh.white',
+        'fsaverage', os.path.join(data_dir, 'rh.floc-words.mgz'))))
 
     # Convert the variance explained by the functional localizer GLM model
     # from subject native surface space to fsaverage
@@ -141,7 +145,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     rh_idx = np.logical_and(rh_idx_ncsnr, rh_idx_r2)
     tval_silico = {}
     tval_vivo = {}
-    for cat in ['face', 'body', 'house']:
+    for cat in ['bodies', 'characters', 'faces', 'places']:
         tval_silico[cat] = np.append(lh_tval_silico[cat][s][lh_idx],
             rh_tval_silico[cat][s][rh_idx])
         tval_vivo[cat] = np.append(lh_tval_vivo[cat][s][lh_idx],
@@ -151,7 +155,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # =============================================================================
 # Correlate the in silico and in vivo functional localizer t-value maps
 # =============================================================================
-    for cat in ['face', 'body', 'house']:
+    for cat in ['bodies', 'characters', 'faces', 'places']:
 
         if s == 0:
             corr_tval_silico_vivo[cat] = []
@@ -176,7 +180,8 @@ results = {
 
 # Create the saving directory
 save_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'stats', args.encoding_model)
+    'vision', 'fmri', 'hvc_selectivity_nsd_floc_stimuli', 'stats',
+    args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 # Save the results
