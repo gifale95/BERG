@@ -110,7 +110,7 @@ rh_fmri = np.concatenate(rh_fmri)
 # Create the stimulus design matrix
 # =============================================================================
 n_cat = len(categories)
-img_per_cat = 82
+img_per_cat = 288
 X = []
 
 for c in range(n_cat):

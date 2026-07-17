@@ -65,8 +65,8 @@ for sub in args.subjects:
     idx_nan_rh = data['metadata']['fmri']['rh_ncsnr'] >= \
         args.ncsnr_threshold
     for key in lh_tval_sub.keys():
-        lh_tval_sub[key][idx_nan_lh] = np.nan
-        rh_tval_sub[key][idx_nan_rh] = np.nan
+        lh_tval_sub[key][~idx_nan_lh] = np.nan
+        rh_tval_sub[key][~idx_nan_rh] = np.nan
 
     # Store the results
     lh_tval.append(lh_tval_sub)
