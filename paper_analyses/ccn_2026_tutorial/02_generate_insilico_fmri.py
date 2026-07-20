@@ -177,5 +177,5 @@ save_dir = os.path.join(args.project_dir, 'insilico_fmri')
 
 # Save the in silico fMRI responses
 file_name = (f'insilico_fmri_sub-{args.fmri_subject:02d}_'
-    f'imageset-{args.image_set}.h5')
+    f'imageset-{args.image_set}.npy')
 np.save(os.path.join(save_dir, file_name), fmri)
