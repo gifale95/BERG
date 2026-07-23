@@ -311,7 +311,7 @@ class BERG:
             raise ModelNotFoundError(f"Model '{model_id}' not found in registry.")
 
         try:
-            BaseModelInterface.describe_from_id(model_id)
+            return BaseModelInterface.describe_from_id(model_id)
         except Exception as e:
             raise ModelNotFoundError(f"Failed to load model description for '{model_id}': {str(e)}")
 
