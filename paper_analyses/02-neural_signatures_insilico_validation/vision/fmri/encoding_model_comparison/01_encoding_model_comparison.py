@@ -103,19 +103,19 @@ for m, model in enumerate(args.encoding_models):
 
     # HVC selectivity
     if m == 0:
-        insilico_validation_scores['corr_tval_silico_vivo_face'] = []
-        insilico_validation_scores['corr_tval_silico_vivo_body'] = []
-        insilico_validation_scores['corr_tval_silico_vivo_house'] = []
+        insilico_validation_scores['corr_tval_silico_vivo_faces'] = []
+        insilico_validation_scores['corr_tval_silico_vivo_bodies'] = []
+        insilico_validation_scores['corr_tval_silico_vivo_places'] = []
     results_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'fmri',
         'hvc_selectivity', 'stats', model, 'stats.npy')
     results = np.load(results_dir, allow_pickle=True).item()
-    insilico_validation_scores['corr_tval_silico_vivo_face'].append(
-        np.array(results['corr_tval_silico_vivo']['face']))
-    insilico_validation_scores['corr_tval_silico_vivo_body'].append(
-        np.array(results['corr_tval_silico_vivo']['body']))
-    insilico_validation_scores['corr_tval_silico_vivo_house'].append(
-        np.array(results['corr_tval_silico_vivo']['house']))
+    insilico_validation_scores['corr_tval_silico_vivo_faces'].append(
+        np.array(results['corr_tval_silico_vivo']['faces']))
+    insilico_validation_scores['corr_tval_silico_vivo_bodies'].append(
+        np.array(results['corr_tval_silico_vivo']['bodies']))
+    insilico_validation_scores['corr_tval_silico_vivo_places'].append(
+        np.array(results['corr_tval_silico_vivo']['places']))
 
    # Tripartite organization
     if m == 0:

@@ -88,9 +88,9 @@ colors = [
 titles = [
     'pRF (polar angle)',
     'pRF (eccentricity)',
-    'floc (face)',
-    'floc (body)',
-    'floc (house)',
+    'floc (faces)',
+    'floc (bodies)',
+    'floc (places)',
     'Tripartite org. (animals)',
     'Tripartite org. (big objects)',
     'DNN layerwise modeling',

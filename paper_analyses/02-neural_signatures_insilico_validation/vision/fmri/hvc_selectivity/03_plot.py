@@ -1,5 +1,4 @@
-"""Plot the vertex-mean responses of high-level visual cortex ROIs for images
-of different categories.
+"""Plot the t-value maps for faces, bodies, and places.
 
 Parameters
 ----------
@@ -90,17 +89,15 @@ plt.rcParams['svg.fonttype'] = 'none'
 # =============================================================================
 # Loop across subjects and categories
 for s, sub in enumerate(tqdm(args.subjects)):
-    for cat in lh_tval[s].keys():
+    for cat in ['bodies', 'faces', 'places']:
 
         # Select the ROIs to plot
-        if cat == 'face':
+        if cat == 'faces':
             roi_list = ['OFA', 'FFA-1', 'FFA-2', 'mTL-faces', 'aTL-faces']
-        if cat == 'body':
+        if cat == 'bodies':
             roi_list = ['EBA', 'FBA-1', 'FBA-2', 'mTL-bodies']
-        elif cat == 'house':
+        elif cat == 'places':
             roi_list = ['OPA', 'PPA', 'RSC']
-        elif cat == 'food':
-            roi_list = ['FFA-1', 'FFA-2', 'EBA', 'PPA']
 
         # Append the results across left and right hemishperes
         data = np.append(lh_tval[s][cat], rh_tval[s][cat])
@@ -112,7 +109,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
             subject=subject,
             cmap='inferno',
             vmin=0,
-            vmax=30,
+            vmax=10,
             with_colorbar=True
             )
 

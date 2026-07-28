@@ -1,21 +1,16 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-hvc_selectivity_nsd_floc_stimuli-01_test_hvc_selectivity_GPU
+#SBATCH --job-name=berg_insilico_validation-food_selectivity-01_test_food_selectivity_CPU
 #SBATCH --mail-type=end
 #SBATCH --mem=25000
-#SBATCH --time=00:30:00
-#SBATCH --qos=hiprio
-#SBATCH --partition=agcichy
-#SBATCH --gres=gpu:1 # number of GPUs
-
-# CUDA module
-module add CUDA/12.4.0
+#SBATCH --time=02:00:00
+#SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a encoding_model_all
 declare -a subject_all
 index=0
-for em in 'fmri-nsd_fsaverage-huze' ; do
+for em in 'fmri-nsd_fsaverage-huze' 'fmri-nsd_fsaverage-alexnet' 'fmri-nsd_fsaverage-alexnet_untrained'; do
     for s in `seq 1 8` ; do
         encoding_model_all[$index]=$em
         subject_all[$index]=$s
@@ -34,11 +29,11 @@ echo encoding_model: $encoding_model
 sleep 8
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/hvc_selectivity_nsd_floc_stimuli
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/food_selectivity
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Run the job
-python 01_test_hvc_selectivity.py --subject $subject --encoding_model $encoding_model
+python 01_test_food_selectivity.py --subject $subject --encoding_model $encoding_model

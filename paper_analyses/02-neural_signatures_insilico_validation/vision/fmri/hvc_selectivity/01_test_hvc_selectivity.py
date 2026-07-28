@@ -1,5 +1,9 @@
-"""Use BERG to generate the in silico fMRI responses to food images, and test
-the contrasts for face, body, food, and place selective areas.
+"""Use BERG to generate the in silico fMRI responses to images of faces,
+bodies, objects, places, and characters, and compute t-constrast maps for each
+of these categories.
+
+The image stimuli are the same one used in the NSD functional localizer
+experiment.
 
 Parameters
 ----------
@@ -44,8 +48,8 @@ for key, val in vars(args).items():
 # =============================================================================
 # Image directories
 img_dir = os.path.join(args.berg_dir, 'neural_signatures_insilico_validation',
-    'vision', 'fmri', 'hvc_selectivity', 'stimuli')
-categories = ['face', 'body', 'food', 'house']
+    'vision', 'fmri', 'hvc_selectivity', 'flocstimuli')
+categories = ['bodies', 'characters', 'faces', 'objects', 'places']
 
 # Load and format the images
 images = {}
@@ -110,7 +114,7 @@ rh_fmri = np.concatenate(rh_fmri)
 # Create the stimulus design matrix
 # =============================================================================
 n_cat = len(categories)
-img_per_cat = 82
+img_per_cat = 288
 X = []
 
 for c in range(n_cat):

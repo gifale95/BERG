@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg_insilico_validation-hvc_selectivity-02_stats
 #SBATCH --mail-type=end
-#SBATCH --mem=3000
+#SBATCH --mem=7000
 #SBATCH --time=00:10:00
 #SBATCH --qos=extended
 

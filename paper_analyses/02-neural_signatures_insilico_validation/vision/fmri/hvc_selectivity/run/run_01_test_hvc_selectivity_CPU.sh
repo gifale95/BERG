@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg_insilico_validation-hvc_selectivity-01_test_hvc_selectivity_CPU
 #SBATCH --mail-type=end
 #SBATCH --mem=25000
-#SBATCH --time=02:00:00
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

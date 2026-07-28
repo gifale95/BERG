@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg_insilico_validation-hvc_selectivity_nsd_floc_stimuli-03_plot
+#SBATCH --job-name=berg_insilico_validation-food_selectivity-03_plot
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
 #SBATCH --time=02:00:00
@@ -20,11 +20,11 @@ encoding_model=${encoding_model_all[$SLURM_ARRAY_TASK_ID]}
 echo encoding_model: $encoding_model
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/hvc_selectivity_nsd_floc_stimuli
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02-neural_signatures_insilico_validation/vision/fmri/food_selectivity
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Run the job
-python 03_plot.py --encoding_model $encoding_model
+python 02_plot.py --encoding_model $encoding_model
