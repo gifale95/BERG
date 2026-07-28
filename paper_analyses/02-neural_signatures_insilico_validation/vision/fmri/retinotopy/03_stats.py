@@ -13,9 +13,6 @@ fmri_subjects : list
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
-encoding_threshold : float
-    The threshold on the encoding models explained variance for vertex
-    selection (in % units).
 GRID_RES : int
     The number of probe centers sampled per axis (x and y). The total number of
     probes will be GRID_RES × GRID_RES.
@@ -45,7 +42,6 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-alexnet')
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--encoding_threshold', default=0, type=float)
 parser.add_argument('--GRID_RES', type=int, default=40)
 parser.add_argument('--PROBE_SIGMA', type=float, default=0.25)
 parser.add_argument('--BG_VALUE', type=float, default=0.5)
@@ -137,19 +133,11 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
 # =============================================================================
 # Vertex thresholding
 # =============================================================================
-    # Only retain vertices that have above threshold (i) NCSNR AND
-    # (ii) encoding prediction accuracy.
-    # Left hemisphere
+    # Only retain vertices that have above threshold NCSNR
     lh_idx_ncsnr = metadata[s]['fmri']['lh_ncsnr'] >= \
         args.ncsnr_threshold
     rh_idx_ncsnr = metadata[s]['fmri']['rh_ncsnr'] >= \
         args.ncsnr_threshold
-    lh_idx_encoding = \
-        metadata[s]['encoding_models']['lh_explained_variance_nsdcore'] >= \
-        args.encoding_threshold
-    rh_idx_encoding = \
-        metadata[s]['encoding_models']['rh_explained_variance_nsdcore'] >= \
-        args.encoding_threshold
 
     # Only retain vertices with a variance explained by the pRF model trained
     # on the in vivo NSD data of at least 20% (this is to avoid including noisy
@@ -159,10 +147,8 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     rh_idx_r2 = prf_r2_rh_vivo[s] >= 20
 
     # Threshold the retinotopic maps
-    lh_idx = np.logical_and(lh_idx_ncsnr, np.logical_and(lh_idx_encoding,
-        lh_idx_r2))
-    rh_idx = np.logical_and(rh_idx_ncsnr, np.logical_and(rh_idx_encoding,
-        rh_idx_r2))
+    lh_idx = np.logical_and(lh_idx_ncsnr, lh_idx_r2)
+    rh_idx = np.logical_and(rh_idx_ncsnr, rh_idx_r2)
     polar_angle_vivo = np.append(polar_angle_lh_vivo[s][lh_idx],
         polar_angle_rh_vivo[s][rh_idx])
     polar_angle_silico = np.append(polar_angle_lh_silico[s][lh_idx],
