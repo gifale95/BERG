@@ -215,7 +215,7 @@ If you use BERG, please cite:
 
 
 [website]: https://gifale95.github.io/BERG/
-[paper]: https://2025.ccneuro.org/poster/?id=dIxr3CPuPR
+[paper]: https://drive.google.com/file/d/1W9n0hWZ08oOZQ48SJMgLCSfaiI6b_aRn/view?usp=drive_link
 [documentation]: https://brain-encoding-response-generator.readthedocs.io/en/latest/
 [berg_structure]: https://brain-encoding-response-generator.readthedocs.io/en/latest/data_storage.html#
 [model_cards]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/overview.html
