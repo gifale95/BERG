@@ -78,21 +78,21 @@ all_subjects = [1, 2, 3, 4, 5, 6, 7, 8]
 # =============================================================================
 # Load the t-fMRI responses for the 50k ILSVRC-2012 validation images
 # =============================================================================
-# Load the t-fMRI responses of all subjects, and average them across repeats
+# Load the t-fMRI responses of all subjects
 tfmri = []
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc',
     'tfmri_responses')
 for sub in all_subjects:
     file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}.h5'
-    tfmri.append(np.mean(h5py.File(
-        os.path.join(data_dir, file_name), 'r')['tfmri'], 1))
+    tfmri.append(h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'])
 tfmri = np.array(tfmri)
 n_images = tfmri.shape[1]
 
 # If cross-validating, remove the CV (test) subject, and average over the
 # remaining (train) subjects. The fMRI responses for the train subjects are
 # used to select the baseline images, and the same images are also used as
-# baseline for the test subjects.
+# baseline for the test subjects. If not cross-validating, average over all
+# subjects.
 if args.cv == 0:
     tfmri_mean = np.mean(tfmri, 0)
 elif args.cv == 1:

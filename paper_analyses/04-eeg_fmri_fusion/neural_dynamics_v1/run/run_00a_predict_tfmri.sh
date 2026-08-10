@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-rnc-00a_predict_tfmri
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-neural_dynamics_v1-00a_predict_tfmri
 #SBATCH --mail-type=end
 #SBATCH --mem=35000
 #SBATCH --time=15:00:00
@@ -12,7 +12,7 @@ declare -a roi_all
 declare -a current_batch_all
 index=0
 for fs in `seq 1 8` ; do
-    for r in 'V1' 'hV4' 'ventral' ; do
+    for r in 'V1' 'hV4' 'FFA' ; do
         for b in `seq 0 9` ; do
             fmri_subject_all[$index]=$fs
             roi_all[$index]=$r
@@ -36,7 +36,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/rnc
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/neural_dynamics_v1
 
 # Run the job
 python 00a_predict_tfmri.py --fmri_subject $fmri_subject --roi $roi --current_batch $current_batch

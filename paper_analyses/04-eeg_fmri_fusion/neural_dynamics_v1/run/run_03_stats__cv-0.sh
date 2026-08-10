@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-rnc-01_rnc_baseline__cv-0
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-neural_dynamics_v1-03_stats__cv-0
 #SBATCH --mail-type=end
 #SBATCH --mem=1000
-#SBATCH --time=02:00:00
+#SBATCH --time=00:05:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -30,7 +30,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/rnc
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/neural_dynamics_v1
 
 # Run the job
-python 01_rnc_baseline.py --cv '0' --roi $roi --time_window_pair $time_window_pair
+python 03_stats.py --cv '0' --roi $roi --time_window_pair $time_window_pair

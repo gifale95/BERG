@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-rnc-00b_aggregate_predicted_tfmri
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-neural_dynamics_v1-quantitative_dynamics_analysis-00_predict_tfmri
 #SBATCH --mail-type=end
-#SBATCH --mem=5000
-#SBATCH --time=01:00:00
+#SBATCH --mem=35000
+#SBATCH --time=03:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -11,7 +11,7 @@ declare -a fmri_subject_all
 declare -a roi_all
 index=0
 for fs in `seq 1 8` ; do
-    for r in 'V1' 'hV4' 'ventral' ; do
+    for r in 'V1' 'hV4' 'FFA' ; do
         fmri_subject_all[$index]=$fs
         roi_all[$index]=$r
         ((index=index+1))
@@ -30,7 +30,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/rnc
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/neural_dynamics_v1/quantitative_dynamics_analysis
 
 # Run the job
-python 00b_aggregate_predicted_tfmri.py --fmri_subject $fmri_subject --roi $roi
+python 00_predict_tfmri.py --fmri_subject $fmri_subject --roi $roi

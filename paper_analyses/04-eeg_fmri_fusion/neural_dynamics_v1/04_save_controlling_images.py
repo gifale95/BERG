@@ -48,7 +48,7 @@ time_window_2_start, time_window_2_end = map(
 
 
 # =============================================================================
-# Load the baseline and control image numbers
+# Load the baseline and controlling image numbers
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc', 'stats',
     'cv-0', args.time_window_pair, f'stats_roi-{args.roi}.npy')

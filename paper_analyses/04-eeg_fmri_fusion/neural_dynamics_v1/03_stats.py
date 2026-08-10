@@ -68,15 +68,14 @@ all_subjects = [1, 2, 3, 4, 5, 6, 7, 8]
 
 
 # =============================================================================
-# Load the t-fMRI responses of all subjects, and average them across repeats
+# Load the t-fMRI responses of all subjects
 # =============================================================================
 tfmri = []
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'rnc',
     'tfmri_responses')
 for sub in all_subjects:
     file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}.h5'
-    tfmri.append(np.mean(h5py.File(
-        os.path.join(data_dir, file_name), 'r')['tfmri'], 1))
+    tfmri.append(h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'])
 tfmri = np.array(tfmri)
 
 

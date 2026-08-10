@@ -109,7 +109,7 @@ for h, hemi in enumerate(args.hemispheres):
     idx_roi = np.where(idx_roi)[0]
 
     # Get the indices of ROI vertices with NCSNR above threshold
-    idx_v[(args.roi, hemi)] = np.intersect1d(idx_roi, idx_ncsnr)
+    idx_v[hemi] = np.intersect1d(idx_roi, idx_ncsnr)
 
 
 # =============================================================================
@@ -163,6 +163,9 @@ for es, esub in enumerate(args.eeg_subjects):
     gc.collect()
     torch.cuda.empty_cache()
 
+# Average the EEG responses across repeats
+eeg = np.mean(eeg, 1)
+
 
 # =============================================================================
 # Loop across EEG time points
@@ -192,34 +195,27 @@ for t in tqdm(range(len(times))):
 
         # Instantiate the fusion regression model
         reg = LinearRegression()
-        reg.coef_ = reg_param['coef_'][idx_v[(args.roi, hemi)]]
-        reg.intercept_ = reg_param['intercept_'][idx_v[(args.roi, hemi)]]
+        reg.coef_ = reg_param['coef_'][idx_v[hemi]]
+        reg.intercept_ = reg_param['intercept_'][idx_v[hemi]]
         reg.n_features_in_ = reg_param['n_features_in_']
 
-        # Empty t-fMRI response array of shape:
-        # (N Images, N Pseudo Trials, N Vertices, 1 Time point)
-        tfmri_hemi = np.zeros((len(eeg), eeg.shape[1],
-            len(idx_v[(args.roi, hemi)]), 1), dtype=np.float32)
-
-        # Generate the t-fMRI responses for each of the 4 in silico EEG
-        # trials
-        for tr in range(eeg.shape[1]):
-            tfmri_hemi[:,tr] = np.expand_dims(reg.predict(eeg[:,tr,:,t]), 2)
+        # Generate the t-fMRI responses
+        tfmri_hemi = np.expand_dims(reg.predict(eeg[:,:,t]), 2)
         del reg_param, reg
 
         # Append the t-fMRI responses across hemispheres
         if h == 0:
             tfmri_time = tfmri_hemi
         else:
-            tfmri_time = np.append(tfmri_time, tfmri_hemi, 2)
+            tfmri_time = np.append(tfmri_time, tfmri_hemi, 1)
         del tfmri_hemi
 
     # Average the t-fMRI responses across vertices to create the ROI
-    # univariate responses, and store them
+    # univariate responses, and append them across time points
     if t == 0:
-        tfmri = np.mean(tfmri_time, 2)
+        tfmri = np.mean(tfmri_time, 1)
     else:
-        tfmri = np.append(tfmri, np.mean(tfmri_time, 2), 2)
+        tfmri = np.append(tfmri, np.mean(tfmri_time, 1), 2)
     del tfmri_time
 
 # Delete the EEG reponses
