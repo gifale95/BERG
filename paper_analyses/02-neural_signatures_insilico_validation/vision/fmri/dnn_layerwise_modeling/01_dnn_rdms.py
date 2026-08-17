@@ -31,7 +31,7 @@ from sklearn.decomposition import PCA
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--nsd_dir', default='/scratch/giffordale95/datasets/natural-scenes-dataset', type=str)
+parser.add_argument('--nsd_dir', default='/scratch/ccn_datasets/natural-scenes-dataset', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> DNN RDMs <<<')

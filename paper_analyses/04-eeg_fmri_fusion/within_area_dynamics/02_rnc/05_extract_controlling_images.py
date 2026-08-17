@@ -1,0 +1,83 @@
+"""Extract and save the controlling images from the h5py files.
+
+Parameters
+----------
+roi: str
+    Used ROI.
+time_window_pair: str
+    A string specifying the two time windows of interest.
+imageset : str
+    The image set to use for the analysis. Possible values are: 'imagenet'
+    (ILSVRC-2012 validation split) and 'coco' (MS COCO 2017 test split).
+berg_dir : str
+    Directory of the BERG.
+"""
+
+import argparse
+import os
+import h5py
+from tqdm import tqdm
+from PIL import Image
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--roi', default='V1', type=str)
+parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
+parser.add_argument('--imageset', default='imagenet', type=str)
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
+args, unknown = parser.parse_known_args()
+
+print('>>> Extract controlling images <<<')
+print('\nInput arguments:')
+for key, val in vars(args).items():
+    print('{:16} {}'.format(key, val))
+
+
+# =============================================================================
+# Break down the time windows
+# =============================================================================
+time_window_1_start, time_window_1_end = map(
+    float, args.time_window_pair.split('__')[0].split('-'))
+time_window_2_start, time_window_2_end = map(
+    float, args.time_window_pair.split('__')[1].split('-'))
+
+
+# =============================================================================
+# Extract and save the baseline images
+# =============================================================================
+# Data directory
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'within_area_dynamics', 'rnc', 'images', f'roi-{args.roi}',
+    args.time_window_pair, f'imageset-{args.imageset}')
+
+# Loop across time windows
+time_windows = ['time_window_1', 'time_window_2']
+for tw in tqdm(time_windows):
+
+    # Load the image h5py file
+    h5_dir = os.path.join(data_dir, f'baseline_images_{tw}.h5')
+    images = h5py.File(h5_dir, 'r')['images'][:]
+
+    # Save the baseline images as .png files
+    for i in range(len(images)):
+        img = Image.fromarray(images[i])
+        file_name = f'{args.roi}_baseline_{tw}_img-{i+1:03}.png'
+        img.save(os.path.join(data_dir, file_name))
+
+
+# =============================================================================
+# Extract and save the controlling images
+# =============================================================================
+# Loop across neural control types
+control_types = ['high_1_high_2', 'low_1_low_2', 'high_1_low_2',
+    'low_1_high_2']
+for ct in tqdm(control_types):
+
+    # Load the image h5py file
+    h5_dir = os.path.join(data_dir, f'controlling_images_{ct}.h5')
+    images = h5py.File(h5_dir, 'r')['images'][:]
+
+    # Save the controlling images as .png files
+    for i in range(len(images)):
+        img = Image.fromarray(images[i])
+        file_name = f'{args.roi}_{ct}_img-{i+1:03}.png'
+        img.save(os.path.join(data_dir, file_name))
