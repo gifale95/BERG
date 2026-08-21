@@ -30,7 +30,6 @@ parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--imageset', default='imagenet', type=str)
 parser.add_argument('--tot_img_batches', default=10, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
-parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Aggregate t-fMRI responses <<<')

@@ -293,7 +293,8 @@ del eeg
 # Save the results
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'tfmri_responses')
+    'within_area_dynamics', 'representational_format_evolution',
+    'tfmri_responses')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = (f'tfmri_sub-{args.fmri_subject:02d}_roi-{args.roi}_'

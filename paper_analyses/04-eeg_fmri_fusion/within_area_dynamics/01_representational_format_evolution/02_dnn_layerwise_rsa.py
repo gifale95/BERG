@@ -45,7 +45,7 @@ for key, val in vars(args).items():
 # Load the t-fMRI RSMs
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'tfmri_rsms')
+    'within_area_dynamics', 'representational_format_evolution', 'tfmri_rsms')
 
 file_name = (f'tfmri_rsms_sub-{args.fmri_subject:02d}_roi-{args.roi}_'
     f'eeg_reps-all_images-{args.images}.npy')
@@ -57,7 +57,7 @@ tfmri_rsms = np.load(os.path.join(data_dir, file_name))
 # Load the DNN RSMs
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'dnn_rsms')
+    'within_area_dynamics', 'representational_format_evolution', 'dnn_rsms')
 
 if args.images == 'things_eeg_2_vivo' or args.images == 'things_eeg_2_silico':
     file_name = f'dnn_rsms_dnn-{args.dnn}_images-things_eeg_2.npy'
@@ -86,7 +86,8 @@ for t in range(n_times):
 # Save the RSA results
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'dnn_layerwise_rsa')
+    'within_area_dynamics', 'representational_format_evolution',
+    'dnn_layerwise_rsa')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = (f'dnn_layerwise_rsa_sub-{args.fmri_subject:02d}_roi-{args.roi}_'

@@ -3,7 +3,7 @@
 #SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02_rnc-02_rnc__cv-1
 #SBATCH --mail-type=end
 #SBATCH --mem=2000
-#SBATCH --time=00:10:00
+#SBATCH --time=00:20:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -13,9 +13,12 @@ declare -a time_window_pair_all
 declare -a imageset_all
 index=0
 for cs in `seq 1 8` ; do
-    for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' 'EBA' 'PPA' ; do
+    # for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' 'OFA' 'EBA' 'FBA' 'PPA' 'OPA' ; do
+    for r in 'V1' 'FFA' 'OFA' 'EBA' 'FBA' 'PPA' 'OPA' ; do
+        # for t in '0.06-0.10__0.20-0.25' '0.06-0.10__0.25-0.30' '0.06-0.10__0.30-0.35' '0.06-0.10__0.35-0.40' '0.10-0.15__0.20-0.25' '0.10-0.15__0.25-0.30' '0.10-0.15__0.30-0.35' '0.10-0.15__0.35-0.40' '0.06-0.15__0.15-0.25' ; do
         for t in '0.06-0.10__0.20-0.25' ; do
-            for i in 'imagenet' 'coco' ; do
+            # for i in 'imagenet' 'coco' ; do
+            for i in 'coco' ; do
                 cv_subject_all[$index]=$cs
                 roi_all[$index]=$r
                 time_window_pair_all[$index]=$t

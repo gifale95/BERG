@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--roi', default='FFA', type=str)
+parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
 parser.add_argument('--imageset', default='imagenet', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -60,17 +60,20 @@ resp_tw_1_h1l2 = stats['cv_resp_1']['high_1_low_2']
 resp_tw_1_l1h2 = stats['cv_resp_1']['low_1_high_2']
 resp_tw_2_h1l2 = stats['cv_resp_2']['high_1_low_2']
 resp_tw_2_l1h2 = stats['cv_resp_2']['low_1_high_2']
-p_val_tw_1 = stats['p_val_tw_1']
-p_val_tw_2 = stats['p_val_tw_2']
+base_resp_1 = stats['base_resp_1']
+base_resp_2 = stats['base_resp_2']
+p_val_tw_1_all_sub = stats['p_val_tw_1_all_sub']
+p_val_tw_2_all_sub = stats['p_val_tw_2_all_sub']
+p_val_tw_1_single_sub = stats['p_val_tw_1_single_sub']
+p_val_tw_2_single_sub = stats['p_val_tw_2_single_sub']
 
 
 # =============================================================================
 # Create the plot save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'rnc', 'plots', 'cv-1',
-    f'imageset-{args.imageset}')
-os.makedirs(save_dir, exist_ok=True)
+    'within_area_dynamics', 'rnc', 'plots_new', f'imageset-{args.imageset}')
+os.makedirs(save_dir, exist_ok=True) # !!!
 
 
 # =============================================================================
@@ -177,10 +180,8 @@ matplotlib.rcParams['grid.alpha'] = .3
 matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
-colors = [(166/255, 77/255, 121/255), (105/255, 105/255, 105/255),
-    (67/255, 103/255, 148/255), # OR blue instead of gray
-    (201/255, 152/255, 152/255) # OR gold instead of gray
-    ]
+colors = [(166/255, 77/255, 121/255), (67/255, 103/255, 148/255),
+   (105/255, 105/255, 105/255)]
     
 # Distribution parameters
 n_grid = 200  # KDE evaluation points
@@ -195,16 +196,16 @@ bar_linewidth = 1
 text_offset = .02  # asterisk offset above/right of the bracket
 head_room = .35  # extra density-axis space for the annotation
 
-# Grouped so the scatter and both marginals iterate over the same containers
+
+# =============================================================================
+# Plot the univariate responses for the controlling images (all subjects)
+# =============================================================================
+# Get the subject data
 resp_x = [resp_tw_1_h1l2.flatten(), resp_tw_1_l1h2.flatten()]
 resp_y = [resp_tw_2_h1l2.flatten(), resp_tw_2_l1h2.flatten()]
 resp_x_avg = [np.mean(resp_tw_1_h1l2, 1), np.mean(resp_tw_1_l1h2, 1)]
 resp_y_avg = [np.mean(resp_tw_2_h1l2, 1), np.mean(resp_tw_2_l1h2, 1)]
 
-
-# =============================================================================
-# Plot the univariate responses for the controlling images
-# =============================================================================
 # Create the figure
 fig = plt.figure(figsize=(10, 10))
 gs = fig.add_gridspec(2, 2, width_ratios=(5, 1), height_ratios=(1, 5),
@@ -217,14 +218,22 @@ ax_joint.set_box_aspect(1)
 # Plot the univariate responses (all images)
 for c in range(n_conditions):
    ax_joint.scatter(resp_x[c], resp_y[c], c=[colors[c]], s=100, alpha=.25,
-      edgecolors='k')
+      edgecolors='k', zorder=1)
 
 # Plot the univariate responses (within-subject average across images)
 for c in range(n_conditions):
    ax_joint.scatter(resp_x_avg[c], resp_y_avg[c], c=[colors[c]], s=400,
-       alpha=.9, edgecolors='k')
+       alpha=1, edgecolors='k', zorder=3)
 
-# Plot the univariate response ditributions
+# Plot the line connectors between the average within-subject univariate
+# responses for the two time windows
+n_sub = len(resp_x_avg[0])
+for s in range(n_sub):
+    ax_joint.plot([resp_x_avg[0][s], resp_x_avg[1][s]],
+      [resp_y_avg[0][s], resp_y_avg[1][s]], color='k', alpha=.25, linewidth=1,
+      zorder=2)
+
+# Plot the univariate response distributions
 all_x = np.concatenate(resp_x)
 all_y = np.concatenate(resp_y)
 all_x = all_x[np.isfinite(all_x)]
@@ -253,7 +262,7 @@ ax_marg_x.plot([pos_x[0], pos_x[0], pos_x[1], pos_x[1]],
    color='k', linewidth=bar_linewidth, solid_capstyle='butt',
    label='_nolegend_')
 ax_marg_x.text(np.mean(pos_x), bar_level_x+text_offset*max_x,
-   p_to_asterisks(p_val_tw_1), ha='center', va='bottom', color='k')
+   p_to_asterisks(p_val_tw_1_all_sub), ha='center', va='bottom', color='k')
 max_y = np.max(density_y)
 bar_level_y = max_y * (1 + bar_height)
 ax_marg_y.plot(
@@ -261,7 +270,7 @@ ax_marg_y.plot(
    [pos_y[0], pos_y[0], pos_y[1], pos_y[1]], color='k',
    linewidth=bar_linewidth, solid_capstyle='butt', label='_nolegend_')
 ax_marg_y.text(bar_level_y+text_offset*max_y, np.mean(pos_y),
-   p_to_asterisks(p_val_tw_2), ha='left', va='center', rotation=-90,
+   p_to_asterisks(p_val_tw_2_all_sub), ha='left', va='center', rotation=-90,
    rotation_mode='anchor', color='k')
 
 # Drop the spine shared with the joint axis, keep the density axis
@@ -291,8 +300,126 @@ ylabels = [1, -0.5, 0, 0.5, 1]
 # plt.ylim(bottom=-1, top=.75)
 
 # Save the figure
-file_name = (f'univariate_rnc_roi-{args.roi}_'
-    f'time_window_pair-{args.time_window_pair}_imageset-{args.imageset}.png')
-fig.savefig(os.path.join(save_dir, file_name), bbox_inches='tight',
-    transparent=True, format='png')
-plt.close()
+# file_name = (f'univariate_rnc_roi-{args.roi}_'
+#    f'time_window_pair-{args.time_window_pair}_sub-all_'
+#    f'imageset-{args.imageset}.png')
+# fig.savefig(os.path.join(save_dir, file_name), bbox_inches='tight',
+#     transparent=True, format='png')
+# plt.close()
+
+
+# =============================================================================
+# Plot the univariate responses for the controlling images (single subjects) # !!!
+# =============================================================================
+# Loop across subjects
+all_subjects = [1, 2, 3, 4, 5, 6, 7, 8]
+for s, sub in enumerate(all_subjects):
+
+   # Get the subject data
+   resp_x = [resp_tw_1_h1l2[s], resp_tw_1_l1h2[s]]
+   resp_y = [resp_tw_2_h1l2[s], resp_tw_2_l1h2[s]]
+   resp_x_avg = [np.mean(resp_tw_1_h1l2[s]), np.mean(resp_tw_1_l1h2[s])]
+   resp_y_avg = [np.mean(resp_tw_2_h1l2[s]), np.mean(resp_tw_2_l1h2[s])]
+   base_resp_x = np.mean(base_resp_1[s])
+   base_resp_y = np.mean(base_resp_2[s])
+   p_val_x = p_val_tw_1_single_sub[s]
+   p_val_y = p_val_tw_2_single_sub[s]
+
+   # Create the figure
+   fig = plt.figure(figsize=(10, 10))
+   gs = fig.add_gridspec(2, 2, width_ratios=(5, 1), height_ratios=(1, 5),
+      left=.1, right=.9, bottom=.1, top=.9, wspace=.04, hspace=.04)
+   ax_joint = fig.add_subplot(gs[1, 0])
+   ax_marg_x = fig.add_subplot(gs[0, 0], sharex=ax_joint)
+   ax_marg_y = fig.add_subplot(gs[1, 1], sharey=ax_joint)
+   ax_joint.set_box_aspect(1)
+
+   # Plot the baseline mean activity
+   ax_joint.plot([base_resp_x, base_resp_x], [min(resp_y[0]), max(resp_y[1])],
+      '--k', alpha=.25, linewidth=2, zorder=1)
+   ax_joint.plot([min(resp_x[1]), max(resp_x[0])], [base_resp_y, base_resp_y],
+      '--k', alpha=.25, linewidth=2, zorder=1)
+
+   # Plot the univariate responses (all images)
+   for c in range(n_conditions):
+      ax_joint.scatter(resp_x[c], resp_y[c], c=[colors[c]], s=100, alpha=.25,
+         edgecolors='k', zorder=2)
+
+   # Plot the univariate responses (within-subject average across images)
+   for c in range(n_conditions):
+      ax_joint.scatter(resp_x_avg[c], resp_y_avg[c], c=[colors[c]], s=400,
+         alpha=1, edgecolors='k', zorder=3)
+
+   # Plot the univariate response distributions
+   all_x = np.concatenate(resp_x)
+   all_y = np.concatenate(resp_y)
+   all_x = all_x[np.isfinite(all_x)]
+   all_y = all_y[np.isfinite(all_y)]
+   grid_x = np.linspace(np.min(all_x)-kde_pad*np.ptp(all_x),
+      np.max(all_x)+kde_pad*np.ptp(all_x), n_grid)
+   grid_y = np.linspace(np.min(all_y)-kde_pad*np.ptp(all_y),
+      np.max(all_y)+kde_pad*np.ptp(all_y), n_grid)
+   density_x = np.zeros((n_conditions, n_grid), dtype=np.float32)
+   density_y = np.zeros((n_conditions, n_grid), dtype=np.float32)
+   for c in range(n_conditions):
+      density_x[c] = marginal_kde(resp_x[c], grid_x)
+      density_y[c] = marginal_kde(resp_y[c], grid_y)
+      ax_marg_x.plot(grid_x, density_x[c], color=colors[c], linewidth=2)
+      ax_marg_x.fill_between(grid_x, 0, density_x[c], color=colors[c], alpha=.25)
+      ax_marg_y.plot(density_y[c], grid_y, color=colors[c], linewidth=2)
+      ax_marg_y.fill_betweenx(grid_y, 0, density_y[c], color=colors[c], alpha=.25)
+   pos_x, tip_x = anchor_positions(density_x, grid_x, resp_x, bar_anchor)
+   pos_y, tip_y = anchor_positions(density_y, grid_y, resp_y, bar_anchor)
+
+   # Plot the significance
+   max_x = np.max(density_x)
+   bar_level_x = max_x * (1 + bar_height)
+   ax_marg_x.plot([pos_x[0], pos_x[0], pos_x[1], pos_x[1]],
+      [tip_x[0]+bar_gap*max_x, bar_level_x, bar_level_x, tip_x[1]+bar_gap*max_x],
+      color='k', linewidth=bar_linewidth, solid_capstyle='butt',
+      label='_nolegend_')
+   ax_marg_x.text(np.mean(pos_x), bar_level_x+text_offset*max_x,
+      p_to_asterisks(p_val_x), ha='center', va='bottom', color='k')
+   max_y = np.max(density_y)
+   bar_level_y = max_y * (1 + bar_height)
+   ax_marg_y.plot(
+      [tip_y[0]+bar_gap*max_y, bar_level_y, bar_level_y, tip_y[1]+bar_gap*max_y],
+      [pos_y[0], pos_y[0], pos_y[1], pos_y[1]], color='k',
+      linewidth=bar_linewidth, solid_capstyle='butt', label='_nolegend_')
+   ax_marg_y.text(bar_level_y+text_offset*max_y, np.mean(pos_y),
+      p_to_asterisks(p_val_y), ha='left', va='center', rotation=-90,
+      rotation_mode='anchor', color='k')
+
+   # Drop the spine shared with the joint axis, keep the density axis
+   ax_marg_x.tick_params(labelbottom=False, bottom=False)
+   ax_marg_x.spines['bottom'].set_visible(False)
+   ax_marg_x.set_ylim(0, max_x*(1+bar_height+head_room))
+   ax_marg_y.tick_params(labelleft=False, left=False)
+   ax_marg_y.spines['left'].set_visible(False)
+   ax_marg_y.set_xlim(0, max_y*(1+bar_height+head_room))
+   for ax_marg in [ax_marg_x, ax_marg_y]:
+      ax_marg.set_axis_off()
+
+   # x-axis parameters
+   xlabel = f'Univariate response ({tw_1})'
+   ax_joint.set_xlabel(xlabel, fontsize=fontsize)
+   xticks = [1, -0.5, 0, 0.5, 1]
+   xlabels = [1, -0.5, 0, 0.5, 1]
+   # plt.xticks(ticks=xticks, labels=xlabels)
+   # plt.xlim(left=-.75, right=.75)
+
+   # y-axis parameters
+   ylabel = f'Univariate response ({tw_2})'
+   ax_joint.set_ylabel(ylabel, fontsize=fontsize)
+   yticks = [1, -0.5, 0, 0.5, 1]
+   ylabels = [1, -0.5, 0, 0.5, 1]
+   # plt.yticks(ticks=yticks, labels=ylabels)
+   # plt.ylim(bottom=-1, top=.75)
+
+   # Save the figure
+   file_name = (f'univariate_rnc_roi-{args.roi}_'
+      f'time_window_pair-{args.time_window_pair}_sub-{sub:02d}_'
+      f'imageset-{args.imageset}.png')
+   fig.savefig(os.path.join(save_dir, file_name), bbox_inches='tight',
+      transparent=True, format='png')
+   plt.close()

@@ -244,7 +244,7 @@ dnn_rsms = (Z @ Z.transpose(0, 2, 1)).transpose(1, 2, 0)
 # Save the DNN RSMs
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'dnn_rsms')
+    'within_area_dynamics', 'representational_format_evolution', 'dnn_rsms')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = f'dnn_rsms_dnn-{args.dnn}_images-{args.images}.npy'

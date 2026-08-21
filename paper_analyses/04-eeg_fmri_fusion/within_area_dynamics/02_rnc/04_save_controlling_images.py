@@ -29,9 +29,9 @@ from torchvision import transforms as trn
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--roi', default='V1', type=str)
-parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
+parser.add_argument('--time_window_pair', default='0.06-0.15__0.15-0.25', type=str)
 parser.add_argument('--imageset', default='imagenet', type=str)
-parser.add_argument('--n_images', default=100, type=int)
+parser.add_argument('--n_images', default=25, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)
 args, unknown = parser.parse_known_args()
@@ -72,45 +72,70 @@ imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='val')
 
 # Save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'rnc', 'images', f'roi-{args.roi}',
+    'within_area_dynamics', 'rnc', 'images_new', f'roi-{args.roi}', # !!!
     args.time_window_pair, f'imageset-{args.imageset}')
 os.makedirs(save_dir, exist_ok=True)
 
-# Loop across time windows
-for key, val in baseline_images.items():
+# # Loop across time windows # !!!
+# for key, val in baseline_images.items():
 
-    # Loop across images
-    images = []
-    for i in tqdm(range(args.n_images)):
+#     # Loop across images
+#     images = []
+#     for i in tqdm(range(args.n_images)):
 
-        # Get and preprocess the baseline images
-        img, _ = imageset.__getitem__(val[i])
-        min_size = min(img.size)
-        transform = trn.Compose([
-            trn.CenterCrop(min_size),
-            trn.Resize((425,425))
-            ])
-        img = transform(img)
-        images.append(np.array(img))
+#         # Get and preprocess the baseline images
+#         img, _ = imageset.__getitem__(val[i])
+#         min_size = min(img.size)
+#         transform = trn.Compose([
+#             trn.CenterCrop(min_size),
+#             trn.Resize((425,425))
+#             ])
+#         img = transform(img)
+#         images.append(np.array(img))
 
-    # Save the baseline images as h5py files
-    h5_dir = os.path.join(save_dir, f'baseline_images_{key}.h5')
-    with h5py.File(h5_dir, 'w') as f:
-        f.create_dataset('images', data=np.array(images))
+#     # Save the baseline images as h5py files
+#     h5_dir = os.path.join(save_dir, f'baseline_images_{key}.h5')
+#     with h5py.File(h5_dir, 'w') as f:
+#         f.create_dataset('images', data=np.array(images))
 
 
 # =============================================================================
-# Save the controlling images
+# Save the controlling images # !!!
 # =============================================================================
-# Loop across control types
-for key, val in controlling_images.items():
+# # Loop across control types
+# for key, val in controlling_images.items():
+
+#     # Loop across images
+#     images = []
+#     for i in tqdm(range(args.n_images)):
+
+#         # Get and preprocess the controlling images
+#         img, _ = imageset.__getitem__(val[i])
+#         min_size = min(img.size)
+#         transform = trn.Compose([
+#             trn.CenterCrop(min_size),
+#             trn.Resize((425,425))
+#             ])
+#         img = transform(img)
+#         images.append(np.array(img))
+
+#     # Save the controlling images as h5py files
+#     h5_dir = os.path.join(save_dir, f'controlling_images_{key}.h5')
+#     with h5py.File(h5_dir, 'w') as f:
+#         f.create_dataset('images', data=np.array(images))
+
+
+# =============================================================================
+# Save the controlling images # !!! DELETE
+# =============================================================================
+for key in ['high_1_low_2', 'low_1_high_2']:
 
     # Loop across images
     images = []
     for i in tqdm(range(args.n_images)):
 
         # Get and preprocess the controlling images
-        img, _ = imageset.__getitem__(val[i])
+        img, _ = imageset.__getitem__(controlling_images[key][i])
         min_size = min(img.size)
         transform = trn.Compose([
             trn.CenterCrop(min_size),

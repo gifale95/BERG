@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02_rnc-00a_predict_tfmri__coco
 #SBATCH --mail-type=end
-#SBATCH --mem=30000
-#SBATCH --time=05:00:00
+#SBATCH --mem=35000
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -13,7 +13,8 @@ declare -a imageset_all
 declare -a current_batch_all
 index=0
 for fs in `seq 1 8` ; do
-    for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' 'EBA' 'PPA' ; do
+    # for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' 'OFA' 'EBA' 'FBA' 'PPA' 'OPA' ; do
+    for r in 'OFA' 'FBA' 'OPA' ; do
         for i in 'coco' ; do
             for b in `seq 0 9` ; do
                 fmri_subject_all[$index]=$fs

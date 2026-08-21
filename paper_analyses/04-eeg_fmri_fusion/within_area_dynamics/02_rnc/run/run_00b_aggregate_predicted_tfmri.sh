@@ -12,7 +12,7 @@ declare -a roi_all
 declare -a imageset_all
 index=0
 for fs in `seq 1 8` ; do
-    for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' 'EBA' 'PPA' ; do
+    for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' 'OFA' 'EBA' 'FBA' 'PPA' 'OPA' ; do
         for i in 'imagenet' 'coco' ; do
             fmri_subject_all[$index]=$fs
             roi_all[$index]=$r

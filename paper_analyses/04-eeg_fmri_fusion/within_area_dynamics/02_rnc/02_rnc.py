@@ -36,7 +36,7 @@ parser.add_argument('--cv_subject', type=int, default=1)
 parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
 parser.add_argument('--imageset', default='imagenet', type=str)
-parser.add_argument('--n_images', default=100, type=int)
+parser.add_argument('--n_images', default=25, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -131,6 +131,15 @@ tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2], 1)
 # =============================================================================
 # Rank the images based on their t-fMRI univariate responses
 # =============================================================================
+# Univariate response score margin used to constrain the selection of the
+# control images. The margin is defined as half the standard deviation of the
+# t-fMRI responses across all images for each time window. The margin is used
+# to ignore images that have t-fMRI responses that are too close to the
+# baseline scores, as these images may not be informative for aligning or
+# disentangling the two time windows. 
+margin_1 = np.std(tfmri_1) / 4 * 3
+margin_2 = np.std(tfmri_2) / 4 * 3
+
 # Select the top N images that align the t-fMRI univariate responses of the two
 # time windows (i.e., that lead to both time windows having either high or low
 # univariate responses).
@@ -138,16 +147,16 @@ tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2], 1)
 response_sum = tfmri_1 + tfmri_2
 high_1_high_2 = np.argsort(response_sum)[::-1].astype(np.float32)
 # Ignore image conditions with t-fMRI responses below the baseline scores
-idx_bad_1 = np.where(tfmri_1[high_1_high_2.astype(np.int32)] < base_1)[0]
-idx_bad_2 = np.where(tfmri_2[high_1_high_2.astype(np.int32)] < base_2)[0]
+idx_bad_1 = np.where(tfmri_1[high_1_high_2.astype(np.int32)] < base_1+margin_1)[0]
+idx_bad_2 = np.where(tfmri_2[high_1_high_2.astype(np.int32)] < base_2+margin_2)[0]
 high_1_high_2[idx_bad_1] = np.nan
 high_1_high_2[idx_bad_2] = np.nan
 high_1_high_2 = high_1_high_2[~np.isnan(high_1_high_2)].astype(np.int32)
 # 2nd ranking: images with low univariate responses for both time windows
 low_1_low_2 = np.argsort(response_sum).astype(np.float32)
 # Ignore images conditions with t-fMRI responses above the baseline scores
-idx_bad_1 = np.where(tfmri_1[low_1_low_2.astype(np.int32)] > base_1)[0]
-idx_bad_2 = np.where(tfmri_2[low_1_low_2.astype(np.int32)] > base_2)[0]
+idx_bad_1 = np.where(tfmri_1[low_1_low_2.astype(np.int32)] > base_1-margin_1)[0]
+idx_bad_2 = np.where(tfmri_2[low_1_low_2.astype(np.int32)] > base_2-margin_2)[0]
 low_1_low_2[idx_bad_1] = np.nan
 low_1_low_2[idx_bad_2] = np.nan
 low_1_low_2 = low_1_low_2[~np.isnan(low_1_low_2)].astype(np.int32)
@@ -161,8 +170,8 @@ response_diff = tfmri_1 - tfmri_2
 high_1_low_2 = np.argsort(response_diff)[::-1].astype(np.float32)
 # Ignore images conditions with univariate responses below (time window 1) or
 # above (time window 2) the baseline scores
-idx_bad_1 = np.where(tfmri_1[high_1_low_2.astype(np.int32)] < base_1)[0]
-idx_bad_2 = np.where(tfmri_2[high_1_low_2.astype(np.int32)] > base_2)[0]
+idx_bad_1 = np.where(tfmri_1[high_1_low_2.astype(np.int32)] < base_1+margin_1)[0]
+idx_bad_2 = np.where(tfmri_2[high_1_low_2.astype(np.int32)] > base_2-margin_2)[0]
 high_1_low_2[idx_bad_1] = np.nan
 high_1_low_2[idx_bad_2] = np.nan
 high_1_low_2 = high_1_low_2[~np.isnan(high_1_low_2)].astype(np.int32)
@@ -171,8 +180,8 @@ high_1_low_2 = high_1_low_2[~np.isnan(high_1_low_2)].astype(np.int32)
 low_1_high_2 = np.argsort(response_diff).astype(np.float32)
 # Ignore images conditions with univariate responses above (time window 1) or
 # below (time window 2) the baseline scores
-idx_bad_1 = np.where(tfmri_1[low_1_high_2.astype(np.int32)] > base_1)[0]
-idx_bad_2 = np.where(tfmri_2[low_1_high_2.astype(np.int32)] < base_2)[0]
+idx_bad_1 = np.where(tfmri_1[low_1_high_2.astype(np.int32)] > base_1-margin_1)[0]
+idx_bad_2 = np.where(tfmri_2[low_1_high_2.astype(np.int32)] < base_2+margin_2)[0]
 low_1_high_2[idx_bad_1] = np.nan
 low_1_high_2[idx_bad_2] = np.nan
 low_1_high_2 = low_1_high_2[~np.isnan(low_1_high_2)].astype(np.int32)

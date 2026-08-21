@@ -36,7 +36,7 @@ parser.add_argument('--cv', type=int, default=1)
 parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
 parser.add_argument('--imageset', default='imagenet', type=str)
-parser.add_argument('--n_images', default=100, type=int)
+parser.add_argument('--n_images', default=25, type=int)
 parser.add_argument('--n_iter', type=int, default=100000)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -138,6 +138,13 @@ elif args.cv == 1:
         controlling_images[ct] = np.asarray(controlling_images[ct])
 
 
+
+# for ct in control_types: # !!! DELETE
+#     for s in range(len(all_subjects)):
+#         print(f'Controlling images for {ct} subject {s+1}: {controlling_images[ct][s].shape}')
+
+
+
 # =============================================================================
 # Load the univariate RNC baseline images
 # =============================================================================
@@ -208,13 +215,24 @@ if args.cv == 1:
 
 if args.cv == 1:
 
+    # All subjects
     # Time window 1
-    p_val_tw_1 = ttest_rel(cv_resp_1['high_1_low_2'].flatten(),
+    p_val_tw_1_all_sub = ttest_rel(cv_resp_1['high_1_low_2'].flatten(),
         cv_resp_1['low_1_high_2'].flatten(), alternative='greater')[1]
-
     # Time window 2
-    p_val_tw_2 = ttest_rel(cv_resp_2['high_1_low_2'].flatten(),
+    p_val_tw_2_all_sub = ttest_rel(cv_resp_2['high_1_low_2'].flatten(),
         cv_resp_2['low_1_high_2'].flatten(), alternative='less')[1]
+
+    # Single subjects
+    p_val_tw_1_single_sub = np.zeros(len(all_subjects))
+    p_val_tw_2_single_sub = np.zeros(len(all_subjects))
+    for s in range(len(all_subjects)):
+        # Time window 1
+        p_val_tw_1_single_sub[s] = ttest_rel(cv_resp_1['high_1_low_2'][s],
+            cv_resp_1['low_1_high_2'][s], alternative='greater')[1]
+        # Time window 2
+        p_val_tw_2_single_sub[s] = ttest_rel(cv_resp_2['high_1_low_2'][s],
+            cv_resp_2['low_1_high_2'][s], alternative='less')[1]
 
 
 # =============================================================================
@@ -250,8 +268,10 @@ elif args.cv == 1:
         'cv_resp_2': cv_resp_2,
         'base_resp_1': base_resp_1,
         'base_resp_2': base_resp_2,
-        'p_val_tw_1': p_val_tw_1,
-        'p_val_tw_2': p_val_tw_2
+        'p_val_tw_1_all_sub': p_val_tw_1_all_sub,
+        'p_val_tw_2_all_sub': p_val_tw_2_all_sub,
+        'p_val_tw_1_single_sub': p_val_tw_1_single_sub,
+        'p_val_tw_2_single_sub': p_val_tw_2_single_sub
         }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',

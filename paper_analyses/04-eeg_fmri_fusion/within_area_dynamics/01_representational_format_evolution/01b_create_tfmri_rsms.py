@@ -45,7 +45,8 @@ for key, val in vars(args).items():
 # Load the t-fMRI responses
 # =============================================================================
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'tfmri_responses')
+    'within_area_dynamics', 'representational_format_evolution',
+    'tfmri_responses')
 
 file_name = (f'tfmri_sub-{args.fmri_subject:02d}_roi-{args.roi}_'
     f'eeg_reps-{args.eeg_reps}_images-{args.images}.npy')
@@ -66,7 +67,7 @@ tfmri_rsms = (Z @ Z.transpose(0, 2, 1)).transpose(1, 2, 0)
 # Save the RSMs
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'tfmri_rsms')
+    'within_area_dynamics', 'representational_format_evolution', 'tfmri_rsms')
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = (f'tfmri_rsms_sub-{args.fmri_subject:02d}_roi-{args.roi}_'

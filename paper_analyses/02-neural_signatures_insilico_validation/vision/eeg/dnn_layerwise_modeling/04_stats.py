@@ -161,7 +161,7 @@ for i in tqdm(range(args.n_iter)):
 ci_decoding[0] = np.percentile(decoding_dist, 2.5, axis=0)
 ci_decoding[1] = np.percentile(decoding_dist, 97.5, axis=0)
 
-# RSA  CIs
+# RSA CIs
 ci_rsa = {}
 ci_rsa_peak_latency = {}
 for key in model_layers:
