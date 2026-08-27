@@ -29,7 +29,7 @@ from torchvision import transforms as trn
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--roi', default='V1', type=str)
-parser.add_argument('--time_window_pair', default='0.06-0.15__0.15-0.25', type=str)
+parser.add_argument('--time_window_pair', default='0.06-0.15__0.20-0.25', type=str)
 parser.add_argument('--imageset', default='imagenet', type=str)
 parser.add_argument('--n_images', default=25, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -72,7 +72,7 @@ imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='val')
 
 # Save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'rnc', 'images_new', f'roi-{args.roi}', # !!!
+    'within_area_dynamics', 'rnc', 'images', f'roi-{args.roi}',
     args.time_window_pair, f'imageset-{args.imageset}')
 os.makedirs(save_dir, exist_ok=True)
 

@@ -72,8 +72,8 @@ p_val_tw_2_single_sub = stats['p_val_tw_2_single_sub']
 # Create the plot save directory
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'rnc', 'plots_new', f'imageset-{args.imageset}')
-os.makedirs(save_dir, exist_ok=True) # !!!
+    'within_area_dynamics', 'rnc', 'plots', f'imageset-{args.imageset}')
+os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
@@ -309,7 +309,7 @@ ylabels = [1, -0.5, 0, 0.5, 1]
 
 
 # =============================================================================
-# Plot the univariate responses for the controlling images (single subjects) # !!!
+# Plot the univariate responses for the controlling images (single subjects)
 # =============================================================================
 # Loop across subjects
 all_subjects = [1, 2, 3, 4, 5, 6, 7, 8]

@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
-parser.add_argument('--rois', default=['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA'], type=list)
+parser.add_argument('--rois', default=['V1', 'hV4', 'FFA', 'EBA', 'PPA'], type=list)
 parser.add_argument('--dnn', default='dinov2l', type=str)
 parser.add_argument('--images', default='things_eeg_2_vivo', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -56,7 +56,7 @@ times = data['times']
 dnn_layerwise_rsa = data['dnn_layerwise_rsa']
 best_dnn_layer = data['best_dnn_layer']
 corr_dnn_layer_tfmri_times = data['corr_dnn_layer_tfmri_times']
-reg_corr_dnn_layer_tfmri_times = data['reg_corr_dnn_layer_tfmri_times']
+reg_best_dnn_layer_tfmri_times = data['reg_best_dnn_layer_tfmri_times']
 ci_dnn_layerwise_rsa = data['ci_dnn_layerwise_rsa']
 ci_best_dnn_layer = data['ci_best_dnn_layer']
 
@@ -110,10 +110,12 @@ n_layers = 24
 colors = sample_cmap(n_layers)
 
 # Create the plot figure
-fig, axs = plt.subplots(3, 3, sharex=True, sharey=True, figsize=(35, 35))
+fig, axs = plt.subplots(1, 5, sharex=True, sharey=True, figsize=(40, 10))
 axs = np.reshape(axs, -1)
 
-for i, (key, val) in enumerate(dnn_layerwise_rsa.items()):
+# Loop across ROIs
+for i, roi in enumerate(args.rois):
+    val = dnn_layerwise_rsa[roi]
 
     # Enforce same length of x- and y-axes
     axs[i].set_box_aspect(1)
@@ -126,22 +128,21 @@ for i, (key, val) in enumerate(dnn_layerwise_rsa.items()):
 
     # Plot the confidence intervals
     for l in range(n_layers):
-        axs[i].fill_between(times, ci_dnn_layerwise_rsa[key][0,l],
-            ci_dnn_layerwise_rsa[key][1,l], color=colors[l], alpha=.1)
+        axs[i].fill_between(times, ci_dnn_layerwise_rsa[roi][0,l],
+            ci_dnn_layerwise_rsa[roi][1,l], color=colors[l], alpha=.1)
 
     # Plot title
-    axs[i].set_title(key, fontsize=fontsize)
+    axs[i].set_title(roi, fontsize=fontsize)
 
     # x-axis parameters
-    if i in [6, 7, 8]:
-        axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
+    axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
     xticks = [0.1, 0.2, 0.3, 0.4]
     xlabels = [100, 200, 300, 400]
     axs[i].set_xticks(ticks=xticks, labels=xlabels)
     axs[i].set_xlim(left=min(times), right=max(times))
 
     # y-axis parameters
-    if i in [0, 3, 6]:
+    if i in [0]:
         axs[i].set_ylabel("Pearson's $r$", fontsize=fontsize)
     yticks = [0, 0.1, 0.2, 0.3]
     ylabels = [0, 0.1, 0.2, 0.3]
@@ -160,10 +161,12 @@ plt.close(fig)
 # =============================================================================
 # Create the plot figure
 color = (139/255, 0/255, 0/255)
-fig, axs = plt.subplots(3, 3, sharex=True, sharey=True, figsize=(35, 35))
+fig, axs = plt.subplots(1, 5, sharex=True, sharey=True, figsize=(40, 10))
 axs = np.reshape(axs, -1)
 
-for i, (key, val) in enumerate(best_dnn_layer.items()):
+# Loop across ROIs
+for i, roi in enumerate(args.rois):
+    val = best_dnn_layer[roi]
 
     # Enforce same length of x- and y-axes
     axs[i].set_box_aspect(1)
@@ -173,35 +176,34 @@ for i, (key, val) in enumerate(best_dnn_layer.items()):
         label='_nolegend_')
 
     # Plot the confidence intervals
-    axs[i].fill_between(times, ci_best_dnn_layer[key][0],
-        ci_best_dnn_layer[key][1], color=color, alpha=.1)
+    axs[i].fill_between(times, ci_best_dnn_layer[roi][0],
+        ci_best_dnn_layer[roi][1], color=color, alpha=.1)
 
     # Plot the correlation between best DNN layers and t-fMRI time points
-    axs[i].text(0.1, 21, f'$ρ$ = {corr_dnn_layer_tfmri_times[key][0]:.2f}',
+    axs[i].text(0.1, 21, f'$ρ$ = {corr_dnn_layer_tfmri_times[roi][0]:.2f}',
         color='k', fontsize=fontsize, ha='left')
 
     # Plot the regression line between DNN layers and t-fMRI time points
-    slope = reg_best_dnn_layer_tfmri_times[key].slope
-    intercept = reg_best_dnn_layer_tfmri_times[key].intercept
+    slope = reg_best_dnn_layer_tfmri_times[roi].slope
+    intercept = reg_best_dnn_layer_tfmri_times[roi].intercept
     x_fit = np.array([min(times), max(times)])
     y_fit = intercept + slope * x_fit
     axs[i].plot(x_fit, y_fit, color='k', linewidth=2, linestyle='--',
         label=f'$y$ = {slope:.2f}$x$ + {intercept:.2f}', alpha=0.5)
 
     # Plot title
-    axs[i].set_title(key, fontsize=fontsize)
+    axs[i].set_title(roi, fontsize=fontsize)
 
     # x-axis parameters
-    if i in [6, 7, 8]:
-        axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
+    axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
     xticks = [0.1, 0.2, 0.3, 0.4]
     xlabels = [100, 200, 300, 400]
     axs[i].set_xticks(ticks=xticks, labels=xlabels)
     axs[i].set_xlim(left=min(times), right=max(times))
 
     # y-axis parameters
-    if i in [0, 3, 6]:
-        axs[i].set_ylabel('DNN layer', fontsize=fontsize)
+    if i in [0]:
+        axs[i].set_ylabel('Most similar DNN layer', fontsize=fontsize)
     yticks = [0, 5, 11, 17, 23]
     ylabels = [1, 6, 12, 18, 24]
     axs[i].set_yticks(ticks=yticks, labels=ylabels)
