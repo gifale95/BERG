@@ -13,7 +13,7 @@ declare -a time_window_pair_all
 declare -a imageset_all
 index=0
 for cs in `seq 1 8` ; do
-    for r in 'V1' 'FFA' 'OFA' 'EBA' 'FBA' 'PPA' 'OPA' ; do
+    for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' 'EBA' 'PPA' ; do
         for t in '0.06-0.10__0.20-0.25' ; do
             for i in 'imagenet' ; do
                 cv_subject_all[$index]=$cs

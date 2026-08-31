@@ -106,8 +106,7 @@ tfmri_2 = np.mean(tfmri[:,:,t_min_2:t_max_2], 2)
 # =============================================================================
 # Load the univariate RNC controlling images
 # =============================================================================
-control_types = ['high_1_high_2', 'low_1_low_2', 'high_1_low_2',
-    'low_1_high_2']
+control_types = ['high_1_low_2', 'low_1_high_2']
 controlling_images = {}
 
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
@@ -136,13 +135,6 @@ elif args.cv == 1:
                 data_dict['controlling_images'][ct][:args.n_images])
     for ct in control_types:
         controlling_images[ct] = np.asarray(controlling_images[ct])
-
-
-
-# for ct in control_types: # !!! DELETE
-#     for s in range(len(all_subjects)):
-#         print(f'Controlling images for {ct} subject {s+1}: {controlling_images[ct][s].shape}')
-
 
 
 # =============================================================================

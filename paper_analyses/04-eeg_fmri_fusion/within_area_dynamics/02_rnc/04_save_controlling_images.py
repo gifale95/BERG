@@ -29,7 +29,7 @@ from torchvision import transforms as trn
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--roi', default='V1', type=str)
-parser.add_argument('--time_window_pair', default='0.06-0.15__0.20-0.25', type=str)
+parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
 parser.add_argument('--imageset', default='imagenet', type=str)
 parser.add_argument('--n_images', default=25, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)

@@ -137,8 +137,8 @@ tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2], 1)
 # to ignore images that have t-fMRI responses that are too close to the
 # baseline scores, as these images may not be informative for aligning or
 # disentangling the two time windows. 
-margin_1 = np.std(tfmri_1) / 4 * 3
-margin_2 = np.std(tfmri_2) / 4 * 3
+margin_1 = np.std(tfmri_1) / 2 # np.std(tfmri_1) / 4 * 3
+margin_2 = np.std(tfmri_2) / 2 # np.std(tfmri_2) / 4 * 3
 
 # Select the top N images that align the t-fMRI univariate responses of the two
 # time windows (i.e., that lead to both time windows having either high or low

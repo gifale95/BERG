@@ -36,7 +36,7 @@ things_dir : str
 nsd_dir : str
     Directory of the Natural Scenes Dataset.
     https://naturalscenesdataset.org/
-        
+
 """
 
 import argparse
