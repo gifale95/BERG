@@ -20,8 +20,10 @@ roi: str
 time_window_pair: str
     A string specifying the two time windows of interest.
 imageset : str
-    The image set to use for the analysis. Possible values are: 'imagenet'
-    (ILSVRC-2012 validation split) and 'coco' (MS COCO 2017 test split).
+    The image set to use for the analysis. Possible values are:
+    'imagenet_train' (ILSVRC-2012 training split),
+    'imagenet_val' (ILSVRC-2012 validation split),
+    'coco' (MS COCO 2017 test split).
 n_images: int
     Number of retained controlling or baseline images.
 n_iter : int
@@ -46,7 +48,7 @@ parser.add_argument('--cv', type=int, default=1)
 parser.add_argument('--cv_subject', type=int, default=1)
 parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
-parser.add_argument('--imageset', default='imagenet', type=str)
+parser.add_argument('--imageset', default='imagenet_val', type=str)
 parser.add_argument('--n_images', default=25, type=int)
 parser.add_argument('--n_iter', type=int, default=100000)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -86,7 +88,7 @@ tfmri = []
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'within_area_dynamics', 'rnc', 'tfmri_responses')
 for sub in all_subjects:
-    file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}_imageset_{args.imageset}.h5'
+    file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}_imageset-{args.imageset}.h5'
     tfmri.append(h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'])
 tfmri = np.array(tfmri)
 n_images = tfmri.shape[1]

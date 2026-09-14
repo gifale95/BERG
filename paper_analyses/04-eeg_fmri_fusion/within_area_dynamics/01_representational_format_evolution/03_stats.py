@@ -11,7 +11,7 @@ fmri_subjects : list
 roi : list
     List of used ROIs.
 dnn : str
-    Name of the used DNN. Possible values are 'dinov2l'.
+    Name of the used DNN. Possible values are 'dinov2l' and 'alexnet'.
 images : str
     If 'things_eeg_2_vivo', use the in vivo EEG responses for the 200 THINGS
     EEG2 test images.
@@ -40,7 +40,7 @@ from sklearn.utils import resample
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--rois', default=['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA'], type=list)
-parser.add_argument('--dnn', default='dinov2l', type=str)
+parser.add_argument('--dnn', default='alexnet', type=str)
 parser.add_argument('--images', default='things_eeg_2_vivo', type=str)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -74,7 +74,7 @@ for r, roi in enumerate(args.rois):
 
         # Load the results
         file_name = (f'dnn_layerwise_rsa_sub-{sub:02d}_roi-{roi}_'
-            f'images-{args.images}.npy')
+            f'images-{args.images}_dnn-{args.dnn}.npy')
         dnn_layerwise_rsa_sub = np.load(os.path.join(data_dir, file_name))
 
         # Sum the results across fMRI subjects

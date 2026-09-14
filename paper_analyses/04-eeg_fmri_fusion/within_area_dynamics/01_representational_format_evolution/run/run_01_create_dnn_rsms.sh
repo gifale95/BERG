@@ -10,8 +10,8 @@
 declare -a dnn_all
 declare -a images_all
 index=0
-for d in 'dinov2l' ; do
-    for i in 'things_eeg_2' 'nsd_515_shared' ; do
+for d in 'dinov2l' 'alexnet' ; do
+    for i in 'things_eeg_2' ; do
         dnn_all[$index]=$d
         images_all[$index]=$i
         ((index=index+1))

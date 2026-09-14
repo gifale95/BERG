@@ -11,9 +11,9 @@ declare -a roi_all
 declare -a time_window_pair_all
 declare -a imageset_all
 index=0
-for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' 'EBA' 'PPA' ; do
+for r in 'V1' 'hV4' 'FFA' 'EBA' 'PPA' ; do
     for t in '0.06-0.10__0.20-0.25' ; do
-        for i in 'imagenet' ; do
+        for i in 'imagenet_val' 'imagenet_train' ; do
             roi_all[$index]=$r
             time_window_pair_all[$index]=$t
             imageset_all[$index]=$i

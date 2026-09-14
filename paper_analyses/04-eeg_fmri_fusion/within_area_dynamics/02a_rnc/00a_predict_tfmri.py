@@ -1,8 +1,8 @@
-"""Predict t-fMRI responses using in silico EEG responses for the 50,000
-ILSVRC-2012 validation images, or for the 40,670 MS COCO 2017 test split
-images. The t-fMRI responses are then converted to univariate responses by
-averaging across vertices within each ROI, for later use in the univariate RNC
-algorithm.
+"""Predict t-fMRI responses using in silico EEG responses for the 1,281,167
+ILSVRC-2012 training images, or for the 50,000 ILSVRC-2012 validation images,
+or for the 40,670 MS COCO 2017 test split images. The t-fMRI responses are then
+converted to univariate responses by averaging across vertices within each ROI,
+for later use in the univariate RNC algorithm.
 
 Parameters
 ----------
@@ -22,8 +22,10 @@ eeg_subjects : list
     List containing the subject identifiers for the THINGS EEG2 subjects. Valid
     subject identifiers are integers from 1 to 10.
 imageset : str
-    The image set to use for the analysis. Possible values are: 'imagenet'
-    (ILSVRC-2012 validation split) and 'coco' (MS COCO 2017 test split).
+    The image set to use for the analysis. Possible values are:
+    'imagenet_train' (ILSVRC-2012 training split),
+    'imagenet_val' (ILSVRC-2012 validation split),
+    'coco' (MS COCO 2017 test split).
 tot_img_batches : int
     The total number of batches in which the images are divided.
 current_batch : int
@@ -57,7 +59,7 @@ parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--eeg_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
-parser.add_argument('--imageset', default='imagenet', type=str)
+parser.add_argument('--imageset', default='imagenet_val', type=str)
 parser.add_argument('--tot_img_batches', default=10, type=int)
 parser.add_argument('--current_batch', default=0, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -123,9 +125,9 @@ for h, hemi in enumerate(args.hemispheres):
 
 
 # =============================================================================
-# Access the ILSVRC-2012 val split, and load the images for the current batch
+# Access the ILSVRC-2012 imageset, and load the images for the current batch
 # =============================================================================
-if args.imageset == 'imagenet':
+if args.imageset == 'imagenet_val' or args.imageset == 'imagenet_train':
 
     # Define the image transform
     transform = trn.Compose([
@@ -135,7 +137,11 @@ if args.imageset == 'imagenet':
     ])
 
     # Access the ILSVRC-2012 validation split
-    images = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='val',
+    if args.imageset == 'imagenet_val':
+        split = 'val'
+    elif args.imageset == 'imagenet_train':
+        split = 'train'
+    images = torchvision.datasets.ImageNet(root=args.imagenet_dir, split=split,
         transform=transform)
 
     # Select the images from the current batch
@@ -274,6 +280,6 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = (f'tfmri_sub-{args.fmri_subject:02d}_roi-{args.roi}_'
-    f'imageset_{args.imageset}_batch-{args.current_batch:02d}.npy')
+    f'imageset-{args.imageset}_batch-{args.current_batch:02d}.npy')
 
 np.save(os.path.join(save_dir, file_name), tfmri)

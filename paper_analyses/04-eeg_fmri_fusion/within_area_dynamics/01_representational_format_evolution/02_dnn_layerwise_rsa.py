@@ -8,7 +8,7 @@ fmri_subject : int
     encoding models are trained on NSD data, valid subject identifiers are
     integers from 1 to 8.
 dnn : str
-    Name of the used DNN. Possible values are 'dinov2l'.
+    Name of the used DNN. Possible values are 'dinov2l' and 'alexnet'.
 images : str
     If 'things_eeg_2_vivo', use the in vivo EEG responses for the 200 THINGS
     EEG2 test images.
@@ -91,6 +91,6 @@ save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = (f'dnn_layerwise_rsa_sub-{args.fmri_subject:02d}_roi-{args.roi}_'
-    f'images-{args.images}.npy')
+    f'images-{args.images}_dnn-{args.dnn}.npy')
 
 np.save(os.path.join(save_dir, file_name), dnn_layerwise_rsa)

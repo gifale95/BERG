@@ -9,8 +9,10 @@ fmri_subject : int
 roi : str
     Used ROI.
 imageset : str
-    The image set to use for the analysis. Possible values are: 'imagenet'
-    (ILSVRC-2012 validation split) and 'coco' (MS COCO 2017 test split).
+    The image set to use for the analysis. Possible values are:
+    'imagenet_train' (ILSVRC-2012 training split),
+    'imagenet_val' (ILSVRC-2012 validation split),
+    'coco' (MS COCO 2017 test split).
 tot_img_batches : int
     The total number of batches in which the images are divided.
 berg_dir : str
@@ -27,7 +29,7 @@ from tqdm import tqdm
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subject', default=1, type=int)
 parser.add_argument('--roi', default='V1', type=str)
-parser.add_argument('--imageset', default='imagenet', type=str)
+parser.add_argument('--imageset', default='imagenet_val', type=str)
 parser.add_argument('--tot_img_batches', default=10, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -47,7 +49,7 @@ data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
 for b in tqdm(range(args.tot_img_batches)):
 
     file_name = (f'tfmri_sub-{args.fmri_subject:02d}_roi-{args.roi}_'
-        f'imageset_{args.imageset}_batch-{b:02d}.npy')
+        f'imageset-{args.imageset}_batch-{b:02d}.npy')
 
     tfmri_batch = np.load(os.path.join(data_dir, file_name)).astype(np.float32)
 
@@ -62,7 +64,7 @@ for b in tqdm(range(args.tot_img_batches)):
 # Save the t-fMRI univariate responses
 # =============================================================================
 file_name = (f'tfmri_sub-{args.fmri_subject:02d}_roi-{args.roi}_'
-    f'imageset_{args.imageset}.h5')
+    f'imageset-{args.imageset}.h5')
 
 with h5py.File(os.path.join(data_dir, file_name), 'w') as f:
     f.create_dataset('tfmri', data=tfmri, dtype=np.float32)

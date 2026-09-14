@@ -11,7 +11,7 @@ declare -a images_all
 declare -a dnn_all
 index=0
 for i in 'things_eeg_2_vivo' ; do
-    for d in 'dinov2l' ; do
+    for d in 'dinov2l' 'alexnet' ; do
         images_all[$index]=$i
         dnn_all[$index]=$d
         ((index=index+1))

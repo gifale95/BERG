@@ -10,7 +10,7 @@ fmri_subjects : list
 roi : list
     List of used ROIs.
 dnn : str
-    Name of the used DNN. Possible values are 'dinov2l'.
+    Name of the used DNN. Possible values are 'dinov2l' and 'alexnet'.
 images : str
     If 'things_eeg_2_vivo', use the in vivo EEG responses for the 200 THINGS
     EEG2 test images.
@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--rois', default=['V1', 'hV4', 'FFA', 'EBA', 'PPA'], type=list)
-parser.add_argument('--dnn', default='dinov2l', type=str)
+parser.add_argument('--dnn', default='alexnet', type=str)
 parser.add_argument('--images', default='things_eeg_2_vivo', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -106,7 +106,7 @@ def sample_cmap(N):
     values = np.linspace(0, 1, N+2)
     colors = cmap(values)[1:-1]
     return colors
-n_layers = 24
+n_layers = dnn_layerwise_rsa[args.rois[0]].shape[1]
 colors = sample_cmap(n_layers)
 
 # Create the plot figure
@@ -144,10 +144,13 @@ for i, roi in enumerate(args.rois):
     # y-axis parameters
     if i in [0]:
         axs[i].set_ylabel("Pearson's $r$", fontsize=fontsize)
-    yticks = [0, 0.1, 0.2, 0.3]
-    ylabels = [0, 0.1, 0.2, 0.3]
+    yticks = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
+    ylabels = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
     axs[i].set_yticks(ticks=yticks, labels=ylabels)
-    axs[i].set_ylim(bottom=-0.05, top=0.35)
+    if args.dnn == 'dinov2l':
+        axs[i].set_ylim(bottom=-0.05, top=0.35)
+    elif args.dnn == 'alexnet':
+        axs[i].set_ylim(bottom=-0.05, top=0.43)
 
 # Save the figure
 file_name = os.path.join(save_dir, f'dnn_layer_as_function_of_tfmri_time_'
@@ -180,7 +183,11 @@ for i, roi in enumerate(args.rois):
         ci_best_dnn_layer[roi][1], color=color, alpha=.1)
 
     # Plot the correlation between best DNN layers and t-fMRI time points
-    axs[i].text(0.1, 21, f'$ρ$ = {corr_dnn_layer_tfmri_times[roi][0]:.2f}',
+    if args.dnn == 'dinov2l':
+        y = 21
+    elif args.dnn == 'alexnet':
+        y = 6.5
+    axs[i].text(0.1, y, f'$ρ$ = {corr_dnn_layer_tfmri_times[roi][0]:.2f}',
         color='k', fontsize=fontsize, ha='left')
 
     # Plot the regression line between DNN layers and t-fMRI time points
@@ -204,8 +211,12 @@ for i, roi in enumerate(args.rois):
     # y-axis parameters
     if i in [0]:
         axs[i].set_ylabel('Most similar DNN layer', fontsize=fontsize)
-    yticks = [0, 5, 11, 17, 23]
-    ylabels = [1, 6, 12, 18, 24]
+    if args.dnn == 'dinov2l':
+        yticks = [0, 5, 11, 17, 23]
+        ylabels = [1, 6, 12, 18, 24]
+    elif args.dnn == 'alexnet':
+        yticks = [0, 1, 2, 3, 4, 5, 6, 7]
+        ylabels = [1, 2, 3, 4, 5, 6, 7, 8]
     axs[i].set_yticks(ticks=yticks, labels=ylabels)
     axs[i].set_ylim(bottom=min(yticks), top=max(yticks))
 

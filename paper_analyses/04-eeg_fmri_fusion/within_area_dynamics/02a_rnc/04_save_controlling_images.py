@@ -7,8 +7,10 @@ roi: str
 time_window_pair: str
     A string specifying the two time windows of interest.
 imageset : str
-    The image set to use for the analysis. Possible values are: 'imagenet'
-    (ILSVRC-2012 validation split) and 'coco' (MS COCO 2017 test split).
+    The image set to use for the analysis. Possible values are:
+    'imagenet_train' (ILSVRC-2012 training split),
+    'imagenet_val' (ILSVRC-2012 validation split),
+    'coco' (MS COCO 2017 test split).
 n_images: int
     Number of retained controlling or baseline images.
 berg_dir : str
@@ -30,7 +32,7 @@ from torchvision import transforms as trn
 parser = argparse.ArgumentParser()
 parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
-parser.add_argument('--imageset', default='imagenet', type=str)
+parser.add_argument('--imageset', default='imagenet_val', type=str)
 parser.add_argument('--n_images', default=25, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--imagenet_dir', default='/scratch/ccn_datasets/ILSVRC2012', type=str)

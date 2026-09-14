@@ -14,8 +14,8 @@ declare -a dnn_all
 index=0
 for fs in `seq 1 8` ; do
     for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' 'EBA' 'PPA' ; do
-        for i in 'things_eeg_2_vivo' 'things_eeg_2_silico' 'nsd_515_shared' ; do
-            for d in 'dinov2l' ; do
+        for i in 'things_eeg_2_vivo' ; do
+            for d in 'dinov2l' 'alexnet' ; do
                 fmri_subject_all[$index]=$fs
                 roi_all[$index]=$r
                 images_all[$index]=$i

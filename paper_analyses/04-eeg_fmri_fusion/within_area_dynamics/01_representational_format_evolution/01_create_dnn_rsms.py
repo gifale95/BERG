@@ -4,7 +4,7 @@ images.
 Parameters
 ----------
 dnn : str
-    Name of the used DNN. Possible values are 'dinov2l'.
+    Name of the used DNN. Possible values are 'dinov2l' and 'alexnet'.
 images : str
     If 'things_eeg_2', use the 200 THINGS EEG2 test images.
     If 'nsd_515_shared', use the 515 NSD shared images.
@@ -28,10 +28,13 @@ from berg import BERG
 from PIL import Image
 import h5py
 import torch
+import torchvision
+from torchvision import transforms as trn
+from torchvision.models.feature_extraction import create_feature_extractor
 from enum import Enum
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dnn', default='dinov2l', type=str)
+parser.add_argument('--dnn', default='alexnet', type=str)
 parser.add_argument('--images', default='things_eeg_2', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
@@ -129,6 +132,34 @@ if args.dnn == 'dinov2l':
         1, 3, 1, 1)
     imagenet_std = torch.tensor([0.229, 0.224, 0.225], device=device).view(
         1, 3, 1, 1)
+
+elif args.dnn == 'alexnet':
+
+    # Load the model
+    model = torchvision.models.alexnet(weights='DEFAULT')
+    # Select the used layers for feature extraction
+    #nodes, _ = get_graph_node_names(model)
+    model_layers = [
+        'features.2',
+        'features.5',
+        'features.7',
+        'features.9',
+        'features.12',
+        'classifier.2',
+        'classifier.5',
+        'classifier.6'
+        ]
+
+    # Create the feature extractor
+    feature_extractor = create_feature_extractor(model, return_nodes=model_layers)
+    feature_extractor.to(device)
+    feature_extractor.eval()
+
+    # Define the image preprocessing
+    transform = trn.Compose([
+        trn.ToTensor(),
+        trn.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
 
 
 # =============================================================================
@@ -229,15 +260,68 @@ if args.dnn == 'dinov2l':
         blocks_to_take, patch_size, n_features, imagenet_mean,
         imagenet_std, device, batch_size, feature_dtype, bool(final_norm))
     # Shape per block: (n_images, n_tokens * n_features)
+    # Shape of dnn_features: (n_images, n_tokens * n_features, n_blocks)
+
+elif args.dnn == 'alexnet':
+
+    # Loop across images
+    with torch.no_grad():
+        for i, img in enumerate(tqdm(images, leave=False)):
+
+            # Preprocess the images
+            img = Image.fromarray(img).convert('RGB')
+            img = transform(img).unsqueeze(0)
+            img = img.to(device)
+
+            # Extract the features
+            ft = feature_extractor(img)
+
+            # Store the features
+            if i == 0:
+                ft_dict = {}
+                for key, val in ft.items():
+                    ft_dict[key] = []
+            for key, val in ft.items():
+                ft_dict[key].append(val.cpu().detach().numpy().flatten())
+            del ft
+        for key, val in ft_dict.items():
+            ft_dict[key] = np.array(val)
 
 
 # =============================================================================
 # Create RSMs using the layerwise DNN activations
 # =============================================================================
-Z = np.ascontiguousarray(dnn_features.transpose(2, 0, 1), dtype=np.float32)  # (Layers, Images, Features)
-Z -= Z.mean(-1, keepdims=True)
-Z /= np.linalg.norm(Z, axis=-1, keepdims=True)
-dnn_rsms = (Z @ Z.transpose(0, 2, 1)).transpose(1, 2, 0)    
+if args.dnn == 'dinov2l':
+
+    Z = np.ascontiguousarray(dnn_features.transpose(2, 0, 1), dtype=np.float32)  # (Layers, Images, Features)
+    Z -= Z.mean(-1, keepdims=True)
+    Z /= np.linalg.norm(Z, axis=-1, keepdims=True)
+    dnn_rsms = (Z @ Z.transpose(0, 2, 1)).transpose(1, 2, 0)
+
+elif args.dnn == 'alexnet':
+
+    def corr_matrix(X):
+        """
+        Computes the correlation matrix of the input data.
+        Parameters
+        ----------
+        X : (N, M) float array
+            Input data matrix with N features and M samples.
+
+        Returns
+        -------
+        corr : (M, M) float array
+            Correlation matrix of the input data.
+        """
+        Xc = X - X.mean(axis=0)
+        Xc /= np.sqrt((Xc**2).sum(axis=0))
+        return (Xc.T @ Xc).astype(np.float32)
+
+    dnn_rsms = []
+    for key in model_layers:
+        dnn_rsms.append(corr_matrix(ft_dict[key].T))
+    dnn_rsms = np.array(dnn_rsms)
+    dnn_rsms = np.transpose(dnn_rsms, (1, 2, 0))  # (Images, Images, Layers)
 
 
 # =============================================================================
