@@ -361,7 +361,7 @@ class FMRIEncodingModel(BaseModelInterface):
 
                 # Preprocess the videos from the current batch
                 video_batch = self.transform(torch.from_numpy(
-                    stimulus[idx_start:idx_end]).contiguous()).to(self.device)
+                    videos[idx_start:idx_end]).contiguous()).to(self.device)
 
                 # Extract features
                 features = self.feature_extractor(video_batch)
