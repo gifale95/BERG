@@ -341,9 +341,6 @@ class FMRIEncodingModel(BaseModelInterface):
         indices = np.linspace(0, num_frames - 1, num_samples, dtype=int)
         videos = stimulus[:,indices]
 
-        # Preprocess the videos
-        videos = self.transform(torch.from_numpy(videos).contiguous())
-
         # Extract features and generate responses in batches
         batch_size = 10
         n_batches = int(np.ceil(len(videos) / batch_size))
@@ -357,12 +354,16 @@ class FMRIEncodingModel(BaseModelInterface):
 
         with torch.no_grad():
             for b in progress_bar:
+
                 # Image batch indices
                 idx_start = b * batch_size
                 idx_end = idx_start + batch_size
 
+                # Preprocess the videos from the current batch
+                video_batch = self.transform(torch.from_numpy(
+                    stimulus[idx_start:idx_end]).contiguous()).to(self.device)
+
                 # Extract features
-                video_batch = videos[idx_start:idx_end].to(self.device)
                 features = self.feature_extractor(video_batch)
 
                 # Flatten features
