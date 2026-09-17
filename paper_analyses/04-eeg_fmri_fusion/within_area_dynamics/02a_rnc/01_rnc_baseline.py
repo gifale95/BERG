@@ -127,15 +127,15 @@ t_max_2 = np.where(times == time_window_2_end)[0][0]
 # of interest
 if args.cv == 0:
     tfmri = {}
-    tfmri['time_window_1'] = np.mean(tfmri_mean[:,t_min_1:t_max_1], 1)
-    tfmri['time_window_2'] = np.mean(tfmri_mean[:,t_min_2:t_max_2], 1)
+    tfmri['time_window_1'] = np.mean(tfmri_mean[:,t_min_1:t_max_1+1], 1)
+    tfmri['time_window_2'] = np.mean(tfmri_mean[:,t_min_2:t_max_2+1], 1)
 elif args.cv == 1:
     tfmri_train = {}
     tfmri_test = {}
-    tfmri_train['time_window_1'] = np.mean(tfmri_tr[:,t_min_1:t_max_1], 1)
-    tfmri_train['time_window_2'] = np.mean(tfmri_tr[:,t_min_2:t_max_2], 1)
-    tfmri_test['time_window_1'] = np.mean(tfmri_te[:,t_min_1:t_max_1], 1)
-    tfmri_test['time_window_2'] = np.mean(tfmri_te[:,t_min_2:t_max_2], 1)
+    tfmri_train['time_window_1'] = np.mean(tfmri_tr[:,t_min_1:t_max_1+1], 1)
+    tfmri_train['time_window_2'] = np.mean(tfmri_tr[:,t_min_2:t_max_2+1], 1)
+    tfmri_test['time_window_1'] = np.mean(tfmri_te[:,t_min_1:t_max_1+1], 1)
+    tfmri_test['time_window_2'] = np.mean(tfmri_te[:,t_min_2:t_max_2+1], 1)
     del tfmri_tr, tfmri_te
 
 

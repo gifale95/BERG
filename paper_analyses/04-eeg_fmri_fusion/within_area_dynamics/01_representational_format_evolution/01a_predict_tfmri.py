@@ -179,7 +179,7 @@ else:
                     break
             # Load and transform the image
             img = Image.open(img_path)
-            img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
+            img = img.resize((256, 256), Image.Resampling.LANCZOS).convert('RGB')
             img = np.array(img).transpose(2, 0, 1)  # Convert to (C, H, W)
             images.append(img)
         # Format the images to a numpy array

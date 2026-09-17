@@ -1,50 +1,79 @@
-def load_encoding_models(args, roi, device):
-    """Load the encoding models, and metadata.
+def load_encoding_models(args, idx_v, t_min, t_max, n_times, device):
+    """Load the encoding EEG and t-fMRI encoding models for the time window
+    of interest.
 
     Parameters
     ----------
     args : Namespace
         Input arguments.
-    roi : str
-        Used ROI.
+    idx_v : dict
+        Dictionary containing the indices of the vertices.
+    t_min : int
+        The starting time point.
+    t_max : int
+        The ending time point.
+    n_times : int
+        The number of time points.
     device : str
         If 'cpu' keep the model on CPU, if 'cuda' send the model to GPU.
 
     Returns
     -------
-    encoding_models : list
-        List containing the trained fwrf encoding models.
-    metadata : dict
-        In silico neural responses metadata.
+    model_eeg : list
+        The trained EEG encoding models.
+    model_tfmri : list
+        The trained t-fMRI encoding models.
 
     """
 
-    from berg import BERG
     from copy import deepcopy
+    from sklearn.linear_model import LinearRegression
 
-    ### Initialize BERG ###
+    ### Load the EEG encoding models ###
+    timepoints = np.zeros(n_times, dtype=np.int32)
+    timepoints[t_min:t_max+1] = 1
     berg_object = BERG(args.berg_dir)
-
-    ### Load the trained encoding model weights and metadata ###
-    encoding_models = []
-    metadata = []
-    for sub in args.all_subjects:
-        # Encoding model weights
-        encoding_models.append(deepcopy(berg_object.get_encoding_model(
+    model_eeg = []
+    for esub in args.eeg_subjects:
+        model_eeg.append(deepcopy(berg_object.get_encoding_model(
             model_id='fmri-nsd-fwrf',
-            subject=sub,
-            selection={'roi': roi},
+            subject=esub,
+            selection={'timepoints': timepoints},
             device=device
             )))
-        # Metadata
-        metadata.append(deepcopy(berg_object.get_model_metadata(
-            model_id='fmri-nsd-fwrf',
-            subject=sub,
-            roi=roi
-            )))
+
+    ### Load the t-fMRI encoding models ###
+    model_tfmri = []
+    for fsub in args.fmri_subjects:
+        model_tfmri_sub = []
+        for t, tid in enumerate(range(t_min, t_max+1)):
+            for h, hemi in enumerate(args.hemispheres):
+                file_name = (f'weights_fmri_sub-{fsub:02d}_'
+                    f'hemi-{hemi}_eeg_train_trials-all_eeg_time-{tid:03d}.npy')
+                reg_param = np.load(os.path.join(args.berg_dir,
+                    'eeg_fmri_fusion', 'encoding_fusion_weights', file_name),
+                    allow_pickle=True).item()
+                if h == 0:
+                    coef_ = reg_param['coef_'][idx_v[(fsub,hemi)]]
+                    intercept_ = reg_param['intercept_'][idx_v[(fsub,hemi)]]
+                    n_features_in_ = reg_param['n_features_in_']
+                else:
+                    coef_ = np.append(coef_,
+                        reg_param['coef_'][idx_v[(fsub,hemi)]], 0)
+                    intercept_ = np.append(intercept_,
+                        reg_param['intercept_'][idx_v[(fsub,hemi)]])
+                del reg_param
+            reg = LinearRegression()
+            reg.coef_ = coef_
+            reg.intercept_ = intercept_
+            reg.n_features_in_ = n_features_in_
+            model_tfmri_sub.append(deepcopy(reg))
+            del reg, coef_, intercept_
+        model_tfmri.append(deepcopy(model_tfmri_sub))
+        del model_tfmri_sub
 
     ### Output ###
-    return encoding_models, metadata
+    return model_eeg, model_tfmri
 
 
 def load_image_generator(args, device):
@@ -67,7 +96,7 @@ def load_image_generator(args, device):
     import os
     import torch
     import torch_nets # https://github.com/willwx/XDream/tree/master/xdream/net_utils/torch_nets
-    from diffusers import ConsistencyModelPipeline
+    # from diffusers import ConsistencyModelPipeline
 
     ### DeePSiM (GAN) ###
     if args.image_generator_name == 'DeePSiM':
@@ -107,87 +136,93 @@ def load_image_generator(args, device):
         image_generator.eval()
 
     ### cd_imagenet64_l2 (diffusion model) ###
-    elif args.image_generator_name == 'cd_imagenet64_l2':
-        # https://huggingface.co/openai/diffusers-cd_imagenet64_l2
-        model = 'openai/diffusers-cd_imagenet64_l2'
-        #image_generator = ConsistencyModelPipeline.from_pretrained(
-        #	model).to(device)
-        # Speed up inference:
-        # https://huggingface.co/docs/diffusers/v0.32.2/optimization/fp16
-        image_generator = ConsistencyModelPipeline.from_pretrained(model,
-            torch_dtype=torch.float16, use_safetensors=True).to(device)
-        # Speed up inference:
-        # https://huggingface.co/docs/diffusers/v0.32.2/optimization/fp16
-        # https://huggingface.co/docs/diffusers/v0.32.2/optimization/xformers
-        #image_generator.enable_xformers_memory_efficient_attention()
-        # Reduce memory usage
-        image_generator.enable_sequential_cpu_offload()
-        image_generator.enable_xformers_memory_efficient_attention()
+    # elif args.image_generator_name == 'cd_imagenet64_l2':
+    #     # https://huggingface.co/openai/diffusers-cd_imagenet64_l2
+    #     model = 'openai/diffusers-cd_imagenet64_l2'
+    #     #image_generator = ConsistencyModelPipeline.from_pretrained(
+    #     #	model).to(device)
+    #     # Speed up inference:
+    #     # https://huggingface.co/docs/diffusers/v0.32.2/optimization/fp16
+    #     image_generator = ConsistencyModelPipeline.from_pretrained(model,
+    #         torch_dtype=torch.float16, use_safetensors=True).to(device)
+    #     # Speed up inference:
+    #     # https://huggingface.co/docs/diffusers/v0.32.2/optimization/fp16
+    #     # https://huggingface.co/docs/diffusers/v0.32.2/optimization/xformers
+    #     #image_generator.enable_xformers_memory_efficient_attention()
+    #     # Reduce memory usage
+    #     image_generator.enable_sequential_cpu_offload()
+    #     image_generator.enable_xformers_memory_efficient_attention()
 
     ### Output ###
     return image_generator
 
 
-def generate_insilico_fmri(args, encoding_models, metadata, images, device):
-    """Use the encoding models to generate the in silico fMRI responses for the
-    synthesized images.
+def generate_tfmri(args, model_eeg, model_tfmri, images):
+    """Use the EEG encoding models to generate in silico fMRI responses for the
+    synthesized images, and then use the t-fMRI encoding models to generate
+    t-fMRI responses from the in silico EEG. The t-fMRI responses are then
+    averaged across vertices and time points belonging to the same time window.
 
     Parameters
     ----------
     args : Namespace
         Input arguments.
-    encoding_models : list
-        List containing the trained fwrf encoding models.
-    metadata : dict
-        In silico neural responses metadata.
+    model_eeg : list
+        The trained EEG encoding models.
+    model_tfmri : list
+        The trained t-fMRI encoding models.
     images : int
         Synthesized images. Must be a 4-D numpy array of shape
         (Batch size x 3 RGB Channels x Width x Height) consisting of integer
         values in the range [0, 255]. Furthermore, the images must be of square
         size (i.e., equal width and height).
-    device : str
-        If 'cpu' perform encoding on CPU, if 'cuda' perform encoding on GPU.
 
     Returns
     -------
-    fmri : float
-        fMRI responses for the generated images.
+    tfmri : float
+        t-fMRI responses for the generated images.
 
     """
 
     import numpy as np
-    from berg import BERG
-    from copy import copy
+    from sklearn.linear_model import LinearRegression
 
-    ### Initialize BERG ###
-    berg_object = BERG(args.berg_dir)
+    ### Generate the in silico EEG responses to images ###
+    # Loop across EEG subjects
+    for es, esub in enumerate(args.eeg_subjects):
+        # Predict the in silico EEG responses, and append them across subjects
+        # across the channels dimension
+        if es == 0:
+            eeg = berg.encode(model_eeg[es], images)
+        else:
+            eeg = np.append(eeg, berg.encode(model_eeg[es], images), 2)
+    # Average the EEG responses across repeats
+    eeg = np.mean(eeg, 1)
 
-    ### Generate the in silico fMRI responses to images ###
-    fmri = []
-    for s in range(len(args.all_subjects)):
-        fmri_sub = berg_object.encode(
-            encoding_models[s],
-            images,
-            return_metadata=False
-            )
-        # Only retain voxels with noise ceiling signal-to-noise ratio scores
-        # above the selected threshold
-        best_voxels = np.where(
-            metadata[s]['fmri']['ncsnr'] > args.ncsnr_threshold)[0]
-        fmri_sub = fmri_sub[:,best_voxels]
-        # Get the univariate responses by averaging the in silico fMRI
-        # responses across voxels
-        fmri_sub = np.nanmean(fmri_sub, 1)
-        fmri.append(copy(fmri_sub))
-    fmri = np.asarray(fmri)
+    ### Generate the t-fMRI responses ###
+    # Loop across fMRI subjects
+    tfmri = []
+    for fs, fsub in enumerate(args.fmri_subjects):
+        # Loop across time points
+        for t in range(len(model_tfmri[fs])):
+            # Generate the t-fMRI responses
+            if t == 0:
+                tfmri_times = model_tfmri[fs][t].predict(eeg[:,:,t])
+            else:
+                tfmri_times = np.append(tfmri_times,
+                    model_tfmri[fs][t].predict(eeg[:,:,t]), 1)
+        # Average the t-fMRI responses across vertices and time points from the
+        # same time window, and store the responses
+        tfmri.append(np.mean(tfmri_times, 1))
+        del tfmri_times
+    tfmri = np.array(tfmri)
 
     ### Output ###
-    return fmri
-
+    return tfmri
 
 
 def score_select(args, tfmri_tw_1, tfmri_tw_2, image_codes, images,
-    baseline_roi_1, baseline_roi_2, margin_tw_1, margin_tw_2):
+    baseline_tw_1, baseline_tw_2, margin_tw_1, margin_tw_2):
     """Score and rank the generated images based on their neural control
     magnitude on the t-fMRI responses and their complexity.
 
@@ -262,10 +297,10 @@ def score_select(args, tfmri_tw_1, tfmri_tw_2, image_codes, images,
         tfmri_tw_2_test = tfmri_tw_2[args.cv_subject-1]
 
     ### Compute the neural control scores ###
-    # [0] --> High time window 1 - High time window 2
-    # [1] --> High time window 1 - Low time window 2
-    # [2] --> Low time window 1 - High time window 2
-    # [3] --> Low time window 1 - Low time window 2
+    # [high_1_high_2] --> High time window 1 - High time window 2
+    # [high_1_low_2] --> High time window 1 - Low time window 2
+    # [low_1_high_2] --> Low time window 1 - High time window 2
+    # [low_1_low_2] --> Low time window 1 - Low time window 2
     if args.control_type == 'high_1_high_2':
         neural_control_scores_train = tfmri_tw_1_train + tfmri_tw_2_train
         neural_control_scores_test = tfmri_tw_1_test + tfmri_tw_2_test
@@ -279,29 +314,29 @@ def score_select(args, tfmri_tw_1, tfmri_tw_2, image_codes, images,
         neural_control_scores_train = tfmri_tw_1_train + tfmri_tw_2_train
         neural_control_scores_test = tfmri_tw_1_test + tfmri_tw_2_test
 
-    ### Compute a penalty based on the fMRI baseline ### # !!!
+    ### Compute a penalty based on the fMRI baseline ###
     baseline_penalty_train = np.zeros((args.n_image_codes), dtype=int)
     baseline_penalty_test = np.zeros((args.n_image_codes), dtype=int)
     if args.control_type == 'high_1_high_2':
-        idx_bad_train_tw_1 = tfmri_tw_1_train < (baseline_roi_1 + baseline_margin)
-        idx_bad_train_tw_2 = tfmri_tw_2_train < (baseline_roi_2 + baseline_margin)
-        idx_bad_test_tw_1 = tfmri_tw_1_test < (baseline_roi_1 + baseline_margin)
-        idx_bad_test_tw_2 = tfmri_tw_2_test < (baseline_roi_2 + baseline_margin)
+        idx_bad_train_tw_1 = tfmri_tw_1_train < (baseline_tw_1 + margin_tw_1)
+        idx_bad_train_tw_2 = tfmri_tw_2_train < (baseline_tw_2 + margin_tw_2)
+        idx_bad_test_tw_1 = tfmri_tw_1_test < (baseline_tw_1 + margin_tw_1)
+        idx_bad_test_tw_2 = tfmri_tw_2_test < (baseline_tw_2 + margin_tw_2)
     elif args.control_type == 'high_1_low_2':
-        idx_bad_train_tw_1 = tfmri_tw_1_train < (baseline_roi_1 + baseline_margin)
-        idx_bad_train_tw_2 = tfmri_tw_2_train > (baseline_roi_2 - baseline_margin)
-        idx_bad_test_tw_1 = tfmri_tw_1_test < (baseline_roi_1 + baseline_margin)
-        idx_bad_test_tw_2 = tfmri_tw_2_test > (baseline_roi_2 - baseline_margin)
+        idx_bad_train_tw_1 = tfmri_tw_1_train < (baseline_tw_1 + margin_tw_1)
+        idx_bad_train_tw_2 = tfmri_tw_2_train > (baseline_tw_2 - margin_tw_2)
+        idx_bad_test_tw_1 = tfmri_tw_1_test < (baseline_tw_1 + margin_tw_1)
+        idx_bad_test_tw_2 = tfmri_tw_2_test > (baseline_tw_2 - margin_tw_2)
     elif args.control_type == 'low_1_high_2':
-        idx_bad_train_tw_1 = tfmri_tw_1_train > (baseline_roi_1 - baseline_margin)
-        idx_bad_train_tw_2 = tfmri_tw_2_train < (baseline_roi_2 + baseline_margin)
-        idx_bad_test_tw_1 = tfmri_tw_1_test > (baseline_roi_1 - baseline_margin)
-        idx_bad_test_tw_2 = tfmri_tw_2_test < (baseline_roi_2 + baseline_margin)
+        idx_bad_train_tw_1 = tfmri_tw_1_train > (baseline_tw_1 - margin_tw_1)
+        idx_bad_train_tw_2 = tfmri_tw_2_train < (baseline_tw_2 + margin_tw_2)
+        idx_bad_test_tw_1 = tfmri_tw_1_test > (baseline_tw_1 - margin_tw_1)
+        idx_bad_test_tw_2 = tfmri_tw_2_test < (baseline_tw_2 + margin_tw_2)
     elif args.control_type == 'low_1_low_2':
-        idx_bad_train_tw_1 = tfmri_tw_1_train > (baseline_roi_1 - baseline_margin)
-        idx_bad_train_tw_2 = tfmri_tw_2_train > (baseline_roi_2 - baseline_margin)
-        idx_bad_test_tw_1 = tfmri_tw_1_test > (baseline_roi_1 - baseline_margin)
-        idx_bad_test_tw_2 = tfmri_tw_2_test > (baseline_roi_2 - baseline_margin)
+        idx_bad_train_tw_1 = tfmri_tw_1_train > (baseline_tw_1 - margin_tw_1)
+        idx_bad_train_tw_2 = tfmri_tw_2_train > (baseline_tw_2 - margin_tw_2)
+        idx_bad_test_tw_1 = tfmri_tw_1_test > (baseline_tw_1 - margin_tw_1)
+        idx_bad_test_tw_2 = tfmri_tw_2_test > (baseline_tw_2 - margin_tw_2)
     idx_bad_train = np.where(idx_bad_train_tw_1 + idx_bad_train_tw_2)[0]
     baseline_penalty_train[idx_bad_train] = 1e+10
     idx_bad_test = np.where(idx_bad_test_tw_1 + idx_bad_test_tw_2)[0]

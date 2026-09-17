@@ -126,8 +126,8 @@ t_min_2 = np.where(times == time_window_2_start)[0][0]
 t_max_2 = np.where(times == time_window_2_end)[0][0]
 
 # Average the t-fMRI responses within the two time windows of interest
-tfmri_1 = np.mean(tfmri_mean[:,t_min_1:t_max_1], 1)
-tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2], 1)
+tfmri_1 = np.mean(tfmri_mean[:,t_min_1:t_max_1+1], 1)
+tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2+1], 1)
 
 
 # =============================================================================

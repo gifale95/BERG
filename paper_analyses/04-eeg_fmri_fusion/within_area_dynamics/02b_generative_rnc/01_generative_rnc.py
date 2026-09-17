@@ -9,10 +9,13 @@ align or disentangle the two areas.
 
 Parameters
 ----------
-all_subjects : list
+fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
     are integers from 1 to 8.
+eeg_subjects : list
+    List containing the subject identifiers for the THINGS EEG2 subjects. Valid
+    subject identifiers are integers from 1 to 10.
 cv : int
     If '1' univariate RNC leaves the data of one subject out for
     cross-validation, if '0' univariate RNC uses the data of all subjects.
@@ -79,17 +82,19 @@ import random
 from tqdm import tqdm
 import torch
 from PIL import Image
+import h5py
 from copy import copy
 from berg import BERG
 
 from utils import load_encoding_models
 from utils import load_image_generator
-from utils import generate_insilico_fmri
+from utils import generate_tfmri
 from utils import score_select
 from utils import optimize_image_codes
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--all_subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
+parser.add_argument('--fmri_subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8])
+parser.add_argument('--eeg_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
 parser.add_argument('--cv', type=int, default=0)
 parser.add_argument('--cv_subject', type=int, default=1)
 parser.add_argument('--roi', default='V1', type=str)
@@ -106,7 +111,7 @@ parser.add_argument('--img_complexity_measure', type=str, default='png')
 parser.add_argument('--frac_kept_image_codes', type=float, default=.25)
 parser.add_argument('--heritability', type=float, default=.25)
 parser.add_argument('--mutation_prob', type=float, default=.25)
-parser.add_argument('--imageset', type=str, default='imagenet_train')
+parser.add_argument('--imageset', type=str, default='imagenet_val')
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -152,40 +157,124 @@ t_min_1 = np.where(times == time_window_1_start)[0][0]
 t_max_1 = np.where(times == time_window_1_end)[0][0]
 t_min_2 = np.where(times == time_window_2_start)[0][0]
 t_max_2 = np.where(times == time_window_2_end)[0][0]
+n_times = len(times)
 
 
 # =============================================================================
-# Load the univariate RNC baseline # !!!
+# Get the fMRI ROI indices
 # =============================================================================
+# Loop across subjects
+idx_v = {}
+for fsub in args.fmri_subjects:
+
+    # Load the fMRI metadata
+    berg = BERG(berg_dir=args.berg_dir)
+    metadata_fmri = berg.get_model_metadata(
+        'fmri-nsd_fsaverage-huze',
+        subject=fsub
+        )
+
+    # Loop across hemisphers
+    for h, hemi in enumerate(args.hemispheres):
+
+        # Only select vertices falling within the NSD visual streams
+        n_vertices = 163842
+        idx_streams = np.zeros(n_vertices, dtype=bool)
+        streams = ['early', 'midventral', 'midlateral', 'midparietal',
+            'ventral', 'lateral', 'parietal']
+        for stream in streams:
+            idx_streams[metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][stream]] = 1
+        idx_streams = np.where(idx_streams)[0]
+
+        # Only select stream vertices with NCSNR above threshold
+        ncsnr = metadata_fmri['fmri'][f'{hemi}_ncsnr']
+        idx_ncsnr = np.where(ncsnr[idx_streams] >= args.ncsnr_threshold)[0]
+
+        # Only select stream vertices of the chosen ROI
+        if args.roi in ['V1', 'V2', 'V3']:
+            idx_r = np.append(
+                metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{args.roi}v'],
+                metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{args.roi}d'])
+            idx_r.sort()
+        elif args.roi in ['FFA', 'VWFA', 'FBA']:
+            idx_r = np.append(
+                metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{args.roi}-1'],
+                metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{args.roi}-2'])
+            idx_r.sort()
+        else:
+            idx_r = metadata_fmri['fmri'][f'{hemi}_fsaverage_rois'][f'{args.roi}']
+            idx_r.sort()
+        idx_roi = np.zeros(n_vertices, dtype=bool)
+        idx_roi[idx_r] = 1
+        idx_roi = idx_roi[idx_streams]
+        idx_roi = np.where(idx_roi)[0]
+
+        # Get the indices of ROI vertices with NCSNR above threshold
+        idx_v[(fsub,hemi)] = np.intersect1d(idx_roi, idx_ncsnr)
+
+
+# =============================================================================
+# Load the baseline scores and t-fMRI responses for all images, and compute the
+# baseline margin
+# =============================================================================
+# Load the univariate RNC baseline scores, and average them across images
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'within_area_dynamics', 'rnc', 'baseline', f'cv-{args.cv}',
     args.time_window_pair, f'imageset-{args.imageset}')
-
 if args.cv == 0:
     file_name = f'baseline_roi-{args.roi}.npy'
     data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
     baseline_tw_1 = np.mean(data['baseline_resp']['time_window_1'])
     baseline_tw_2 = np.mean(data['baseline_resp']['time_window_2'])
-
 elif args.cv == 1:
     file_name = f'baseline_cv_subject-{args.cv_subject}_roi-{args.roi}.npy'
     data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
     baseline_tw_1 = np.mean(data['baseline_resp_train']['time_window_1'])
     baseline_tw_2 = np.mean(data['baseline_resp_train']['time_window_2'])
 
-# Compute the baseline margin # !!!
-MANUALLY DEFINE THE BASELINE MARGIN
-margin_tw_1 = 
-margin_tw_2 = 
+# Load the t-fMRI responses of all subjects
+tfmri = []
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'within_area_dynamics', 'rnc', 'tfmri_responses')
+for sub in args.fmri_subjects:
+    file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}_imageset-{args.imageset}.h5'
+    tfmri.append(h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'])
+tfmri = np.array(tfmri)
+# If cross-validating, remove the CV (test) subject, and average over the
+# remaining (train) subjects. The fMRI responses for the train subjects are
+# used to select the controlling images, and the controlling images will then
+# be validated on the fMRI responses for the test subjects. If not
+# cross-validating, average over all subjects.
+if args.cv == 0:
+    tfmri_mean = np.mean(tfmri, 0)
+elif args.cv == 1:
+    tfmri_mean = np.delete(tfmri, args.cv_subject-1, 0)
+    tfmri_mean = np.mean(tfmri_mean, 0)
+del tfmri
+# Average the t-fMRI responses within the two time windows of interest
+tfmri_1 = np.mean(tfmri_mean[:,t_min_1:t_max_1], 1)
+tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2], 1)
+
+# Univariate response score margin used to constrain the selection of the
+# control images. The margin is defined as the standard deviation of the
+# t-fMRI responses across all images for each time window. The margin is used
+# to ignore images that have t-fMRI responses that are too close to the
+# baseline scores, as these images may not be informative for aligning or
+# disentangling the two time windows. 
+margin_tw_1 = np.std(tfmri_1)
+margin_tw_2 = np.std(tfmri_2)
 
 
 # =============================================================================
-# Load the encoding models of all subjects # !!!
+# Load the EEG and EEG-to-fMRI encoding models of all subjects
 # =============================================================================
-encoding_models_roi_1, metadata_roi_1 = load_encoding_models(args, roi_1,
-    device)
-encoding_models_roi_2, metadata_roi_2 = load_encoding_models(args, roi_2,
-    device)
+# Load the models for the first time window
+model_eeg_tw_1, model_tfmri_tw_1 = load_encoding_models(args, idx_v, t_min_1,
+    t_max_1, n_times, device)
+
+# Load the models for the second time window
+model_eeg_tw_2, model_tfmri_tw_2 = load_encoding_models(args, idx_v, t_min_2,
+    t_max_2, n_times, device)
 
 
 # =============================================================================
@@ -239,9 +328,9 @@ best_scores_test = np.zeros(args.generations, dtype=np.float32)
 total_image_code_size = (args.generations,) + image_code_size
 best_image_codes = np.zeros(total_image_code_size, dtype=np.float32)
 # In silico fMRI responses
-best_tfmri_tw_1 = np.zeros((args.generations, len(args.all_subjects)),
+best_tfmri_tw_1 = np.zeros((args.generations, len(args.fmri_subjects)),
     dtype=np.float32)
-best_tfmri_tw_2 = np.zeros((args.generations, len(args.all_subjects)),
+best_tfmri_tw_2 = np.zeros((args.generations, len(args.fmri_subjects)),
     dtype=np.float32)
 
 
@@ -316,12 +405,15 @@ for g in tqdm(range(args.generations), leave=False):
 
 
 # =============================================================================
-# Generate t-fMRI responses for the synthesized images # !!!
+# Generate t-fMRI responses for the synthesized images
 # =============================================================================
-    tfmri_tw_1_new = generate_insilico_fmri(args, encoding_models_roi_1,
-        metadata_roi_1, copy(images_new), device)
-    tfmri_tw_2_new = generate_insilico_fmri(args, encoding_models_roi_2,
-        metadata_roi_2, copy(images_new), device)
+    # Generate the t-fMRI responses for the first time window
+    tfmri_tw_1_new = generate_tfmri(args, model_eeg_tw_1,
+        model_tfmri_tw_1, copy(images_new))
+
+    # Generate the t-fMRI responses for the second time window
+    tfmri_tw_2_new = generate_tfmri(args, model_eeg_tw_2,
+        model_tfmri_tw_2, copy(images_new))
 
 
 # =============================================================================
@@ -343,14 +435,14 @@ for g in tqdm(range(args.generations), leave=False):
 
 
 # =============================================================================
-# Compute the neural control scores, and select the image codes accordingly # !!!
+# Compute the neural control scores, and select the image codes accordingly
 # =============================================================================
     # Score the generated images, rank the scores, and then select/store the
     # image codes of the best N images
     scores_train, scores_test, neural_control_scores_train, \
         neural_control_scores_test, baseline_penalty_train, \
         baseline_penalty_test, images_complexity, image_codes, tfmri_tw_1, \
-        tfmri_tw_2, images = score_select(args, tfmri_tw_1, tfmri_tw_2, # !!!
+        tfmri_tw_2, images = score_select(args, tfmri_tw_1, tfmri_tw_2,
         image_codes, images, baseline_tw_1, baseline_tw_2, margin_tw_1,
         margin_tw_2)
 
