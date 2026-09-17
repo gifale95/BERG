@@ -128,88 +128,73 @@ for h, hemi in enumerate(args.hemispheres):
 # =============================================================================
 # Access the ILSVRC-2012 imageset, and load the images for the current batch
 # =============================================================================
-# if args.imageset == 'imagenet_val' or args.imageset == 'imagenet_train':
+if args.imageset == 'imagenet_val' or args.imageset == 'imagenet_train':
 
-#     # Define the image transform
-#     transform = trn.Compose([
-#         trn.Lambda(lambda img: trn.functional.center_crop(img, min(img.size))),
-#         trn.Resize((256, 256)),
-#         trn.Lambda(lambda img: np.transpose(img, (2, 0, 1))) # HWC to CHW
-#     ])
+    # Define the image transform
+    transform = trn.Compose([
+        trn.Lambda(lambda img: trn.functional.center_crop(img, min(img.size))),
+        trn.Resize((256, 256)),
+        trn.Lambda(lambda img: np.transpose(img, (2, 0, 1))) # HWC to CHW
+    ])
 
-#     # Access the ILSVRC-2012 validation split
-#     if args.imageset == 'imagenet_val':
-#         split = 'val'
-#     elif args.imageset == 'imagenet_train':
-#         split = 'train'
-#     images = torchvision.datasets.ImageNet(root=args.imagenet_dir, split=split,
-#         transform=transform)
+    # Access the ILSVRC-2012 validation split
+    if args.imageset == 'imagenet_val':
+        split = 'val'
+    elif args.imageset == 'imagenet_train':
+        split = 'train'
+    images = torchvision.datasets.ImageNet(root=args.imagenet_dir, split=split,
+        transform=transform)
 
-#     # Select the images from the current batch
-#     imgs_per_batch = int(np.ceil(len(images) / args.tot_img_batches))
-#     start_idx = args.current_batch * imgs_per_batch
-#     end_idx = min((args.current_batch + 1) * imgs_per_batch, len(images))
+    # Select the images from the current batch
+    imgs_per_batch = int(np.ceil(len(images) / args.tot_img_batches))
+    start_idx = args.current_batch * imgs_per_batch
+    end_idx = min((args.current_batch + 1) * imgs_per_batch, len(images))
 
-#     # Load the images from the current batch
-#     for i in tqdm(np.arange(start_idx, end_idx)):
-#         img, _ = images.__getitem__(i)
-#         if i == start_idx:
-#             images_batch = np.expand_dims(img, 0)
-#         else:
-#             images_batch = np.append(images_batch, np.expand_dims(img, 0), 0)
+    # Load the images from the current batch
+    for i in tqdm(np.arange(start_idx, end_idx)):
+        img, _ = images.__getitem__(i)
+        if i == start_idx:
+            images_batch = np.expand_dims(img, 0)
+        else:
+            images_batch = np.append(images_batch, np.expand_dims(img, 0), 0)
 
 
 # =============================================================================
 # Access the COCO 2017 test split, and load the images for the current batch
 # =============================================================================
-# if args.imageset == 'coco':
+if args.imageset == 'coco':
 
-#     # Define the image transform
-#     transform = trn.Compose([
-#         trn.Lambda(lambda img: trn.functional.center_crop(img, min(img.size))),
-#         trn.Resize((256, 256)),
-#         trn.Lambda(lambda img: np.transpose(img, (2, 0, 1))) # HWC to CHW
-#     ])
+    # Define the image transform
+    transform = trn.Compose([
+        trn.Lambda(lambda img: trn.functional.center_crop(img, min(img.size))),
+        trn.Resize((256, 256)),
+        trn.Lambda(lambda img: np.transpose(img, (2, 0, 1))) # HWC to CHW
+    ])
 
-#     # Get the list of image files from the MS COCO 2017 test split
-#     coco_test2017_dir = os.path.join(args.coco_dir, 'images', 'test2017')
-#     img_files = os.listdir(coco_test2017_dir)
-#     img_files.sort()
+    # Get the list of image files from the MS COCO 2017 test split
+    coco_test2017_dir = os.path.join(args.coco_dir, 'images', 'test2017')
+    img_files = os.listdir(coco_test2017_dir)
+    img_files.sort()
 
-#     # Select the images from the current batch
-#     imgs_per_batch = int(np.ceil(len(img_files) / args.tot_img_batches))
-#     start_idx = args.current_batch * imgs_per_batch
-#     end_idx = min((args.current_batch + 1) * imgs_per_batch, len(img_files))
+    # Select the images from the current batch
+    imgs_per_batch = int(np.ceil(len(img_files) / args.tot_img_batches))
+    start_idx = args.current_batch * imgs_per_batch
+    end_idx = min((args.current_batch + 1) * imgs_per_batch, len(img_files))
 
-#     # Load the images
-#     images_batch = []
-#     for i in tqdm(np.arange(start_idx, end_idx)):
-#         img_path = os.path.join(coco_test2017_dir, img_files[i])
-#         img = Image.open(img_path).convert('RGB')
-#         img = transform(img)
-#         images_batch.append(np.asarray(img))
-#     images_batch = np.array(images_batch, dtype=np.uint8)
+    # Load the images
+    images_batch = []
+    for i in tqdm(np.arange(start_idx, end_idx)):
+        img_path = os.path.join(coco_test2017_dir, img_files[i])
+        img = Image.open(img_path).convert('RGB')
+        img = transform(img)
+        images_batch.append(np.asarray(img))
+    images_batch = np.array(images_batch, dtype=np.uint8)
 
 
 # =============================================================================
 # Predict the in silico EEG responses
 # =============================================================================
-images_batch = np.random.randn(5000, 3, 256, 256).astype(np.uint8) # !!! DELETE
-esub = 1
-es = 0
-# Print RAM # !!!
-process = psutil.Process(os.getpid())
-ram_gb = process.memory_info().rss / (1024 ** 3)
-print(f"RAM used Images: {ram_gb:.2f} GB")
-
-import torchvision
-import torch
-transform = torchvision.models.ViT_B_32_Weights.IMAGENET1K_V1.transforms()
-images_batch = transform(torch.from_numpy(images_batch))
-
-
-for es, esub in enumerate([1]): # !!! DELETE
-# for es, esub in enumerate(args.eeg_subjects):
+for es, esub in enumerate(args.eeg_subjects):
 
     # Load the EEG encoding model
     model = berg.get_encoding_model(
@@ -289,11 +274,6 @@ for t in tqdm(range(len(times))):
     else:
         tfmri = np.append(tfmri, np.mean(tfmri_time, 1), 1)
     del tfmri_time
-
-    # Print RAM # !!!
-    process = psutil.Process(os.getpid())
-    ram_gb = process.memory_info().rss / (1024 ** 3)
-    print(f"RAM used time {t}: {ram_gb:.2f} GB")
 
 # Delete the EEG reponses
 del eeg
