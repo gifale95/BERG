@@ -308,12 +308,9 @@ class HUZE(BaseModelInterface):
                 "Stimulus must be a 4D numpy array (batch, channels, height, width)"
             )
         
-        # Preprocess stimulus
-        images = self.transform(stimulus)
-        
         # Extract features and generate responses in batches
         batch_size = 100
-        n_batches = int(np.ceil(len(images) / batch_size))
+        n_batches = int(np.ceil(len(stimulus) / batch_size))
         
         if show_progress:
             progress_bar = tqdm(range(n_batches), desc='Encoding fMRI responses')
@@ -356,18 +353,22 @@ class HUZE(BaseModelInterface):
 
         with torch.no_grad():
             for b in progress_bar:
+
                 # Image batch indices
                 idx_start = b * batch_size
                 idx_end = idx_start + batch_size
+
+                # Preprocess the images from the current batch
+                img_batch = self.transform(stimulus[idx_start:idx_end])
+
                 # Extract features
-                img_batch = images[idx_start:idx_end]
                 features = self.model(img_batch, voxel_indices=all_selected_voxel_indices)
                 all_outputs.append(features.cpu())
                 if show_progress and isinstance(progress_bar, tqdm):
-                    encoded_images = min((b + 1) * batch_size, len(images))
+                    encoded_images = min((b + 1) * batch_size, len(stimulus))
                     progress_bar.set_postfix({
                         'Encoded images': encoded_images,
-                        'Total images': len(images)
+                        'Total images': len(stimulus)
                     })
         
         # Concatenate all outputs into one tensor

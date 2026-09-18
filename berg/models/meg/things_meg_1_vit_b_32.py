@@ -427,12 +427,9 @@ class MEGEncodingModel(BaseModelInterface):
                 "Stimulus must be a 4D numpy array (batch, channels, height, width)"
             )
         
-        # Preprocess the images
-        images = self.transform(torch.from_numpy(stimulus))
-        
         # Extract features and generate responses in batches
         batch_size = 100
-        n_batches = int(np.ceil(len(images) / batch_size))
+        n_batches = int(np.ceil(len(stimulus) / batch_size))
         
         if show_progress:
             progress_bar = tqdm(range(n_batches), desc='Encoding MEG responses')
@@ -443,12 +440,16 @@ class MEGEncodingModel(BaseModelInterface):
         
         with torch.no_grad():
             for b in progress_bar:
+
                 # Image batch indices
                 idx_start = b * batch_size
-                idx_end = min(idx_start + batch_size, len(images))
-                
+                idx_end = min(idx_start + batch_size, len(stimulus))
+
+                # Preprocess the images from the current batch
+                img_batch = self.transform(torch.from_numpy(
+                    stimulus[idx_start:idx_end])).to(self.device)
+
                 # Extract features
-                img_batch = images[idx_start:idx_end].to(self.device)
                 _, features = self.feature_extractor(img_batch)
                 
                 # Extract all tokens from each layer and concatenate
@@ -516,10 +517,10 @@ class MEGEncodingModel(BaseModelInterface):
                     )
                 
                 if show_progress and isinstance(progress_bar, tqdm):
-                    encoded_images = min((b + 1) * batch_size, len(images))
+                    encoded_images = min((b + 1) * batch_size, len(stimulus))
                     progress_bar.set_postfix({
                         'Encoded images': encoded_images,
-                        'Total images': len(images)
+                        'Total images': len(stimulus)
                     })
         
         return insilico_meg_responses
