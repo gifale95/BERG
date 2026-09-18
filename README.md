@@ -30,7 +30,7 @@ For more information on how to contribute, please refer to [our documentation][b
 #### Standard
 
 ```shell
-pip install -U git+https://github.com/gifale95/BERG.git"
+pip install -U git+https://github.com/gifale95/BERG.git
 ```
 
 #### TRIBEv2 (replaces BrainScore)
