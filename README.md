@@ -27,13 +27,19 @@ For more information on how to contribute, please refer to [our documentation][b
 
 > **Requires Python ≥ 3.11**
 
-#### Recommended (includes TRIBEv2)
+#### Standard
+
+```shell
+pip install -U git+https://github.com/gifale95/BERG.git"
+```
+
+#### TRIBEv2 (replaces BrainScore)
 
 ```shell
 pip install -U "berg[full] @ git+https://github.com/gifale95/BERG.git"
 ```
 
-#### BrainScore (optional, replaces TRIBEv2)
+#### BrainScore (replaces TRIBEv2)
 
 BERG is integrated with [BrainScore](https://www.brain-score.org), giving you access to hundreds of vision models scored against macaque neural recordings (V1, V2, V4, IT), as well as GPT-family language models scored against human fMRI data.
 
