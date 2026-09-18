@@ -15,7 +15,7 @@ For additional information on BERG, you can check out our [website][website], [p
 We warmly welcome contributions to improve and expand BERG, including:
 - Encoding models with higher prediction accuracies.
 - Encoding models for new neural data recording modalities (e.g., MEG/ECoG/animal).
-- Encoiding models from new neural dataset.
+- Encoding models from new neural dataset.
 - Encoding models of neural responses for new stimulus types (e.g., videos, audio, language, multimodal).
 - Suggestions to improve BERG.
 
