@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02a_rnc-00a_predict_tfmri__imagenet_val
 #SBATCH --mail-type=end
-#SBATCH --mem=5000
-#SBATCH --time=05:00:00
+#SBATCH --mem=20000
+#SBATCH --time=15:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

@@ -8,7 +8,7 @@ fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
     are integers from 1 to 8.
-roi : list
+rois : list
     List of used ROIs.
 dnn : str
     Name of the used DNN. Possible values are 'dinov2l' and 'alexnet'.
@@ -40,7 +40,7 @@ from sklearn.utils import resample
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--rois', default=['V1', 'V2', 'V3', 'hV4', 'FFA', 'EBA', 'PPA'], type=list)
-parser.add_argument('--dnn', default='alexnet', type=str)
+parser.add_argument('--dnn', default='dinov2l', type=str)
 parser.add_argument('--images', default='things_eeg_2_vivo', type=str)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -66,19 +66,26 @@ data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
 
 # Loop across ROIs
 dnn_layerwise_rsa = {}
-for r, roi in enumerate(args.rois):
+dnn_layerwise_rsa_single_vertices = {}
+for r, roi in enumerate(tqdm(args.rois)):
 
     # Loop across fMRI subjects
     dnn_layerwise_rsa[roi] = []
+    dnn_layerwise_rsa_single_vertices[roi] = []
     for s, sub in enumerate(args.fmri_subjects):
 
-        # Load the results
+        # Load the results, and append them across fMRI subjects
         file_name = (f'dnn_layerwise_rsa_sub-{sub:02d}_roi-{roi}_'
             f'images-{args.images}_dnn-{args.dnn}.npy')
         dnn_layerwise_rsa_sub = np.load(os.path.join(data_dir, file_name))
-
-        # Sum the results across fMRI subjects
         dnn_layerwise_rsa[roi].append(dnn_layerwise_rsa_sub)
+        del dnn_layerwise_rsa_sub
+
+        # Load the single vertex results, and append them across fMRI subjects
+        file_name = (f'dnn_layerwise_rsa_single_vertices_sub-{sub:02d}_'
+            f'roi-{roi}_images-{args.images}_dnn-{args.dnn}.npy')
+        dnn_layerwise_rsa_sub = np.load(os.path.join(data_dir, file_name))
+        dnn_layerwise_rsa_single_vertices[roi].append(dnn_layerwise_rsa_sub)
         del dnn_layerwise_rsa_sub
 
     # Format the results to numpy arrays
@@ -157,6 +164,48 @@ for key in dnn_layerwise_rsa.keys():
 
 
 # =============================================================================
+# Compute the individual-vertex complexity shift
+# =============================================================================
+# Get the best DNN layer for each t-fMRI vertex and time point (based on the
+# average of the top-5 DNN layers to get a more robust estimate)
+best_dnn_layer_single_vertices = {}
+for key, val in dnn_layerwise_rsa_single_vertices.items():
+    best_dnn_layer_single_vertices[key] = []
+    for s in range(len(val)):
+        idx_best = np.mean(np.argsort(val[s], 0)[-5:], 0)
+        best_dnn_layer_single_vertices[key].append(idx_best)
+        del idx_best
+
+# Average the best DNN layers across the two time windows
+metadata_eeg = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    subject=1
+)
+times = np.round(metadata_eeg['eeg']['times'], 3)
+idx_tw_1 = (times >= 0.06) & (times <= 0.1)
+best_dnn_layer_tw_1 = {}
+for key, val in best_dnn_layer_single_vertices.items():
+    best_dnn_layer_tw_1[key] = []
+    for s in range(len(val)):
+        best_dnn_layer_tw_1[key].append(np.mean(val[s][:,idx_tw_1], 1))
+idx_tw_2 = (times >= 0.2) & (times <= 0.25)
+best_dnn_layer_tw_2 = {}
+for key, val in best_dnn_layer_single_vertices.items():
+    best_dnn_layer_tw_2[key] = []
+    for s in range(len(val)):
+        best_dnn_layer_tw_2[key].append(np.mean(val[s][:,idx_tw_2], 1))
+
+# Subtract the best DNN layers of the two time windows to get the complexity
+# shift
+best_dnn_layer_shift = {}
+for key, val in best_dnn_layer_single_vertices.items():
+    best_dnn_layer_shift[key] = []
+    for s in range(len(val)):
+        best_dnn_layer_shift[key].append(best_dnn_layer_tw_2[key][s] - \
+            best_dnn_layer_tw_1[key][s])
+
+
+# =============================================================================
 # Save the stats
 # =============================================================================
 results = {
@@ -166,7 +215,8 @@ results = {
     'corr_dnn_layer_tfmri_times': corr_dnn_layer_tfmri_times,
     'reg_best_dnn_layer_tfmri_times': reg_best_dnn_layer_tfmri_times,
     'ci_dnn_layerwise_rsa': ci_dnn_layerwise_rsa,
-    'ci_best_dnn_layer': ci_best_dnn_layer
+    'ci_best_dnn_layer': ci_best_dnn_layer,
+    'best_dnn_layer_shift': best_dnn_layer_shift
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',

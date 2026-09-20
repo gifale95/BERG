@@ -7,6 +7,8 @@ fmri_subject : int
     The subject identifiers for the fMRI encoding models. Since the used
     encoding models are trained on NSD data, valid subject identifiers are
     integers from 1 to 8.
+roi : str
+    Used ROI.
 dnn : str
     Name of the used DNN. Possible values are 'dinov2l' and 'alexnet'.
 images : str

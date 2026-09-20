@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-01_representational_format_evolution-03_stats
 #SBATCH --mail-type=end
-#SBATCH --mem=4000
-#SBATCH --time=00:10:00
+#SBATCH --mem=10000
+#SBATCH --time=00:30:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -11,7 +11,7 @@ declare -a images_all
 declare -a dnn_all
 index=0
 for i in 'things_eeg_2_vivo' ; do
-    for d in 'dinov2l' 'alexnet' ; do
+    for d in 'dinov2l' ; do
         images_all[$index]=$i
         dnn_all[$index]=$d
         ((index=index+1))

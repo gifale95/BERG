@@ -52,7 +52,6 @@ import gc
 import torch
 from sklearn.linear_model import LinearRegression
 from PIL import Image
-import psutil
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subject', default=1, type=int)
@@ -187,7 +186,7 @@ if args.imageset == 'coco':
         img_path = os.path.join(coco_test2017_dir, img_files[i])
         img = Image.open(img_path).convert('RGB')
         img = transform(img)
-        images_batch.append(np.asarray(img))
+        images_batch.append(np.asarray(img).astype(np.uint8))
     images_batch = np.array(images_batch, dtype=np.uint8)
 
 
@@ -202,26 +201,18 @@ for es, esub in enumerate(args.eeg_subjects):
         subject=esub
         )
 
-    # Predict the in silico EEG responses, and append them across subjects
-    # across the channels dimension
+    # Predict the in silico EEG responses, average them across repeats, and
+    # append them across subjects across the channels dimension
     if es == 0:
-        eeg = berg.encode(model, images_batch, show_progress=True)
+        eeg = np.mean(berg.encode(model, images_batch), 1)
     else:
-        eeg = np.append(eeg, berg.encode(model, images_batch), 2)
+        eeg = np.append(eeg, np.mean(berg.encode(model, images_batch), 1), 1)
 
     # Remove the model from memory
     del model
     gc.collect()
     torch.cuda.empty_cache()
 del images_batch
-
-# Average the EEG responses across repeats
-eeg = np.mean(eeg, 1)
-
-# Print RAM # !!!
-process = psutil.Process(os.getpid())
-ram_gb = process.memory_info().rss / (1024 ** 3)
-print(f"RAM used EEG: {ram_gb:.2f} GB")
 
 
 # =============================================================================

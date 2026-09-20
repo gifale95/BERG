@@ -7,7 +7,7 @@ fmri_subjects : list
     List containing the subject identifiers for the fMRI encoding models. Since
     the used encoding models are trained on NSD data, valid subject identifiers
     are integers from 1 to 8.
-roi : list
+rois : list
     List of used ROIs.
 dnn : str
     Name of the used DNN. Possible values are 'dinov2l' and 'alexnet'.
@@ -32,7 +32,7 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--rois', default=['V1', 'hV4', 'FFA', 'EBA', 'PPA'], type=list)
-parser.add_argument('--dnn', default='alexnet', type=str)
+parser.add_argument('--dnn', default='dinov2l', type=str)
 parser.add_argument('--images', default='things_eeg_2_vivo', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -59,6 +59,7 @@ corr_dnn_layer_tfmri_times = data['corr_dnn_layer_tfmri_times']
 reg_best_dnn_layer_tfmri_times = data['reg_best_dnn_layer_tfmri_times']
 ci_dnn_layerwise_rsa = data['ci_dnn_layerwise_rsa']
 ci_best_dnn_layer = data['ci_best_dnn_layer']
+best_dnn_layer_shift = data['best_dnn_layer_shift']
 
 
 # =============================================================================
@@ -225,6 +226,49 @@ for i, roi in enumerate(args.rois):
 
 # Save the figure
 file_name = os.path.join(save_dir, f'best_dnn_layer_as_function_of_tfmri_time_'
+    f'dnn-{args.dnn}_images-{args.images}.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close(fig)
+
+
+# =============================================================================
+# Plot the individual-vertex complexity shift
+# =============================================================================
+# Create the plot figure
+color = (139/255, 0/255, 0/255)
+fig, axs = plt.subplots(1, 5, sharex=True, sharey=False, figsize=(40, 10))
+axs = np.reshape(axs, -1)
+
+# Loop across ROIs
+for i, roi in enumerate(args.rois):
+    val = np.concatenate(best_dnn_layer_shift[roi])
+
+    # Enforce same length of x- and y-axes
+    axs[i].set_box_aspect(1)
+
+    # Plot vertcal chance line
+    axs[i].plot([0, 0], [0, 250], '--k', alpha=.5, linewidth=2, zorder=2)
+
+    # Plot the best DNN layer shift
+    axs[i].hist(val, bins=100, color=color, alpha=.5, zorder=1)
+
+    # Plot title
+    axs[i].set_title(roi, fontsize=fontsize)
+
+    # x-axis parameters
+    axs[i].set_xlabel('Most-predictive-layer\nshift magnitude',
+        fontsize=fontsize)
+    xticks = [-23, 0, 23]
+    xlabels = [-23, 0, 23]
+    axs[i].set_xticks(ticks=xticks, labels=xlabels)
+    axs[i].set_xlim(left=-23, right=23)
+
+    # y-axis parameters
+    if i in [0]:
+        axs[i].set_ylabel('Vertex count', fontsize=fontsize)
+
+# Save the figure
+file_name = os.path.join(save_dir, f'best_dnn_layer_shift_'
     f'dnn-{args.dnn}_images-{args.images}.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close(fig)
