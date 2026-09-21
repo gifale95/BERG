@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02_rnc-01_rnc_baseline__cv-1
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02a_rnc-01_rnc_baseline__cv-1
 #SBATCH --mail-type=end
 #SBATCH --mem=2000
 #SBATCH --time=02:00:00
@@ -15,7 +15,7 @@ index=0
 for cs in `seq 1 8` ; do
     for r in 'V1' 'hV4' 'FFA' 'EBA' 'PPA' ; do
         for t in '0.06-0.10__0.20-0.25' ; do
-            for i in 'imagenet_val' 'imagenet_train' ; do
+            for i in 'imagenet_val' ; do
                 cv_subject_all[$index]=$cs
                 roi_all[$index]=$r
                 time_window_pair_all[$index]=$t
@@ -42,7 +42,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/within_area_dynamics/02_rnc
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/within_area_dynamics/02a_rnc
 
 # Run the job
 python 01_rnc_baseline.py --cv '1' --cv_subject $cv_subject --roi $roi --time_window_pair $time_window_pair --imageset $imageset

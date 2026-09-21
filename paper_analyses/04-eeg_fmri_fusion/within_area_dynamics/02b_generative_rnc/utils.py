@@ -26,6 +26,9 @@ def load_encoding_models(args, idx_v, t_min, t_max, n_times, device):
 
     """
 
+    import os
+    import numpy as np
+    from berg import BERG
     from copy import deepcopy
     from sklearn.linear_model import LinearRegression
 
@@ -36,7 +39,7 @@ def load_encoding_models(args, idx_v, t_min, t_max, n_times, device):
     model_eeg = []
     for esub in args.eeg_subjects:
         model_eeg.append(deepcopy(berg_object.get_encoding_model(
-            model_id='fmri-nsd-fwrf',
+            model_id='eeg-things_eeg_2-vit_b_32',
             subject=esub,
             selection={'timepoints': timepoints},
             device=device
@@ -157,7 +160,7 @@ def load_image_generator(args, device):
     return image_generator
 
 
-def generate_tfmri(args, model_eeg, model_tfmri, images):
+def generate_tfmri(args, model_eeg, model_tfmri, images, berg):
     """Use the EEG encoding models to generate in silico fMRI responses for the
     synthesized images, and then use the t-fMRI encoding models to generate
     t-fMRI responses from the in silico EEG. The t-fMRI responses are then
@@ -176,6 +179,8 @@ def generate_tfmri(args, model_eeg, model_tfmri, images):
         (Batch size x 3 RGB Channels x Width x Height) consisting of integer
         values in the range [0, 255]. Furthermore, the images must be of square
         size (i.e., equal width and height).
+    berg : BERG
+        The BERG object.
 
     Returns
     -------
@@ -185,6 +190,7 @@ def generate_tfmri(args, model_eeg, model_tfmri, images):
     """
 
     import numpy as np
+    from berg import BERG
     from sklearn.linear_model import LinearRegression
 
     ### Generate the in silico EEG responses to images ###

@@ -101,7 +101,7 @@ parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
 parser.add_argument('--ncsnr_threshold', type=float, default=0.2)
-parser.add_argument('--control_type', type=str, default='high_1_high_2')
+parser.add_argument('--control_type', type=str, default='high_1_low_2')
 parser.add_argument('--generations', type=int, default=500)
 parser.add_argument('--evolution', type=int, default=1)
 parser.add_argument('--n_image_codes', type=int, default=1000)
@@ -409,11 +409,11 @@ for g in tqdm(range(args.generations), leave=False):
 # =============================================================================
     # Generate the t-fMRI responses for the first time window
     tfmri_tw_1_new = generate_tfmri(args, model_eeg_tw_1,
-        model_tfmri_tw_1, copy(images_new))
+        model_tfmri_tw_1, copy(images_new), berg)
 
     # Generate the t-fMRI responses for the second time window
     tfmri_tw_2_new = generate_tfmri(args, model_eeg_tw_2,
-        model_tfmri_tw_2, copy(images_new))
+        model_tfmri_tw_2, copy(images_new), berg)
 
 
 # =============================================================================

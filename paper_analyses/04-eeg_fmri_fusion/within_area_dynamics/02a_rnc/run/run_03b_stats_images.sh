@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02_rnc-03b_stats_images
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02a_rnc-03b_stats_images
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
 #SBATCH --time=00:20:00
@@ -36,7 +36,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/within_area_dynamics/02_rnc
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/within_area_dynamics/02a_rnc
 
 # Run the job
 python 03b_stats_images.py --roi $roi --time_window_pair $time_window_pair --imageset $imageset
