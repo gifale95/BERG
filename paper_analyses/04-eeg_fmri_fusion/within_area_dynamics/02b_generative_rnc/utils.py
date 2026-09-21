@@ -196,14 +196,14 @@ def generate_tfmri(args, model_eeg, model_tfmri, images, berg):
     ### Generate the in silico EEG responses to images ###
     # Loop across EEG subjects
     for es, esub in enumerate(args.eeg_subjects):
-        # Predict the in silico EEG responses, and append them across subjects
-        # across the channels dimension
+        # Predict the in silico EEG responses, average them across repeats, and
+        # append them across subjects across the channels dimension
         if es == 0:
-            eeg = berg.encode(model_eeg[es], images)
+            eeg = np.mean(berg.encode(
+                model_eeg[es], images, show_progress=False), 1)
         else:
-            eeg = np.append(eeg, berg.encode(model_eeg[es], images), 2)
-    # Average the EEG responses across repeats
-    eeg = np.mean(eeg, 1)
+            eeg = np.append(eeg, np.mean(berg.encode(
+                model_eeg[es], images, show_progress=False), 1), 1)
 
     ### Generate the t-fMRI responses ###
     # Loop across fMRI subjects

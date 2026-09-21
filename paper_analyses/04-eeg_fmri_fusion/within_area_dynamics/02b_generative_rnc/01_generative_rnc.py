@@ -505,7 +505,7 @@ for g in tqdm(range(args.generations), leave=False):
             file_name = 'gan_img_' + args.control_type + \
                 '_generation-' + f'{g+1:05d}' + '_null_penalty-' + \
                 str(best_baseline_penalty_train[g]) + '_complexity-' + \
-                f'{best_images_complexity[g]:08d}' + '.png'
+                f'{best_images_complexity[g]:08f}' + '.png'
             img.save(os.path.join(save_dir, file_name))
 
 

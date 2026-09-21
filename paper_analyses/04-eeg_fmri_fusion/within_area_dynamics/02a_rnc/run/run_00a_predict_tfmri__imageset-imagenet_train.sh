@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02a_rnc-00a_predict_tfmri__imagenet_val
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02a_rnc-00a_predict_tfmri__imagenet_train
 #SBATCH --mail-type=end
 #SBATCH --mem=20000
-#SBATCH --time=03-00:00:00
+#SBATCH --time=04-00:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -12,8 +12,8 @@ declare -a imageset_all
 declare -a current_batch_all
 index=0
 for r in 'V1' 'hV4' 'FFA' 'EBA' 'PPA' ; do
-    for i in 'imagenet_val' ; do
-        for b in `seq 0 9` ; do
+    for i in 'imagenet_train' ; do
+        for b in `seq 0 199` ; do
             roi_all[$index]=$r
             imageset_all[$index]=$i
             current_batch_all[$index]=$b
@@ -40,4 +40,4 @@ conda activate berg
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/within_area_dynamics/02a_rnc
 
 # Run the job
-python 00a_predict_tfmri.py --roi $roi --imageset $imageset --tot_img_batches '10' --current_batch $current_batch
+python 00a_predict_tfmri.py --roi $roi --imageset $imageset --tot_img_batches '200' --current_batch $current_batch
