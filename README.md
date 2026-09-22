@@ -221,7 +221,7 @@ If you use BERG, please cite:
 
 
 [website]: https://gifale95.github.io/BERG/
-[paper]: https://2025.ccneuro.org/poster/?id=dIxr3CPuPR
+[paper]: https://drive.google.com/file/d/1W9n0hWZ08oOZQ48SJMgLCSfaiI6b_aRn/view?usp=drive_link
 [documentation]: https://brain-encoding-response-generator.readthedocs.io/en/latest/
 [berg_structure]: https://brain-encoding-response-generator.readthedocs.io/en/latest/data_storage.html#
 [model_cards]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/overview.html
@@ -291,7 +291,7 @@ If you use BERG, please cite:
 [fmri-cneuromod_algo2025-text2fmri]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod_algo2025-text2fmri.html
 [Algonauts]: https://algonautsproject.com/2025/index.html
 [acc-fmri-cneuromod_algo2025-text2fmri]: https://huggingface.co/collections/ShreyDixit/text2fmri
-[fmri-cneuromod_algo2025-vibe]: https://brain-encoding-response-generator.readthedocs.io/en/latest/model_cards/fmri-cneuromod_algo2025-vibe.html
+[fmri-cneuromod_algo2025-vibe]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod_algo2025-vibe.html
 [acc-fmri-cneuromod_algo2025-vibe]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-cneuromod_algo2025/model-vibe/encoding_models_accuracy
 
 [brainscore_language]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_language.html
@@ -302,13 +302,13 @@ If you use BERG, please cite:
 [freeman_2013]: https://doi.org/10.1038/nn.3402
 [majaj_2015]: https://doi.org/10.1152/jn.00262.2014
 
-[fmri-multi_study-tribe_v2]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-multi_study-tribe_v2.html
+[fmri-multi_study-tribe_v2]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-dascoli_2026-tribe_v2.html
 [tribev2]: https://github.com/facebookresearch/tribev2
 [acc-fmri-multi_study-tribe_v2]: https://ai.meta.com/research/publications/a-foundation-model-of-vision-audition-and-language-for-in-silico-neuroscience/
 
-[ecog-zada2025-gpt2_xl]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/ecog-zada2025-gpt2_xl.md
+[ecog-zada2025-gpt2_xl]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/ecog-zada2025-gpt2_xl.html
 [zada_2025]: https://doi.org/10.1038/s41597-025-05462-2
 [acc-ecog-zada2025-gpt2_xl]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-ecog/train_dataset-zada2025/model-gpt2_xl/encoding_models_accuracy/
-[fmri-lebel2023-opt_1_3b]: https://gifale95.github.io/BERG/model_cards/fmri-lebel2023-opt_1_3b.html
+[fmri-lebel2023-opt_1_3b]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-lebel2023-opt_1_3b.html
 [lebel_2023]: https://doi.org/10.1038/s41597-023-02437-z
 [acc-fmri-lebel2023-opt_1_3b]: https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-lebel2023/model-opt_1_3b_ridge/encoding_models_accuracy/
