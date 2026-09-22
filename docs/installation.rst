@@ -14,7 +14,7 @@ Recommended (includes TRIBEv2)
 
 .. code-block:: bash
 
-   pip install -U "berg[full] @ git+https://github.com/gifale95/BERG.git"
+   pip install -U "berg[tribev2] @ git+https://github.com/gifale95/BERG.git"
 
 We recommend creating a dedicated conda environment:
 
@@ -22,7 +22,7 @@ We recommend creating a dedicated conda environment:
 
    conda create -n berg python=3.11
    conda activate berg
-   pip install -U "berg[full] @ git+https://github.com/gifale95/BERG.git"
+   pip install -U "berg[tribev2] @ git+https://github.com/gifale95/BERG.git"
 
 BrainScore (optional, replaces TRIBEv2)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -48,19 +48,19 @@ Switching between versions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 If you already have one version installed and want to switch, uninstall the conflicting packages first:
 
-**Full → BrainScore:**
+**TRIBEv2 → BrainScore:**
 
 .. code-block:: bash
 
    pip uninstall tribev2 neuralset neuraltrain -y
    pip install -e ".[brainscore]"
 
-**BrainScore → Full:**
+**BrainScore → TRIBEv2:**
 
 .. code-block:: bash
 
    pip uninstall brainscore-vision brainscore-language -y
-   pip install -e ".[full]"
+   pip install -e ".[tribev2]"
 
 Verify Installation
 -------------------
