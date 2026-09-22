@@ -52,6 +52,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+tribev2 = [
+    "tribev2 @ git+https://github.com/facebookresearch/tribev2.git",
+]
 full = [
     "tribev2 @ git+https://github.com/facebookresearch/tribev2.git",
 ]

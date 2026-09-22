@@ -36,7 +36,7 @@ pip install -U git+https://github.com/gifale95/BERG.git
 #### TRIBEv2 (replaces BrainScore)
 
 ```shell
-pip install -U "berg[full] @ git+https://github.com/gifale95/BERG.git"
+pip install -U "berg[tribev2] @ git+https://github.com/gifale95/BERG.git"
 ```
 
 #### BrainScore (replaces TRIBEv2)
@@ -53,16 +53,16 @@ pip install -U "berg[brainscore] @ git+https://github.com/gifale95/BERG.git"
 
 If you already have one version installed and want to switch, uninstall the conflicting packages first:
 
-**Full → BrainScore:**
+**TRIBEv2 → BrainScore:**
 ```shell
 pip uninstall tribev2 neuralset neuraltrain -y
 pip install -e ".[brainscore]"
 ```
 
-**BrainScore → Full:**
+**BrainScore → TRIBEv2:**
 ```shell
 pip uninstall brainscore-vision brainscore-language -y
-pip install -e ".[full]"
+pip install -e ".[tribev2]"
 ```
 
 

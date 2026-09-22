@@ -105,7 +105,7 @@ class BERG:
         if importlib.util.find_spec("tribev2") is None:
             print(
                 "[TRIBEv2] TRIBEv2 is not installed.\n"
-                "  To install: pip install berg[full]\n"
+                "  To install: pip install berg[tribev2]\n"
                 "  Note: TRIBEv2 and BrainScore cannot coexist due to a NumPy version conflict.\n"
             )
 
