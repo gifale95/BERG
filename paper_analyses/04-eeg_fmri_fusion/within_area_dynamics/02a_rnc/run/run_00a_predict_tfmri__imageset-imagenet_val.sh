@@ -27,7 +27,6 @@ echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
 roi=${roi_all[$SLURM_ARRAY_TASK_ID]}
 imageset=${imageset_all[$SLURM_ARRAY_TASK_ID]}
 current_batch=${current_batch_all[$SLURM_ARRAY_TASK_ID]}
-echo fmri_subject: $fmri_subject
 echo roi: $roi
 echo imageset: $imageset
 echo current_batch: $current_batch

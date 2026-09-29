@@ -238,7 +238,7 @@ metadata_eeg = berg.get_model_metadata(
 times = metadata_eeg['eeg']['times']
 
 # Loop across fMRI subjects and EEG time points
-for fs, fsub in enumerate(args.fmri_subject):
+for fs, fsub in enumerate(tqdm(args.fmri_subject)):
     for t in tqdm(range(len(times))):
 
 

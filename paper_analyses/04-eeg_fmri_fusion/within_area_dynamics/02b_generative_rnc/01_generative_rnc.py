@@ -256,13 +256,13 @@ tfmri_1 = np.mean(tfmri_mean[:,t_min_1:t_max_1], 1)
 tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2], 1)
 
 # Univariate response score margin used to constrain the selection of the
-# control images. The margin is defined as the standard deviation of the
+# control images. The margin is defined as half standard deviation of the
 # t-fMRI responses across all images for each time window. The margin is used
 # to ignore images that have t-fMRI responses that are too close to the
 # baseline scores, as these images may not be informative for aligning or
 # disentangling the two time windows. 
-margin_tw_1 = np.std(tfmri_1)
-margin_tw_2 = np.std(tfmri_2)
+margin_tw_1 = np.std(tfmri_1) / 2
+margin_tw_2 = np.std(tfmri_2) / 2
 
 
 # =============================================================================

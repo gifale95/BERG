@@ -1,24 +1,29 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02a_rnc-02_rnc__cv-1
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02b_generative_rnc-01_generative_rnc__cv-0__GPU
 #SBATCH --mail-type=end
-#SBATCH --mem=2000
-#SBATCH --time=00:20:00
+#SBATCH --mem=70000
+#SBATCH --time=20:00:00
 #SBATCH --qos=extended
+#SBATCH --partition=agcichy
+#SBATCH --gres=gpu:1 # number of GPUs
+
+# CUDA module
+module add CUDA/12.4.0
 
 # Create the parameters combinations
-declare -a cv_subject_all
 declare -a roi_all
 declare -a time_window_pair_all
+declare -a control_type_all
 declare -a imageset_all
 index=0
-for cs in `seq 1 8` ; do
-    for r in 'V1' 'hV4' 'FFA' 'EBA' 'PPA' ; do
-        for t in '0.06-0.10__0.20-0.25' ; do
+for r in 'V1' 'hV4' 'FFA' 'EBA' 'PPA' ; do
+    for t in '0.06-0.10__0.20-0.25' ; do
+        for c in 'high_1_low_2' 'low_1_high_2' ; do
             for i in 'imagenet_val' ; do
-                cv_subject_all[$index]=$cs
                 roi_all[$index]=$r
                 time_window_pair_all[$index]=$t
+                control_type_all[$index]=$c
                 imageset_all[$index]=$i
                 ((index=index+1))
             done
@@ -28,13 +33,13 @@ done
 
 # Extract the parameters
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
-cv_subject=${cv_subject_all[$SLURM_ARRAY_TASK_ID]}
 roi=${roi_all[$SLURM_ARRAY_TASK_ID]}
 time_window_pair=${time_window_pair_all[$SLURM_ARRAY_TASK_ID]}
+control_type=${control_type_all[$SLURM_ARRAY_TASK_ID]}
 imageset=${imageset_all[$SLURM_ARRAY_TASK_ID]}
-echo cv_subject: $cv_subject
 echo roi: $roi
 echo time_window_pair: $time_window_pair
+echo control_type: $control_type
 echo imageset: $imageset
 
 # Activate the Anaconda environment
@@ -42,7 +47,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/within_area_dynamics/02a_rnc
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/within_area_dynamics/02b_generative_rnc
 
 # Run the job
-python 02_rnc.py --cv '1' --cv_subject $cv_subject --roi $roi --time_window_pair $time_window_pair --imageset $imageset
+python 01_generative_rnc.py --cv '0' --roi $roi --time_window_pair $time_window_pair --control_type $control_type --imageset $imageset

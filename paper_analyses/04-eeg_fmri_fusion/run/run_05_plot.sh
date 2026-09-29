@@ -9,7 +9,7 @@
 # Create the parameters combinations
 declare -a eeg_train_trials_all
 index=0
-for t in 'all' 'even' 'odd' ; do
+for t in 'all' ; do
     eeg_train_trials_all[$index]=$t
     ((index=index+1))
 done

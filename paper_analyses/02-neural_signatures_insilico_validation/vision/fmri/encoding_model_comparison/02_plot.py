@@ -86,13 +86,11 @@ colors = [
     ]
 
 titles = [
-    'pRF (polar angle)',
-    'pRF (eccentricity)',
-    'floc (faces)',
-    'floc (bodies)',
-    'floc (places)',
-    'Tripartite org. (animals)',
-    'Tripartite org. (big objects)',
+    'Polar angle',
+    'Eccentricity',
+    'Face selectivity',
+    'Body selectivity',
+    'Place selectivity',
     'DNN layerwise modeling',
     'LLM modeling',
     'Behavioral modeling'
@@ -104,29 +102,36 @@ y_labels = [
     "Pearson's $r$",
     "Pearson's $r$",
     "Pearson's $r$",
-    'Vertex overlap (%)',
-    'Vertex overlap (%)',
-    "Pearson's $r$",
+    "Spearman's $ρ$",
     "Δ Pearson's $r$",
     "Δ Pearson's $r$"
+]
+
+signatures = [
+    'corr_polar_angle_silico_vivo',
+    'corr_eccentricity_silico_vivo',
+    'corr_tval_silico_vivo_faces',
+    'corr_tval_silico_vivo_bodies',
+    'corr_tval_silico_vivo_places',
+    'corr_best_layer_hierarchy_score',
+    'diff_llm_rsa_high_early',
+    'diff_behavioral_rsa_high_early'
 ]
 
 
 # =============================================================================
 # Plot the results (NSD-core)
 # =============================================================================
-# Print the average correlation score across all the insilico validation scores
-correlation_avg = np.mean([val[0] for val in corr_nsdcore.values()])
-print(f'Average correlation score for NSD-core: {correlation_avg:.4f}')
-
-fig, axs = plt.subplots(2, 5, sharex=True, sharey=False, figsize=(37.5, 15))
+fig, axs = plt.subplots(2, 4, sharex=True, sharey=False, figsize=(30, 15))
 axs = np.reshape(axs, -1)
 
-fig.supylabel("Neural signature in silico validation score", fontsize=fontsize,
+fig.supylabel("Explanation accuracy", fontsize=fontsize,
     x=0.075)
-fig.supxlabel("Encoding accuracy (NSD-core)", fontsize=fontsize)
+fig.supxlabel("Prediction accuracy", fontsize=fontsize)
 
-for i, (key, val) in enumerate(insilico_validation_scores.items()):
+for i, key in enumerate(signatures):
+
+    val = insilico_validation_scores[key]
 
     # Enforce same length of x- and y-axes
     axs[i].set_box_aspect(1)
@@ -196,18 +201,16 @@ plt.close(fig)
 # =============================================================================
 # Plot the results (NSD-synthetic)
 # =============================================================================
-# Print the average correlation score across all the insilico validation scores
-correlation_avg = np.mean([val[0] for val in corr_nsdsynthetic.values()])
-print(f'Average correlation score for NSD-synthetic: {correlation_avg:.4f}')
-
-fig, axs = plt.subplots(2, 5, sharex=True, sharey=False, figsize=(37.5, 15))
+fig, axs = plt.subplots(2, 4, sharex=True, sharey=False, figsize=(30, 15))
 axs = np.reshape(axs, -1)
 
-fig.supylabel("Neural signature in silico validation score", fontsize=fontsize,
+fig.supylabel("Explanation accuracy", fontsize=fontsize,
     x=0.075)
-fig.supxlabel("Encoding accuracy (NSD-synthetic)", fontsize=fontsize)
+fig.supxlabel("Prediction accuracy", fontsize=fontsize)
 
-for i, (key, val) in enumerate(insilico_validation_scores.items()):
+for i, key in enumerate(signatures):
+
+    val = insilico_validation_scores[key]
 
     # Enforce same length of x- and y-axes
     axs[i].set_box_aspect(1)

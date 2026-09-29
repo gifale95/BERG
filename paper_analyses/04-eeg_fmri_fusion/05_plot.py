@@ -55,57 +55,57 @@ os.makedirs(save_dir, exist_ok=True)
 # Plot the encoding accuracy of the EEG-fMRI fusion encoding models on brain
 # surfaces (subject-average)
 # =============================================================================
-# Plot parameters
-fontsize = 40
-matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
-matplotlib.rcParams['font.size'] = fontsize
-plt.rc('xtick', labelsize=19)
-plt.rc('ytick', labelsize=19)
-matplotlib.use("svg")
-plt.rcParams["text.usetex"] = False
-plt.rcParams['svg.fonttype'] = 'none'
-subject = 'fsaverage_nsd_sub-01'
+# # Plot parameters
+# fontsize = 40
+# matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+# matplotlib.rcParams['font.size'] = fontsize
+# plt.rc('xtick', labelsize=19)
+# plt.rc('ytick', labelsize=19)
+# matplotlib.use("svg")
+# plt.rcParams["text.usetex"] = False
+# plt.rcParams['svg.fonttype'] = 'none'
+# subject = 'fsaverage_nsd_sub-01'
 
-# Loop over EEG time points
-for t, time in enumerate(tqdm(times)):
+# # Loop over EEG time points
+# for t, time in enumerate(tqdm(times)):
 
-    # Average the results across subjects, and append them across left and
-    # right hemishperes
-    data = np.append(np.nanmean(corr_tfmri_fmri[:,0,:,t], 0),
-        np.nanmean(corr_tfmri_fmri[:,1,:,t], 0))
+#     # Average the results across subjects, and append them across left and
+#     # right hemishperes
+#     data = np.append(np.nanmean(corr_tfmri_fmri[:,0,:,t], 0),
+#         np.nanmean(corr_tfmri_fmri[:,1,:,t], 0))
 
-    # Create the flat brain surface
-    vertex_data = cortex.Vertex(
-        data,
-        subject,
-        cmap='afmhot',
-        vmin=0,
-        vmax=1,
-        with_colorbar=True)
+#     # Create the flat brain surface
+#     vertex_data = cortex.Vertex(
+#         data,
+#         subject,
+#         cmap='afmhot',
+#         vmin=0,
+#         vmax=1,
+#         with_colorbar=True)
 
-    # Plot the flat brain surface
-    fig = cortex.quickshow(
-        vertex_data,
-        #height=2000, # Increase resolution of map and ROI contours
-        with_curvature=True,
-        with_rois=True,
-        roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-        linewidth=3,
-        linecolor=(1, 1, 1),
-        with_labels=True,
-        labelsize=25,
-        curvature_brightness=0.4,
-        with_colorbar=True
-        )
+#     # Plot the flat brain surface
+#     fig = cortex.quickshow(
+#         vertex_data,
+#         #height=2000, # Increase resolution of map and ROI contours
+#         with_curvature=True,
+#         with_rois=True,
+#         roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
+#         linewidth=3,
+#         linecolor=(1, 1, 1),
+#         with_labels=True,
+#         labelsize=25,
+#         curvature_brightness=0.4,
+#         with_colorbar=True
+#         )
 
-    # Add title
-    title = f'Time (ms): {np.round(time*1000)}'
-    plt.title(title, fontsize=fontsize)
+#     # Add title
+#     title = f'Time (ms): {np.round(time*1000)}'
+#     plt.title(title, fontsize=fontsize)
 
-    # Save the plot
-    plot_file = os.path.join(save_dir, f'correlation_time-{t:03d}.png')
-    plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
-    plt.close()
+#     # Save the plot
+#     plot_file = os.path.join(save_dir, f'correlation_time-{t:03d}.png')
+#     plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
+#     plt.close()
 
 
 # =============================================================================

@@ -1,22 +1,22 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02a_rnc-00a_predict_tfmri__imagenet_train
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02a_rnc-02_rnc__cv-0__imagenet_val
 #SBATCH --mail-type=end
-#SBATCH --mem=25000
-#SBATCH --time=25:00:00
+#SBATCH --mem=1000
+#SBATCH --time=00:10:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a roi_all
+declare -a time_window_pair_all
 declare -a imageset_all
-declare -a current_batch_all
 index=0
 for r in 'V1' 'hV4' 'FFA' 'EBA' 'PPA' ; do
-    for i in 'imagenet_train' ; do
-        for b in `seq 0 199` ; do
+    for t in '0.06-0.10__0.20-0.25' ; do
+        for i in 'imagenet_val' ; do
             roi_all[$index]=$r
+            time_window_pair_all[$index]=$t
             imageset_all[$index]=$i
-            current_batch_all[$index]=$b
             ((index=index+1))
         done
     done
@@ -25,11 +25,11 @@ done
 # Extract the parameters
 echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
 roi=${roi_all[$SLURM_ARRAY_TASK_ID]}
+time_window_pair=${time_window_pair_all[$SLURM_ARRAY_TASK_ID]}
 imageset=${imageset_all[$SLURM_ARRAY_TASK_ID]}
-current_batch=${current_batch_all[$SLURM_ARRAY_TASK_ID]}
 echo roi: $roi
+echo time_window_pair: $time_window_pair
 echo imageset: $imageset
-echo current_batch: $current_batch
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
@@ -39,4 +39,4 @@ conda activate berg
 cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/within_area_dynamics/02a_rnc
 
 # Run the job
-python 00a_predict_tfmri.py --roi $roi --imageset $imageset --tot_img_batches '200' --current_batch $current_batch
+python 02_rnc.py --cv '0' --roi $roi --time_window_pair $time_window_pair --imageset $imageset
