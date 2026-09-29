@@ -2,6 +2,8 @@
 
 The [**Brain Encoding Response Generator (BERG)**][website] is a resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.
 
+**For an overview of in silico neuroscience and BERG, see [this video][berg_video].**
+
 In silico neural responses from encoding models increasingly resemble in vivo responses recorded from real brains, enabling the novel research paradigm of in silico neuroscience. In silico neural responses are quick and cheap to generate, allowing researchers to explore and test scientific hypotheses across vastly larger solution spaces than possible in vivo. Novel findings from large-scale in silico experimentation are then validated through targeted small-scale in vivo data collection, in this way optimizing research resources. Thus, in silico neuroscience scales beyond what is possible with in vivo data, and democratizes research across groups with diverse data collection infrastructure and resources. To catalyze this emerging research paradigm, we introduce the Brain Encoding Response Generator (BERG), a resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code. BERG includes a growing, well documented library of encoding models trained on different neural data acquisition modalities, datasets, subjects, stimulation types, and brain areas, offering broad versatility for addressing a wide range of research questions through in silico neuroscience.
 
 <font color='red'><b>Note:</b></font> Beyond BERG's native models, BERG is also integrated with [BrainScore](https://www.brain-score.org), giving you access to hundreds of vision models scored against macaque neural recordings (V1, V2, V4, IT), as well as GPT-family language models scored against human fMRI data.
@@ -187,6 +189,7 @@ We provide several tutorials to help you get started with BERG (you can run thes
 - [EEG Tutorial](https://drive.google.com/file/d/1uF5nr1pyg0_my3gULj3w5y0nuq5gZjhL/view?usp=drive_link) - Learn how to generate in silico EEG responses.
 - [BrainScore Tutorial](https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17) - Learn how to generate in silico neural responses using BrainScore vision and language models.
 - [Adding New Models](https://drive.google.com/file/d/1nBxEiJATzJdWwfzRPmyai2G76HkeBhAU/view?usp=drive_link) - Guide on how to contribute your own encoding models to BERG.
+- [In silico neuroscience discovery](https://colab.research.google.com/drive/1kXOzb5ivPNIk5izlqkHyCLaMz-0FqfSH?usp=sharing) - Validate BERG's in silico fMRI responses, and use them for in silico neuroscience discovery.
 
 **Example Application - Relational Neural Control (RNC):**
 
@@ -222,6 +225,7 @@ If you use BERG, please cite:
 
 [website]: https://gifale95.github.io/BERG/
 [paper]: https://drive.google.com/file/d/1W9n0hWZ08oOZQ48SJMgLCSfaiI6b_aRn/view?usp=drive_link
+[berg_video]: https://www.youtube.com/watch?v=LR1RigGJoXE&t=38m55s
 [documentation]: https://brain-encoding-response-generator.readthedocs.io/en/latest/
 [berg_structure]: https://brain-encoding-response-generator.readthedocs.io/en/latest/data_storage.html#
 [model_cards]: https://brain-encoding-response-generator.readthedocs.io/en/latest/models/overview.html
