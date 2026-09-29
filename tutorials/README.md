@@ -7,3 +7,4 @@ We provide several tutorials to help you get started with BERG (you can run thes
 - [EEG Tutorial](https://drive.google.com/file/d/1uF5nr1pyg0_my3gULj3w5y0nuq5gZjhL/view?usp=drive_link) - Learn how to generate in silico EEG responses.
 - [BrainScore Tutorial](https://colab.research.google.com/drive/1B-gRZmdN6ZhxUUgUXgxfTgJc344a8Z17) - Learn how to generate in silico neural responses using BrainScore vision and language models.
 - [Adding New Models](https://drive.google.com/file/d/1nBxEiJATzJdWwfzRPmyai2G76HkeBhAU/view?usp=drive_link) - Guide on how to contribute your own encoding models to BERG.
+- [In silico neuroscience discovery](https://colab.research.google.com/drive/1kXOzb5ivPNIk5izlqkHyCLaMz-0FqfSH?usp=sharing) - Validate BERG's in silico fMRI responses, and use them for in silico neuroscience discovery.
