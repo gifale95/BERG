@@ -1,8 +1,8 @@
 """Create the retinotopic mapping stimuli used to define polar angle and
 eccentricity maps. One set of retinotopic mapping stimuli is created for each
-of NSD's 100 shared images that all subjects viewed for 3 times during the NSD
-experiment. These images were also part of the 515 NSD shared images used to
-test the encoding models.
+of NSD's 515 shared images that all subjects viewed for 3 times during the NSD
+experiment. These images were the same 515 NSD shared images used to test the
+encoding models.
 
 Parameters
 ----------

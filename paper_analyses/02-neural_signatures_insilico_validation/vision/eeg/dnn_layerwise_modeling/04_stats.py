@@ -150,6 +150,26 @@ rsa_peak_latency_dnn_layer_corr = np.array(rsa_peak_latency_dnn_layer_corr)
 
 
 # =============================================================================
+# Get the best DNN layer for each EEG time point
+# =============================================================================
+# Get the best DNN layer for each EEG time point
+best_dnn_layer = {}
+for key, val in dnn_layerwise_rsa.items():
+    best_dnn_layer[key] = []
+    for s in range(len(val)):
+        idx_best = np.mean(np.argsort(val[s], 0)[-5:], 0)
+        best_dnn_layer[key].append(idx_best)
+        del idx_best
+    best_dnn_layer[key] = np.array(best_dnn_layer[key])
+
+# Compute the correlation between best DNN layers (averaged across subjects)
+# and the t-fMRI time points
+corr_dnn_layer_tfmri_times = {}
+for key, val in best_dnn_layer.items():
+    corr_dnn_layer_tfmri_times[key] = spearmanr(times, np.mean(val, 0))
+
+
+# =============================================================================
 # Bootstrap confidence intervals (CIs)
 # =============================================================================
 # Pairwise decoding CIs

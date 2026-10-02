@@ -61,16 +61,6 @@ insilico_validation_scores = {}
 
 for m, model in enumerate(args.encoding_models):
 
-    # ERPs
-    if m == 0:
-        insilico_validation_scores['mse_erps'] = []
-    results_dir = os.path.join(args.berg_dir,
-        'neural_signatures_insilico_validation', 'vision', 'eeg', 'erps',
-        'erps', model, 'erps.npy')
-    results = np.load(results_dir, allow_pickle=True).item()
-    insilico_validation_scores['mse_erps'].append(np.array(
-        results['mse_erps']))
-
     # N170 faces
     if m == 0:
         insilico_validation_scores['erp_diff_avg'] = []
@@ -83,13 +73,13 @@ for m, model in enumerate(args.encoding_models):
 
    # Object categorization
     if m == 0:
-        insilico_validation_scores['decoding_avg'] = []
+        insilico_validation_scores['decoding_peaks_diff'] = []
     results_dir = os.path.join(args.berg_dir,
         'neural_signatures_insilico_validation', 'vision', 'eeg',
         'object_categorization', 'stats', model, 'stats_channels-O-P.npy')
     results = np.load(results_dir, allow_pickle=True).item()
-    insilico_validation_scores['decoding_avg'].append(np.array(
-        results['decoding_avg']))
+    insilico_validation_scores['decoding_peaks_diff'].append(np.array(
+        results['decoding_peaks_diff']))
 
    # DNN layerwise modeling
     if m == 0:
@@ -130,13 +120,8 @@ corr = {}
 
 for key, val in insilico_validation_scores.items():
 
-    if key in ['mse_erps', 'erp_diff_avg']:
-        corr[key] = pearsonr(np.array(encoding_accuracy).flatten(),
-            np.array(val).flatten(), alternative='less')
-    else:
-        corr[key] = pearsonr(np.array(encoding_accuracy).flatten(),
-            np.array(val).flatten(), alternative='greater')
-
+    corr[key] = pearsonr(np.array(encoding_accuracy).flatten(),
+        np.array(val).flatten(), alternative='greater')
 
 # =============================================================================
 # Save the results

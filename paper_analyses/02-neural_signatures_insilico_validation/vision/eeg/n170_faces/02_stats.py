@@ -93,8 +93,8 @@ eeg_objects = np.mean(eeg_objects[:,:,kept_chan_idx], 2)
 erp_faces = np.mean(eeg_faces, 1)
 erp_objects = np.mean(eeg_objects, 1)
 
-# Compute the difference between face and object absolute ERPs
-erp_diff = erp_faces - erp_objects
+# Compute the difference between object and face ERPs
+erp_diff = erp_objects - erp_faces
 
 
 # =============================================================================
@@ -126,7 +126,7 @@ ci_erp_diff[1] = np.percentile(diff_dist, 97.5, axis=0)
 # Statistical significance
 # =============================================================================
 # Compute the p-value
-pval_erp_diff = ttest_1samp(erp_diff, 0, axis=0, alternative='less')[1]
+pval_erp_diff = ttest_1samp(erp_diff, 0, axis=0, alternative='greater')[1]
 
 # Multiple comparison correction
 sig_erp_diff, pval_erp_diff_corrected, _, _ = multipletests(pval_erp_diff,

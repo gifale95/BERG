@@ -82,8 +82,7 @@ inanimate_obj = {
 }
 
 # Multiply the indices by 50, since the ILSVRC-2012 validation split has 50
-# images per category (and we will only use one image per each of the 200
-# cateogries)
+# images per category (we will only use one image per each of the 20 cateogries)
 idx = {}
 idx['animate'] = np.array(list(animate_obj.keys())) * 50
 idx['inanimate'] = np.array(list(inanimate_obj.keys())) * 50
@@ -113,7 +112,7 @@ exemplars = 10
 for animacy in ['animate', 'inanimate']:
     count = 1
     for i in tqdm(range(len(idx[animacy]))):
-        for e in range(10):
+        for e in range(exemplars):
             img_idx = idx[animacy][i] + e
             img, label = dataset[img_idx]
             img = image_transform(img)

@@ -125,8 +125,7 @@ signatures = [
 fig, axs = plt.subplots(2, 4, sharex=True, sharey=False, figsize=(30, 15))
 axs = np.reshape(axs, -1)
 
-fig.supylabel("Explanation accuracy", fontsize=fontsize,
-    x=0.075)
+fig.supylabel("Explanation accuracy", fontsize=fontsize, x=0.075)
 fig.supxlabel("Prediction accuracy", fontsize=fontsize)
 
 for i, key in enumerate(signatures):
@@ -204,8 +203,7 @@ plt.close(fig)
 fig, axs = plt.subplots(2, 4, sharex=True, sharey=False, figsize=(30, 15))
 axs = np.reshape(axs, -1)
 
-fig.supylabel("Explanation accuracy", fontsize=fontsize,
-    x=0.075)
+fig.supylabel("Explanation accuracy", fontsize=fontsize, x=0.075)
 fig.supxlabel("Prediction accuracy", fontsize=fontsize)
 
 for i, key in enumerate(signatures):

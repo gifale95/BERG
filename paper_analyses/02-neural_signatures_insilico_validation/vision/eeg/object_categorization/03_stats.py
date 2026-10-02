@@ -175,6 +175,24 @@ decoding_avg = np.mean(decoding_avg[:,idx_time], 1)
 
 
 # =============================================================================
+# Compute difference between decoding peaks
+# =============================================================================
+# Get the index of peak decoding accuracy
+decoding_peaks = np.argmax(np.stack((decoding_exemplars, decoding_objects,
+    decoding_animacy), 0), 2)
+
+# Convert the peak decoding accuracy indices to times (milliseconds)
+decoding_peaks_times = times[decoding_peaks] * 1000
+
+# Subtract the peak decoding times of animacy and exemplar, and of object
+# category and exemplar, and of animacy and object
+decoding_peaks_diff = np.zeros((2, len(args.subjects)))
+decoding_peaks_diff[0] = decoding_peaks_times[2] - decoding_peaks_times[0]
+decoding_peaks_diff[1] = decoding_peaks_times[1] - decoding_peaks_times[0]
+decoding_peaks_diff = np.mean(decoding_peaks_diff, 0)
+
+
+# =============================================================================
 # Perform MDS on the EEG responses of each time point
 # =============================================================================
 # # Empty results array of shape (Images, 2 MDS dimensions, Times)
@@ -209,6 +227,7 @@ results = {
     'ci_peak_latency_objects': ci_peak_latency_objects,
     'ci_peak_latency_animacy': ci_peak_latency_animacy,
     'decoding_avg': decoding_avg,
+    'decoding_peaks_diff': decoding_peaks_diff,
     'times': times,
     'kept_ch_names': kept_ch_names
 }

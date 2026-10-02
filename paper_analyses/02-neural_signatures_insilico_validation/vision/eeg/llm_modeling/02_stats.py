@@ -112,7 +112,7 @@ ci_peak_latency_ci_rsa[1] = np.percentile(peak_lat_rsa_dist, 97.5, axis=0)
 
 
 # =============================================================================
-# RSA difference scores between late (200-400ms) and early (50-200ms) time points
+# RSA difference scores between late (200-400ms) and early (60-200ms) time points
 # =============================================================================
 # Average the MSE across time points
 idx_early = np.where((times >= 0.06) & (times <= 0.2))[0]

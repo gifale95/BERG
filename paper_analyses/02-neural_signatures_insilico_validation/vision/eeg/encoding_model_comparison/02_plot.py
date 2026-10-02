@@ -84,21 +84,27 @@ colors = [
     ]
 
 titles = [
-    'ERPs',
     'N170 faces',
-    'Object categorization',
+    'Object decoding dynamics',
     'DNN layerwise modeling',
     'LLM modeling',
     'Behavioral modeling'
 ]
 
 y_labels = [
-    'Mean squared error',
     'Δ μV',
-    "Decoding accuracy (%)",
+    "Δ Decoding peak time (ms)",
     "Spearman's $ρ$",
     "Δ Pearson's $r$",
     "Δ Pearson's $r$"
+]
+
+signatures = [
+    'erp_diff_avg',
+    'decoding_peaks_diff',
+    'rsa_peak_latency_dnn_layer_corr',
+    'diff_llm_rsa_late_early',
+    'diff_beh_rsa_late_early'
 ]
 
 
@@ -112,11 +118,12 @@ print(f'Average correlation score: {correlation_avg:.4f}')
 fig, axs = plt.subplots(2, 3, sharex=True, sharey=False, figsize=(25, 15))
 axs = np.reshape(axs, -1)
 
-fig.supylabel("Neural signature in silico validation score", fontsize=fontsize,
-    x=0.05)
-fig.supxlabel("Encoding accuracy", fontsize=fontsize)
+fig.supylabel("Explanation accuracy", fontsize=fontsize, x=0.05)
+fig.supxlabel("Prediction accuracy", fontsize=fontsize)
 
-for i, (key, val) in enumerate(insilico_validation_scores.items()):
+for i, key in enumerate(signatures):
+
+    val = insilico_validation_scores[key]
 
     # Enforce same length of x- and y-axes
     axs[i].set_box_aspect(1)
