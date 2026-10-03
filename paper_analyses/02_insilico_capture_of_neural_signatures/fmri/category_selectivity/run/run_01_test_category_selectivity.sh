@@ -1,0 +1,44 @@
+#!/bin/bash
+#SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
+#SBATCH --job-name=berg-02_insilico_capture_of_neural_signatures-fmri-category_selectivity-01_test_category_selectivity_GPU
+#SBATCH --mail-type=end
+#SBATCH --mem=25000
+#SBATCH --time=00:30:00
+#SBATCH --qos=hiprio
+#SBATCH --partition=agcichy
+#SBATCH --gres=gpu:1 # number of GPUs
+
+# CUDA module
+module add CUDA/12.4.0
+
+# Create the parameters combinations
+declare -a encoding_model_all
+declare -a subject_all
+index=0
+for em in 'fmri-nsd_fsaverage-huze' ; do
+    for s in `seq 1 8` ; do
+        encoding_model_all[$index]=$em
+        subject_all[$index]=$s
+        ((index=index+1))
+    done
+done
+
+# Extract the parameters
+echo SLURM_ARRAY_JOB_ID: $SLURM_ARRAY_TASK_ID
+encoding_model=${encoding_model_all[$SLURM_ARRAY_TASK_ID]}
+subject=${subject_all[$SLURM_ARRAY_TASK_ID]}
+echo subject: $subject
+echo encoding_model: $encoding_model
+
+# Wait a bit so it doesn't crash
+sleep 8
+
+# Change to the .py script directory
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/02_insilico_capture_of_neural_signatures/fmri/hvc_selectivity
+
+# Activate the Anaconda environment
+source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
+conda activate berg
+
+# Run the job
+python 01_test_category_selectivity.py --subject $subject --encoding_model $encoding_model

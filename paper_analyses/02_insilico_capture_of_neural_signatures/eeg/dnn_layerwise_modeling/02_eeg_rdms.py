@@ -1,0 +1,182 @@
+"""Create the EEG RDMs through pairwise decoding.
+
+Parameters
+----------
+encoding_model : str
+    The name of BERG's encoding model used for generating the in silico EEG
+    responses.
+subject : int
+    The subject identifier for the EEG encoding models.
+channels : string
+    String containing the EEG channel type(s) retained for the analyses,
+    separated by a comma. Possible values are: 'O' (occipital), 'P'
+    (posterior), 'T' (temporal), 'C' (central), 'F' (frontal). Alternatively,
+    the list can also contain the names of the individual channels used.
+berg_dir : str
+    Directory of the BERG.
+things_dir : str
+    Directory of the THINGS database.
+    https://osf.io/jum2f/
+
+"""
+
+import argparse
+import os
+import random
+import numpy as np
+from PIL import Image
+from tqdm import tqdm
+from berg import BERG
+from sklearn.svm import SVC
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--encoding_model', type=str, default='eeg-things_eeg_2-vit_b_32')
+parser.add_argument('--subject', default=1, type=int)
+parser.add_argument('--channels', default='O,P', type=lambda s: s.split(','))
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
+parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
+args, unknown = parser.parse_known_args()
+
+print('>>> EEG RDMs <<<')
+print('\nInput arguments:')
+for key, val in vars(args).items():
+    print('{:16} {}'.format(key, val))
+
+# Set random seed for reproducible results
+seed = 20200220
+random.seed(seed)
+np.random.seed(seed)
+
+
+# =============================================================================
+# Get the THINGS EEG2 test image metadata
+# =============================================================================
+berg = BERG(berg_dir=args.berg_dir)
+
+metadata_things = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    subject=1
+    )
+
+test_img_files = metadata_things['encoding_models']['test_img_info']\
+    ['test_img_files']
+
+
+# =============================================================================
+# Load BERG's encoding model
+# =============================================================================
+# Get the model metadata
+metadata = berg.get_model_metadata(
+    args.encoding_model,
+    subject=args.subject
+    )
+times = metadata['eeg']['times']
+
+# EEG channel selection
+ch_names = metadata['eeg']['ch_names']
+kept_ch_names = []
+for c in ch_names:
+    for ch_select in args.channels:
+        if ch_select in c:
+            kept_ch_names.append(c)
+            break
+
+# Load the encoding model
+model = berg.get_encoding_model(
+    args.encoding_model,
+    subject=args.subject,
+    selection={'channels': kept_ch_names}
+    )
+
+
+# =============================================================================
+# Generate the in silico EEG responses
+# =============================================================================
+# Loop across test object concepts
+images = []
+for file in tqdm(test_img_files):
+
+    # Find correct subfolder
+    img_path = None
+    for root, _, files in os.walk(os.path.join(args.things_dir)):
+        if file in files:
+            img_path = os.path.join(root, file)
+            break
+    
+    # Load and transform the image
+    img = Image.open(img_path)
+    img = img.resize((224, 224), Image.Resampling.LANCZOS).convert('RGB')
+    img = np.array(img).transpose(2, 0, 1)  # Convert to (C, H, W)
+    images.append(img)
+
+# Format the images to a numpy array
+images = np.array(images)
+
+# Generate the in silico EEG responses
+eeg, metadata = berg.encode(model, images, return_metadata=True)
+times = metadata['eeg']['times']
+
+
+# =============================================================================
+# Create the EEG RDM (pairwise decoding)
+# =============================================================================
+# The code assumes EEG responses in the format:
+# (Image conditions × Repeats × Channels × Time points)
+
+# Results array of shape:
+# (Image conditions × Image conditions × EEG time points)
+eeg_rdm = np.zeros((len(eeg), len(eeg), len(times)), dtype=np.float32)
+
+# Loop over EEG time points and images
+for t in tqdm(range(len(times))):
+    for i1 in range(len(eeg)):
+        for i2 in range(i1):
+
+            # Select the image condition data
+            eeg_cond_1 = eeg[i1,:,:,t]
+            eeg_cond_2 = eeg[i2,:,:,t]
+
+            # SVM target vectors
+            y_train = np.zeros(((len(eeg_cond_1)-1)*2))
+            y_train[int(len(y_train)/2):] = 1
+            y_test = np.asarray((0, 1))
+            scores = np.zeros(len(eeg_cond_1))
+
+            # Loop across repeats (leave-one-repeat-out cross-decoding)
+            for r in range(len(eeg_cond_1)):
+
+                # Define the train/test partitions
+                X_train = np.append(np.delete(eeg_cond_1, r, 0),
+                    np.delete(eeg_cond_2, r, 0), 0)
+                X_test = np.append(np.expand_dims(eeg_cond_1[r], 0),
+                    np.expand_dims(eeg_cond_2[r], 0), 0)
+
+                # Train the classifier
+                dec_svm = SVC(kernel='linear')
+                dec_svm.fit(X_train, y_train)
+
+                # Test the classifier
+                y_pred = dec_svm.predict(X_test)
+                scores[r] = sum(y_pred == y_test) / len(y_test)
+
+            # Store the accuracy
+            eeg_rdm[i1,i2,t] = np.mean(scores)
+            eeg_rdm[i2,i1,t] = eeg_rdm[i1,i2,t]
+
+
+# =============================================================================
+# Save the results
+# =============================================================================
+results = {
+    'eeg_rdm': eeg_rdm,
+    'metadata': metadata
+}
+
+save_dir = os.path.join(args.berg_dir, 'insilico_capture_of_neural_signatures',
+    'eeg', 'dnn_layerwise_modeling', 'eeg_rdms', args.encoding_model)
+os.makedirs(save_dir, exist_ok=True)
+
+file_name = 'eeg_rdms_sub-' + format(args.subject, '02') + '_channels-' + \
+    '-'.join(args.channels) + '.npy'
+
+np.save(os.path.join(save_dir, file_name), results)
