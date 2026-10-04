@@ -148,7 +148,7 @@ for i, key in enumerate(signatures):
     val_array = np.array(val)
     for s in range(len(fmri_subjects)):
         axs[i].plot(acc_array[:,s], val_array[:,s], color='k', linewidth=1,
-            alpha=.1, zorder=1)
+            alpha=.2, zorder=1)
 
     # Print the correlation score between prediction accuracy and explanation
     # accuracy
@@ -166,9 +166,9 @@ for i, key in enumerate(signatures):
 
     # Plot the correlation line
     m, b = np.polyfit(acc, validation, 1)
-    x_line = np.linspace(acc.min(), acc.max(), 100)
+    x_line = np.linspace(0.2, 0.4, 100)
     y_line = m * x_line + b
-    axs[i].plot(x_line, y_line, color='k', linewidth=2, alpha=0.3, zorder=1)
+    # axs[i].plot(x_line, y_line, color='k', linewidth=2, alpha=0.3, zorder=1)
 
     # Plot title
     axs[i].set_title(f'{titles[i]}', fontsize=fontsize)
@@ -230,7 +230,7 @@ for i, key in enumerate(signatures):
     val_array = np.array(val)
     for s in range(len(fmri_subjects)):
         axs[i].plot(acc_array[:,s], val_array[:,s], color='k', linewidth=1,
-            alpha=.1, zorder=1)
+            alpha=.2, zorder=1)
 
     # Print the correlation score between prediction accuracy and explanation
     # accuracy
@@ -250,7 +250,7 @@ for i, key in enumerate(signatures):
     m, b = np.polyfit(acc, validation, 1)
     x_line = np.linspace(acc.min(), acc.max(), 100)
     y_line = m * x_line + b
-    axs[i].plot(x_line, y_line, color='k', linewidth=2, alpha=0.3, zorder=1)
+    # axs[i].plot(x_line, y_line, color='k', linewidth=2, alpha=0.3, zorder=1)
 
     # Plot title
     axs[i].set_title(f'{titles[i]}', fontsize=fontsize)

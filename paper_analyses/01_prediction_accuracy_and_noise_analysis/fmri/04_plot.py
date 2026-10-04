@@ -20,7 +20,6 @@ import numpy as np
 import cortex
 import matplotlib
 import matplotlib.pyplot as plt
-from scipy.stats import ttest_1samp
 
 
 # =============================================================================
@@ -65,6 +64,19 @@ os.makedirs(save_dir, exist_ok=True)
 
 
 # =============================================================================
+# NCSNR vertex selection
+# =============================================================================
+for model in correlation_nsdcore.keys():
+    for s in range(len(args.subjects)):
+        for hemi in ['lh', 'rh']:
+
+            ncsnr = metadata[s]['fmri'][hemi+'_ncsnr']
+            idx_nan = ncsnr < args.ncsnr_threshold
+            correlation_nsdcore[model][hemi][s][idx_nan] = np.nan
+            correlation_nsdsynthetic[model][hemi][s][idx_nan] = np.nan
+
+
+# =============================================================================
 # Plot the prediction accuracy results on brain surfaces
 # =============================================================================
 # Plot parameters
@@ -81,7 +93,8 @@ for model in correlation_nsdcore.keys():
     # NSD-core
     # Average the results across subjects, and append them across left and
     # right hemishperes
-    data = np.append(np.nanmean(correlation_nsdcore[model]['lh'], 0),
+    data = np.append(
+        np.nanmean(correlation_nsdcore[model]['lh'], 0),
         np.nanmean(correlation_nsdcore[model]['rh'], 0))
     # Create the flat brain surface
     vertex_data = cortex.Vertex(
@@ -90,7 +103,6 @@ for model in correlation_nsdcore.keys():
         cmap='afmhot',
         vmin=0,
         vmax=0.8,
-        with_colorbar=True
         )
     # Plot the flat brain surface
     fig = cortex.quickshow(
@@ -99,12 +111,12 @@ for model in correlation_nsdcore.keys():
         with_curvature=True,
         with_rois=True,
         roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-        linewidth=3,
+        linewidth=5,
         linecolor=(1, 1, 1),
         with_labels=False,
         labelsize=35,
         curvature_brightness=0.4,
-        with_colorbar=True
+        with_colorbar=False
         )
     # Save the figure
     file_name = os.path.join(save_dir,
@@ -125,7 +137,6 @@ for model in correlation_nsdcore.keys():
         cmap='afmhot',
         vmin=0,
         vmax=0.8,
-        with_colorbar=True
         )
     # Plot the flat brain surface
     fig = cortex.quickshow(
@@ -134,12 +145,12 @@ for model in correlation_nsdcore.keys():
         with_curvature=True,
         with_rois=True,
         roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-        linewidth=3,
+        linewidth=5,
         linecolor=(1, 1, 1),
         with_labels=False,
         labelsize=35,
         curvature_brightness=0.4,
-        with_colorbar=True
+        with_colorbar=False
         )
     # Save the figure
     file_name = os.path.join(save_dir,
@@ -149,178 +160,23 @@ for model in correlation_nsdcore.keys():
 
 
 # =============================================================================
-# Plot the prediction accuracy differences on brain surfaces
+# Print the vertex-average prediction accuracy stats
 # =============================================================================
-# Plot parameters
-plt.rc('xtick', labelsize=19)
-plt.rc('ytick', labelsize=19)
-matplotlib.use("svg")
-plt.rcParams["text.usetex"] = False
-plt.rcParams['svg.fonttype'] = 'none'
-subject = 'fsaverage_nsd_sub-01'
-
-# Loop across models
-for model in diff_correlation_nsdcore.keys():
-
-    # NSD-core
-    # Average the results across subjects, and append them across left and
-    # right hemishperes
-    data = np.append(np.nanmean(diff_correlation_nsdcore[model]['lh'], 0),
-        np.nanmean(diff_correlation_nsdcore[model]['rh'], 0))
-    # Create the flat brain surface
-    vertex_data = cortex.Vertex(
-        data,
-        subject=subject,
-        cmap='RdGy_r',
-        vmin=-0.4,
-        vmax=0.4,
-        with_colorbar=True
-        )
-    # Plot the flat brain surface
-    fig = cortex.quickshow(
-        vertex_data,
-        height=2000, # Increase resolution of map and ROI contours
-        with_curvature=True,
-        with_rois=True,
-        roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-        linewidth=3,
-        linecolor=(1, 1, 1),
-        with_labels=False,
-        labelsize=35,
-        curvature_brightness=0.4,
-        with_colorbar=True
-        )
-    # Save the figure
-    file_name = os.path.join(save_dir,
-        f'diff_prediction_accuracy_nsdcore_model-{model}.svg')
-    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-    plt.close()
-
-    # NSD-synthetic
-    # Average the results across subjects, and append them across left and
-    # right hemishperes
-    data = np.append(
-        np.nanmean(diff_correlation_nsdsynthetic[model]['lh'], 0),
-        np.nanmean(diff_correlation_nsdsynthetic[model]['rh'], 0))
-    # Create the flat brain surface
-    vertex_data = cortex.Vertex(
-        data,
-        subject=subject,
-        cmap='RdGy_r',
-        vmin=-0.4,
-        vmax=0.4,
-        with_colorbar=True
-        )
-    # Plot the flat brain surface
-    fig = cortex.quickshow(
-        vertex_data,
-        height=2000, # Increase resolution of map and ROI contours
-        with_curvature=True,
-        with_rois=True,
-        roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-        linewidth=3,
-        linecolor=(1, 1, 1),
-        with_labels=False,
-        labelsize=35,
-        curvature_brightness=0.4,
-        with_colorbar=True
-        )
-    # Save the figure
-    file_name = os.path.join(save_dir,
-        f'diff_prediction_accuracy_nsdsynthetic_model-{model}.svg')
-    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-    plt.close()
-
-
-# =============================================================================
-# Vertex-averaege prediction accuracy stats
-# =============================================================================
-# Compute the vertex-average prediction accuracy
-correlation_nsdcore_avg = {}
-correlation_nsdsynthetic_avg = {}
 # Loop across models
 for model in correlation_nsdcore.keys():
-    correlation_nsdcore_avg[model] = []
-    correlation_nsdsynthetic_avg[model] = []
-    # Loop across subjects
-    for s in range(len(args.subjects)):
-        # Get the index of vertices with NCSNR scores above threshold
-        lh_ncsnr = metadata[s]['fmri']['lh_ncsnr']
-        rh_ncsnr = metadata[s]['fmri']['rh_ncsnr']
-        lh_idx = lh_ncsnr >= args.ncsnr_threshold
-        rh_idx = rh_ncsnr >= args.ncsnr_threshold
-        # Average the prediction accuracy scores across vertices with NCSNR
-        # scores above threshold
-        correlation_nsdcore_avg[model].append(np.mean(np.append(
-            correlation_nsdcore[model]['lh'][s][lh_idx],
-            correlation_nsdcore[model]['rh'][s][rh_idx])))
-        correlation_nsdsynthetic_avg[model].append(np.mean(np.append(
-            correlation_nsdsynthetic[model]['lh'][s][lh_idx],
-            correlation_nsdsynthetic[model]['rh'][s][rh_idx])))
-    correlation_nsdcore_avg[model] = np.array(correlation_nsdcore_avg[model])
-    correlation_nsdsynthetic_avg[model] = np.array(
-        correlation_nsdsynthetic_avg[model])
 
-# Compute the vertex-average prediction accuracy difference
-diff_correlation_nsdcore_avg = {}
-diff_correlation_nsdsynthetic_avg = {}
-# Loop across models
-for model in diff_correlation_nsdcore.keys():
-    diff_correlation_nsdcore_avg[model] = []
-    diff_correlation_nsdsynthetic_avg[model] = []
-    # Loop across subjects
-    for s in range(len(args.subjects)):
-        # Get the index of vertices with NCSNR scores above threshold
-        lh_ncsnr = metadata[s]['fmri']['lh_ncsnr']
-        rh_ncsnr = metadata[s]['fmri']['rh_ncsnr']
-        lh_idx = lh_ncsnr >= args.ncsnr_threshold
-        rh_idx = rh_ncsnr >= args.ncsnr_threshold
-        # Average the prediction accuracy scores across vertices with NCSNR
-        # scores above threshold
-        diff_correlation_nsdcore_avg[model].append(np.mean(np.append(
-            diff_correlation_nsdcore[model]['lh'][s][lh_idx],
-            diff_correlation_nsdcore[model]['rh'][s][rh_idx])))
-        diff_correlation_nsdsynthetic_avg[model].append(np.mean(np.append(
-            diff_correlation_nsdsynthetic[model]['lh'][s][lh_idx],
-            diff_correlation_nsdsynthetic[model]['rh'][s][rh_idx])))
-    diff_correlation_nsdcore_avg[model] = np.array(
-        diff_correlation_nsdcore_avg[model])
-    diff_correlation_nsdsynthetic_avg[model] = np.array(
-        diff_correlation_nsdsynthetic_avg[model])
+    # Compute the average prediction accuracy across subjects and hemispheres
+    avg_nsdcore = np.round(np.nanmean(np.append(
+        np.array(correlation_nsdcore[model]['lh']).flatten(),
+        np.array(correlation_nsdcore[model]['rh']).flatten())), 2)
+    avg_nsdsynthetic = np.round(np.nanmean(np.append(
+        np.array(correlation_nsdsynthetic[model]['lh']).flatten(),
+        np.array(correlation_nsdsynthetic[model]['rh']).flatten())), 2)
 
-# Compute the significance for the prediction accuracies
-p_val_correlation_nsdcore_avg = {}
-p_val_correlation_nsdsynthetic_avg = {}
-for model in correlation_nsdcore.keys():
-    p_val_correlation_nsdcore_avg[model] = ttest_1samp(
-        correlation_nsdcore_avg[model], 0, alternative='greater')[1]
-    p_val_correlation_nsdsynthetic_avg[model] = ttest_1samp(
-        correlation_nsdsynthetic_avg[model], 0, alternative='greater')[1]
-
-# Compute the significance for the prediction accuracy differences
-p_val_diff_correlation_nsdcore_avg = {}
-p_val_diff_correlation_nsdsynthetic_avg = {}
-for model in diff_correlation_nsdcore.keys():
-    p_val_diff_correlation_nsdcore_avg[model] = ttest_1samp(
-        diff_correlation_nsdcore_avg[model], 0, alternative='two-sided')[1]
-    p_val_diff_correlation_nsdsynthetic_avg[model] = ttest_1samp(
-        diff_correlation_nsdsynthetic_avg[model], 0, alternative='two-sided')[1]
-
-# Print the prediction accuracy results
-for model in correlation_nsdcore_avg.keys():
-    print(f'Model: {model}')
-    print(f'Prediction accuracy (NSD-core): {np.mean(correlation_nsdcore_avg[model])}')
-    print(f'Prediction accuracy (NSD-synthetic): {np.mean(correlation_nsdsynthetic_avg[model])}')
-    print(f'Prediction accuracy p-value (NSD-core): {p_val_correlation_nsdcore_avg[model]}')
-    print(f'Prediction accuracy p-value (NSD-synthetic): {p_val_correlation_nsdsynthetic_avg[model]}')
-
-# Print the prediction accuracy result differences
-for model in diff_correlation_nsdcore_avg.keys():
-    print(f'Model: {model}')
-    print(f'Prediction accuracy difference (NSD-core): {np.mean(diff_correlation_nsdcore_avg[model])}')
-    print(f'Prediction accuracy difference (NSD-synthetic): {np.mean(diff_correlation_nsdsynthetic_avg[model])}')
-    print(f'Prediction accuracy difference p-value (NSD-core): {p_val_diff_correlation_nsdcore_avg[model]}')
-    print(f'Prediction accuracy difference p-value (NSD-synthetic): {p_val_diff_correlation_nsdsynthetic_avg[model]}')
+    # Print the average prediction accuracy
+    print(f'\nModel: {model}')
+    print(f'Prediction accuracy (NSD-core): {avg_nsdcore}')
+    print(f'Prediction accuracy (NSD-synthetic): {avg_nsdsynthetic}')
 
 
 # =============================================================================
