@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
-parser.add_argument('--eeg_train_trials', default='odd', type=str)
+parser.add_argument('--eeg_train_trials', default='all', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -38,7 +38,7 @@ results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats',
 results = np.load(results_dir, allow_pickle=True).item()
 
 metadata = results['metadata']
-times = results['times']
+times = np.round(results['times'], 3)
 corr_tfmri_fmri = results['corr_tfmri_fmri']
 corr_tfmri_fmri_roi = results['corr_tfmri_fmri_roi']
 ci_corr_tfmri_fmri_roi = results['ci_corr_tfmri_fmri_roi']
@@ -55,57 +55,64 @@ os.makedirs(save_dir, exist_ok=True)
 # Plot the encoding accuracy of the EEG-fMRI fusion encoding models on brain
 # surfaces (subject-average)
 # =============================================================================
-# # Plot parameters
-# fontsize = 40
-# matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
-# matplotlib.rcParams['font.size'] = fontsize
-# plt.rc('xtick', labelsize=19)
-# plt.rc('ytick', labelsize=19)
-# matplotlib.use("svg")
-# plt.rcParams["text.usetex"] = False
-# plt.rcParams['svg.fonttype'] = 'none'
-# subject = 'fsaverage_nsd_sub-01'
+# Plot parameters
+fontsize = 40
+matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
+matplotlib.rcParams['font.size'] = fontsize
+plt.rc('xtick', labelsize=19)
+plt.rc('ytick', labelsize=19)
+matplotlib.use("svg")
+plt.rcParams["text.usetex"] = False
+plt.rcParams['svg.fonttype'] = 'none'
+subject = 'fsaverage_nsd_sub-01'
 
-# # Loop over EEG time points
-# for t, time in enumerate(tqdm(times)):
+# Time points to plot
+plot_times = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4]
 
-#     # Average the results across subjects, and append them across left and
-#     # right hemishperes
-#     data = np.append(np.nanmean(corr_tfmri_fmri[:,0,:,t], 0),
-#         np.nanmean(corr_tfmri_fmri[:,1,:,t], 0))
+# Loop over EEG time points
+for time in tqdm(plot_times):
 
-#     # Create the flat brain surface
-#     vertex_data = cortex.Vertex(
-#         data,
-#         subject,
-#         cmap='afmhot',
-#         vmin=0,
-#         vmax=1,
-#         with_colorbar=True)
+    # Get the time index
+    t = np.where(times == time)[0][0]
 
-#     # Plot the flat brain surface
-#     fig = cortex.quickshow(
-#         vertex_data,
-#         #height=2000, # Increase resolution of map and ROI contours
-#         with_curvature=True,
-#         with_rois=True,
-#         roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-#         linewidth=3,
-#         linecolor=(1, 1, 1),
-#         with_labels=True,
-#         labelsize=25,
-#         curvature_brightness=0.4,
-#         with_colorbar=True
-#         )
+    # Average the results across subjects, and append them across left and
+    # right hemishperes
+    data = np.append(np.nanmean(corr_tfmri_fmri[:,0,:,t], 0),
+        np.nanmean(corr_tfmri_fmri[:,1,:,t], 0))
 
-#     # Add title
-#     title = f'Time (ms): {np.round(time*1000)}'
-#     plt.title(title, fontsize=fontsize)
+    # Create the flat brain surface
+    vertex_data = cortex.Vertex(
+        data,
+        subject,
+        cmap='afmhot',
+        vmin=0,
+        vmax=1,
+        )
 
-#     # Save the plot
-#     plot_file = os.path.join(save_dir, f'correlation_time-{t:03d}.png')
-#     plt.savefig(plot_file, dpi=300, bbox_inches='tight', format='png')
-#     plt.close()
+    # Plot the flat brain surface
+    fig = cortex.quickshow(
+        vertex_data,
+        height=2000, # Increase resolution of map and ROI contours
+        with_curvature=False,
+        with_rois=True,
+        roi_list=['E', 'I', 'V', 'L', 'D'], # 'Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal''E', 'I', 'V', 'L', 'D'
+        linewidth=5,
+        linecolor=(1, 1, 1),
+        with_labels=False,
+        labelsize=60,
+        curvature_brightness=0.4,
+        with_colorbar=False
+        )
+
+    # Add title
+    title = f'Time (ms): {np.round(time*1000)}'
+    plt.title(title, fontsize=fontsize)
+
+    # Save the plot
+    time = int(np.round(time*1000))
+    plot_file = os.path.join(save_dir, f'correlation_time-{time:04d}ms.png')
+    plt.savefig(plot_file, dpi=150, transparent=True, bbox_inches='tight', format='png')
+    plt.close()
 
 
 # =============================================================================
@@ -137,7 +144,7 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 
 # Define the ROIs to plot
-rois = ['V1', 'V2', 'V3', 'hV4', 'ventral', 'lateral', 'parietal']
+rois = ['V1', 'V2', 'V3', 'hV4', 'FFA']
 
 # Get the plot colors
 def sample_cmap(N):
@@ -147,41 +154,51 @@ def sample_cmap(N):
     return colors
 colors = sample_cmap(len(rois))
 
-# Create the figure
-fig = plt.figure(figsize=(10, 7.5))
+# Print the peak time point of each ROI
+for roi in rois:
+    peak = times[np.argmax(np.mean(corr_tfmri_fmri_roi[roi], 0))]
+    print(f'Peak time point of {roi}: {np.round(peak*1000)} ms')
 
-# Plot the stimulus onset and chance dashed line
-plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
-    alpha=.25, label='_nolegend_')
+# Select time points between 0 and 400 ms
+t_idx = np.intersect1d(np.where(times >= 0)[0], np.where(times <= 0.4)[0])
+times_plot = times[t_idx]
+
+# Create the figure
+fig = plt.figure(figsize=(25, 5))
+
+# Plot the chance dashed line
+plt.plot([-10, 10], [0, 0], 'k--', linewidth=3, alpha=.25, label='_nolegend_')
 
 # Loop across ROIs
 for r, roi in enumerate(rois):
 
     # Plot the correlation
-    plt.plot(times, np.mean(corr_tfmri_fmri_roi[roi], 0),
-        color=colors[r], linewidth=2, label=roi)
+    plt.plot(times_plot, np.mean(corr_tfmri_fmri_roi[roi][:,t_idx], 0),
+        color=colors[r], linewidth=3, label=roi)
 
     # Plot the CIs
-    plt.fill_between(times, ci_corr_tfmri_fmri_roi[roi][1],
-        ci_corr_tfmri_fmri_roi[roi][0], color=colors[r], alpha=.1)
+    plt.fill_between(times_plot, ci_corr_tfmri_fmri_roi[roi][1,t_idx],
+        ci_corr_tfmri_fmri_roi[roi][0,t_idx], color=colors[r], alpha=.1)
 
     # Plot the peak time point
-    peak = times[np.argmax(np.mean(corr_tfmri_fmri_roi[roi], 0))]
-    max_corr = max(np.mean(corr_tfmri_fmri_roi[roi], 0))
-    plt.scatter(peak, max_corr, color=colors[r], s=200, marker='o',
+    peak = times_plot[np.argmax(np.mean(corr_tfmri_fmri_roi[roi][:,t_idx], 0))]
+    max_corr = max(np.mean(corr_tfmri_fmri_roi[roi][:,t_idx], 0))
+    plt.scatter(peak, max_corr, color=colors[r], s=400, marker='o',
         edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
     ci_low = peak - ci_corr_tfmri_fmri_roi_peak_lat[roi][0]
     ci_up = ci_corr_tfmri_fmri_roi_peak_lat[roi][1] - peak
     conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-    plt.errorbar(peak, max_corr, xerr=conf_int, fmt="none",
-        ecolor='k', elinewidth=1, capsize=3)
+    # plt.errorbar(peak, max_corr, xerr=conf_int, fmt="none",
+    #     ecolor='k', elinewidth=1, capsize=3)
 
 # x-axis parameters
 plt.xlabel('Time (ms)', fontsize=fontsize)
-xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
-xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+# xticks = [0, .1, .2, .3, .4]
+# xlabels = [0, 100, 200, 300, 400]
+xticks = [0, .05, .1, .15, .2, .25, .3, .35, .4]
+xlabels = [0, 50, 100, 150, 200, 250, 300, 350, 400]
 plt.xticks(ticks=xticks, labels=xlabels)
-plt.xlim(left=min(times), right=max(times))
+plt.xlim(left=min(times_plot), right=max(times_plot))
 
 # y-axis parameters
 plt.ylabel("Pearson's $r$", fontsize=fontsize)

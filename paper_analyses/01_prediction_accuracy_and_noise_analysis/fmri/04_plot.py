@@ -110,11 +110,11 @@ for model in correlation_nsdcore.keys():
         height=2000, # Increase resolution of map and ROI contours
         with_curvature=True,
         with_rois=True,
-        roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
+        roi_list=['E', 'I', 'V', 'L', 'D'], # 'Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'
         linewidth=5,
         linecolor=(1, 1, 1),
         with_labels=False,
-        labelsize=35,
+        labelsize=60,
         curvature_brightness=0.4,
         with_colorbar=False
         )
@@ -144,11 +144,11 @@ for model in correlation_nsdcore.keys():
         height=2000, # Increase resolution of map and ROI contours
         with_curvature=True,
         with_rois=True,
-        roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
+        roi_list=['E', 'I', 'V', 'L', 'D'], # 'Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'
         linewidth=5,
         linecolor=(1, 1, 1),
         with_labels=False,
-        labelsize=35,
+        labelsize=60,
         curvature_brightness=0.4,
         with_colorbar=False
         )

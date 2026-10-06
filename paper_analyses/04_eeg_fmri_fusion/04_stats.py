@@ -17,9 +17,6 @@ eeg_train_trials : str
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
-encoding_threshold : float
-    The threshold on the encoding models explained variance for vertex
-    selection (in % units).
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
     distribution.
@@ -40,7 +37,6 @@ parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=li
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--eeg_train_trials', default='all', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--encoding_threshold', default=0, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -111,13 +107,9 @@ for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
             f'{args.eeg_train_trials}.npy')
         corr_tfmri_fmri[fs,h,idx_v] = np.load(os.path.join(data_dir, file_name))
 
-        # NCSNR and encoding accuracy vertex selection
+        # NCSNR vertex selection
         ncsnr = metadata[fs]['fmri'][hemi+'_ncsnr']
-        idx_ncsnr = ncsnr >= args.ncsnr_threshold
-        encoding = metadata[fs]['encoding_models']\
-            [hemi+'_explained_variance_nsdcore']
-        idx_encoding = encoding >= args.encoding_threshold
-        idx_nan = ~np.logical_and(idx_ncsnr, idx_encoding)
+        idx_nan = ncsnr < args.ncsnr_threshold
         corr_tfmri_fmri[fs,h,idx_nan] = np.nan
 
 
