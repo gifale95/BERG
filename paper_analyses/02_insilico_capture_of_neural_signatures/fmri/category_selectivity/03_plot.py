@@ -27,7 +27,7 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
-parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
+parser.add_argument('--subjects', default=[1], type=int) # !!! 1, 2, 3, 4, 5, 6, 7, 8
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -91,9 +91,9 @@ for s, sub in enumerate(tqdm(args.subjects)):
 
         # Select the ROIs to plot
         if cat == 'faces':
-            roi_list = ['OFA', 'FFA-1', 'FFA-2', 'mTL-faces', 'aTL-faces']
+            roi_list = ['OFA', 'FFA-1', 'FFA-2'] # 'mTL-faces', 'aTL-faces'
         if cat == 'bodies':
-            roi_list = ['EBA', 'FBA-1', 'FBA-2', 'mTL-bodies']
+            roi_list = ['EBA', 'FBA-1', 'FBA-2'] # 'mTL-bodies'
         elif cat == 'places':
             roi_list = ['OPA', 'PPA', 'RSC']
 
@@ -107,8 +107,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
             subject=subject,
             cmap='inferno',
             vmin=0,
-            vmax=10,
-            with_colorbar=True
+            vmax=10
             )
 
         # Plot the flat brain surface
@@ -123,7 +122,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
             with_labels=True,
             labelsize=35,
             curvature_brightness=0.4,
-            with_colorbar=True
+            with_colorbar=False
             )
 
         # Save the figure

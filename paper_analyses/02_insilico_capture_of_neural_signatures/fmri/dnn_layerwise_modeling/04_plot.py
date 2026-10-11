@@ -33,7 +33,7 @@ import matplotlib.pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-vit_b_32')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--model', default='alexnet', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
@@ -138,8 +138,7 @@ vertex_data = cortex.Vertex(
     subject=subject,
     cmap='turbo_r',
     vmin=1,
-    vmax=len(model_layers),
-    with_colorbar=True
+    vmax=len(model_layers)
     )
 
 # Plot the flat brain surface
@@ -148,13 +147,13 @@ fig = cortex.quickshow(
     height=2000, # Increase resolution of map and ROI contours
     with_curvature=True,
     with_rois=True,
-    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-    linewidth=3,
+    roi_list=['E', 'I', 'V', 'L', 'D'], # 'Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'
+    linewidth=5,
     linecolor=(1, 1, 1),
     with_labels=True,
-    labelsize=25,
+    labelsize=60,
     curvature_brightness=0.4,
-    with_colorbar=True
+    with_colorbar=False
     )
 
 # Save the figure

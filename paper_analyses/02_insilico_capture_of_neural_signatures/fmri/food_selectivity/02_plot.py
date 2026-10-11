@@ -96,7 +96,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
         elif cat == 'house':
             roi_list = ['OPA', 'PPA', 'RSC']
         elif cat == 'food':
-            roi_list = ['FFA-1', 'FFA-2', 'EBA', 'PPA']
+            roi_list = ['FFA-1', 'FFA-2', 'PPA']
 
         # Append the results across left and right hemishperes
         data = np.append(lh_tval[s][cat], rh_tval[s][cat])

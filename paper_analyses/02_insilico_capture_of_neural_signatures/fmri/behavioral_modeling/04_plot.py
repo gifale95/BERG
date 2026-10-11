@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 # Input arguments
 # =============================================================================
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-vit_b_32')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -65,7 +65,7 @@ metadata = results['metadata']
 for s in range(len(args.subjects)):
     for hemi in ['lh', 'rh']:
 
-        ncsnr = results['metadata']['fmri'][hemi+'_ncsnr']
+        ncsnr = results['metadata'][s]['fmri'][hemi+'_ncsnr']
         idx_nan = ncsnr < args.ncsnr_threshold
 
         if hemi == 'lh':
@@ -97,10 +97,9 @@ data = np.append(np.nanmean(lh_rsa, 0), np.nanmean(rh_rsa, 0))
 vertex_data = cortex.Vertex(
     data,
     subject=subject,
-    cmap='afmhot',
+    cmap='magma_r',
     vmin=0,
-    vmax=0.5,
-    with_colorbar=True
+    vmax=0.4
     )
 
 # Plot the flat brain surface
@@ -109,13 +108,13 @@ fig = cortex.quickshow(
     height=2000, # Increase resolution of map and ROI contours
     with_curvature=True,
     with_rois=True,
-    roi_list=['Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'],
-    linewidth=3,
+    roi_list=['E', 'I', 'V', 'L', 'D'], # 'Early', 'Intermediate', 'Ventral', 'Lateral', 'Dorsal'
+    linewidth=5,
     linecolor=(1, 1, 1),
     with_labels=True,
-    labelsize=25,
+    labelsize=60,
     curvature_brightness=0.4,
-    with_colorbar=True
+    with_colorbar=False
     )
 
 # Save the figure

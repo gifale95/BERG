@@ -39,7 +39,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import hsv_to_rgb
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-alexnet')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--FIELD_SIZE', type=float, default=8.4)
@@ -133,7 +133,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
         height=2000, # Increase resolution of map and ROI contours
         with_curvature=True,
         with_rois=True,
-        roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4', 'FFA-1', 'FFA-2', 'EBA', 'PPA', 'RSC'],
+        roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4'], # 'FFA-1', 'FFA-2', 'EBA', 'PPA', 'RSC'
         linewidth=3,
         linecolor=(1, 1, 1),
         with_labels=True,
@@ -173,7 +173,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
         height=2000, # Increase resolution of map and ROI contours
         with_curvature=True,
         with_rois=True,
-        roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4', 'FFA-1', 'FFA-2', 'EBA', 'PPA', 'RSC'],
+        roi_list=['V1v', 'V1d', 'V2v', 'V2d', 'V3v', 'V3d', 'hV4'], # 'FFA-1', 'FFA-2', 'EBA', 'PPA', 'RSC'
         linewidth=3,
         linecolor=(1, 1, 1),
         with_labels=True,
