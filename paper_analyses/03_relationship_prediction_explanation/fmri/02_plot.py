@@ -56,7 +56,7 @@ corr_nsdsynthetic = results['corr_nsdsynthetic']
 # =============================================================================
 # Plot parameters
 # =============================================================================
-fontsize = 30
+fontsize = 38
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams["font.weight"] = "normal"
 matplotlib.rcParams["axes.labelweight"] = "normal"

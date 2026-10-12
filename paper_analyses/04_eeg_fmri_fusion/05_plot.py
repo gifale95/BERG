@@ -178,7 +178,7 @@ for r, roi in enumerate(rois):
 
     # Plot the CIs
     plt.fill_between(times_plot, ci_corr_tfmri_fmri_roi[roi][1,t_idx],
-        ci_corr_tfmri_fmri_roi[roi][0,t_idx], color=colors[r], alpha=.1)
+        ci_corr_tfmri_fmri_roi[roi][0,t_idx], color=colors[r], alpha=.25)
 
     # Plot the peak time point
     peak = times_plot[np.argmax(np.mean(corr_tfmri_fmri_roi[roi][:,t_idx], 0))]
