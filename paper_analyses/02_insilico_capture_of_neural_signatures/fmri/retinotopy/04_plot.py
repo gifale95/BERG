@@ -123,8 +123,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
         subject=subject,
         cmap='hsv',
         vmin=0,
-        vmax=360,
-        with_colorbar=True
+        vmax=360
         )
 
     # Plot the flat brain surface
@@ -145,8 +144,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     # Save the figure
     file_name = os.path.join(save_dir, 'polar_angle_encoding_model-'+
         args.encoding_model+'_subject-'+str(sub)+'.svg')
-    fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
-        format='svg')
+    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
     plt.close(fig)
 
 
@@ -163,8 +161,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
         subject=subject,
         cmap='gist_rainbow',
         vmin=0,
-        vmax=6,
-        with_colorbar=True
+        vmax=6
         )
 
     # Plot the flat brain surface
@@ -185,8 +182,7 @@ for s, sub in enumerate(tqdm(args.fmri_subjects)):
     # Save the figure
     file_name = os.path.join(save_dir, 'eccentricity_encoding_model-'+
         args.encoding_model+'_subject-'+str(sub)+'.svg')
-    fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
-        format='svg')
+    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
     plt.close(fig)
 
 
@@ -233,8 +229,7 @@ plt.show()
 
 # Save the polar angle color wheel
 file_name = os.path.join(save_dir, 'polar_angle_colorwheel.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
-    format='svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close(fig)
 
 
@@ -280,6 +275,5 @@ ax.plot([ s, s], [-s, s], 'k--', linewidth=2)
 
 # Save the eccentricity map
 file_name = os.path.join(save_dir, 'eccentricity_map.svg')
-fig.savefig(file_name, dpi=300, bbox_inches='tight', transparent=True,
-    format='svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close(fig)

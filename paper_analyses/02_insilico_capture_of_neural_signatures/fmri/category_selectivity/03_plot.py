@@ -27,8 +27,8 @@ import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
-parser.add_argument('--subjects', default=[1], type=int) # !!! 1, 2, 3, 4, 5, 6, 7, 8
-parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
+parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -44,31 +44,21 @@ os.makedirs(save_dir, exist_ok=True)
 # =============================================================================
 # Load the results
 # =============================================================================
-lh_tval = []
-rh_tval = []
+# Load the results
+data_dir = os.path.join(args.berg_dir, 'insilico_capture_of_neural_signatures',
+    'fmri', 'category_selectivity', 'stats', args.encoding_model, 'stats.npy')
+data = np.load(data_dir, allow_pickle=True).item()
+lh_tval_silico = data['lh_tval_silico']
+rh_tval_silico = data['rh_tval_silico']
+metadata = data['metadata']
 
-for sub in args.subjects:
-
-    # Load the results
-    data_dir = os.path.join(args.berg_dir,
-        'insilico_capture_of_neural_signatures', 'fmri',
-        'category_selectivity', 't_values', args.encoding_model,
-        f'results_sub-{sub:02d}.npy')
-    data = np.load(data_dir, allow_pickle=True).item()
-    lh_tval_sub = data['lh_tval']
-    rh_tval_sub = data['rh_tval']
-
-    # NCSNR vertex selection
-    idx_nan_lh = data['metadata']['fmri']['lh_ncsnr'] < args.ncsnr_threshold
-    idx_nan_rh = data['metadata']['fmri']['rh_ncsnr'] < args.ncsnr_threshold
-    for key in lh_tval_sub.keys():
-        lh_tval_sub[key][idx_nan_lh] = np.nan
-        rh_tval_sub[key][idx_nan_rh] = np.nan
-
-    # Store the results
-    lh_tval.append(lh_tval_sub)
-    rh_tval.append(rh_tval_sub)
-    del data, lh_tval_sub, rh_tval_sub
+# NCSNR vertex selection
+for key in lh_tval_silico.keys():
+    for s in range(len(args.subjects)):
+        idx_nan_lh = metadata[s]['fmri']['lh_ncsnr'] < args.ncsnr_threshold
+        idx_nan_rh = metadata[s]['fmri']['rh_ncsnr'] < args.ncsnr_threshold
+        lh_tval_silico[key][s][idx_nan_lh] = np.nan
+        rh_tval_silico[key][s][idx_nan_rh] = np.nan
 
 
 # =============================================================================

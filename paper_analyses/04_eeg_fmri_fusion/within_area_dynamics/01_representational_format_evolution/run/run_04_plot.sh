@@ -11,7 +11,7 @@ declare -a images_all
 declare -a dnn_all
 index=0
 for i in 'things_eeg_2_vivo' ; do
-    for d in 'dinov2l' 'alexnet' ; do
+    for d in 'dinov2l' ; do
         images_all[$index]=$i
         dnn_all[$index]=$d
         ((index=index+1))
@@ -30,7 +30,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/within_area_dynamics/01_representational_format_evolution
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04_eeg_fmri_fusion/within_area_dynamics/01_representational_format_evolution
 
 # Run the job
 python 04_plot.py --images $images --dnn $dnn

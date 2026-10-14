@@ -3,10 +3,6 @@ activation RSMs.
 
 Parameters
 ----------
-fmri_subjects : list
-    List containing the subject identifiers for the fMRI encoding models. Since
-    the used encoding models are trained on NSD data, valid subject identifiers
-    are integers from 1 to 8.
 rois : list
     List of used ROIs.
 dnn : str
@@ -30,8 +26,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
-parser.add_argument('--rois', default=['V1', 'hV4', 'FFA', 'EBA', 'PPA'], type=list)
+parser.add_argument('--rois', default=['V1', 'hV4', 'FFA'], type=list)
 parser.add_argument('--dnn', default='dinov2l', type=str)
 parser.add_argument('--images', default='things_eeg_2_vivo', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -52,7 +47,7 @@ data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
 
 data = np.load(data_dir, allow_pickle=True).item()
 
-times = data['times']
+times = data['times_new']
 dnn_layerwise_rsa = data['dnn_layerwise_rsa']
 best_dnn_layer = data['best_dnn_layer']
 corr_dnn_layer_tfmri_times = data['corr_dnn_layer_tfmri_times']
@@ -102,16 +97,12 @@ plt.rcParams['svg.fonttype'] = 'none'
 # Plot the RSA scores of all DNN layers as a function of t-fMRI time points
 # =============================================================================
 # Get the plot colors
-def sample_cmap(N):
-    cmap = plt.cm.get_cmap('cividis')
-    values = np.linspace(0, 1, N+2)
-    colors = cmap(values)[1:-1]
-    return colors
 n_layers = dnn_layerwise_rsa[args.rois[0]].shape[1]
-colors = sample_cmap(n_layers)
+colors = matplotlib.colormaps['cividis'](np.linspace(0, 1, n_layers))
 
 # Create the plot figure
-fig, axs = plt.subplots(1, 5, sharex=True, sharey=True, figsize=(40, 10))
+fig, axs = plt.subplots(1, len(args.rois), sharex=True, sharey=True,
+    figsize=(20, 4))
 axs = np.reshape(axs, -1)
 
 # Loop across ROIs
@@ -119,7 +110,7 @@ for i, roi in enumerate(args.rois):
     val = dnn_layerwise_rsa[roi]
 
     # Enforce same length of x- and y-axes
-    axs[i].set_box_aspect(1)
+    # axs[i].set_box_aspect(1)
 
     # Plot the correlation of each DNN layer as a function of t-fMRI time
     # points
@@ -149,7 +140,7 @@ for i, roi in enumerate(args.rois):
     ylabels = [0, 0.1, 0.2, 0.3, 0.4, 0.5]
     axs[i].set_yticks(ticks=yticks, labels=ylabels)
     if args.dnn == 'dinov2l':
-        axs[i].set_ylim(bottom=-0.05, top=0.35)
+        axs[i].set_ylim(bottom=-0.06, top=0.35)
     elif args.dnn == 'alexnet':
         axs[i].set_ylim(bottom=-0.05, top=0.43)
 
@@ -163,9 +154,12 @@ plt.close(fig)
 # =============================================================================
 # Plot the best DNN layer as a function of t-fMRI time points
 # =============================================================================
-# Create the plot figure
+# Plot color
 color = (139/255, 0/255, 0/255)
-fig, axs = plt.subplots(1, 5, sharex=True, sharey=True, figsize=(40, 10))
+
+# Create the plot figure
+fig, axs = plt.subplots(1, len(args.rois), sharex=True, sharey=True,
+    figsize=(20, 4))
 axs = np.reshape(axs, -1)
 
 # Loop across ROIs
@@ -173,7 +167,7 @@ for i, roi in enumerate(args.rois):
     val = best_dnn_layer[roi]
 
     # Enforce same length of x- and y-axes
-    axs[i].set_box_aspect(1)
+    # axs[i].set_box_aspect(1)
 
     # Plot the best DNN layer for each t-fMRI time point
     axs[i].plot(times, np.mean(val, 0), color=color, linewidth=2, alpha=1,
@@ -185,11 +179,18 @@ for i, roi in enumerate(args.rois):
 
     # Plot the correlation between best DNN layers and t-fMRI time points
     if args.dnn == 'dinov2l':
-        y = 21
+        y = 3
     elif args.dnn == 'alexnet':
         y = 6.5
-    axs[i].text(0.1, y, f'$ρ$ = {corr_dnn_layer_tfmri_times[roi][0]:.2f}',
-        color='k', fontsize=fontsize, ha='left')
+    if corr_dnn_layer_tfmri_times[roi][1] < 0.0001:
+        s = f'$ρ$={np.round(corr_dnn_layer_tfmri_times[roi][0], 2):0.2f}***'
+    elif corr_dnn_layer_tfmri_times[roi][1] < 0.001:
+        s = f'$ρ$={np.round(corr_dnn_layer_tfmri_times[roi][0], 2):0.2f}**'
+    elif corr_dnn_layer_tfmri_times[roi][1] < 0.01:
+        s = f'$ρ$={np.round(corr_dnn_layer_tfmri_times[roi][0], 2):0.2f}*'
+    else:
+        s = f'$ρ$={np.round(corr_dnn_layer_tfmri_times[roi][0], 2):0.2f}'
+    axs[i].text(0.25, y, s, color='k', fontsize=fontsize, ha='left')
 
     # Plot the regression line between DNN layers and t-fMRI time points
     slope = reg_best_dnn_layer_tfmri_times[roi].slope
@@ -197,7 +198,7 @@ for i, roi in enumerate(args.rois):
     x_fit = np.array([min(times), max(times)])
     y_fit = intercept + slope * x_fit
     axs[i].plot(x_fit, y_fit, color='k', linewidth=2, linestyle='--',
-        label=f'$y$ = {slope:.2f}$x$ + {intercept:.2f}', alpha=0.5)
+        alpha=0.5)
 
     # Plot title
     axs[i].set_title(roi, fontsize=fontsize)
@@ -211,7 +212,7 @@ for i, roi in enumerate(args.rois):
 
     # y-axis parameters
     if i in [0]:
-        axs[i].set_ylabel('Most similar DNN layer', fontsize=fontsize)
+        axs[i].set_ylabel('Most similar layer', fontsize=fontsize)
     if args.dnn == 'dinov2l':
         yticks = [0, 5, 11, 17, 23]
         ylabels = [1, 6, 12, 18, 24]
@@ -234,9 +235,12 @@ plt.close(fig)
 # =============================================================================
 # Plot the individual-vertex complexity shift
 # =============================================================================
-# Create the plot figure
+# Plot color
 color = (139/255, 0/255, 0/255)
-fig, axs = plt.subplots(1, 5, sharex=True, sharey=False, figsize=(40, 10))
+
+# Create the plot figure
+fig, axs = plt.subplots(1, len(args.rois), sharex=True, sharey=False,
+    figsize=(20, 4))
 axs = np.reshape(axs, -1)
 
 # Loop across ROIs
@@ -244,19 +248,19 @@ for i, roi in enumerate(args.rois):
     val = np.concatenate(best_dnn_layer_shift[roi])
 
     # Enforce same length of x- and y-axes
-    axs[i].set_box_aspect(1)
+    # axs[i].set_box_aspect(1)
 
     # Plot vertcal chance line
     axs[i].plot([0, 0], [0, 250], '--k', alpha=.5, linewidth=2, zorder=2)
 
     # Plot the best DNN layer shift
-    axs[i].hist(val, bins=100, color=color, alpha=.5, zorder=1)
+    axs[i].hist(val, bins=100, color=color, alpha=.75, zorder=1)
 
     # Plot title
     axs[i].set_title(roi, fontsize=fontsize)
 
     # x-axis parameters
-    axs[i].set_xlabel('Most-predictive-layer\nshift magnitude',
+    axs[i].set_xlabel('Most-similar-layer\nshift magnitude',
         fontsize=fontsize)
     xticks = [-23, 0, 23]
     xlabels = [-23, 0, 23]
@@ -264,6 +268,7 @@ for i, roi in enumerate(args.rois):
     axs[i].set_xlim(left=-23, right=23)
 
     # y-axis parameters
+    axs[i].set_yticks([]) 
     if i in [0]:
         axs[i].set_ylabel('Vertex count', fontsize=fontsize)
 

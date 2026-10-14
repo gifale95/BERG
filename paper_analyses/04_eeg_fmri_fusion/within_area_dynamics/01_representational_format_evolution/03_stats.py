@@ -106,7 +106,7 @@ times = np.round(metadata_eeg['eeg']['times'], 3)
 
 # EEG time point selection
 idx_times = (times >= 0.06) & (times <= 0.4)
-times = times[idx_times]
+times_new = times[idx_times]
 for key, val in dnn_layerwise_rsa.items():
     dnn_layerwise_rsa[key] = val[:,:,idx_times]
 
@@ -129,13 +129,13 @@ for key, val in dnn_layerwise_rsa.items():
 # and the t-fMRI time points
 corr_dnn_layer_tfmri_times = {}
 for key, val in best_dnn_layer.items():
-    corr_dnn_layer_tfmri_times[key] = spearmanr(times, np.mean(val, 0))
+    corr_dnn_layer_tfmri_times[key] = spearmanr(times_new, np.mean(val, 0))
 
 # Fit a regression line between best DNN layers (averaged across subjects) and
 # the t-fMRI time points
 reg_best_dnn_layer_tfmri_times = {}
 for key, val in best_dnn_layer.items():
-    reg_best_dnn_layer_tfmri_times[key] = linregress(times, np.mean(val, 0))
+    reg_best_dnn_layer_tfmri_times[key] = linregress(times_new, np.mean(val, 0))
 
 
 # =============================================================================
@@ -143,7 +143,7 @@ for key, val in best_dnn_layer.items():
 # =============================================================================
 ci_dnn_layerwise_rsa = {}
 ci_best_dnn_layer = {}
-n_times = len(times)
+n_times = len(times_new)
 n_layers = dnn_layerwise_rsa[list(dnn_layerwise_rsa.keys())[0]].shape[1]
 
 for key in dnn_layerwise_rsa.keys():
@@ -210,6 +210,7 @@ for key, val in best_dnn_layer_single_vertices.items():
 # =============================================================================
 results = {
     'times': times,
+    'times_new': times_new,
     'dnn_layerwise_rsa': dnn_layerwise_rsa,
     'best_dnn_layer': best_dnn_layer,
     'corr_dnn_layer_tfmri_times': corr_dnn_layer_tfmri_times,

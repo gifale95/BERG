@@ -152,7 +152,7 @@ for i, key in enumerate(signatures):
 
     # Print the correlation score between prediction accuracy and explanation
     # accuracy
-    x = 0.34
+    x = 0.32
     y = min(validation) + (max(validation) - min(validation)) * 0.05
     if corr_nsdcore[key][1] < 0.0001:
         s = f'$r$={np.round(corr_nsdcore[key][0], 2):0.2f}***'
