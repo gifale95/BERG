@@ -27,7 +27,7 @@ from sklearn.utils import resample
 from scipy.stats import ttest_rel
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-vit_b_32')
+parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -157,7 +157,7 @@ pval_diff['FFA_Shapes-Circles>Shapes-Diamonds'] = ttest_rel(
     vertex_mean_resp['FFA']['Curvature-Shapes-Diamonds'],
     alternative='greater')[1]
 # Tex-Curvy > Tex-Rectilinear
-pval_diff['FFA_Tex-Curvy_>Tex-Rectilinear'] = ttest_rel(
+pval_diff['FFA_Tex-Curvy>Tex-Rectilinear'] = ttest_rel(
     vertex_mean_resp['FFA']['Curvature-Tex-Curvy'],
     vertex_mean_resp['FFA']['Curvature-Tex-Rectilinear'],
     alternative='greater')[1]
@@ -174,7 +174,7 @@ pval_diff['PPA_Shapes-Circles<Shapes-Diamonds'] = ttest_rel(
     vertex_mean_resp['PPA']['Curvature-Shapes-Diamonds'],
     alternative='less')[1]
 # Tex-Curvy < Tex-Rectilinear
-pval_diff['PPA_Tex-Curvy_<Tex-Rectilinear'] = ttest_rel(
+pval_diff['PPA_Tex-Curvy<Tex-Rectilinear'] = ttest_rel(
     vertex_mean_resp['PPA']['Curvature-Tex-Curvy'],
     vertex_mean_resp['PPA']['Curvature-Tex-Rectilinear'],
     alternative='less')[1]
@@ -219,7 +219,7 @@ results = {
     }
 
 save_dir = os.path.join(args.berg_dir, 'insilico_capture_of_neural_signatures',
-    'ffa_ppa_effects', 'stats', args.encoding_model)
+    'fmri', 'ffa_ppa_effects', 'stats', args.encoding_model)
 os.makedirs(save_dir, exist_ok=True)
 
 file_name = 'curvature.npy'
