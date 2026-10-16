@@ -92,7 +92,7 @@ plt.rcParams['svg.fonttype'] = 'none'
 # Plot the EEG pairwise decoding results
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(10, 7.5))
+    figsize=(7, 5))
 axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
@@ -114,12 +114,12 @@ axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
     elinewidth=1, capsize=3)
 
 # Plot the confidence intervals
-axs[0].fill_between(times, ci_decoding[1], ci_decoding[0], color='k', alpha=.1)
+axs[0].fill_between(times, ci_decoding[1], ci_decoding[0], color='k', alpha=.2)
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
-xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+xticks = [0, .2, .4, .595]
+xlabels = [0, 200, 400, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
 
@@ -139,10 +139,10 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 # Plot the RSA results
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(10, 7.5))
+    figsize=(7, 5))
 axs = np.reshape(axs, (-1))
 
-# Plot the chance and stimulus onset dashed lines
+# Plot the chance and stimulsus onset dashed lines
 axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=2, alpha=.25, label='_nolegend_')
 
@@ -161,17 +161,17 @@ axs[0].errorbar(peak, max_rsa, xerr=conf_int, fmt="none", ecolor='k',
     elinewidth=1, capsize=3)
 
 # Plot the confidence intervals
-axs[0].fill_between(times, ci_rsa[1], ci_rsa[0], color='k', alpha=.1)
+axs[0].fill_between(times, ci_rsa[1], ci_rsa[0], color='k', alpha=.2)
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
-xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+xticks = [0, .2, .4, .595]
+xlabels = [0, 200, 400, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
 
 # y-axis parameters
-axs[0].set_ylabel("Pearson's $r$", fontsize=fontsize)
+axs[0].set_ylabel("RSA score (Pearson's $r$)", fontsize=fontsize)
 yticks = [0, 0.05, 0.1, 0.15, 0.2]
 ylabels = [0, 0.05, 0.1, 0.15, 0.2]
 plt.yticks(ticks=yticks, labels=ylabels)

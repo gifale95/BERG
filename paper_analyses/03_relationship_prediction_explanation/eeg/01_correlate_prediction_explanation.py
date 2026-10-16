@@ -48,8 +48,7 @@ prediction_accuracy = []
 idx_time = np.where(metadata[0]['eeg']['times'] >= 0.06)[0]
 for model in args.encoding_models:
     model = model[17:]
-    prediction_accuracy.append(np.mean(
-        correlation[model][:,:2,idx_time], (1, 2)))
+    prediction_accuracy.append(np.mean(correlation[model][:,idx_time], 1))
 prediction_accuracy = np.array(prediction_accuracy)
 
 

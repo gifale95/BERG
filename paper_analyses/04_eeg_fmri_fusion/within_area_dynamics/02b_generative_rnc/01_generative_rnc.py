@@ -485,13 +485,13 @@ for g in tqdm(range(args.generations), leave=False):
         if args.cv == 0:
             save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
                 'within_area_dynamics', 'generative_univariate_rnc',
-                'controlling_images', 'cv-'+f'{args.cv}',
+                'controlling_images', 'cv-'+f'{args.cv}', args.roi,
                 args.time_window_pair, 'control_condition-'+args.control_type,
                 model_save_dir, 'evolution-'+f'{args.evolution:02d}')
         elif args.cv == 1:
             save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
                 'within_area_dynamics', 'generative_univariate_rnc',
-                'controlling_images', 'cv-'+f'{args.cv}',
+                'controlling_images', 'cv-'+f'{args.cv}', args.roi,
                 args.time_window_pair, 'control_condition-'+args.control_type,
                 'cv_subject-'+f'{args.cv_subject:02d}', model_save_dir,
                 'evolution-'+f'{args.evolution:02d}')
@@ -529,7 +529,7 @@ data_dict = {
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'within_area_dynamics', 'generative_univariate_rnc', 'optimization_scores',
-    'cv-'+f'{args.cv}', args.time_window_pair, 'control_condition-'+
+    'cv-'+f'{args.cv}', args.roi, args.time_window_pair, 'control_condition-'+
     args.control_type, model_save_dir, 'evolution-'+f'{args.evolution:02d}')
 
 if os.path.isdir(save_dir) == False:
@@ -548,7 +548,7 @@ np.save(os.path.join(save_dir, file_name), data_dict)
 # =============================================================================
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'within_area_dynamics', 'generative_univariate_rnc', 'image_codes',
-    'cv-'+f'{args.cv}', args.time_window_pair, 'control_condition-'+
+    'cv-'+f'{args.cv}', args.roi, args.time_window_pair, 'control_condition-'+
     args.control_type, model_save_dir, 'evolution-'+f'{args.evolution:02d}')
 
 if os.path.isdir(save_dir) == False:

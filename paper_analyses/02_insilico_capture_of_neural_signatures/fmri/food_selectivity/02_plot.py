@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
 parser.add_argument('--subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=int)
-parser.add_argument('--ncsnr_threshold', default=0.2, type=float) # 0.2
+parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -96,7 +96,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
         elif cat == 'house':
             roi_list = ['OPA', 'PPA', 'RSC']
         elif cat == 'food':
-            roi_list = ['FFA-1', 'FFA-2', 'PPA']
+            roi_list = ['FFA-1', 'FFA-2']
 
         # Append the results across left and right hemishperes
         data = np.append(lh_tval[s][cat], rh_tval[s][cat])
@@ -108,8 +108,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
             subject=subject,
             cmap='inferno',
             vmin=0,
-            vmax=30,
-            with_colorbar=True
+            vmax=30
             )
 
         # Plot the flat brain surface
@@ -124,7 +123,7 @@ for s, sub in enumerate(tqdm(args.subjects)):
             with_labels=True,
             labelsize=35,
             curvature_brightness=0.4,
-            with_colorbar=True
+            with_colorbar=False
             )
 
         # Save the figure

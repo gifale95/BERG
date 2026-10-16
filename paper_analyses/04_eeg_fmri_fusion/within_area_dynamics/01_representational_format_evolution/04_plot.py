@@ -175,7 +175,7 @@ for i, roi in enumerate(args.rois):
 
     # Plot the confidence intervals
     axs[i].fill_between(times, ci_best_dnn_layer[roi][0],
-        ci_best_dnn_layer[roi][1], color=color, alpha=.1)
+        ci_best_dnn_layer[roi][1], color=color, alpha=.2)
 
     # Plot the correlation between best DNN layers and t-fMRI time points
     if args.dnn == 'dinov2l':

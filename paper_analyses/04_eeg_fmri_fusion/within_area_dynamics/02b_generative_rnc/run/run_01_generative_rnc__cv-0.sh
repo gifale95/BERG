@@ -12,7 +12,7 @@ declare -a time_window_pair_all
 declare -a control_type_all
 declare -a imageset_all
 index=0
-for r in 'V1' 'hV4' 'FFA' 'EBA' 'PPA' ; do
+for r in 'V1' 'hV4' 'FFA' ; do
     for t in '0.06-0.10__0.20-0.25' ; do
         for c in 'high_1_low_2' 'low_1_high_2' ; do
             for i in 'imagenet_val' ; do
@@ -42,7 +42,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion/within_area_dynamics/02b_generative_rnc
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04_eeg_fmri_fusion/within_area_dynamics/02b_generative_rnc
 
 # Run the job
 python 01_generative_rnc.py --cv '0' --roi $roi --time_window_pair $time_window_pair --control_type $control_type --imageset $imageset

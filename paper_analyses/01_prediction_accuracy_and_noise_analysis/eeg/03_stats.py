@@ -26,6 +26,7 @@ import os
 import numpy as np
 import random
 from sklearn.utils import resample
+from tqdm import tqdm
 from scipy.stats import ttest_1samp
 from scipy.stats import ttest_rel
 from statsmodels.stats.multitest import multipletests
@@ -66,20 +67,17 @@ for model in args.encoding_models:
     corr_iv_is_single_chan[model[17:]] = np.array(results['corr_iv_is'])
     corr_iv_iv_single_chan[model[17:]] = np.array(results['corr_iv_iv'])
 
-# Average the prediction accuracy results across channels from the same channel
-# group
+# Average the prediction accuracy results across occipital and parietal
+# channels
+idx_chan = []
+for i, ch in enumerate(metadata[0]['eeg']['ch_names']):
+    if 'O' in ch or 'P' in ch:
+        idx_chan.append(i)
+idx_chan = np.array(idx_chan)
 correlation = {}
 for model in correlation_single_chan.keys():
-    correlation[model] = []
-    for chan in args.channels:
-        idx_chan = []
-        for i, ch in enumerate(metadata[0]['eeg']['ch_names']):
-            if chan in ch:
-                idx_chan.append(i)
-        idx_chan = np.array(idx_chan)
-        correlation[model].append(np.mean(
-            correlation_single_chan[model][:,idx_chan], 1))
-    correlation[model] = np.swapaxes(np.array(correlation[model]), 0, 1)
+    correlation[model] = np.mean(
+        correlation_single_chan[model][:,idx_chan], 1)
 
 # Average the noise analysis results across occipital and parietal channels,
 # and across time points from 60ms after stimulus onset
@@ -101,53 +99,18 @@ for model in corr_iv_is_single_chan.keys():
 
 
 # =============================================================================
-# Compute the difference in prediction accuracy between encoding models
-# =============================================================================
-diff_correlation = {}
-
-# "vit_b_32" minus "alexnet"
-diff_correlation['vit_b_32_minus_alexnet'] = correlation['vit_b_32'] - \
-    correlation['alexnet']
-
-# "vit_b_32" minus "alexnet_untrained"
-diff_correlation['vit_b_32_minus_alexnet_untrained'] = \
-    correlation['vit_b_32'] - correlation['alexnet_untrained']
-
-# "alexnet" minus "alexnet_untrained"
-diff_correlation['alexnet_minus_alexnet_untrained'] = \
-    correlation['alexnet'] - correlation['alexnet_untrained']
-
-
-# =============================================================================
 # Prediction accuracy confidence intervals
 # =============================================================================
 # Prediction accuracy
 ci_correlation = {}
 for model in correlation.keys():
-    ci_correlation[model] = np.zeros((2, correlation[model].shape[1],
-        correlation[model].shape[2]))
-    dist_correlation = np.zeros((args.n_iter, correlation[model].shape[1],
-        correlation[model].shape[2]))
-    for i in range(args.n_iter):
+    ci_correlation[model] = np.zeros((2, correlation[model].shape[1]))
+    dist_correlation = np.zeros((args.n_iter, correlation[model].shape[1]))
+    for i in tqdm(range(args.n_iter)):
         idx = resample(np.arange(len(args.subjects)))
         dist_correlation[i] = np.mean(correlation[model][idx], 0)
     ci_correlation[model][0] = np.percentile(dist_correlation, 2.5, axis=0)
     ci_correlation[model][1] = np.percentile(dist_correlation, 97.5, axis=0)
-
-# Prediction accuracy difference
-ci_diff_correlation = {}
-for model in diff_correlation.keys():
-    ci_diff_correlation[model] = np.zeros((2, diff_correlation[model].shape[1],
-        diff_correlation[model].shape[2]))
-    dist_diff_correlation = np.zeros((args.n_iter,
-        diff_correlation[model].shape[1], diff_correlation[model].shape[2]))
-    for i in range(args.n_iter):
-        idx = resample(np.arange(len(args.subjects)))
-        dist_diff_correlation[i] = np.mean(diff_correlation[model][idx], 0)
-    ci_diff_correlation[model][0] = np.percentile(dist_diff_correlation, 2.5,
-        axis=0)
-    ci_diff_correlation[model][1] = np.percentile(dist_diff_correlation, 97.5,
-        axis=0)
 
 
 # =============================================================================
@@ -162,26 +125,10 @@ for model in correlation.keys():
     p_val = ttest_1samp(correlation[model], 0, axis=0,
         alternative='greater')[1]
     # Correct for multiple comparisons
-    shape = p_val.shape
-    sig = multipletests(p_val.flatten(), 0.05, 'fdr_bh')[0]
+    sig = multipletests(p_val, 0.05, 'fdr_bh')[0]
     # Store the p-values and significance
     p_val_correlation[model] = p_val
-    sig_correlation[model] = np.reshape(sig, shape)
-
-# Prediction accuracy differences
-p_val_diff_correlation = {}
-sig_diff_correlation = {}
-for model in diff_correlation.keys():
-    # Compute the p-values for the correlation scores being significantly
-    # greater or smaller than 0
-    p_val = ttest_1samp(diff_correlation[model], 0, axis=0,
-        alternative='two-sided')[1]
-    # Correct for multiple comparisons
-    shape = p_val.shape
-    sig = multipletests(p_val.flatten(), 0.05, 'fdr_bh')[0]
-    # Store the p-values and significance
-    p_val_diff_correlation[model] = p_val
-    sig_diff_correlation[model] = np.reshape(sig, shape)
+    sig_correlation[model] = sig
 
 
 # =============================================================================
@@ -195,7 +142,7 @@ for model in corr_iv_is.keys():
     ci_corr_iv_iv[model] = np.zeros((2, corr_iv_iv[model].shape[1]))
     dist_corr_iv_is = np.zeros((args.n_iter))
     dist_corr_iv_iv = np.zeros((args.n_iter, corr_iv_iv[model].shape[1]))
-    for i in range(args.n_iter):
+    for i in tqdm(range(args.n_iter)):
         idx = resample(np.arange(len(args.subjects)))
         dist_corr_iv_is[i] = np.mean(corr_iv_is[model][idx])
         dist_corr_iv_iv[i] = np.mean(corr_iv_iv[model][idx], axis=0)
@@ -232,11 +179,6 @@ results = {
     'ci_correlation': ci_correlation,
     'p_val_correlation': p_val_correlation,
     'sig_correlation': sig_correlation,
-
-    'diff_correlation': diff_correlation,
-    'ci_diff_correlation': ci_diff_correlation,
-    'p_val_diff_correlation': p_val_diff_correlation,
-    'sig_diff_correlation': sig_diff_correlation,
 
     'corr_iv_iv': corr_iv_iv,
     'corr_iv_is': corr_iv_is,

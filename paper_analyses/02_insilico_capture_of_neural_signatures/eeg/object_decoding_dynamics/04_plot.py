@@ -62,8 +62,6 @@ ci_peak_latency_exemplars = results['ci_peak_latency_exemplars']
 ci_peak_latency_objects = results['ci_peak_latency_objects']
 ci_peak_latency_animacy = results['ci_peak_latency_animacy']
 times = results['times']
-eeg_mds = results['eeg_mds']
-eeg_mds_single_sub = results['eeg_mds_single_sub']
 
 
 # =============================================================================
@@ -103,7 +101,7 @@ os.makedirs(save_dir, exist_ok=True)
 
 # Create the figure
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(10, 7.5))
+    figsize=(7, 5))
 axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
@@ -118,7 +116,7 @@ max_dec = max(np.mean(decoding_exemplars, 0))
 axs[0].plot(times, np.mean(decoding_exemplars, 0), color=colors[0],
     linewidth=2, label=label)
 axs[0].fill_between(times, ci_exemplars[0], ci_exemplars[1], color=colors[0],
-    alpha=.1)
+    alpha=.2)
 axs[0].scatter(peak, max_dec, color=colors[0], s=200, marker='o',
     edgecolors='k', linewidths=1, zorder=3)
 ci_low = peak - ci_peak_latency_exemplars[0]
@@ -136,7 +134,7 @@ axs[0].scatter(peak, max_dec, color=colors[1], s=200, marker='o',
 axs[0].plot(times, np.mean(decoding_animacy, 0), color=colors[1], linewidth=2,
     label=label)
 axs[0].fill_between(times, ci_animacy[0], ci_animacy[1], color=colors[1],
-    alpha=.1)
+    alpha=.2)
 ci_low = peak - ci_peak_latency_animacy[0]
 ci_up = ci_peak_latency_animacy[1] - peak
 conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
@@ -152,7 +150,7 @@ axs[0].scatter(peak, max_dec, color=colors[2], s=200, marker='o',
 axs[0].plot(times, np.mean(decoding_objects, 0), color=colors[2], linewidth=2,
     label=label)
 axs[0].fill_between(times, ci_objects[0], ci_objects[1], color=colors[2],
-    alpha=.1)
+    alpha=.2)
 ci_low = peak - ci_peak_latency_objects[0]
 ci_up = ci_peak_latency_objects[1] - peak
 conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
@@ -161,8 +159,8 @@ axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
-xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+xticks = [0, .2, .4, .595]
+xlabels = [0, 200, 400, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
 
@@ -187,146 +185,146 @@ plt.close(fig)
 # Plot the EEG responses in MDS space, color coded based on animacy
 # (single subjects)
 # =============================================================================
-# Plot parameters
-fontsize = 25
-matplotlib.rcParams['axes.spines.right'] = False
-matplotlib.rcParams['axes.spines.top'] = False
-matplotlib.rcParams['axes.spines.left'] = False
-matplotlib.rcParams['axes.spines.bottom'] = False
-matplotlib.use("svg")
-plt.rcParams["text.usetex"] = False
-plt.rcParams['svg.fonttype'] = 'none'
-colors = [(100/255, 149/255, 237/255), (169/255, 169/255, 169/255)]
+# # Plot parameters
+# fontsize = 25
+# matplotlib.rcParams['axes.spines.right'] = False
+# matplotlib.rcParams['axes.spines.top'] = False
+# matplotlib.rcParams['axes.spines.left'] = False
+# matplotlib.rcParams['axes.spines.bottom'] = False
+# matplotlib.use("svg")
+# plt.rcParams["text.usetex"] = False
+# plt.rcParams['svg.fonttype'] = 'none'
+# colors = [(100/255, 149/255, 237/255), (169/255, 169/255, 169/255)]
 
-# Loop across subjects
-for s, sub in enumerate(tqdm(args.subjects)):
+# # Loop across subjects
+# for s, sub in enumerate(tqdm(args.subjects)):
 
-    # Select the MDS results from the subject of interest
-    eeg_mds_sub = eeg_mds_single_sub[s]
+#     # Select the MDS results from the subject of interest
+#     eeg_mds_sub = eeg_mds_single_sub[s]
 
-    # Create the plots save directory
-    save_dir_mds = os.path.join(args.berg_dir,
-        'insilico_capture_of_neural_signatures', 'eeg',
-        'object_decoding_dynamics', 'plots', args.encoding_model, 'mds',
-        f'sub-{sub:02d}')
-    os.makedirs(save_dir_mds, exist_ok=True)
+#     # Create the plots save directory
+#     save_dir_mds = os.path.join(args.berg_dir,
+#         'insilico_capture_of_neural_signatures', 'eeg',
+#         'object_decoding_dynamics', 'plots', args.encoding_model, 'mds',
+#         f'sub-{sub:02d}')
+#     os.makedirs(save_dir_mds, exist_ok=True)
 
-    # Loop across time points
-    for t in range(len(times)):
+#     # Loop across time points
+#     for t in range(len(times)):
 
-        # Create the figure
-        fig, ax = plt.subplots(figsize=(10, 10))
+#         # Create the figure
+#         fig, ax = plt.subplots(figsize=(10, 10))
 
-        # Plot the animate images
-        plt.scatter(eeg_mds_sub[:eeg_mds_sub.shape[0]//2,0,t],
-            eeg_mds_sub[:eeg_mds_sub.shape[0]//2,1,t],	s=250, color=colors[0],
-            linewidths=0, alpha=.9)
+#         # Plot the animate images
+#         plt.scatter(eeg_mds_sub[:eeg_mds_sub.shape[0]//2,0,t],
+#             eeg_mds_sub[:eeg_mds_sub.shape[0]//2,1,t],	s=250, color=colors[0],
+#             linewidths=0, alpha=.9)
 
-        # Plot the inanimate images
-        plt.scatter(eeg_mds_sub[eeg_mds_sub.shape[0]//2:,0,t],
-            eeg_mds_sub[eeg_mds_sub.shape[0]//2:,1,t],	s=250, color=colors[1],
-            linewidths=0, alpha=.9)
+#         # Plot the inanimate images
+#         plt.scatter(eeg_mds_sub[eeg_mds_sub.shape[0]//2:,0,t],
+#             eeg_mds_sub[eeg_mds_sub.shape[0]//2:,1,t],	s=250, color=colors[1],
+#             linewidths=0, alpha=.9)
 
-        # x-axis
-        plt.xticks([])
-    #    plt.xlim(left=min(eeg_mds[:,0].flatten()),
-    #        right=max(eeg_mds[:,0].flatten()))
+#         # x-axis
+#         plt.xticks([])
+#     #    plt.xlim(left=min(eeg_mds[:,0].flatten()),
+#     #        right=max(eeg_mds[:,0].flatten()))
 
-        # y-axis
-        plt.yticks([])
-    #    plt.ylim(bottom=min(eeg_mds[:,1].flatten()),
-    #        top=max(eeg_mds[:,1].flatten()))
+#         # y-axis
+#         plt.yticks([])
+#     #    plt.ylim(bottom=min(eeg_mds[:,1].flatten()),
+#     #        top=max(eeg_mds[:,1].flatten()))
 
-        # Title
-        title = 'Time: ' + str(np.round((times[t]*1000))) + ' ms'
-        plt.title(title, fontsize=fontsize)
+#         # Title
+#         title = 'Time: ' + str(np.round((times[t]*1000))) + ' ms'
+#         plt.title(title, fontsize=fontsize)
 
-        # Save the figure
-        file_name = os.path.join(save_dir_mds, 'mds_animacy_sub-'+
-            format(sub, '02')+'_time-'+format(t, '03')+'.svg')
-        fig.savefig(file_name, bbox_inches='tight', transparent=True,
-            format='svg')
-        file_name = os.path.join(save_dir_mds, 'mds_animacy_sub-'+
-            format(sub, '02')+'_time-'+format(t, '03')+'.png')
-        fig.savefig(file_name, bbox_inches='tight', transparent=False,
-            format='png')
-        plt.close(fig)
+#         # Save the figure
+#         file_name = os.path.join(save_dir_mds, 'mds_animacy_sub-'+
+#             format(sub, '02')+'_time-'+format(t, '03')+'.svg')
+#         fig.savefig(file_name, bbox_inches='tight', transparent=True,
+#             format='svg')
+#         file_name = os.path.join(save_dir_mds, 'mds_animacy_sub-'+
+#             format(sub, '02')+'_time-'+format(t, '03')+'.png')
+#         fig.savefig(file_name, bbox_inches='tight', transparent=False,
+#             format='png')
+#         plt.close(fig)
 
 
 # =============================================================================
 # Plot the MDS results with images at peak decoding time points
 # =============================================================================
-# Plot parameters
-fontsize = 25
-matplotlib.rcParams['axes.spines.right'] = False
-matplotlib.rcParams['axes.spines.top'] = False
-matplotlib.rcParams['axes.spines.left'] = False
-matplotlib.rcParams['axes.spines.bottom'] = False
-matplotlib.use("svg")
-plt.rcParams["text.usetex"] = False
-plt.rcParams['svg.fonttype'] = 'none'
+# # Plot parameters
+# fontsize = 25
+# matplotlib.rcParams['axes.spines.right'] = False
+# matplotlib.rcParams['axes.spines.top'] = False
+# matplotlib.rcParams['axes.spines.left'] = False
+# matplotlib.rcParams['axes.spines.bottom'] = False
+# matplotlib.use("svg")
+# plt.rcParams["text.usetex"] = False
+# plt.rcParams['svg.fonttype'] = 'none'
 
-# Read all images into memory
-images = []
-image_path = os.path.join(args.berg_dir,
-    'insilico_capture_of_neural_signatures', 'eeg',
-    'object_decoding_dynamics', 'stimuli')
-animate_imgs = os.listdir(os.path.join(image_path, 'animate'))
-animate_imgs.sort()
-for img_file in tqdm(animate_imgs):
-    img = Image.open(os.path.join(image_path, 'animate', img_file))
-    img = np.asarray(img) / 255
-    images.append(img)
-inanimate_imgs = os.listdir(os.path.join(image_path, 'inanimate'))
-inanimate_imgs.sort()
-for img_file in tqdm(inanimate_imgs):
-    img = Image.open(os.path.join(image_path, 'inanimate', img_file))
-    img = np.asarray(img) / 255
-    images.append(img)
+# # Read all images into memory
+# images = []
+# image_path = os.path.join(args.berg_dir,
+#     'insilico_capture_of_neural_signatures', 'eeg',
+#     'object_decoding_dynamics', 'stimuli')
+# animate_imgs = os.listdir(os.path.join(image_path, 'animate'))
+# animate_imgs.sort()
+# for img_file in tqdm(animate_imgs):
+#     img = Image.open(os.path.join(image_path, 'animate', img_file))
+#     img = np.asarray(img) / 255
+#     images.append(img)
+# inanimate_imgs = os.listdir(os.path.join(image_path, 'inanimate'))
+# inanimate_imgs.sort()
+# for img_file in tqdm(inanimate_imgs):
+#     img = Image.open(os.path.join(image_path, 'inanimate', img_file))
+#     img = np.asarray(img) / 255
+#     images.append(img)
 
-# Get the peak decoding time indices
-peak_indices = {
-    'exemplars': np.argmax(np.mean(decoding_exemplars, 0)),
-    'objects': np.argmax(np.mean(decoding_objects, 0)),
-    'animacy': np.argmax(np.mean(decoding_animacy, 0))
-}
+# # Get the peak decoding time indices
+# peak_indices = {
+#     'exemplars': np.argmax(np.mean(decoding_exemplars, 0)),
+#     'objects': np.argmax(np.mean(decoding_objects, 0)),
+#     'animacy': np.argmax(np.mean(decoding_animacy, 0))
+# }
 
-# Loop across decoding types
-for key, val in tqdm(peak_indices.items()):
+# # Loop across decoding types
+# for key, val in tqdm(peak_indices.items()):
 
-    # Create the figure
-    fig, ax = plt.subplots(figsize=(13, 13))
+#     # Create the figure
+#     fig, ax = plt.subplots(figsize=(13, 13))
 
-    # Loop across images
-    for i in range(len(images)):
+#     # Loop across images
+#     for i in range(len(images)):
 
-        # Get the image
-        img = images[i]
+#         # Get the image
+#         img = images[i]
 
-        # Plot the image
-        imagebox = OffsetImage(img, zoom=0.15) # Adjust zoom as needed
-        ab = AnnotationBbox(
-            imagebox,
-            (eeg_mds[i,0,val], eeg_mds[i,1,val]),
-            frameon=True,
-            pad=0,
-            bboxprops=dict(edgecolor=None, linewidth=0))
-        ax.add_artist(ab)
+#         # Plot the image
+#         imagebox = OffsetImage(img, zoom=0.15) # Adjust zoom as needed
+#         ab = AnnotationBbox(
+#             imagebox,
+#             (eeg_mds[i,0,val], eeg_mds[i,1,val]),
+#             frameon=True,
+#             pad=0,
+#             bboxprops=dict(edgecolor=None, linewidth=0))
+#         ax.add_artist(ab)
 
-    # x-axis
-    plt.xticks([])
-    plt.xlim(left=min(eeg_mds[:,0,val]), right=max(eeg_mds[:,0,val]))
+#     # x-axis
+#     plt.xticks([])
+#     plt.xlim(left=min(eeg_mds[:,0,val]), right=max(eeg_mds[:,0,val]))
 
-    # y-axis
-    plt.yticks([])
-    plt.ylim(bottom=min(eeg_mds[:,1,val]), top=max(eeg_mds[:,1,val]))
+#     # y-axis
+#     plt.yticks([])
+#     plt.ylim(bottom=min(eeg_mds[:,1,val]), top=max(eeg_mds[:,1,val]))
 
-    # Title
-    title = f'EEG MDS at peak {key} decoding time ({int((times[val]*1000))} ms)'
-    plt.title(title, fontsize=fontsize)
+#     # Title
+#     title = f'EEG MDS at peak {key} decoding time ({int((times[val]*1000))} ms)'
+#     plt.title(title, fontsize=fontsize)
 
-    # Save the figure
-    file_name = os.path.join(save_dir, 'mds_images_'+key+
-        '_peak_decoding_channels-'+'-'.join(args.channels)+'.svg')
-    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-    plt.close(fig)
+#     # Save the figure
+#     file_name = os.path.join(save_dir, 'mds_images_'+key+
+#         '_peak_decoding_channels-'+'-'.join(args.channels)+'.svg')
+#     fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+#     plt.close(fig)

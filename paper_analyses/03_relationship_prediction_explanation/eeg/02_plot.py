@@ -54,7 +54,7 @@ corr = results['corr']
 # =============================================================================
 # Plot parameters
 # =============================================================================
-fontsize = 30
+fontsize = 35
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams["font.weight"] = "normal"
 matplotlib.rcParams["axes.labelweight"] = "normal"
@@ -144,7 +144,7 @@ for i, key in enumerate(signatures):
 
     # Print the correlation score between prediction accuracy and explanation
     # accuracy
-    x = 0.35
+    x = 0.32
     y = min(validation) + (max(validation) - min(validation)) * 0.05
     if corr[key][1] < 0.0001:
         s = f'$r$={np.round(corr[key][0], 2):0.2f}***'

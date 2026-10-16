@@ -70,7 +70,12 @@ controlling_images = data['controlling_images']
 # Save the baseline images
 # =============================================================================
 # Access the ILSVRC-2012 validation split
-imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir, split='val')
+if args.imageset == 'imagenet_val':
+    imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir,
+        split='val')
+elif args.imageset == 'imagenet_train':
+    imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir,
+        split='train')
 
 # Save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',

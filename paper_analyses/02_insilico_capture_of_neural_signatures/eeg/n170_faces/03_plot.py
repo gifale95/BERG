@@ -92,7 +92,7 @@ colors = [(139/255, 0/255, 0/255), (0/255, 0/255, 0/255)]
 # =============================================================================
 # Plot the ERPs
 # =============================================================================
-fig = plt.figure(figsize=(10, 7.5))
+fig = plt.figure(figsize=(7, 5))
 
 # Plot the stimulus onset dashed line
 plt.plot([0, 0], [100, -100], 'k--', linewidth=2, alpha=.25,
@@ -106,9 +106,9 @@ plt.plot(times, np.mean(erp_objects, 0), color=colors[1], linewidth=2,
 
 # Plot the CIs
 plt.fill_between(times, ci_erp_faces[1], ci_erp_faces[0], color=colors[0],
-    alpha=.1)
+    alpha=.2)
 plt.fill_between(times, ci_erp_objects[1], ci_erp_objects[0], color=colors[1],
-    alpha=.1)
+    alpha=.2)
 
 # Plot the significance markers
 sig = np.empty(len(times))
@@ -118,8 +118,8 @@ plt.scatter(times, sig, s=100, color=colors[0])
 
 # x-axis parameters
 plt.xlabel('Time (ms)', fontsize=fontsize)
-xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
-xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+xticks = [0, .2, .4, .595]
+xlabels = [0, 200, 400, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 plt.xlim(left=min(times), right=max(times))
 
@@ -136,47 +136,5 @@ plt.legend(ncol=1, fontsize=fontsize, loc=4, frameon=False)
 # Save the figure
 file_name = os.path.join(save_dir, 'erps_channels-'+'-'.join(args.channels)+
     '.svg')
-fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-plt.close(fig)
-
-
-# =============================================================================
-# Plot the ERP difference
-# =============================================================================
-fig = plt.figure(figsize=(10, 7.5))
-
-# Plot the stimulus onset dashed line
-plt.plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--', linewidth=2,
-    alpha=.25, label='_nolegend_')
-
-# Plot the ERP differnce
-plt.plot(times, np.mean(erp_diff, 0), color='k', linewidth=2)
-
-# Plot the CIs
-plt.fill_between(times, ci_erp_diff[1], ci_erp_diff[0], color='k', alpha=.1)
-
-# Plot the significance markers
-sig = np.empty(len(times))
-sig[:] = np.nan
-sig[sig_erp_diff] = -.43
-plt.scatter(times, sig, s=100, color='k')
-
-# x-axis parameters
-plt.xlabel('Time (ms)', fontsize=fontsize)
-xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
-xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
-plt.xticks(ticks=xticks, labels=xlabels)
-plt.xlim(left=min(times), right=max(times))
-
-# y-axis parameters
-plt.ylabel('Δ μV', fontsize=fontsize)
-yticks = [-.4, -0.2, 0, .2, .4]
-ylabels = [-.4, -.2, 0, .2, .4]
-plt.yticks(ticks=yticks, labels=ylabels)
-plt.ylim(bottom=-.5, top=.5)
-
-# Save the figure
-file_name = os.path.join(save_dir, 'diff_erps_channels-'+
-    '-'.join(args.channels)+'.svg')
 fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 plt.close(fig)

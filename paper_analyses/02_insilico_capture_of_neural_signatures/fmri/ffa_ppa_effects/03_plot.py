@@ -366,7 +366,7 @@ s_mean = 750
 color = 'k'
 
 # Create the figure
-fig = plt.figure(figsize=(17.5, 5))
+fig = plt.figure(figsize=(16, 5))
 
 # Loop across image types
 for i, itype in enumerate(image_types_sorted):
@@ -404,6 +404,9 @@ for i, itype in enumerate(image_types_sorted):
             sig = ''
         plt.text(x[0], max(y)+0.1, sig, fontsize=fontsize, ha='center',
             va='center')
+
+# Title
+plt.title('FFA', fontsize=fontsize)
 
 # x-axis parameters
 xticks = x_coord
@@ -493,6 +496,9 @@ for i, itype in enumerate(image_types_sorted):
             sig = ''
         plt.text(x[0], min(y)-0.1, sig, fontsize=fontsize, ha='center',
             va='center')
+
+# Title
+plt.title('PPA', fontsize=fontsize)
 
 # x-axis parameters
 xticks = x_coord
