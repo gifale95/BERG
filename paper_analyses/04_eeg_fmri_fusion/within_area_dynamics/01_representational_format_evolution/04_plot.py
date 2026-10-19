@@ -236,11 +236,11 @@ plt.close(fig)
 # Plot the individual-vertex complexity shift
 # =============================================================================
 # Plot color
-color = (139/255, 0/255, 0/255)
+color = (224/255, 102/255, 78/255)
 
 # Create the plot figure
 fig, axs = plt.subplots(1, len(args.rois), sharex=True, sharey=False,
-    figsize=(20, 4))
+    figsize=(20, 2))
 axs = np.reshape(axs, -1)
 
 # Loop across ROIs
@@ -270,7 +270,7 @@ for i, roi in enumerate(args.rois):
     # y-axis parameters
     axs[i].set_yticks([]) 
     if i in [0]:
-        axs[i].set_ylabel('Vertex count', fontsize=fontsize)
+        axs[i].set_ylabel('Vertex\ncount', fontsize=fontsize)
 
 # Save the figure
 file_name = os.path.join(save_dir, f'best_dnn_layer_shift_'
