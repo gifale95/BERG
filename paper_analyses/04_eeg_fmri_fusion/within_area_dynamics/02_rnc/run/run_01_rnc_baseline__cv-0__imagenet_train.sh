@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02a_rnc-02_rnc__cv-0__imagenet_train
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02_rnc-01_rnc_baseline__cv-0__imagenet_all
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
-#SBATCH --time=03:00:00
+#SBATCH --mem=15000
+#SBATCH --time=05:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
@@ -11,9 +11,9 @@ declare -a roi_all
 declare -a time_window_pair_all
 declare -a imageset_all
 index=0
-for r in 'V1' 'hV4' 'FFA' ; do
+for r in 'V1' 'hV4' 'FFA' 'PPA' ; do
     for t in '0.06-0.10__0.20-0.25' ; do
-        for i in 'imagenet_train' ; do
+        for i in 'imagenet_all' ; do
             roi_all[$index]=$r
             time_window_pair_all[$index]=$t
             imageset_all[$index]=$i
@@ -36,7 +36,7 @@ source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04_eeg_fmri_fusion/within_area_dynamics/02a_rnc
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04_eeg_fmri_fusion/within_area_dynamics/02_rnc
 
 # Run the job
-python 02_rnc.py --cv '0' --roi $roi --time_window_pair $time_window_pair --imageset $imageset
+python 01_rnc_baseline.py --cv '0' --roi $roi --time_window_pair $time_window_pair --imageset $imageset

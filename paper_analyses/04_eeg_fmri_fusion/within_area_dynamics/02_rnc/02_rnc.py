@@ -18,6 +18,7 @@ imageset : str
     The image set to use for the analysis. Possible values are:
     'imagenet_train' (ILSVRC-2012 training split),
     'imagenet_val' (ILSVRC-2012 validation split),
+    'imagenet_all' (ILSVRC-2012 training + validation split),
     'coco' (MS COCO 2017 test split).
 n_images: int
     Number of retained controlling or baseline images.
@@ -87,12 +88,23 @@ elif args.cv == 1:
 # Load the t-fMRI responses
 # =============================================================================
 # Load the t-fMRI responses of all subjects
-tfmri = []
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
     'within_area_dynamics', 'rnc', 'tfmri_responses')
-for sub in all_subjects:
-    file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}_imageset-{args.imageset}.h5'
-    tfmri.append(h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'])
+tfmri = []
+if args.imageset in ['imagenet_train', 'imagenet_val', 'coco']:
+    for sub in all_subjects:
+        file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}_imageset-{args.imageset}.h5'
+        tfmri.append(h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'])
+elif args.imageset == 'imagenet_all':
+    splits = ['imagenet_val', 'imagenet_train']
+    for sub in all_subjects:
+        tfmri_sub = []
+        for split in splits:
+            file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}_imageset-{split}.h5'
+            tfmri_sub.append(h5py.File(os.path.join(
+                data_dir, file_name), 'r')['tfmri'])
+        tfmri.append(np.concatenate(tfmri_sub))
+        del tfmri_sub
 tfmri = np.array(tfmri)
 
 # If cross-validating, remove the CV (test) subject, and average over the
@@ -139,8 +151,8 @@ tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2+1], 1)
 # to ignore images that have t-fMRI responses that are too close to the
 # baseline scores, as these images may not be informative for aligning or
 # disentangling the two time windows. 
-margin_1 = np.std(tfmri_1) / 2 # np.std(tfmri_1) / 4 * 3
-margin_2 = np.std(tfmri_2) / 2 # np.std(tfmri_2) / 4 * 3
+margin_1 = np.std(tfmri_1) # np.std(tfmri_1) / 2 # np.std(tfmri_1) / 4 * 3
+margin_2 = np.std(tfmri_2) # np.std(tfmri_2) / 2 # np.std(tfmri_2) / 4 * 3
 
 # Select the top N images that align the t-fMRI univariate responses of the two
 # time windows (i.e., that lead to both time windows having either high or low

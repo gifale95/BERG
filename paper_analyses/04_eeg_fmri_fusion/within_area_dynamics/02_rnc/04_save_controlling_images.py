@@ -10,6 +10,7 @@ imageset : str
     The image set to use for the analysis. Possible values are:
     'imagenet_train' (ILSVRC-2012 training split),
     'imagenet_val' (ILSVRC-2012 validation split),
+    'imagenet_all' (ILSVRC-2012 training + validation split),
     'coco' (MS COCO 2017 test split).
 n_images: int
     Number of retained controlling or baseline images.
@@ -75,6 +76,11 @@ if args.imageset == 'imagenet_val':
         split='val')
 elif args.imageset == 'imagenet_train':
     imageset = torchvision.datasets.ImageNet(root=args.imagenet_dir,
+        split='train')
+elif args.imageset == 'imagenet_all':
+    imageset_val = torchvision.datasets.ImageNet(root=args.imagenet_dir,
+        split='val')
+    imageset_train = torchvision.datasets.ImageNet(root=args.imagenet_dir,
         split='train')
 
 # Save directory
@@ -142,7 +148,13 @@ for key in ['high_1_low_2', 'low_1_high_2']:
     for i in tqdm(range(args.n_images)):
 
         # Get and preprocess the controlling images
-        img, _ = imageset.__getitem__(controlling_images[key][i])
+        if args.imageset in ['imagenet_val', 'imagenet_train']:
+            img, _ = imageset.__getitem__(controlling_images[key][i])
+        elif args.imageset == 'imagenet_all':
+            if controlling_images[key][i] < 50000:
+                img, _ = imageset_val.__getitem__(controlling_images[key][i])
+            else:
+                img, _ = imageset_train.__getitem__(controlling_images[key][i]-50000)
         min_size = min(img.size)
         transform = trn.Compose([
             trn.CenterCrop(min_size),

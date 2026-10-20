@@ -10,6 +10,7 @@ imageset : str
     The image set to use for the analysis. Possible values are:
     'imagenet_train' (ILSVRC-2012 training split),
     'imagenet_val' (ILSVRC-2012 validation split),
+    'imagenet_all' (ILSVRC-2012 training + validation split),
     'coco' (MS COCO 2017 test split).
 berg_dir : str
     Directory of the BERG.
