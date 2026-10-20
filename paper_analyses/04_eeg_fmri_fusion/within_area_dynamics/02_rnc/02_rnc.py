@@ -38,7 +38,7 @@ parser.add_argument('--cv', type=int, default=1)
 parser.add_argument('--cv_subject', type=int, default=1)
 parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
-parser.add_argument('--imageset', default='imagenet_val', type=str)
+parser.add_argument('--imageset', default='imagenet_all', type=str)
 parser.add_argument('--n_images', default=25, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
@@ -146,13 +146,13 @@ tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2+1], 1)
 # Rank the images based on their t-fMRI univariate responses
 # =============================================================================
 # Univariate response score margin used to constrain the selection of the
-# control images. The margin is defined as half the standard deviation of the
+# control images. The margin is defined as 3/4 of the standard deviation of the
 # t-fMRI responses across all images for each time window. The margin is used
 # to ignore images that have t-fMRI responses that are too close to the
 # baseline scores, as these images may not be informative for aligning or
 # disentangling the two time windows. 
-margin_1 = np.std(tfmri_1) # np.std(tfmri_1) / 2 # np.std(tfmri_1) / 4 * 3
-margin_2 = np.std(tfmri_2) # np.std(tfmri_2) / 2 # np.std(tfmri_2) / 4 * 3
+margin_1 = np.std(tfmri_1) / 4 * 3
+margin_2 = np.std(tfmri_2) / 4 * 3
 
 # Select the top N images that align the t-fMRI univariate responses of the two
 # time windows (i.e., that lead to both time windows having either high or low

@@ -222,9 +222,6 @@ for i, roi in enumerate(args.rois):
     axs[i].set_yticks(ticks=yticks, labels=ylabels)
     axs[i].set_ylim(bottom=min(yticks), top=max(yticks))
 
-    # Legend
-    axs[i].legend(frameon=False, loc=4)
-
 # Save the figure
 file_name = os.path.join(save_dir, f'best_dnn_layer_as_function_of_tfmri_time_'
     f'dnn-{args.dnn}_images-{args.images}.svg')

@@ -142,7 +142,7 @@ axs[0].errorbar(peak, max_dec, xerr=conf_int, fmt="none", ecolor='k',
     elinewidth=1, capsize=3)
 
 # Object decoding
-label = 'Object'
+label = 'Category'
 peak = times[np.argmax(np.mean(decoding_objects, 0))]
 max_dec = max(np.mean(decoding_objects, 0))
 axs[0].scatter(peak, max_dec, color=colors[2], s=200, marker='o',

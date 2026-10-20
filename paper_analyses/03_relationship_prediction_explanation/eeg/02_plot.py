@@ -54,7 +54,7 @@ corr = results['corr']
 # =============================================================================
 # Plot parameters
 # =============================================================================
-fontsize = 35
+fontsize = 25
 matplotlib.rcParams['font.sans-serif'] = 'DejaVu Sans'
 matplotlib.rcParams["font.weight"] = "normal"
 matplotlib.rcParams["axes.labelweight"] = "normal"
@@ -113,7 +113,7 @@ signatures = [
 correlation_avg = np.mean([val[0] for val in corr.values()])
 print(f'Average correlation score: {correlation_avg:.4f}')
 
-fig, axs = plt.subplots(2, 3, sharex=True, sharey=False, figsize=(30, 17.5))
+fig, axs = plt.subplots(1, 5, sharex=True, sharey=False, figsize=(37.5, 5))
 axs = np.reshape(axs, -1)
 
 fig.supylabel("Explanation accuracy", fontsize=fontsize, x=0.05)
@@ -144,7 +144,7 @@ for i, key in enumerate(signatures):
 
     # Print the correlation score between prediction accuracy and explanation
     # accuracy
-    x = 0.32
+    x = 0.31
     y = min(validation) + (max(validation) - min(validation)) * 0.05
     if corr[key][1] < 0.0001:
         s = f'$r$={np.round(corr[key][0], 2):0.2f}***'
@@ -166,12 +166,11 @@ for i, key in enumerate(signatures):
     axs[i].set_title(f'{titles[i]}', fontsize=fontsize)
 
     # x-axis parameters
-    if i in [3, 4, 5]:
-        axs[i].set_xlabel("Pearson's $r$", fontsize=fontsize)
-        xticks = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-        xlabels = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
-        axs[i].set_xticks(ticks=xticks, labels=xlabels)
-        axs[i].set_xlim(left=.06, right=.53)
+    axs[i].set_xlabel("Pearson's $r$", fontsize=fontsize)
+    xticks = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    xlabels = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+    axs[i].set_xticks(ticks=xticks, labels=xlabels)
+    axs[i].set_xlim(left=.06, right=.53)
 
     # y-axis parameters
     axs[i].set_ylabel(y_labels[i], fontsize=fontsize)

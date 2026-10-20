@@ -67,6 +67,11 @@ ci_rsa_peak_latency = results['ci_rsa_peak_latency']
 decoding = results['decoding']
 ci_decoding = results['ci_decoding']
 times = results['times']
+best_dnn_layer = results['best_dnn_layer']
+ci_best_dnn_layer = results['ci_best_dnn_layer']
+times_new = results['times_new']
+corr_dnn_layer_eeg_times_sub_avg = results['corr_dnn_layer_eeg_times_sub_avg']
+reg_best_dnn_layer_eeg_times_sub_avg = results['reg_best_dnn_layer_eeg_times_sub_avg']
 
 
 # =============================================================================
@@ -123,7 +128,7 @@ plt.rcParams['svg.fonttype'] = 'none'
 # Plot the EEG pairwise decoding results
 # =============================================================================
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(10, 7.5))
+    figsize=(7, 5))
 axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
@@ -174,7 +179,7 @@ def sample_cmap(N):
 colors = sample_cmap(len(model_layers))
 
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(10, 7.5))
+    figsize=(7, 5))
 axs = np.reshape(axs, (-1))
 
 # Plot the chance and stimulus onset dashed lines
@@ -190,17 +195,17 @@ for l, layer in enumerate(model_layers):
 
     # Plot the confidence intervals
     axs[0].fill_between(times, ci_rsa[layer][1], ci_rsa[layer][0],
-        color=colors[l], alpha=.1)
+        color=colors[l], alpha=.2)
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [-0.1, 0, .1, .2, .3, .4, .5, .595]
-xlabels = [-100, 0, 100, 200, 300, 400, 500, 600]
+xticks = [0, .2, .4, .595]
+xlabels = [0, 200, 400, 600]
 plt.xticks(ticks=xticks, labels=xlabels)
 axs[0].set_xlim(left=min(times), right=max(times))
 
 # y-axis parameters
-axs[0].set_ylabel("Pearson's $r$", fontsize=fontsize)
+axs[0].set_ylabel("RSA score (Pearson's $r$)", fontsize=fontsize)
 yticks = [0, 0.05, 0.1, 0.15, 0.2]
 ylabels = [0, 0.05, 0.1, 0.15, 0.2]
 plt.yticks(ticks=yticks, labels=ylabels)
@@ -216,6 +221,65 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 
 
 # =============================================================================
+# Plot the best DNN layer as a function of time
+# =============================================================================
+# Plot color
+color = (139/255, 0/255, 0/255)
+
+# Create the figure
+fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
+    figsize=(7, 5))
+axs = np.reshape(axs, (-1))
+
+# Plot the best DNN layer for each t-fMRI time point
+axs[0].plot(times_new, np.mean(best_dnn_layer, 0), color=color, linewidth=2,
+    alpha=1, label='_nolegend_')
+
+# Plot the confidence intervals
+axs[0].fill_between(times_new, ci_best_dnn_layer[0], ci_best_dnn_layer[1],
+    color=color, alpha=.2)
+
+# Plot the correlation between best DNN layers and t-fMRI time points
+y = 0.25
+if corr_dnn_layer_eeg_times_sub_avg[1] < 0.0001:
+    s = f'$ρ$={np.round(corr_dnn_layer_eeg_times_sub_avg[0], 2):0.2f}***'
+elif corr_dnn_layer_eeg_times_sub_avg[1] < 0.001:
+    s = f'$ρ$={np.round(corr_dnn_layer_eeg_times_sub_avg[0], 2):0.2f}**'
+elif corr_dnn_layer_eeg_times_sub_avg[1] < 0.01:
+    s = f'$ρ$={np.round(corr_dnn_layer_eeg_times_sub_avg[0], 2):0.2f}*'
+else:
+    s = f'$ρ$={np.round(corr_dnn_layer_eeg_times_sub_avg[0], 2):0.2f}'
+axs[0].text(0.4, y, s, color='k', fontsize=fontsize, ha='left')
+
+# Plot the regression line between DNN layers and t-fMRI time points
+slope = reg_best_dnn_layer_eeg_times_sub_avg.slope
+intercept = reg_best_dnn_layer_eeg_times_sub_avg.intercept
+x_fit = np.array([min(times), max(times)])
+y_fit = intercept + slope * x_fit
+axs[0].plot(x_fit, y_fit, color='k', linewidth=2, linestyle='--', alpha=0.5)
+
+# x-axis parameters
+axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
+xticks = [0.2, 0.4, 0.595]
+xlabels = [200, 400, 600]
+axs[0].set_xticks(ticks=xticks, labels=xlabels)
+axs[0].set_xlim(left=min(times_new), right=max(times_new))
+
+# y-axis parameters
+axs[0].set_ylabel('Most similar layer', fontsize=fontsize)
+yticks = [0, 1, 2, 3, 4, 5, 6, 7]
+ylabels = [1, 2, 3, 4, 5, 6, 7, 8]
+axs[0].set_yticks(ticks=yticks, labels=ylabels)
+axs[0].set_ylim(bottom=min(yticks), top=max(yticks))
+
+# Save the figure
+file_name = os.path.join(save_dir,
+    'most_similar_dnn_layer_as_function_of_time_channels-'+args.channels+
+    '_dnn_model-'+args.dnn_model+'.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+
+
+# =============================================================================
 # Plot the layerwise peak latency
 # =============================================================================
 # Print the subject average peak-latency correlation score and p-value
@@ -226,7 +290,7 @@ print((f'RSA peak latency - DNN layer correlation (subject average): '),
 
 
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-    figsize=(7.5, 7.5))
+    figsize=(7, 7))
 axs = np.reshape(axs, (-1))
 
 # Plot the layerwise peak latency (subject average)

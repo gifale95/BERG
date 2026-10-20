@@ -27,7 +27,7 @@ from scipy.stats import gaussian_kde
 parser = argparse.ArgumentParser()
 parser.add_argument('--roi', default='hV4', type=str)
 parser.add_argument('--time_window_pair', default='0.06-0.10__0.20-0.25', type=str)
-parser.add_argument('--imageset', default='imagenet_val', type=str)
+parser.add_argument('--imageset', default='imagenet_all', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 

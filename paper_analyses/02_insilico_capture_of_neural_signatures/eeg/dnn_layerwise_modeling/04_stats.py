@@ -32,6 +32,7 @@ import numpy as np
 from tqdm import tqdm
 from scipy.stats import spearmanr
 from sklearn.utils import resample
+from scipy.stats import linregress
 
 
 # =============================================================================
@@ -150,7 +151,7 @@ rsa_peak_latency_dnn_layer_corr = np.array(rsa_peak_latency_dnn_layer_corr)
 
 
 # =============================================================================
-# Get the best DNN layer for each EEG time point
+# Get the best DNN layer for each EEG time point (single subjects)
 # =============================================================================
 # Format the RSA results
 rsa_formatted = []
@@ -166,10 +167,26 @@ idx_times = np.where(times >= .06)[0]
 best_dnn_layer = best_dnn_layer[:,idx_times]
 times_new = times[idx_times]
 
-# Compute the correlation between best DNN layers EEG time points
+# Compute the correlation between best DNN layers and EEG time points
 corr_dnn_layer_eeg_times = []
 for s in range(len(args.subjects)):
     corr_dnn_layer_eeg_times.append(spearmanr(times_new, best_dnn_layer[s])[0])
+corr_dnn_layer_eeg_times = np.array(corr_dnn_layer_eeg_times)
+corr_dnn_layer_eeg_times_sub_avg = spearmanr(times_new,
+    np.mean(best_dnn_layer, 0))
+
+# Best DNN layer CIs
+ci_best_dnn_layer = np.zeros((2, len(times_new)))
+best_dnn_layer_dist = np.zeros((args.n_iter, len(times_new)))
+for i in tqdm(range(args.n_iter)):
+    idx = resample(np.arange(len(args.subjects)))
+    best_dnn_layer_dist[i] = np.mean(best_dnn_layer[idx], 0)
+ci_best_dnn_layer[0] = np.percentile(best_dnn_layer_dist, 2.5, axis=0)
+ci_best_dnn_layer[1] = np.percentile(best_dnn_layer_dist, 97.5, axis=0)
+
+# Fit a regression line between best DNN layers and the EEG time points
+reg_best_dnn_layer_eeg_times_sub_avg = linregress(times_new,
+    np.mean(best_dnn_layer, 0))
 
 
 # =============================================================================
@@ -214,7 +231,13 @@ results = {
     'ci_rsa': ci_rsa,
     'ci_rsa_peak_latency': ci_rsa_peak_latency,
     'corr_dnn_layer_eeg_times': corr_dnn_layer_eeg_times,
-    'times': times
+    'times': times,
+    'times_new': times_new,
+    'best_dnn_layer': best_dnn_layer,
+    'ci_best_dnn_layer': ci_best_dnn_layer,
+    'corr_dnn_layer_eeg_times': corr_dnn_layer_eeg_times,
+    'corr_dnn_layer_eeg_times_sub_avg': corr_dnn_layer_eeg_times_sub_avg,
+    'reg_best_dnn_layer_eeg_times_sub_avg': reg_best_dnn_layer_eeg_times_sub_avg,
 }
 
 save_dir = os.path.join(args.berg_dir, 'insilico_capture_of_neural_signatures',
