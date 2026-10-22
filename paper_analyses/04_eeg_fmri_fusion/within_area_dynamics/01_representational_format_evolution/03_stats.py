@@ -21,7 +21,7 @@ images : str
     images.
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
-    distribution.
+    distribution and for the statistical significance permutation test.
 berg_dir : str
     Directory of the BERG.
 
@@ -107,8 +107,6 @@ times = np.round(metadata_eeg['eeg']['times'], 3)
 # EEG time point selection
 idx_times = (times >= 0.06) & (times <= 0.4)
 times_new = times[idx_times]
-for key, val in dnn_layerwise_rsa.items():
-    dnn_layerwise_rsa[key] = val[:,:,idx_times]
 
 
 # =============================================================================
@@ -126,16 +124,18 @@ for key, val in dnn_layerwise_rsa.items():
     best_dnn_layer[key] = np.array(best_dnn_layer[key])
 
 # Compute the correlation between best DNN layers (averaged across subjects)
-# and the t-fMRI time points
+# and the t-fMRI time points (for time points between 60-400ms)
 corr_dnn_layer_tfmri_times = {}
 for key, val in best_dnn_layer.items():
-    corr_dnn_layer_tfmri_times[key] = spearmanr(times_new, np.mean(val, 0))
+    corr_dnn_layer_tfmri_times[key] = spearmanr(times_new,
+        np.mean(val, 0)[idx_times])
 
 # Fit a regression line between best DNN layers (averaged across subjects) and
-# the t-fMRI time points
+# the t-fMRI time points (for time points between 60-400ms)
 reg_best_dnn_layer_tfmri_times = {}
 for key, val in best_dnn_layer.items():
-    reg_best_dnn_layer_tfmri_times[key] = linregress(times_new, np.mean(val, 0))
+    reg_best_dnn_layer_tfmri_times[key] = linregress(times_new,
+        np.mean(val, 0)[idx_times])
 
 
 # =============================================================================
@@ -143,7 +143,7 @@ for key, val in best_dnn_layer.items():
 # =============================================================================
 ci_dnn_layerwise_rsa = {}
 ci_best_dnn_layer = {}
-n_times = len(times_new)
+n_times = len(times)
 n_layers = dnn_layerwise_rsa[list(dnn_layerwise_rsa.keys())[0]].shape[1]
 
 for key in dnn_layerwise_rsa.keys():
@@ -161,6 +161,34 @@ for key in dnn_layerwise_rsa.keys():
     ci_dnn_layerwise_rsa[key][1] = np.percentile(rsa_dist, 97.5, axis=0)
     ci_best_dnn_layer[key][0] = np.percentile(best_dnn_layer_dist, 2.5, axis=0)
     ci_best_dnn_layer[key][1] = np.percentile(best_dnn_layer_dist, 97.5, axis=0)
+
+
+# =============================================================================
+# Compute the significance through permutation tests
+# =============================================================================
+# Permutation null distribution empty arrays
+null_dist = {}
+for key in best_dnn_layer.keys():
+    null_dist[key] = np.zeros((args.n_iter))
+
+# Loop across permutation iterations
+for i in tqdm(range(args.n_iter)):
+
+    # Permutation indices
+    perm_times = resample(np.arange(len(times_new)), replace=False)
+    perm_layer = resample(np.arange(len(times_new)), replace=False)
+
+    # Compute the correlation scores for the permuted data
+    for key, val in best_dnn_layer.items():
+        null_dist[key][i] = spearmanr(times_new[perm_times],
+            np.mean(val, 0)[idx_times][perm_layer])[0]
+
+# Compute the p-values based on the null distribution
+p_values_best_dnn_layer = {}
+for key in best_dnn_layer.keys():
+    p_values_best_dnn_layer[key] = \
+        (np.sum(null_dist[key] >= corr_dnn_layer_tfmri_times[key][0]) + 1) / \
+        (args.n_iter + 1)
 
 
 # =============================================================================
@@ -217,6 +245,7 @@ results = {
     'reg_best_dnn_layer_tfmri_times': reg_best_dnn_layer_tfmri_times,
     'ci_dnn_layerwise_rsa': ci_dnn_layerwise_rsa,
     'ci_best_dnn_layer': ci_best_dnn_layer,
+    'p_values_best_dnn_layer': p_values_best_dnn_layer,
     'best_dnn_layer_shift': best_dnn_layer_shift
 }
 

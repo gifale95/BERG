@@ -138,6 +138,10 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 # =============================================================================
 # Plot the RSA results
 # =============================================================================
+# Plot color
+color = (139/255, 0/255, 0/255)
+
+# Create the figure
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(7, 5))
 axs = np.reshape(axs, (-1))
@@ -147,21 +151,21 @@ axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=2, alpha=.25, label='_nolegend_')
 
 # Plot the RSA subject-average results
-axs[0].plot(times, np.mean(rsa, 0), color='k', linewidth=2)
+axs[0].plot(times, np.mean(rsa, 0), color=color, linewidth=2)
 
 # Plot the peak time point
 peak = times[np.argmax(np.mean(rsa, 0))]
 max_rsa = max(np.mean(rsa, 0))
-axs[0].scatter(peak, max_rsa, color='k', s=200, marker='o', edgecolors='k',
+axs[0].scatter(peak, max_rsa, color=color, s=200, marker='o', edgecolors='k',
     linewidths=1, zorder=3)
 ci_low = peak - ci_peak_latency_ci_rsa[0]
 ci_up = ci_peak_latency_ci_rsa[1] - peak
 conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
-axs[0].errorbar(peak, max_rsa, xerr=conf_int, fmt="none", ecolor='k',
-    elinewidth=1, capsize=3)
+# axs[0].errorbar(peak, max_rsa, xerr=conf_int, fmt="none", ecolor=color,
+#     elinewidth=1, capsize=3)
 
 # Plot the confidence intervals
-axs[0].fill_between(times, ci_rsa[1], ci_rsa[0], color='k', alpha=.2)
+axs[0].fill_between(times, ci_rsa[1], ci_rsa[0], color=color, alpha=.2)
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)

@@ -71,8 +71,8 @@ for tw in tqdm(time_windows):
 # Extract and save the controlling images
 # =============================================================================
 # Loop across neural control types
-control_types = ['high_1_high_2', 'low_1_low_2', 'high_1_low_2',
-    'low_1_high_2']
+control_types = ['high_1', 'high_2', 'high_1_high_2', 'low_1_low_2',
+    'high_1_low_2', 'low_1_high_2']
 for ct in tqdm(control_types):
 
     # Load the image h5py file

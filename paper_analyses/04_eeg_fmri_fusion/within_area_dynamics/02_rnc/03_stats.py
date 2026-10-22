@@ -121,7 +121,8 @@ tfmri_2 = np.mean(tfmri[:,:,t_min_2:t_max_2+1], 2)
 # =============================================================================
 # Load the univariate RNC controlling images
 # =============================================================================
-control_types = ['high_1_low_2', 'low_1_high_2']
+control_types = ['high_1', 'high_2', 'high_1_low_2', 'low_1_high_2',
+    'high_1_high_2', 'low_1_low_2']
 controlling_images = {}
 
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
@@ -216,30 +217,29 @@ if args.cv == 1:
 # =============================================================================
 # For each time window, compute the significance of the difference in
 # univariate t-fMRI responses between the two disentangling control conditions
-# (high_1_low_2 vs low_1_high_2). For each time window, the significance is
-# computed on responses of all subjects for all images from the same neural
-# control condition, using a paired samples t-test.
+# (high_1_low_2 vs low_1_high_2), or between the controlling and baseline
+# conditions (high_1 vs baseline for time window 1, and high_2 vs baseline for
+# time window 2). The significance is computed using a paired t-test across
+# image conditions.
 
 if args.cv == 1:
 
-    # All subjects
-    # Time window 1
-    p_val_tw_1_all_sub = ttest_rel(cv_resp_1['high_1_low_2'].flatten(),
-        cv_resp_1['low_1_high_2'].flatten(), alternative='greater')[1]
-    # Time window 2
-    p_val_tw_2_all_sub = ttest_rel(cv_resp_2['high_1_low_2'].flatten(),
-        cv_resp_2['low_1_high_2'].flatten(), alternative='less')[1]
-
     # Single subjects
+    rnc_p_val_tw_1_single_sub = np.zeros(len(all_subjects))
+    rnc_p_val_tw_2_single_sub = np.zeros(len(all_subjects))
     p_val_tw_1_single_sub = np.zeros(len(all_subjects))
     p_val_tw_2_single_sub = np.zeros(len(all_subjects))
     for s in range(len(all_subjects)):
         # Time window 1
-        p_val_tw_1_single_sub[s] = ttest_rel(cv_resp_1['high_1_low_2'][s],
+        rnc_p_val_tw_1_single_sub[s] = ttest_rel(cv_resp_1['high_1_low_2'][s],
             cv_resp_1['low_1_high_2'][s], alternative='greater')[1]
+        p_val_tw_1_single_sub[s] = ttest_rel(cv_resp_1['high_1'][s],
+            base_resp_1[s], alternative='greater')[1]
         # Time window 2
-        p_val_tw_2_single_sub[s] = ttest_rel(cv_resp_2['high_1_low_2'][s],
+        rnc_p_val_tw_2_single_sub[s] = ttest_rel(cv_resp_2['high_1_low_2'][s],
             cv_resp_2['low_1_high_2'][s], alternative='less')[1]
+        p_val_tw_2_single_sub[s] = ttest_rel(cv_resp_2['high_2'][s],
+            base_resp_2[s], alternative='greater')[1]
 
 
 # =============================================================================
@@ -275,10 +275,10 @@ elif args.cv == 1:
         'cv_resp_2': cv_resp_2,
         'base_resp_1': base_resp_1,
         'base_resp_2': base_resp_2,
-        'p_val_tw_1_all_sub': p_val_tw_1_all_sub,
-        'p_val_tw_2_all_sub': p_val_tw_2_all_sub,
         'p_val_tw_1_single_sub': p_val_tw_1_single_sub,
-        'p_val_tw_2_single_sub': p_val_tw_2_single_sub
+        'rnc_p_val_tw_1_single_sub': rnc_p_val_tw_1_single_sub,
+        'p_val_tw_2_single_sub': p_val_tw_2_single_sub,
+        'rnc_p_val_tw_2_single_sub': rnc_p_val_tw_2_single_sub
         }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',

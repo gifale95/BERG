@@ -13,6 +13,8 @@ fmri_subjects : list
 ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
+n_iter : int
+    Amount of iterations for the statistical significance permutation test.
 berg_dir : str
     Directory of the BERG.
 
@@ -22,11 +24,14 @@ import argparse
 import os
 import numpy as np
 from scipy.stats import pearsonr
+from sklearn.utils import resample
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_models', type=list, default=['fmri-nsd_fsaverage-alexnet_untrained', 'fmri-nsd_fsaverage-alexnet', 'fmri-nsd_fsaverage-huze'])
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
+parser.add_argument('--n_iter', default=100000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -44,17 +49,14 @@ results_dir = os.path.join(args.berg_dir, 'prediction_accuracy_noise_analysis',
     'fmri', 'stats', 'stats.npy')
 results = np.load(results_dir, allow_pickle=True).item()
 correlation_nsdcore = results['correlation_nsdcore']
-correlation_nsdsynthetic = results['correlation_nsdsynthetic']
 metadata = results['metadata']
 
 # Average the results across vertex from both hemispheres, and aggregate them
 # across subjects and encoding models
 prediction_accuracy_nsdcore = []
-prediction_accuracy_nsdsynthetic = []
 for model in args.encoding_models:
     model = model[19:]
     acc_core = []
-    acc_synthetic = []
     for s, sub in enumerate(args.fmri_subjects):
         # Vertex selection based on the NCSNR
         lh_idx = metadata[s]['fmri']['lh_ncsnr'] >= args.ncsnr_threshold
@@ -62,11 +64,8 @@ for model in args.encoding_models:
         acc_core.append(np.mean(np.append(
             correlation_nsdcore[model]['lh'][0][lh_idx],
             correlation_nsdcore[model]['rh'][0][rh_idx])))
-        acc_synthetic.append(np.mean(np.append(
-            correlation_nsdsynthetic[model]['lh'][0][lh_idx],
-            correlation_nsdsynthetic[model]['rh'][0][rh_idx])))
     prediction_accuracy_nsdcore.append(np.array(acc_core))
-    prediction_accuracy_nsdsynthetic.append(np.array(acc_synthetic))
+prediction_accuracy_nsdcore = np.array(prediction_accuracy_nsdcore)
 
 
 # =============================================================================
@@ -141,15 +140,43 @@ for m, model in enumerate(args.encoding_models):
 # Correlate the prediction and explanation accuracy scores
 # =============================================================================
 corr_nsdcore = {}
-corr_nsdsynthetic = {}
 
 for key, val in insilico_validation_scores.items():
 
-    corr_nsdcore[key] = pearsonr(np.array(prediction_accuracy_nsdcore).flatten(),
+    corr_nsdcore[key] = pearsonr(prediction_accuracy_nsdcore.flatten(),
         np.array(val).flatten(), alternative='greater')
-    corr_nsdsynthetic[key] = pearsonr(
-        np.array(prediction_accuracy_nsdsynthetic).flatten(),
-        np.array(val).flatten(), alternative='greater')
+
+
+# =============================================================================
+# Compute the significance through permutation tests
+# =============================================================================
+# Permutation null distribution empty arrays
+null_dist_nsdcore = {}
+for key in insilico_validation_scores.keys():
+    null_dist_nsdcore[key] = np.zeros((args.n_iter))
+
+# Loop across permutation iterations
+for i in tqdm(range(args.n_iter)):
+
+    # Permutation indices
+    idx_pred = resample(np.arange(len(prediction_accuracy_nsdcore.flatten())),
+        replace=False)
+    idx_expl = resample(np.arange(len(prediction_accuracy_nsdcore.flatten())),
+        replace=False)
+
+    # Compute the correlation scores for the permuted data
+    for key, val in insilico_validation_scores.items():
+        null_dist_nsdcore[key][i] = pearsonr(
+            prediction_accuracy_nsdcore.flatten()[idx_pred],
+            np.array(val).flatten()[idx_expl],
+            alternative='greater')[0]
+
+# Compute the p-values based on the null distribution
+p_values_nsdcore = {}
+for key in insilico_validation_scores.keys():
+    p_values_nsdcore[key] = \
+        (np.sum(null_dist_nsdcore[key] >= corr_nsdcore[key][0]) + 1) / \
+        (args.n_iter + 1)
 
 
 # =============================================================================
@@ -160,10 +187,9 @@ results = {
     'encoding_models': args.encoding_models,
     'fmri_subjects': args.fmri_subjects,
     'prediction_accuracy_nsdcore': prediction_accuracy_nsdcore,
-    'prediction_accuracy_nsdsynthetic': prediction_accuracy_nsdsynthetic,
     'insilico_validation_scores': insilico_validation_scores,
-    'corr_nsdcore': corr_nsdcore,
-    'corr_nsdsynthetic': corr_nsdsynthetic
+    'p_values_nsdcore': p_values_nsdcore,
+    'corr_nsdcore': corr_nsdcore
     }
 
 # Create the saving directory

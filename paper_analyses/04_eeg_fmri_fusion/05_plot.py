@@ -164,7 +164,7 @@ t_idx = np.intersect1d(np.where(times >= 0)[0], np.where(times <= 0.4)[0])
 times_plot = times[t_idx]
 
 # Create the figure
-fig = plt.figure(figsize=(25, 5))
+fig = plt.figure(figsize=(25, 3))
 
 # Plot the chance dashed line
 plt.plot([-10, 10], [0, 0], 'k--', linewidth=3, alpha=.25, label='_nolegend_')
@@ -202,8 +202,8 @@ plt.xlim(left=min(times_plot), right=max(times_plot))
 
 # y-axis parameters
 plt.ylabel("Pearson's $r$", fontsize=fontsize)
-yticks = [0, 0.2, 0.4, 0.6, 0.8]
-ylabels = [0, 0.2, 0.4, 0.6, 0.8]
+yticks = [0, 0.4, 0.8]
+ylabels = [0, 0.4, 0.8]
 plt.yticks(ticks=yticks, labels=ylabels)
 plt.ylim(bottom=-.1, top=.8)
 

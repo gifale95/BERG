@@ -1,6 +1,7 @@
-"""Apply univariate relational neural control (RNC) to find images that align
-or disentangle the t-fMRI responses of an ROI between two time windows of
-interest.
+"""Apply neural control to find images taht drive the t-fMRI responses of the
+time window of interest. Furthermore, apply univariate relational neural
+control (RNC) to find images that align or disentangle the t-fMRI responses of
+an ROI between two time windows of interest.
 
 Parameters
 ----------
@@ -143,7 +144,17 @@ tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2+1], 1)
 
 
 # =============================================================================
-# Rank the images based on their t-fMRI univariate responses
+# Rank the images based on their t-fMRI univariate responses (neural control)
+# =============================================================================
+# Select the top N images that drive responses of the first time window
+high_1 = np.argsort(tfmri_1)[::-1]
+
+# Select the top N images that drive responses of the second time window
+high_2 = np.argsort(tfmri_2)[::-1]
+
+
+# =============================================================================
+# Rank the images based on their t-fMRI univariate responses (RNC)
 # =============================================================================
 # Univariate response score margin used to constrain the selection of the
 # control images. The margin is defined as 3/4 of the standard deviation of the
@@ -213,10 +224,12 @@ data_dict = {
     'tfmri_1': tfmri_1,
     'tfmri_2': tfmri_2,
     'controlling_images': {
-         'high_1_high_2': high_1_high_2,
-         'low_1_low_2': low_1_low_2,
-         'high_1_low_2': high_1_low_2,
-         'low_1_high_2': low_1_high_2
+        'high_1': high_1,
+        'high_2': high_2,
+        'high_1_high_2': high_1_high_2,
+        'low_1_low_2': low_1_low_2,
+        'high_1_low_2': high_1_low_2,
+        'low_1_high_2': low_1_high_2
     }
 }
 

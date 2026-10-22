@@ -47,13 +47,15 @@ data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
 
 data = np.load(data_dir, allow_pickle=True).item()
 
-times = data['times_new']
+times = data['times']
+times_new = data['times_new']
 dnn_layerwise_rsa = data['dnn_layerwise_rsa']
 best_dnn_layer = data['best_dnn_layer']
 corr_dnn_layer_tfmri_times = data['corr_dnn_layer_tfmri_times']
 reg_best_dnn_layer_tfmri_times = data['reg_best_dnn_layer_tfmri_times']
 ci_dnn_layerwise_rsa = data['ci_dnn_layerwise_rsa']
 ci_best_dnn_layer = data['ci_best_dnn_layer']
+p_values_best_dnn_layer = data['p_values_best_dnn_layer']
 best_dnn_layer_shift = data['best_dnn_layer_shift']
 
 
@@ -107,13 +109,17 @@ axs = np.reshape(axs, -1)
 
 # Loop across ROIs
 for i, roi in enumerate(args.rois):
-    val = dnn_layerwise_rsa[roi]
 
     # Enforce same length of x- and y-axes
     # axs[i].set_box_aspect(1)
 
+    # Plot the chance dashed lines
+    axs[i].plot([-10, 10], [0, 0], 'k--', linewidth=2, alpha=.25,
+        label='_nolegend_')
+
     # Plot the correlation of each DNN layer as a function of t-fMRI time
     # points
+    val = dnn_layerwise_rsa[roi]
     for l in range(n_layers):
         axs[i].plot(times, np.mean(val[:,l], axis=0), color=colors[l],
             linewidth=2, alpha=.9, label='_nolegend_')
@@ -128,10 +134,10 @@ for i, roi in enumerate(args.rois):
 
     # x-axis parameters
     axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
-    xticks = [0.1, 0.2, 0.3, 0.4]
-    xlabels = [100, 200, 300, 400]
+    xticks = [0, 0.1, 0.2, 0.3, 0.4]
+    xlabels = [0, 100, 200, 300, 400]
     axs[i].set_xticks(ticks=xticks, labels=xlabels)
-    axs[i].set_xlim(left=min(times), right=max(times))
+    axs[i].set_xlim(left=0, right=0.4)
 
     # y-axis parameters
     if i in [0]:
@@ -169,33 +175,40 @@ for i, roi in enumerate(args.rois):
     # Enforce same length of x- and y-axes
     # axs[i].set_box_aspect(1)
 
-    # Plot the best DNN layer for each t-fMRI time point
-    axs[i].plot(times, np.mean(val, 0), color=color, linewidth=2, alpha=1,
+    # Plot the best DNN layer for each t-fMRI time point (set the best layers
+    # outside the time window of interest to NaN)
+    tmin = 0
+    tmax = 0.4
+    idx_times = (times >= tmin) & (times <= tmax)
+    val = np.mean(val, 0)
+    val[~idx_times] = np.nan
+    axs[i].plot(times, val, color=color, linewidth=2, alpha=1,
         label='_nolegend_')
 
     # Plot the confidence intervals
+    ci_best_dnn_layer[roi][:,~idx_times] = np.nan
     axs[i].fill_between(times, ci_best_dnn_layer[roi][0],
         ci_best_dnn_layer[roi][1], color=color, alpha=.2)
 
     # Plot the correlation between best DNN layers and t-fMRI time points
     if args.dnn == 'dinov2l':
-        y = 3
+        y = 2.5
     elif args.dnn == 'alexnet':
         y = 6.5
-    if corr_dnn_layer_tfmri_times[roi][1] < 0.0001:
+    if p_values_best_dnn_layer[roi] < 0.0001:
         s = f'$ρ$={np.round(corr_dnn_layer_tfmri_times[roi][0], 2):0.2f}***'
-    elif corr_dnn_layer_tfmri_times[roi][1] < 0.001:
+    elif p_values_best_dnn_layer[roi] < 0.001:
         s = f'$ρ$={np.round(corr_dnn_layer_tfmri_times[roi][0], 2):0.2f}**'
-    elif corr_dnn_layer_tfmri_times[roi][1] < 0.01:
+    elif p_values_best_dnn_layer[roi] < 0.01:
         s = f'$ρ$={np.round(corr_dnn_layer_tfmri_times[roi][0], 2):0.2f}*'
     else:
         s = f'$ρ$={np.round(corr_dnn_layer_tfmri_times[roi][0], 2):0.2f}'
-    axs[i].text(0.25, y, s, color='k', fontsize=fontsize, ha='left')
+    axs[i].text(0.225, y, s, color='k', fontsize=fontsize, ha='left')
 
     # Plot the regression line between DNN layers and t-fMRI time points
     slope = reg_best_dnn_layer_tfmri_times[roi].slope
     intercept = reg_best_dnn_layer_tfmri_times[roi].intercept
-    x_fit = np.array([min(times), max(times)])
+    x_fit = np.array([0.06, tmax])
     y_fit = intercept + slope * x_fit
     axs[i].plot(x_fit, y_fit, color='k', linewidth=2, linestyle='--',
         alpha=0.5)
@@ -205,10 +218,10 @@ for i, roi in enumerate(args.rois):
 
     # x-axis parameters
     axs[i].set_xlabel('Time (ms)', fontsize=fontsize)
-    xticks = [0.1, 0.2, 0.3, 0.4]
-    xlabels = [100, 200, 300, 400]
+    xticks = [0, 0.1, 0.2, 0.3, 0.4]
+    xlabels = [0, 100, 200, 300, 400]
     axs[i].set_xticks(ticks=xticks, labels=xlabels)
-    axs[i].set_xlim(left=min(times), right=max(times))
+    axs[i].set_xlim(left=0, right=0.4)
 
     # y-axis parameters
     if i in [0]:

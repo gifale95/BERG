@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-01_representational_format_evolution-03_stats
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
+#SBATCH --mem=15000
 #SBATCH --time=00:30:00
 #SBATCH --qos=extended
 

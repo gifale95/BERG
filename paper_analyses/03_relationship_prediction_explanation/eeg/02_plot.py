@@ -49,6 +49,7 @@ eeg_subjects = np.array(results['eeg_subjects'])
 prediction_accuracy = results['prediction_accuracy']
 insilico_validation_scores = results['insilico_validation_scores']
 corr = results['corr']
+p_values = results['p_values']
 
 
 # =============================================================================
@@ -146,11 +147,11 @@ for i, key in enumerate(signatures):
     # accuracy
     x = 0.31
     y = min(validation) + (max(validation) - min(validation)) * 0.05
-    if corr[key][1] < 0.0001:
+    if p_values[key] < 0.0001:
         s = f'$r$={np.round(corr[key][0], 2):0.2f}***'
-    elif corr[key][1] < 0.001:
+    elif p_values[key] < 0.001:
         s = f'$r$={np.round(corr[key][0], 2):0.2f}**'
-    elif corr[key][1] < 0.01:
+    elif p_values[key] < 0.01:
         s = f'$r$={np.round(corr[key][0], 2):0.2f}*'
     else:
         s = f'$r$={np.round(corr[key][0], 2):0.2f}'
