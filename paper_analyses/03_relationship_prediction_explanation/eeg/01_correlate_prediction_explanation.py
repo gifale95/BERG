@@ -23,6 +23,7 @@ import numpy as np
 from scipy.stats import pearsonr
 from sklearn.utils import resample
 from tqdm import tqdm
+import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_models', type=list, default=['eeg-things_eeg_2-alexnet_untrained', 'eeg-things_eeg_2-alexnet', 'eeg-things_eeg_2-vit_b_32'])
@@ -35,6 +36,11 @@ print('>>> Correlation between prediction and explanation accuracy <<<')
 print('\nInput parameters:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
+
+# Set random seed for reproducible results
+seed = 20200220
+random.seed(seed)
+np.random.seed(seed)
 
 
 # =============================================================================

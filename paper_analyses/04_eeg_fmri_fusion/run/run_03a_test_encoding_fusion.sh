@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=eeg_fmri_fusion-03_test_encoding_fusion
+#SBATCH --job-name=eeg_fmri_fusion-03a_test_encoding_fusion
 #SBATCH --mail-type=end
 #SBATCH --mem=20000
 #SBATCH --time=2-00:00:00
@@ -32,11 +32,11 @@ echo hemisphere: $hemisphere
 echo eeg_train_trials: $eeg_train_trials
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04_eeg_fmri_fusion
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh
 conda activate berg
 
 # Run the job
-python 03_test_encoding_fusion.py --fmri_subject $fmri_subject --hemisphere $hemisphere --eeg_train_trials $eeg_train_trials
+python 03a_test_encoding_fusion.py --fmri_subject $fmri_subject --hemisphere $hemisphere --eeg_train_trials $eeg_train_trials

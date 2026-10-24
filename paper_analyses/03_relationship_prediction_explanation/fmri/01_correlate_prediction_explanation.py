@@ -26,6 +26,7 @@ import numpy as np
 from scipy.stats import pearsonr
 from sklearn.utils import resample
 from tqdm import tqdm
+import random
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_models', type=list, default=['fmri-nsd_fsaverage-alexnet_untrained', 'fmri-nsd_fsaverage-alexnet', 'fmri-nsd_fsaverage-huze'])
@@ -39,6 +40,11 @@ print('>>> Correlation between prediction and explanation accuracy <<<')
 print('\nInput parameters:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
+
+# Set random seed for reproducible results
+seed = 20200220
+random.seed(seed)
+np.random.seed(seed)
 
 
 # =============================================================================

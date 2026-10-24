@@ -1,5 +1,5 @@
-"""Aggregate the t-fMRI encoding accuracies for each ROI across fMRI subjects
-and hemispheres, and compute the confidence intervals.
+"""Load the t-fMRI prediction accuracies, average the vertex results within
+selected ROIs, and compute the ROI-wise confidence intervals and significance.
 
 Parameters
 ----------
@@ -19,7 +19,7 @@ ncsnr_threshold : float
     vertex selection.
 n_iter : int
     Amount of iterations for creating the confidence intervals bootstrapped
-    distribution.
+    distribution and for the prediction accuracy null distribution.
 berg_dir : str
     Directory of the BERG.
 
@@ -31,6 +31,8 @@ import numpy as np
 from tqdm import tqdm
 from berg import BERG
 from sklearn.utils import resample
+from statsmodels.stats.multitest import multipletests
+from scipy.stats import binom
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=list)
@@ -53,25 +55,25 @@ for key, val in vars(args).items():
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
-# Load the EEG time points
+# LOnly select time points between 0-400 ms
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
     subject=1
 )
 times = metadata_eeg['eeg']['times']
+t_idx = np.intersect1d(np.where(times >= 0)[0], np.where(times <= 0.4)[0])
+times_new = times[t_idx]
 
 # Analysis parameters
 metadata = []
 n_fsub = len(args.fmri_subjects)
 n_hemi = len(args.hemispheres)
 n_vertex = 163842
-n_time = len(times)
-rois = ['V1', 'V2', 'V3', 'hV4', 'OFA', 'FFA', 'OWFA', 'VWFA', 'OPA', 'PPA',
-    'RSC', 'EBA', 'FBA', 'early', 'intermediate', 'ventral', 'lateral',
-    'parietal']
+n_time = len(times_new)
+rois = ['V1', 'V2', 'V3', 'hV4', 'FFA']
 
 # Empty correlation array of shape:
-# (N fMRI subjects, 2 hemispheres, 163842 fMRI vertices, 140 EEG time points)
+# (N fMRI subjects, 2 hemispheres, 163842 fMRI vertices, N EEG time points)
 corr_tfmri_fmri = np.zeros((n_fsub, n_hemi, n_vertex, n_time),
     dtype=np.float32)
 corr_tfmri_fmri[:] = np.nan
@@ -105,7 +107,8 @@ for fs, fsub in enumerate(tqdm(args.fmri_subjects)):
             'encoding_fusion_accuracy')
         file_name = (f'corr_fmri_sub-{fsub:02d}_hemi-{hemi}_eeg_train_trials-'
             f'{args.eeg_train_trials}.npy')
-        corr_tfmri_fmri[fs,h,idx_v] = np.load(os.path.join(data_dir, file_name))
+        corr_tfmri_fmri[fs,h,idx_v] = np.load(os.path.join(
+            data_dir, file_name))[:,t_idx]
 
         # NCSNR vertex selection
         ncsnr = metadata[fs]['fmri'][hemi+'_ncsnr']
@@ -152,8 +155,8 @@ for r, roi in enumerate(rois):
             else:
                 idx_roi = metadata[fs]['fmri'][f'{hemi}_fsaverage_rois'][roi]
 
-            # Get the correlation scores of the above threshold vertices
-            # from the chosen ROI
+            # Get the correlation scores of the above NCSNR threshold vertices
+            # of the chosen ROI
             if h == 0:
                 corr = corr_tfmri_fmri[fs,h,idx_roi]
             else:
@@ -181,7 +184,7 @@ for key, val in tqdm(corr_tfmri_fmri_roi.items()):
     for i in range(args.n_iter):
         idx = resample(np.arange(len(args.fmri_subjects)))
         corr_dist[i] = np.mean(val[idx], 0)
-        peak_lat_dist[i] = times[np.argmax(np.mean(val[idx], 0))]
+        peak_lat_dist[i] = times_new[np.argmax(np.mean(val[idx], 0))]
 
     ci_corr_tfmri_fmri_roi[key][0] = np.percentile(corr_dist, 2.5, axis=0)
     ci_corr_tfmri_fmri_roi[key][1] = np.percentile(corr_dist, 97.5, axis=0)
@@ -190,15 +193,90 @@ for key, val in tqdm(corr_tfmri_fmri_roi.items()):
 
 
 # =============================================================================
+# Load the ROI-wise prediction null distribution results
+# =============================================================================
+# Empty null distribution arrays of shape:
+# (8 subjects, N EEG time points, N iterations)
+null_dist = {}
+for roi in rois:
+    null_dist[roi] = np.zeros((len(args.fmri_subjects), len(times_new),
+        args.n_iter), dtype=np.float32)
+
+# Loop across fMRI subjects, ROIs, and hemispheres
+for fs, fsub in enumerate(args.fmri_subjects):
+    for roi in rois:
+        for h, hemi in enumerate(args.hemispheres):
+
+            # Load the null distribution
+            data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+                'encoding_fusion_accuracy_null_distribution')
+            file_name = (f'corr_null_dist_fmri_sub-{fsub:02d}_hemi-{hemi}_roi-'
+                f'{roi}_eeg_train_trials-{args.eeg_train_trials}.npy')
+
+            if h == 0:
+                null_dist_hemi = np.load(os.path.join(data_dir, file_name))
+            else:
+                null_dist_hemi = np.append(null_dist_hemi,
+                    np.load(os.path.join(data_dir, file_name)), 0)
+
+        # Store the mean null distribution across hemispheres
+        null_dist[roi][fs] = np.mean(null_dist_hemi, 0)[t_idx]
+
+
+# =============================================================================
+# Compute the ROI-wise significance
+# =============================================================================
+# Empty p-value and significance arrays of shape:
+# (8 subjects, N EEG time points)
+within_subj_pval = {}
+within_subj_sig = {}
+for roi in rois:
+    within_subj_pval[roi] = np.zeros((len(args.fmri_subjects), len(times_new)))
+    within_subj_sig[roi] = np.zeros((len(args.fmri_subjects), len(times_new)))
+
+# Compute the within-subject ROI-wise p-values based on the null distribution
+# permutations tests
+for roi in rois:
+    for fs in range(len(args.fmri_subjects)):
+        for t in range(len(times_new)):
+            within_subj_pval[roi][fs,t] = \
+                (np.sum(null_dist[roi][fs,t] >= corr_tfmri_fmri_roi[roi][fs,t]) + 1) / \
+                (args.n_iter + 1)
+
+# Multiple comparison correction across time points
+for roi in rois:
+    for fs in range(len(args.fmri_subjects)):
+        within_subj_sig[roi][fs] = multipletests(within_subj_pval[roi][fs],
+            0.05, 'fdr_bh')[0]
+
+# Compute the between-subject significance based on population prevalence:
+# this is the probability of observing k or more significant results by chance,
+# based on the CDF of the binomial distribution of within-subject
+# significances.
+n = len(args.fmri_subjects) # Total number of subjects
+p = 0.05 # probability of success in each trial
+between_subj_pval = {}
+for roi in rois:
+    between_subj_pval[roi] = np.zeros((len(times_new)))
+    for t in range(len(times_new)):
+        k = sum(within_subj_sig[roi][:,t]) # Number of significant subjects
+        # We use "k-1" because otherwise we would get the probability of observing
+        # k+1 or more significant results by chance
+        between_subj_pval[roi][t] = 1 - binom.cdf(k-1, n, p)
+
+
+# =============================================================================
 # Save the results
 # =============================================================================
 results = {
     'metadata': metadata,
     'times': times,
+    'times_new': times_new,
     'corr_tfmri_fmri': corr_tfmri_fmri,
     'corr_tfmri_fmri_roi': corr_tfmri_fmri_roi,
     'ci_corr_tfmri_fmri_roi': ci_corr_tfmri_fmri_roi,
-    'ci_corr_tfmri_fmri_roi_peak_lat': ci_corr_tfmri_fmri_roi_peak_lat
+    'ci_corr_tfmri_fmri_roi_peak_lat': ci_corr_tfmri_fmri_roi_peak_lat,
+    'between_subj_pval': between_subj_pval
 }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats')
