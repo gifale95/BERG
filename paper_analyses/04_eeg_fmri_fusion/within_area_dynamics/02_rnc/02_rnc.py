@@ -33,6 +33,7 @@ import os
 import numpy as np
 from berg import BERG
 import h5py
+from scipy.stats import zscore
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, default=1)
@@ -58,6 +59,20 @@ time_window_1_start, time_window_1_end = map(
 time_window_2_start, time_window_2_end = map(
     float, args.time_window_pair.split('__')[1].split('-'))
 
+# Get the EEG time points
+berg = BERG(berg_dir=args.berg_dir)
+metadata_eeg = berg.get_model_metadata(
+    'eeg-things_eeg_2-vit_b_32',
+    subject=1
+)
+times = np.round(metadata_eeg['eeg']['times'], 3)
+
+# Get the time window indices
+t_min_1 = np.where(times == time_window_1_start)[0][0]
+t_max_1 = np.where(times == time_window_1_end)[0][0]
+t_min_2 = np.where(times == time_window_2_start)[0][0]
+t_max_2 = np.where(times == time_window_2_end)[0][0]
+
 
 # =============================================================================
 # Get the total dataset subjects
@@ -66,27 +81,7 @@ all_subjects = [1, 2, 3, 4, 5, 6, 7, 8]
 
 
 # =============================================================================
-# Load the univariate RNC baseline scores, and average them across images
-# =============================================================================
-data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'rnc', 'baseline', f'cv-{args.cv}',
-    args.time_window_pair, f'imageset-{args.imageset}')
-
-if args.cv == 0:
-    file_name = f'baseline_roi-{args.roi}.npy'
-    data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
-    base_1 = np.mean(data['baseline_resp']['time_window_1'])
-    base_2 = np.mean(data['baseline_resp']['time_window_2'])
-
-elif args.cv == 1:
-    file_name = f'baseline_cv_subject-{args.cv_subject}_roi-{args.roi}.npy'
-    data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
-    base_1 = np.mean(data['baseline_resp_train']['time_window_1'])
-    base_2 = np.mean(data['baseline_resp_train']['time_window_2'])
-
-
-# =============================================================================
-# Load the t-fMRI responses
+# Load the t-fMRI responses, and average them across the two time windows
 # =============================================================================
 # Load the t-fMRI responses of all subjects
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
@@ -107,6 +102,15 @@ elif args.imageset == 'imagenet_all':
         tfmri.append(np.concatenate(tfmri_sub))
         del tfmri_sub
 tfmri = np.array(tfmri)
+n_images = tfmri.shape[1]
+
+# Average the t-fMRI responses within the two time windows of interest
+tfmri_1 = np.mean(tfmri[:,:,t_min_1:t_max_1+1], 2)
+tfmri_2 = np.mean(tfmri[:,:,t_min_2:t_max_2+1], 2)
+
+# Z-score the t-fMRI responses of each subject
+tfmri_1 = zscore(tfmri_1, 1)
+tfmri_2 = zscore(tfmri_2, 1)
 
 # If cross-validating, remove the CV (test) subject, and average over the
 # remaining (train) subjects. The fMRI responses for the train subjects are
@@ -114,33 +118,35 @@ tfmri = np.array(tfmri)
 # be validated on the fMRI responses for the test subjects. If not
 # cross-validating, average over all subjects.
 if args.cv == 0:
-    tfmri_mean = np.mean(tfmri, 0)
+    tfmri_1 = np.mean(tfmri_1, 0)
+    tfmri_2 = np.mean(tfmri_2, 0)
 elif args.cv == 1:
-    tfmri_mean = np.delete(tfmri, args.cv_subject-1, 0)
-    tfmri_mean = np.mean(tfmri_mean, 0)
+    tfmri_1 = np.mean(np.delete(tfmri_1, args.cv_subject-1, 0), 0)
+    tfmri_2 = np.mean(np.delete(tfmri_2, args.cv_subject-1, 0), 0)
 del tfmri
 
 
 # =============================================================================
-# Average the t-fMRI responses within the two time windows of interest
+# Get the univariate RNC baseline scores
 # =============================================================================
-# Get the EEG time points
-berg = BERG(berg_dir=args.berg_dir)
-metadata_eeg = berg.get_model_metadata(
-    'eeg-things_eeg_2-vit_b_32',
-    subject=1
-)
-times = np.round(metadata_eeg['eeg']['times'], 3)
+# Load the univariate RNC baseline images
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'within_area_dynamics', 'rnc', 'baseline', f'cv-{args.cv}',
+    args.time_window_pair, f'imageset-{args.imageset}')
+if args.cv == 0:
+    file_name = f'baseline_roi-{args.roi}.npy'
+    data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
+    base_img_1 = data['baseline_img']['time_window_1']
+    base_img_2 = data['baseline_img']['time_window_2']
+elif args.cv == 1:
+    file_name = f'baseline_cv_subject-{args.cv_subject}_roi-{args.roi}.npy'
+    data = np.load(os.path.join(data_dir, file_name), allow_pickle=True).item()
+    base_img_1 = data['baseline_img_train']['time_window_1']
+    base_img_2 = data['baseline_img_train']['time_window_2']
 
-# Get the time window indices
-t_min_1 = np.where(times == time_window_1_start)[0][0]
-t_max_1 = np.where(times == time_window_1_end)[0][0]
-t_min_2 = np.where(times == time_window_2_start)[0][0]
-t_max_2 = np.where(times == time_window_2_end)[0][0]
-
-# Average the t-fMRI responses within the two time windows of interest
-tfmri_1 = np.mean(tfmri_mean[:,t_min_1:t_max_1+1], 1)
-tfmri_2 = np.mean(tfmri_mean[:,t_min_2:t_max_2+1], 1)
+# Get the univariate t-fMRI responses averaged across all baseline images
+base_1 = np.mean(tfmri_1[base_img_1])
+base_2 = np.mean(tfmri_2[base_img_2])
 
 
 # =============================================================================
@@ -224,12 +230,12 @@ data_dict = {
     'tfmri_1': tfmri_1,
     'tfmri_2': tfmri_2,
     'controlling_images': {
-        'high_1': high_1,
-        'high_2': high_2,
-        'high_1_high_2': high_1_high_2,
-        'low_1_low_2': low_1_low_2,
-        'high_1_low_2': high_1_low_2,
-        'low_1_high_2': low_1_high_2
+        'nc_high_1': high_1,
+        'nc_high_2': high_2,
+        'rnc_high_1_high_2': high_1_high_2,
+        'rnc_low_1_low_2': low_1_low_2,
+        'rnc_high_1_low_2': high_1_low_2,
+        'rnc_low_1_high_2': low_1_high_2
     }
 }
 

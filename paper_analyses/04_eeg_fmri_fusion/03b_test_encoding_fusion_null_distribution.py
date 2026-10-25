@@ -55,7 +55,7 @@ parser.add_argument('--roi', default='V1', type=str)
 parser.add_argument('--eeg_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10], type=list)
 parser.add_argument('--eeg_train_trials', default='all', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--n_iter', default=100000, type=int)
+parser.add_argument('--n_iter', default=10000, type=int)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -167,8 +167,8 @@ times = metadata_eeg['eeg']['times']
 # =============================================================================
 n_img = fmri_test_z.shape[0]
 
-idx_perm = np.zeros((n_img, args.n_iter), dtype=int)
-idx_perm_pred = np.zeros((n_img, args.n_iter), dtype=int)
+idx_perm = np.zeros((n_img, args.n_iter), dtype=np.int16)
+idx_perm_pred = np.zeros((n_img, args.n_iter), dtype=np.int16)
 
 for i in tqdm(range(args.n_iter)):
 
@@ -224,7 +224,7 @@ for t in tqdm(range(len(times))):
             np.diag(tfmri_perm.T @ fmri_perm) / len(tfmri_perm)
 
     # Delete unused variables
-    del tfmri
+    del tfmri, tfmri_z, tfmri_perm, fmri_perm
     gc.collect()
 
 

@@ -38,11 +38,12 @@ results_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'stats',
 results = np.load(results_dir, allow_pickle=True).item()
 
 metadata = results['metadata']
-times = np.round(results['times'], 3)
+times = np.round(results['times_new'], 3)
 corr_tfmri_fmri = results['corr_tfmri_fmri']
 corr_tfmri_fmri_roi = results['corr_tfmri_fmri_roi']
 ci_corr_tfmri_fmri_roi = results['ci_corr_tfmri_fmri_roi']
 ci_corr_tfmri_fmri_roi_peak_lat = results['ci_corr_tfmri_fmri_roi_peak_lat']
+between_subj_pval = results['between_subj_pval']
 
 # Create the plots save directory
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion', 'plots',
@@ -154,6 +155,14 @@ def sample_cmap(N):
     return colors
 colors = sample_cmap(len(rois))
 
+# Format the significance for plotting
+sig = {}
+for r, roi in enumerate(rois):
+    sig[roi] = np.zeros((len(times)))
+    sig[roi] = np.nan
+    y_val = -0.05 - 0.01 * r
+    sig[roi][between_subj_pval[roi] < 0.05] = y_val
+
 # Print the peak time point of each ROI
 for roi in rois:
     peak = times[np.argmax(np.mean(corr_tfmri_fmri_roi[roi], 0))]
@@ -190,6 +199,9 @@ for r, roi in enumerate(rois):
     conf_int = np.reshape(np.append(ci_low, ci_up), (-1,1))
     # plt.errorbar(peak, max_corr, xerr=conf_int, fmt="none",
     #     ecolor='k', elinewidth=1, capsize=3)
+
+    # Plot the significance
+    plt.scatter(times, sig[roi], s=100, color=colors[r])
 
 # x-axis parameters
 plt.xlabel('Time (ms)', fontsize=fontsize)

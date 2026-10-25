@@ -2,7 +2,7 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=eeg_fmri_fusion-03b_test_encoding_fusion_null_distribution
 #SBATCH --mail-type=end
-#SBATCH --mem=20000
+#SBATCH --mem=30000
 #SBATCH --time=30:00:00
 #SBATCH --qos=extended
 
@@ -13,7 +13,7 @@ declare -a roi_all
 index=0
 for fs in `seq 1 8` ; do
     for h in 'lh' 'rh' ; do
-        for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' ; do
+        for r in 'V1' 'V2' 'V3' 'hV4' 'FFA' 'PPA' ; do
             fmri_subject_all[$index]=$fs
             hemisphere_all[$index]=$h
             roi_all[$index]=$r

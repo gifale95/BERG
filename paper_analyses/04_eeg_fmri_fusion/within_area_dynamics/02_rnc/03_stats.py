@@ -32,7 +32,8 @@ import numpy as np
 import random
 import h5py
 from berg import BERG
-from scipy.stats import ttest_rel
+from scipy.stats import zscore
+from scipy.stats import binom
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--cv', type=int, default=1)
@@ -53,6 +54,7 @@ for key, val in vars(args).items():
 seed = 20200220
 random.seed(seed)
 np.random.seed(seed)
+rng = np.random.default_rng(seed=seed)
 
 
 # =============================================================================
@@ -63,42 +65,6 @@ time_window_1_start, time_window_1_end = map(
 time_window_2_start, time_window_2_end = map(
     float, args.time_window_pair.split('__')[1].split('-'))
 
-
-# =============================================================================
-# Get the total dataset subjects
-# =============================================================================
-all_subjects = [1, 2, 3, 4, 5, 6, 7, 8]
-
-
-# =============================================================================
-# Load the t-fMRI responses of all subjects
-# =============================================================================
-data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
-    'within_area_dynamics', 'rnc', 'tfmri_responses')
-tfmri = []
-
-if args.imageset in ['imagenet_train', 'imagenet_val', 'coco']:
-    for sub in all_subjects:
-        file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}_imageset-{args.imageset}.h5'
-        tfmri.append(h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'])
-
-elif args.imageset == 'imagenet_all':
-    splits = ['imagenet_val', 'imagenet_train']
-    for sub in all_subjects:
-        tfmri_sub = []
-        for split in splits:
-            file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}_imageset-{split}.h5'
-            tfmri_sub.append(h5py.File(os.path.join(
-                data_dir, file_name), 'r')['tfmri'])
-        tfmri.append(np.concatenate(tfmri_sub))
-        del tfmri_sub
-
-tfmri = np.array(tfmri)
-
-
-# =============================================================================
-# Average the t-fMRI responses within the two time windows of interest
-# =============================================================================
 # Get the EEG time points
 berg = BERG(berg_dir=args.berg_dir)
 metadata_eeg = berg.get_model_metadata(
@@ -113,16 +79,52 @@ t_max_1 = np.where(times == time_window_1_end)[0][0]
 t_min_2 = np.where(times == time_window_2_start)[0][0]
 t_max_2 = np.where(times == time_window_2_end)[0][0]
 
+
+# =============================================================================
+# Get the total dataset subjects
+# =============================================================================
+all_subjects = [1, 2, 3, 4, 5, 6, 7, 8]
+
+
+# =============================================================================
+# Load the t-fMRI responses, and average them across the two time windows
+# =============================================================================
+# Load the t-fMRI responses of all subjects
+data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
+    'within_area_dynamics', 'rnc', 'tfmri_responses')
+tfmri = []
+if args.imageset in ['imagenet_train', 'imagenet_val', 'coco']:
+    for sub in all_subjects:
+        file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}_imageset-{args.imageset}.h5'
+        tfmri.append(h5py.File(os.path.join(data_dir, file_name), 'r')['tfmri'])
+elif args.imageset == 'imagenet_all':
+    splits = ['imagenet_val', 'imagenet_train']
+    for sub in all_subjects:
+        tfmri_sub = []
+        for split in splits:
+            file_name = f'tfmri_sub-{sub:02d}_roi-{args.roi}_imageset-{split}.h5'
+            tfmri_sub.append(h5py.File(os.path.join(
+                data_dir, file_name), 'r')['tfmri'])
+        tfmri.append(np.concatenate(tfmri_sub))
+        del tfmri_sub
+tfmri = np.array(tfmri)
+n_images = tfmri.shape[1]
+
 # Average the t-fMRI responses within the two time windows of interest
 tfmri_1 = np.mean(tfmri[:,:,t_min_1:t_max_1+1], 2)
 tfmri_2 = np.mean(tfmri[:,:,t_min_2:t_max_2+1], 2)
+del tfmri
+
+# Z-score the t-fMRI responses of each subject
+tfmri_1 = zscore(tfmri_1, 1)
+tfmri_2 = zscore(tfmri_2, 1)
 
 
 # =============================================================================
 # Load the univariate RNC controlling images
 # =============================================================================
-control_types = ['high_1', 'high_2', 'high_1_low_2', 'low_1_high_2',
-    'high_1_high_2', 'low_1_low_2']
+control_types = ['nc_high_1', 'nc_high_2', 'rnc_high_1_low_2',
+    'rnc_low_1_high_2', 'rnc_high_1_high_2', 'rnc_low_1_low_2']
 controlling_images = {}
 
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
@@ -178,13 +180,13 @@ elif args.cv == 1:
         data_dict = np.load(os.path.join(data_dir, file_name),
             allow_pickle=True).item()
         baseline_images['time_window_1'][s] = \
-            data_dict['baseline_img']['time_window_1']
+            data_dict['baseline_img_test']['time_window_1']
         baseline_images['time_window_2'][s] = \
-            data_dict['baseline_img']['time_window_2']
+            data_dict['baseline_img_test']['time_window_2']
 
 
 # =============================================================================
-# Validate the neural control conditions across subjects (only for cv==1)
+# Validate the controlling images across subjects (only for cv==1)
 # =============================================================================
 # Get the test subject univariate t-fMRI responses for the controlling
 # and baseline images.
@@ -215,31 +217,129 @@ if args.cv == 1:
 # =============================================================================
 # Neural control statistical significance (only for cv==1)
 # =============================================================================
-# For each time window, compute the significance of the difference in
-# univariate t-fMRI responses between the two disentangling control conditions
-# (high_1_low_2 vs low_1_high_2), or between the controlling and baseline
-# conditions (high_1 vs baseline for time window 1, and high_2 vs baseline for
-# time window 2). The significance is computed using a paired t-test across
-# image conditions.
+# For each time window, use permutation tests to compute the within subject
+# significance between the univariate t-fMRI responses of driving
+# (high_1, high_2) and baseline images, and then compute the population-level
+# significance based on population prevalence.
 
 if args.cv == 1:
 
-    # Single subjects
-    rnc_p_val_tw_1_single_sub = np.zeros(len(all_subjects))
-    rnc_p_val_tw_2_single_sub = np.zeros(len(all_subjects))
-    p_val_tw_1_single_sub = np.zeros(len(all_subjects))
-    p_val_tw_2_single_sub = np.zeros(len(all_subjects))
-    for s in range(len(all_subjects)):
-        # Time window 1
-        rnc_p_val_tw_1_single_sub[s] = ttest_rel(cv_resp_1['high_1_low_2'][s],
-            cv_resp_1['low_1_high_2'][s], alternative='greater')[1]
-        p_val_tw_1_single_sub[s] = ttest_rel(cv_resp_1['high_1'][s],
-            base_resp_1[s], alternative='greater')[1]
-        # Time window 2
-        rnc_p_val_tw_2_single_sub[s] = ttest_rel(cv_resp_2['high_1_low_2'][s],
-            cv_resp_2['low_1_high_2'][s], alternative='less')[1]
-        p_val_tw_2_single_sub[s] = ttest_rel(cv_resp_2['high_2'][s],
-            base_resp_2[s], alternative='greater')[1]
+    # Define the permutation indices
+    idx_ctrl = np.zeros((args.n_iter, args.n_images), dtype=np.int32)
+    idx_base = np.zeros((args.n_iter, args.n_images), dtype=np.int32)
+    for i in range(args.n_iter):
+        idx = rng.choice(n_images, size=args.n_images*2, replace=False)
+        idx_ctrl[i] = idx[:args.n_images]
+        idx_base[i] = idx[args.n_images:]
+        del idx
+
+    # Loop across time windows
+    for tw in ['time_window_1', 'time_window_2']:
+
+        # Get the actual difference between the univariate t-fMRI responses of
+        # the driving and baseline images
+        if tw == 'time_window_1':
+            diff = np.mean(cv_resp_1['nc_high_1'], 1) - np.mean(base_resp_1, 1)
+        elif tw == 'time_window_2':
+            diff = np.mean(cv_resp_2['nc_high_2'], 1) - np.mean(base_resp_2, 1)
+
+        # Create the difference null distribution using permuted t-fMRI
+        # responses
+        diff_null_dist = np.zeros((len(all_subjects), args.n_iter),
+            dtype=np.float32)
+        for i in range(args.n_iter):
+            if tw == 'time_window_1':
+                diff_null_dist[:,i] = np.mean(tfmri_1[:,idx_ctrl[i]], 1) - \
+                    np.mean(tfmri_1[:,idx_base[i]], 1)
+            elif tw == 'time_window_2':
+                diff_null_dist[:,i] = np.mean(tfmri_2[:,idx_ctrl[i]], 1) - \
+                    np.mean(tfmri_2[:,idx_base[i]], 1)
+
+        # Compute the within-subject significance
+        within_subj_pval = np.zeros((len(all_subjects)))
+        for s in range(len(all_subjects)):
+            within_subj_pval[s] = \
+                (np.sum(diff_null_dist[s] >= diff[s]) + 1) / \
+                (args.n_iter + 1)
+        within_subj_sig = within_subj_pval < 0.05
+
+        # Compute the population-level significance based on population
+        # prevalence: this is the probability of observing k or more
+        # significant results by chance, based on the CDF of the binomial
+        # distribution of within-subject significances.
+        n = len(all_subjects) # Total number of subjects
+        p = 0.05 # probability of success in each trial
+        k = sum(within_subj_sig) # Number of significant subjects
+        # We use "k-1" because otherwise we would get the probability of observing
+        # k+1 or more significant results by chance
+        if tw == 'time_window_1':
+            nc_between_subj_pval_tw_1 = 1 - binom.cdf(k-1, n, p)
+        elif tw == 'time_window_2':
+            nc_between_subj_pval_tw_2 = 1 - binom.cdf(k-1, n, p)
+
+
+# =============================================================================
+# RNC statistical significance (only for cv==1)
+# =============================================================================
+# For each time window, use permutation tests to compute the within-subject
+# significance of the difference between the univariate t-fMRI responses for
+# the two controlling conditions (high_1_low_2 vs low_1_high_2).
+
+if args.cv == 1:
+
+    # Define the permutation indices
+    idx_h1l2 = np.zeros((args.n_iter, args.n_images), dtype=np.int32)
+    idx_l1h2 = np.zeros((args.n_iter, args.n_images), dtype=np.int32)
+    for i in range(args.n_iter):
+        idx = rng.choice(n_images, size=args.n_images*2, replace=False)
+        idx_h1l2[i] = idx[:args.n_images]
+        idx_l1h2[i] = idx[args.n_images:]
+        del idx
+
+    # Loop across time windows
+    for tw in ['time_window_1', 'time_window_2']:
+
+        # Get the actual difference between the univariate t-fMRI responses of
+        # the controlling images
+        if tw == 'time_window_1':
+            diff = np.mean(cv_resp_1['rnc_high_1_low_2'], 1) - \
+                np.mean(cv_resp_1['rnc_low_1_high_2'], 1)
+        elif tw == 'time_window_2':
+            diff = np.mean(cv_resp_2['rnc_low_1_high_2'], 1) - \
+                np.mean(cv_resp_2['rnc_high_1_low_2'], 1)
+
+        # Create the difference null distribution using permuted t-fMRI
+        # responses
+        diff_null_dist = np.zeros((len(all_subjects), args.n_iter),
+            dtype=np.float32)
+        for i in range(args.n_iter):
+            if tw == 'time_window_1':
+                diff_null_dist[:,i] = np.mean(tfmri_1[:,idx_h1l2[i]], 1) - \
+                    np.mean(tfmri_1[:,idx_l1h2[i]], 1)
+            elif tw == 'time_window_2':
+                diff_null_dist[:,i] = np.mean(tfmri_1[:,idx_l1h2[i]], 1) - \
+                    np.mean(tfmri_1[:,idx_h1l2[i]], 1)
+
+        # Compute the within-subject significance
+        within_subj_pval = np.zeros((len(all_subjects)))
+        for s in range(len(all_subjects)):
+            within_subj_pval[s] = (np.sum(diff_null_dist[s] >= diff[s]) + 1) / \
+                (args.n_iter + 1)
+        within_subj_pval = within_subj_pval < 0.05
+
+        # Compute the population-level significance based on population
+        # prevalence: this is the probability of observing k or more
+        # significant results by chance, based on the CDF of the binomial
+        # distribution of within-subject significances.
+        n = len(all_subjects) # Total number of subjects
+        p = 0.05 # probability of success in each trial
+        k = sum(within_subj_pval) # Number of significant subjects
+        # We use "k-1" because otherwise we would get the probability of observing
+        # k+1 or more significant results by chance
+        if tw == 'time_window_1':
+            rnc_between_subj_pval_tw_1 = 1 - binom.cdf(k-1, n, p)
+        elif tw == 'time_window_2':
+            rnc_between_subj_pval_tw_2 = 1 - binom.cdf(k-1, n, p)
 
 
 # =============================================================================
@@ -275,10 +375,10 @@ elif args.cv == 1:
         'cv_resp_2': cv_resp_2,
         'base_resp_1': base_resp_1,
         'base_resp_2': base_resp_2,
-        'p_val_tw_1_single_sub': p_val_tw_1_single_sub,
-        'rnc_p_val_tw_1_single_sub': rnc_p_val_tw_1_single_sub,
-        'p_val_tw_2_single_sub': p_val_tw_2_single_sub,
-        'rnc_p_val_tw_2_single_sub': rnc_p_val_tw_2_single_sub
+        'nc_between_subj_pval_tw_1': nc_between_subj_pval_tw_1,
+        'nc_between_subj_pval_tw_2': nc_between_subj_pval_tw_2,
+        'rnc_between_subj_pval_tw_1': rnc_between_subj_pval_tw_1,
+        'rnc_between_subj_pval_tw_2': rnc_between_subj_pval_tw_2
         }
 
 save_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',

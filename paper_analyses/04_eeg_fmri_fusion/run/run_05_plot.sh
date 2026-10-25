@@ -20,7 +20,7 @@ eeg_train_trials=${eeg_train_trials_all[$SLURM_ARRAY_TASK_ID]}
 echo eeg_train_trials: $eeg_train_trials
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04_eeg_fmri_fusion
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh

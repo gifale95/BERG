@@ -2,14 +2,14 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=eeg_fmri_fusion-04_stats
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
-#SBATCH --time=00:20:00
+#SBATCH --mem=50000
+#SBATCH --time=02:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations
 declare -a eeg_train_trials_all
 index=0
-for t in 'all' 'even' 'odd' ; do
+for t in 'all' ; do
     eeg_train_trials_all[$index]=$t
     ((index=index+1))
 done
@@ -20,7 +20,7 @@ eeg_train_trials=${eeg_train_trials_all[$SLURM_ARRAY_TASK_ID]}
 echo eeg_train_trials: $eeg_train_trials
 
 # Change to the .py script directory
-cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04-eeg_fmri_fusion
+cd /home/giffordale95/projects/brain-encoding-response-generator/github/BERG/paper_analyses/04_eeg_fmri_fusion
 
 # Activate the Anaconda environment
 source /home/giffordale95/anaconda3/etc/profile.d/conda.sh

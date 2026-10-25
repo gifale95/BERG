@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
-#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02_rnc-01_rnc_baseline__cv-1__imagenet_train
+#SBATCH --job-name=berg-04_eeg_fmri_fusion-within_area_dynamics-02_rnc-01_rnc_baseline__cv-1__imagenet_all
 #SBATCH --mail-type=end
 #SBATCH --mem=15000
-#SBATCH --time=05:00:00
+#SBATCH --time=00:20:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

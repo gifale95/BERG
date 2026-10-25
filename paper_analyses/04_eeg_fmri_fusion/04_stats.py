@@ -39,7 +39,7 @@ parser.add_argument('--fmri_subjects', default=[1, 2, 3, 4, 5, 6, 7, 8], type=li
 parser.add_argument('--hemispheres', default=['lh', 'rh'], type=list)
 parser.add_argument('--eeg_train_trials', default='all', type=str)
 parser.add_argument('--ncsnr_threshold', default=0.2, type=float)
-parser.add_argument('--n_iter', default=100000, type=int)
+parser.add_argument('--n_iter', default=10000, type=int) # !!! 100000
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
@@ -55,7 +55,7 @@ for key, val in vars(args).items():
 # Initialize BERG
 berg = BERG(berg_dir=args.berg_dir)
 
-# LOnly select time points between 0-400 ms
+# Only select time points between 0-400 ms
 metadata_eeg = berg.get_model_metadata(
     'eeg-things_eeg_2-vit_b_32',
     subject=1
@@ -249,7 +249,7 @@ for roi in rois:
         within_subj_sig[roi][fs] = multipletests(within_subj_pval[roi][fs],
             0.05, 'fdr_bh')[0]
 
-# Compute the between-subject significance based on population prevalence:
+# Compute the population-level significance based on population prevalence:
 # this is the probability of observing k or more significant results by chance,
 # based on the CDF of the binomial distribution of within-subject
 # significances.
