@@ -26,7 +26,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--rois', default=['V1', 'hV4', 'FFA'], type=list)
+parser.add_argument('--rois', default=['V1', 'hV4', 'FFA', 'PPA'], type=list)
 parser.add_argument('--dnn', default='dinov2l', type=str)
 parser.add_argument('--images', default='things_eeg_2_vivo', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
@@ -104,7 +104,7 @@ colors = matplotlib.colormaps['cividis'](np.linspace(0, 1, n_layers))
 
 # Create the plot figure
 fig, axs = plt.subplots(1, len(args.rois), sharex=True, sharey=True,
-    figsize=(20, 4))
+    figsize=(22.4, 3))
 axs = np.reshape(axs, -1)
 
 # Loop across ROIs
@@ -165,7 +165,7 @@ color = (139/255, 0/255, 0/255)
 
 # Create the plot figure
 fig, axs = plt.subplots(1, len(args.rois), sharex=True, sharey=True,
-    figsize=(20, 4))
+    figsize=(22.4, 3))
 axs = np.reshape(axs, -1)
 
 # Loop across ROIs
@@ -203,7 +203,7 @@ for i, roi in enumerate(args.rois):
         s = f'$ρ$={np.round(corr_dnn_layer_tfmri_times[roi][0], 2):0.2f}*'
     else:
         s = f'$ρ$={np.round(corr_dnn_layer_tfmri_times[roi][0], 2):0.2f}'
-    axs[i].text(0.225, y, s, color='k', fontsize=fontsize, ha='left')
+    axs[i].text(0.185, y, s, color='k', fontsize=fontsize, ha='left')
 
     # Plot the regression line between DNN layers and t-fMRI time points
     slope = reg_best_dnn_layer_tfmri_times[roi].slope
@@ -250,7 +250,7 @@ color = (224/255, 102/255, 78/255)
 
 # Create the plot figure
 fig, axs = plt.subplots(1, len(args.rois), sharex=True, sharey=False,
-    figsize=(20, 2))
+    figsize=(22.4, 2))
 axs = np.reshape(axs, -1)
 
 # Loop across ROIs

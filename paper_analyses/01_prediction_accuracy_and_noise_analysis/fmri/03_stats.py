@@ -14,8 +14,7 @@ hemispheres : list of str
     List of strings containing the hemispheres used for the analyses.
     Possible values  are: 'lh' (left hemisphere) and 'rh' (right hemisphere).
 n_iter : int
-    Amount of iterations for creating the confidence intervals bootstrapped
-    distribution.
+    Amount of iterations to generate the bootstrap and null distributions.
 berg_dir : str
     Directory of the BERG.
 """
@@ -25,8 +24,8 @@ import os
 import numpy as np
 from tqdm import tqdm
 import random
+from scipy.stats import binom
 from sklearn.utils import resample
-from scipy.stats import ttest_1samp
 from scipy.stats import ttest_rel
 from statsmodels.stats.multitest import multipletests
 
@@ -47,10 +46,11 @@ for key, val in vars(args).items():
 seed = 20200220
 random.seed(seed)
 np.random.seed(seed)
+rng = np.random.default_rng(seed=seed)
 
 
 # =============================================================================
-# Load the prediction accuracy and noise analysis results
+# Load and format the prediction accuracy and noise analysis results
 # =============================================================================
 correlation_nsdcore = {}
 correlation_nsdsynthetic = {}
@@ -58,6 +58,9 @@ metadata_berg = {}
 corr_iv1tr_is_avg = {}
 corr_iv1tr_iv2tr_avg = {}
 corr_iv1tr_iv1tr_avg = {}
+corr_iv1tr_is = {}
+corr_iv1tr_iv2tr = {}
+corr_iv1tr_iv1tr = {}
 
 for model in args.encoding_models:
 
@@ -65,152 +68,62 @@ for model in args.encoding_models:
         'prediction_accuracy_noise_analysis', 'fmri', 'prediction_accuracy',
         model, 'prediction_accuracy.npy')
     results = np.load(results_dir, allow_pickle=True).item()
+
+    metadata = results['metadata']
     correlation_nsdcore[model[19:]] = results['correlation_nsdcore']
     correlation_nsdsynthetic[model[19:]] = results['correlation_nsdsynthetic']
+
     corr_iv1tr_is_avg[model[19:]] = results['corr_iv1tr_is_avg']
     corr_iv1tr_iv2tr_avg[model[19:]] = results['corr_iv1tr_iv2tr_avg']
     corr_iv1tr_iv1tr_avg[model[19:]] = results['corr_iv1tr_iv1tr_avg']
-    metadata = results['metadata']
+
+    corr_iv1tr_is[model[19:]] = []
+    corr_iv1tr_iv2tr[model[19:]] = []
+    corr_iv1tr_iv1tr[model[19:]] = []
+    for s in range(len(args.subjects)):
+        for h, hemi in enumerate(args.hemispheres):
+            idx_non_nan = ~np.isnan(results['corr_iv1tr_is'][hemi][s])
+            if h == 0:
+                corr_iv1tr_is_hemi = results['corr_iv1tr_is'][hemi][s]
+                corr_iv1tr_iv2tr_hemi = results['corr_iv1tr_iv2tr'][hemi][s]
+                corr_iv1tr_iv1tr_hemi = results['corr_iv1tr_iv1tr'][hemi][s]
+            else:
+                corr_iv1tr_is_hemi = np.append(corr_iv1tr_is_hemi,
+                    results['corr_iv1tr_is'][hemi][s], 0)
+                corr_iv1tr_iv2tr_hemi = np.append(corr_iv1tr_iv2tr_hemi,
+                    results['corr_iv1tr_iv2tr'][hemi][s], 0)
+                corr_iv1tr_iv1tr_hemi = np.append(corr_iv1tr_iv2tr_hemi,
+                    results['corr_iv1tr_iv1tr'][hemi][s], 0)
+        corr_iv1tr_is[model[19:]].append(corr_iv1tr_is_hemi)
+        corr_iv1tr_iv2tr[model[19:]].append(corr_iv1tr_iv2tr_hemi)
+        corr_iv1tr_iv1tr[model[19:]].append(corr_iv1tr_iv1tr_hemi)
+    corr_iv1tr_is[model[19:]] = np.array(corr_iv1tr_is[model[19:]])
+    corr_iv1tr_iv2tr[model[19:]] = np.array(corr_iv1tr_iv2tr[model[19:]])
+    corr_iv1tr_iv1tr[model[19:]] = np.array(corr_iv1tr_iv1tr[model[19:]])
 
 
 # =============================================================================
-# Compute the difference in prediction accuracy between encoding models
+# Noise analysis confidence intervals
 # =============================================================================
-diff_correlation_nsdcore = {}
-diff_correlation_nsdcore['huze_minus_alexnet'] = {}
-diff_correlation_nsdcore['huze_minus_alexnet_untrained'] = {}
-diff_correlation_nsdcore['alexnet_minus_alexnet_untrained'] = {}
-diff_correlation_nsdsynthetic = {}
-diff_correlation_nsdsynthetic['huze_minus_alexnet'] = {}
-diff_correlation_nsdsynthetic['huze_minus_alexnet_untrained'] = {}
-diff_correlation_nsdsynthetic['alexnet_minus_alexnet_untrained'] = {}
-
-for h, hemi in enumerate(args.hemispheres):
-
-    diff_correlation_nsdcore['huze_minus_alexnet'][hemi] = []
-    diff_correlation_nsdcore['huze_minus_alexnet_untrained'][hemi] = []
-    diff_correlation_nsdcore['alexnet_minus_alexnet_untrained'][hemi] = []
-    diff_correlation_nsdsynthetic['huze_minus_alexnet'][hemi] = []
-    diff_correlation_nsdsynthetic['huze_minus_alexnet_untrained'][hemi] = []
-    diff_correlation_nsdsynthetic['alexnet_minus_alexnet_untrained'][hemi] = []
-
-    for s, sub in enumerate(args.subjects):
-
-        # "huze" minus "alexnet"
-        diff_correlation_nsdcore['huze_minus_alexnet'][hemi].append(
-            correlation_nsdcore['huze'][hemi][s] - \
-            correlation_nsdcore['alexnet'][hemi][s])
-        diff_correlation_nsdsynthetic['huze_minus_alexnet'][hemi].append(
-            correlation_nsdsynthetic['huze'][hemi][s] - \
-            correlation_nsdsynthetic['alexnet'][hemi][s])
-
-        # "huze" minus "alexnet_untrained"
-        diff_correlation_nsdcore['huze_minus_alexnet_untrained'][hemi].append(
-            correlation_nsdcore['huze'][hemi][s] - \
-            correlation_nsdcore['alexnet_untrained'][hemi][s])
-        diff_correlation_nsdsynthetic['huze_minus_alexnet_untrained'][hemi].append(
-            correlation_nsdsynthetic['huze'][hemi][s] - \
-            correlation_nsdsynthetic['alexnet_untrained'][hemi][s])
-
-        # "alexnet" minus "alexnet_untrained"
-        diff_correlation_nsdcore['alexnet_minus_alexnet_untrained'][hemi].append(
-            correlation_nsdcore['alexnet'][hemi][s] - \
-            correlation_nsdcore['alexnet_untrained'][hemi][s])
-        diff_correlation_nsdsynthetic['alexnet_minus_alexnet_untrained'][hemi].append(
-            correlation_nsdsynthetic['alexnet'][hemi][s] - \
-            correlation_nsdsynthetic['alexnet_untrained'][hemi][s])
-
-
-# =============================================================================
-# Prediction accuracy significance testing
-# =============================================================================
-# Prediction accuracy
-p_val_correlation_nsdcore = {}
-p_val_correlation_nsdsynthetic = {}
-sig_correlation_nsdcore = {}
-sig_correlation_nsdsynthetic = {}
-for key in correlation_nsdcore.keys():
-    p_val_correlation_nsdcore[key] = {}
-    p_val_correlation_nsdsynthetic[key] = {}
-    sig_correlation_nsdcore[key] = {}
-    sig_correlation_nsdsynthetic[key] = {}
-    # Append the correlation scores across hemispheres
-    nsdcore = np.append(correlation_nsdcore[key]['lh'],
-        correlation_nsdcore[key]['rh'], 1)
-    nsdsynthetic = np.append(correlation_nsdsynthetic[key]['lh'],
-        correlation_nsdsynthetic[key]['rh'], 1)
-    # Compute the p-values for the correlation scores being significantly
-    # greater than 0
-    p_val_nsdcore = ttest_1samp(nsdcore, 0, axis=0, alternative='greater')[1]
-    p_val_nsdsynthetic = ttest_1samp(nsdsynthetic, 0, axis=0,
-        alternative='greater')[1]
-    # Correct for multiple comparisons
-    sig_nsdcore = multipletests(p_val_nsdcore, 0.05, 'fdr_bh')[0]
-    sig_nsdsynthetic = multipletests(p_val_nsdsynthetic, 0.05, 'fdr_bh')[0]
-    # Store the p-values and significance
-    p_val_correlation_nsdcore[key]['lh'] = p_val_nsdcore[:163842]
-    p_val_correlation_nsdcore[key]['rh'] = p_val_nsdcore[163842:]
-    p_val_correlation_nsdsynthetic[key]['lh'] = p_val_nsdsynthetic[:163842]
-    p_val_correlation_nsdsynthetic[key]['rh'] = p_val_nsdsynthetic[163842:]
-    sig_correlation_nsdcore[key]['lh'] = sig_nsdcore[:163842]
-    sig_correlation_nsdcore[key]['rh'] = sig_nsdcore[163842:]
-    sig_correlation_nsdsynthetic[key]['lh'] = sig_nsdsynthetic[:163842]
-    sig_correlation_nsdsynthetic[key]['rh'] = sig_nsdsynthetic[163842:]
-
-# Prediction accuracy differences
-p_val_diff_correlation_nsdcore = {}
-p_val_diff_correlation_nsdsynthetic = {}
-sig_diff_correlation_nsdcore = {}
-sig_diff_correlation_nsdsynthetic = {}
-for key in diff_correlation_nsdcore.keys():
-    p_val_diff_correlation_nsdcore[key] = {}
-    p_val_diff_correlation_nsdsynthetic[key] = {}
-    sig_diff_correlation_nsdcore[key] = {}
-    sig_diff_correlation_nsdsynthetic[key] = {}
-    # Append the correlation scores across hemispheres
-    diff_nsdcore = np.append(diff_correlation_nsdcore[key]['lh'],
-        diff_correlation_nsdcore[key]['rh'], 1)
-    diff_nsdsynthetic = np.append(diff_correlation_nsdsynthetic[key]['lh'],
-        diff_correlation_nsdsynthetic[key]['rh'], 1)
-    # Compute the p-values for the correlation score differences being
-    # significantly greater or smaller than 0
-    p_val_nsdcore = ttest_1samp(diff_nsdcore, 0, axis=0,
-        alternative='two-sided')[1]
-    p_val_nsdsynthetic = ttest_1samp(diff_nsdsynthetic, 0,
-        axis=0, alternative='two-sided')[1]
-    # Correct for multiple comparisons
-    sig_nsdcore = multipletests(p_val_nsdcore, 0.05, 'fdr_bh')[0]
-    sig_nsdsynthetic = multipletests(p_val_nsdsynthetic, 0.05, 'fdr_bh')[0]
-    # Store the p-values
-    p_val_diff_correlation_nsdcore[key]['lh'] = p_val_nsdcore[:163842]
-    p_val_diff_correlation_nsdcore[key]['rh'] = p_val_nsdcore[163842:]
-    p_val_diff_correlation_nsdsynthetic[key]['lh'] = p_val_nsdsynthetic[:163842]
-    p_val_diff_correlation_nsdsynthetic[key]['rh'] = p_val_nsdsynthetic[163842:]
-    sig_diff_correlation_nsdcore[key]['lh'] = sig_nsdcore[:163842]
-    sig_diff_correlation_nsdcore[key]['rh'] = sig_nsdcore[163842:]
-    sig_diff_correlation_nsdsynthetic[key]['lh'] = sig_nsdsynthetic[:163842]
-    sig_diff_correlation_nsdsynthetic[key]['rh'] = sig_nsdsynthetic[163842:]
-
-
-# =============================================================================
-# Noise analysis confidence intervals and significance testing
-# =============================================================================
-# Bootstrap the confidence intervals
 ci_corr_iv1tr_is = {}
 ci_corr_iv1tr_iv1tr = {}
 ci_corr_iv1tr_iv2tr = {}
+
 for model in corr_iv1tr_is_avg.keys():
+
     ci_corr_iv1tr_is[model] = np.zeros((2))
     ci_corr_iv1tr_iv1tr[model] = np.zeros((2))
     ci_corr_iv1tr_iv2tr[model] = np.zeros((2))
     dist_corr_iv1tr_is = np.zeros((args.n_iter))
     dist_corr_iv1tr_iv1tr = np.zeros((args.n_iter))
     dist_corr_iv1tr_iv2tr = np.zeros((args.n_iter))
+
     for i in tqdm(range(args.n_iter)):
         idx = resample(np.arange(len(args.subjects)))
         dist_corr_iv1tr_is[i] = np.mean(corr_iv1tr_is_avg[model][idx])
         dist_corr_iv1tr_iv1tr[i] = np.mean(corr_iv1tr_iv1tr_avg[model][idx])
         dist_corr_iv1tr_iv2tr[i] = np.mean(corr_iv1tr_iv2tr_avg[model][idx])
+
     ci_corr_iv1tr_is[model][0] = np.percentile(dist_corr_iv1tr_is, 2.5)
     ci_corr_iv1tr_is[model][1] = np.percentile(dist_corr_iv1tr_is, 97.5)
     ci_corr_iv1tr_iv1tr[model][0] = np.percentile(dist_corr_iv1tr_iv1tr, 2.5)
@@ -218,19 +131,57 @@ for model in corr_iv1tr_is_avg.keys():
     ci_corr_iv1tr_iv2tr[model][0] = np.percentile(dist_corr_iv1tr_iv2tr, 2.5)
     ci_corr_iv1tr_iv2tr[model][1] = np.percentile(dist_corr_iv1tr_iv2tr, 97.5)
 
-# Significance testing
-p_val_1 = {}
-p_val_2 = {}
-for model in corr_iv1tr_is_avg.keys():
 
-    p_1 = ttest_rel(corr_iv1tr_iv2tr_avg[model], corr_iv1tr_iv1tr_avg[model],
-        alternative='greater')[1]
-    p_2 = ttest_rel(corr_iv1tr_is_avg[model], corr_iv1tr_iv2tr_avg[model],
-        alternative='greater')[1]
-    pval = np.append(p_1, p_2)
-    pval_corrected = multipletests(pval, 0.05, 'fdr_bh')[1]
-    p_val_1[model] = pval_corrected[0]
-    p_val_2[model] = pval_corrected[1]
+# =============================================================================
+# Noise analysis significance testing (only for the Huze model)
+# =============================================================================
+# Get the actual difference between the noise analysis predictors
+model = 'huze'
+diff_1 = corr_iv1tr_iv2tr_avg[model] - corr_iv1tr_iv1tr_avg[model]
+diff_2 = corr_iv1tr_is_avg[model] - corr_iv1tr_iv2tr_avg[model]
+
+# Create the difference null distribution using permuted t-fMRI
+# responses
+diff_1_null_dist = np.zeros((len(args.subjects), args.n_iter),
+    dtype=np.float32)
+diff_2_null_dist = np.zeros((len(args.subjects), args.n_iter),
+    dtype=np.float32)
+appended_data = np.append(corr_iv1tr_iv2tr[model], corr_iv1tr_iv1tr[model], 1)
+appended_data = np.append(appended_data, corr_iv1tr_is[model], 1)
+for i in tqdm(range(args.n_iter)):
+    n_vertex = len(corr_iv1tr_iv2tr[model][0])
+    idx_perm = rng.choice(n_vertex*3, size=n_vertex*3, replace=False)
+    for s in range(len(args.subjects)):
+        diff_1_null_dist[s,i] = \
+            np.nanmean(appended_data[s,idx_perm[:n_vertex]]) - \
+            np.nanmean(appended_data[s,idx_perm[n_vertex:2*n_vertex]])
+        diff_2_null_dist[s,i] = \
+            np.nanmean(appended_data[s,idx_perm[2*n_vertex:]]) - \
+            np.nanmean(appended_data[s,idx_perm[:n_vertex]])
+
+# Compute the within-subject significance
+within_subj_pval_1 = np.zeros((len(args.subjects)))
+within_subj_pval_2 = np.zeros((len(args.subjects)))
+for s in range(len(args.subjects)):
+    within_subj_pval_1[s] = (np.sum(diff_1_null_dist[s] >= diff_1[s]) + 1) / \
+        (args.n_iter + 1)
+    within_subj_pval_2[s] = (np.sum(diff_2_null_dist[s] >= diff_2[s]) + 1) / \
+        (args.n_iter + 1)
+within_subj_sig_1 = within_subj_pval_1 < 0.01
+within_subj_sig_2 = within_subj_pval_2 < 0.01
+
+# Compute the population-level significance based on population
+# prevalence: this is the probability of observing k or more
+# significant results by chance, based on the CDF of the binomial
+# distribution of within-subject significances.
+n = len(args.subjects) # Total number of subjects
+p = 0.05 # probability of success in each trial
+k_1 = sum(within_subj_sig_1) # Number of significant subjects
+k_2 = sum(within_subj_sig_2) # Number of significant subjects
+# We use "k-1" because otherwise we would get the probability of observing
+# k+1 or more significant results by chance
+between_subj_pval_1 = 1 - binom.cdf(k_1-1, n, p)
+between_subj_pval_2 = 1 - binom.cdf(k_2-1, n, p)
 
 
 # =============================================================================
@@ -241,17 +192,6 @@ results = {
 
     'correlation_nsdcore': correlation_nsdcore,
     'correlation_nsdsynthetic': correlation_nsdsynthetic,
-    'p_val_correlation_nsdcore': p_val_correlation_nsdcore,
-    'p_val_correlation_nsdsynthetic': p_val_correlation_nsdsynthetic,
-    'sig_correlation_nsdcore': sig_correlation_nsdcore,
-    'sig_correlation_nsdsynthetic': sig_correlation_nsdsynthetic,
-
-    'diff_correlation_nsdcore': diff_correlation_nsdcore,
-    'diff_correlation_nsdsynthetic': diff_correlation_nsdsynthetic,
-    'p_val_diff_correlation_nsdcore': p_val_diff_correlation_nsdcore,
-    'p_val_diff_correlation_nsdsynthetic': p_val_diff_correlation_nsdsynthetic,
-    'sig_diff_correlation_nsdcore': sig_diff_correlation_nsdcore,
-    'sig_diff_correlation_nsdsynthetic': sig_diff_correlation_nsdsynthetic,
 
     'corr_iv1tr_is_avg': corr_iv1tr_is_avg,
     'corr_iv1tr_iv2tr_avg': corr_iv1tr_iv2tr_avg,
@@ -259,8 +199,8 @@ results = {
     'ci_corr_iv1tr_is': ci_corr_iv1tr_is,
     'ci_corr_iv1tr_iv2tr': ci_corr_iv1tr_iv2tr,
     'ci_corr_iv1tr_iv1tr': ci_corr_iv1tr_iv1tr,
-    'p_val_1': p_val_1,
-    'p_val_2': p_val_2
+    'between_subj_pval_1': between_subj_pval_1,
+    'between_subj_pval_2': between_subj_pval_2
 }
 
 save_dir = os.path.join(args.berg_dir, 'prediction_accuracy_noise_analysis',

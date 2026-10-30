@@ -88,6 +88,8 @@ t_min_1 = np.where(times == time_window_1_start)[0][0]
 t_max_1 = np.where(times == time_window_1_end)[0][0]
 t_min_2 = np.where(times == time_window_2_start)[0][0]
 t_max_2 = np.where(times == time_window_2_end)[0][0]
+t_min_all = np.where(times == 0.06)[0][0]
+t_max_all = np.where(times == 0.4)[0][0]
 
 
 # =============================================================================
@@ -97,7 +99,7 @@ all_subjects = [1, 2, 3, 4, 5, 6, 7, 8]
 
 
 # =============================================================================
-# Load the t-fMRI responses, and average them across the two time windows
+# Load the t-fMRI responses, and average them across the time windows
 # =============================================================================
 # Load the t-fMRI responses of all subjects
 data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
@@ -120,13 +122,16 @@ elif args.imageset == 'imagenet_all':
 tfmri = np.array(tfmri)
 n_images = tfmri.shape[1]
 
-# Average the t-fMRI responses within the two time windows of interest
+# Average the t-fMRI responses within the time windows of interest
 tfmri_tw_1 = np.mean(tfmri[:,:,t_min_1:t_max_1+1], 2)
 tfmri_tw_2 = np.mean(tfmri[:,:,t_min_2:t_max_2+1], 2)
+tfmri_all = np.mean(tfmri[:,:,t_min_all:t_max_all+1], 2)
+del tfmri
 
 # Z-score the t-fMRI responses of each subject
 tfmri_tw_1 = zscore(tfmri_tw_1, 1)
 tfmri_tw_2 = zscore(tfmri_tw_2, 1)
+tfmri_all = zscore(tfmri_all, 1)
 
 # If cross-validating, remove the CV (test) subject, and average over the
 # remaining (train) subjects. The fMRI responses for the train subjects are
@@ -137,6 +142,7 @@ if args.cv == 0:
     tfmri = {}
     tfmri['time_window_1'] = np.mean(tfmri_tw_1, 0)
     tfmri['time_window_2'] = np.mean(tfmri_tw_2, 0)
+    tfmri['time_window_all'] = np.mean(tfmri_all, 0)
 elif args.cv == 1:
     tfmri_train = {}
     tfmri_test = {}
@@ -144,8 +150,11 @@ elif args.cv == 1:
         tfmri_tw_1, args.cv_subject-1, 0), 0)
     tfmri_train['time_window_2'] = np.mean(np.delete(
         tfmri_tw_2, args.cv_subject-1, 0), 0)
+    tfmri_train['time_window_all'] = np.mean(np.delete(
+        tfmri_all, args.cv_subject-1, 0), 0)
     tfmri_test['time_window_1'] = tfmri_tw_1[args.cv_subject-1]
     tfmri_test['time_window_2'] = tfmri_tw_2[args.cv_subject-1]
+    tfmri_test['time_window_all'] = tfmri_all[args.cv_subject-1]
 del tfmri_tw_1, tfmri_tw_2
 
 
@@ -160,7 +169,7 @@ elif args.cv == 1:
     baseline_img_test = {}
 
 # Create the baseline null distribution
-for tw in ['time_window_1', 'time_window_2']:
+for tw in ['time_window_1', 'time_window_2', 'time_window_all']:
     null_distribution_images = []
     if args.cv == 0:
         null_distribution = []

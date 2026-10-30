@@ -166,27 +166,37 @@ pval_diff['FFA_Faces-Small>Objects-Small'] = ttest_rel(
     vertex_mean_resp['FFA']['Faces-Small'],
     vertex_mean_resp['FFA']['Objects-Small'],
     alternative='greater')[1]
+# Faces > Faces-Small
+pval_diff['FFA_Faces>Faces-Small'] = ttest_rel(
+    vertex_mean_resp['FFA']['Faces'],
+    vertex_mean_resp['FFA']['Faces-Small'],
+    alternative='greater')[1]
 
 # PPA
-# Faces > Objects
+# Scenes > Objects
 pval_diff['PPA_Scenes>Objects'] = ttest_rel(
     vertex_mean_resp['PPA']['Scenes'],
     vertex_mean_resp['PPA']['Objects'],
     alternative='greater')[1]
-# Faces > Objects-Small
+# Scenes > Objects-Small
 pval_diff['PPA_Scenes>Objects-Small'] = ttest_rel(
     vertex_mean_resp['PPA']['Scenes'],
     vertex_mean_resp['PPA']['Objects-Small'],
     alternative='greater')[1]
-# Faces-Small > Objects
+# Scenes-Small > Objects
 pval_diff['PPA_Scenes-Small>Objects'] = ttest_rel(
     vertex_mean_resp['PPA']['Scenes-Small'],
     vertex_mean_resp['PPA']['Objects'],
     alternative='greater')[1]
-# Faces-Small > Objects-Small
+# Scenes-Small > Objects-Small
 pval_diff['PPA_Scenes-Small>Objects-Small'] = ttest_rel(
     vertex_mean_resp['PPA']['Scenes-Small'],
     vertex_mean_resp['PPA']['Objects-Small'],
+    alternative='greater')[1]
+# Scenes > Scenes-Small
+pval_diff['PPA_Scenes>Scenes-Small'] = ttest_rel(
+    vertex_mean_resp['PPA']['Scenes'],
+    vertex_mean_resp['PPA']['Scenes-Small'],
     alternative='greater')[1]
 
 

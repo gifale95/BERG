@@ -46,6 +46,7 @@ time_window_2_end = int(time_window_2_end * 1000)
 
 tw_1 = f'{time_window_1_start}-{time_window_1_end} ms'
 tw_2 = f'{time_window_2_start}-{time_window_2_end} ms'
+tw_all = '60-400 ms'
 
 
 # =============================================================================
@@ -57,20 +58,20 @@ data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
    f'imageset-{args.imageset}', f'stats_roi-{args.roi}.npy')
 stats = np.load(data_dir, allow_pickle=True).item()
 
-# Get univariate responses of both time windows for all subjects and
-# disentangling controlling images
-resp_tw_1_h1 = stats['cv_resp_1']['nc_high_1']
-resp_tw_2_h2 = stats['cv_resp_2']['nc_high_2']
+# Get the univariate responses for baseline and controlling images
+resp_high_all = stats['cv_resp_all']['nc_high_all']
 resp_tw_1_h1l2 = stats['cv_resp_1']['rnc_high_1_low_2']
 resp_tw_1_l1h2 = stats['cv_resp_1']['rnc_low_1_high_2']
 resp_tw_2_h1l2 = stats['cv_resp_2']['rnc_high_1_low_2']
 resp_tw_2_l1h2 = stats['cv_resp_2']['rnc_low_1_high_2']
 base_resp_1 = stats['base_resp_1']
 base_resp_2 = stats['base_resp_2']
-nc_between_subj_pval_tw_1 = stats['nc_between_subj_pval_tw_1']
-nc_between_subj_pval_tw_2 = stats['nc_between_subj_pval_tw_2']
-rnc_between_subj_pval_tw_1 = stats['rnc_between_subj_pval_tw_1']
-rnc_between_subj_pval_tw_2 = stats['rnc_between_subj_pval_tw_2']
+base_resp_all = stats['base_resp_all']
+nc_between_subj_pval = stats['nc_between_subj_pval']
+rnc_between_subj_pval_h1l2_tw_1 = stats['rnc_between_subj_pval_h1l2_tw_1']
+rnc_between_subj_pval_l1h2_tw_1 = stats['rnc_between_subj_pval_l1h2_tw_1']
+rnc_between_subj_pval_h1l2_tw_2 = stats['rnc_between_subj_pval_h1l2_tw_2']
+rnc_between_subj_pval_l1h2_tw_2 = stats['rnc_between_subj_pval_l1h2_tw_2']
 
 # # Load the image statistics
 # data_dir = os.path.join(args.berg_dir, 'eeg_fmri_fusion',
@@ -216,7 +217,7 @@ matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 colors = [(166/255, 77/255, 121/255), (67/255, 103/255, 148/255),
-   (105/255, 105/255, 105/255)]
+   (183/255, 141/255, 48/255)]
     
 # Distribution parameters
 n_grid = 200  # KDE evaluation points
@@ -229,80 +230,104 @@ bar_height = .12  # bracket level above the tallest peak, as a fraction of it
 bar_gap = .05  # gap between each tip and its bracket leg
 bar_linewidth = 1
 text_offset = .02  # asterisk offset above/right of the bracket
-head_room = .35  # extra density-axis space for the annotation
+head_room = .25  # extra density-axis space for the annotation
 
 
 # =============================================================================
 # Plot the univariate responses for the neural control controlling images
 # =============================================================================
-# Create the figure
-fig, axs = plt.subplots(1, 2, sharex=False, sharey=False, figsize=(12, 3))
-axs = np.reshape(axs, -1)
-
-# Loop across time windows
-for tw in range(2):
-
-   # Enforce same length of x- and y-axes
-   # axs[tw].set_box_aspect(1)
-
-   # Get the data
-   if tw == 0:
-      resp = resp_tw_1_h1.flatten()
-      base_resp = base_resp_1.flatten()
-      p_val = nc_between_subj_pval_tw_1
-      title = f'{tw_1}'
-      color = colors[0]
-   else:
-      resp = resp_tw_2_h2.flatten()
-      base_resp = base_resp_2.flatten()
-      p_val = nc_between_subj_pval_tw_2
-      title = f'{tw_2}'
-      color = colors[1]
-
-   # Plot the univariate response distributions
-   all_x = np.append(base_resp, resp)
-   all_x = all_x[np.isfinite(all_x)]
-   grid_x = np.linspace(np.min(all_x)-kde_pad*np.ptp(all_x),
-      np.max(all_x)+kde_pad*np.ptp(all_x), n_grid)
-   density_base_resp = marginal_kde(base_resp, grid_x)
-   density_resp = marginal_kde(resp, grid_x)
-   # axs[tw].plot(grid_x, density_base_resp, color='gray', linewidth=1)
-   axs[tw].fill_between(grid_x, 0, density_base_resp, color='gray', alpha=.5)
-   # axs[tw].plot(grid_x, density_resp, color=color, linewidth=1)
-   axs[tw].fill_between(grid_x, 0, density_resp, color=color, alpha=.5)
-
-   # Plot the title
-   axs[tw].set_title(title, fontsize=fontsize)
-
-   # Plot the significance
-   density_x = np.array([density_base_resp, density_resp])
-   resp_x = np.array([base_resp, resp])
-   pos_x, tip_x = anchor_positions(density_x, grid_x, resp_x, bar_anchor)
-   max_x = np.max(density_x)
-   bar_level_x = max_x * (1 + bar_height)
-   axs[tw].plot([pos_x[0], pos_x[0], pos_x[1], pos_x[1]],
-      [tip_x[0]+bar_gap*max_x, bar_level_x, bar_level_x, tip_x[1]+bar_gap*max_x],
-      color='k', linewidth=bar_linewidth, solid_capstyle='butt',
-      label='_nolegend_')
-   axs[tw].text(np.mean(pos_x), bar_level_x+text_offset*max_x,
-      p_to_asterisks(p_val), ha='center', va='bottom', color='k')
-
-   # x-axis parameters
-   xlabel = 'Univariate response'
-   axs[tw].set_xlabel(xlabel, fontsize=fontsize)
-   axs[tw].set_xlim(min(all_x)-kde_pad*np.ptp(all_x),
-      max(all_x)+kde_pad*np.ptp(all_x))
-
-   # y-axis parameters
-   axs[tw].set_yticks([])
-   axs[tw].set_ylim(0) 
-   if tw == 0:
-      ylabel = 'Image count'
-      axs[tw].set_ylabel(ylabel, fontsize=fontsize)
+# Plot color
+color = colors[2]
+ 
+# Get the data
+resp_y = resp_high_all.flatten()
+resp_y_avg = np.mean(resp_high_all, 1)
+base_resp_y_avg = np.mean(base_resp_all)
+p_val_y = nc_between_subj_pval
+ 
+# Layout parameters (inches). The x axis is hidden, so the x data units are
+# inches too: jitter and strip_pad are physical sizes.
+panel_height = 2.5  # Height of the strip and density panels
+marg_width = .625  # Width of the density panel
+panel_gap = .06  # Gap between the strip and density panels
+jitter = .3  # Half-width of the horizontal scatter of the single images
+# White space left and right of the strip (keep it above ~.05, otherwise the
+# outermost dots get clipped at the panel edges)
+strip_pad = .1
+fig_margin = 1  # Room around the panels for ticks, labels and asterisks
+rng = np.random.default_rng(seed=20200220)
+ 
+# Create the figure. Panel sizes are fixed in inches, so the strip panel is
+# exactly as wide as the strip plus its padding.
+strip_panel_width = 2*(jitter+strip_pad)
+fig_width = 2*fig_margin + strip_panel_width + panel_gap + marg_width
+fig_height = 2*fig_margin + panel_height
+fig = plt.figure(figsize=(fig_width, fig_height))
+ax_strip = fig.add_axes((fig_margin/fig_width, fig_margin/fig_height,
+    strip_panel_width/fig_width, panel_height/fig_height))
+ax_marg_y = fig.add_axes(((fig_margin+strip_panel_width+panel_gap)/fig_width,
+    fig_margin/fig_height, marg_width/fig_width, panel_height/fig_height),
+    sharey=ax_strip)
+ 
+# Plot the baseline mean activity
+ax_strip.plot([-jitter, jitter], [base_resp_y_avg, base_resp_y_avg], '--k',
+    alpha=.25, linewidth=2, zorder=1)
+ 
+# Plot the univariate responses (all images)
+x_jitter = rng.uniform(-jitter, jitter, len(resp_y))
+ax_strip.scatter(x_jitter, resp_y, c=[color], s=50, alpha=.25,
+    edgecolors='k', zorder=2)
+ 
+# Plot the univariate responses (subject average, centered on the strip)
+ax_strip.scatter(np.zeros_like(resp_y_avg), resp_y_avg, c=[color],
+    s=150, alpha=1, edgecolors='k', zorder=3)
+ 
+# Plot the univariate response distribution
+resp_y_finite = resp_y[np.isfinite(resp_y)]
+grid_y = np.linspace(np.min(resp_y_finite)-kde_pad*np.ptp(resp_y_finite),
+    np.max(resp_y_finite)+kde_pad*np.ptp(resp_y_finite), n_grid)
+density_y = marginal_kde(resp_y, grid_y).astype(np.float32)
+# Shape: (n_grid,)
+ax_marg_y.fill_betweenx(grid_y, 0, density_y, color=color, alpha=.25)
+# anchor_positions expects one density row and one response array per
+# condition, so pass the single condition as a list of length 1
+pos_y, tip_y = anchor_positions(density_y[np.newaxis], grid_y, [resp_y],
+    bar_anchor)
+ 
+# Plot the significance
+ax_marg_y.text(tip_y[0], pos_y[0], p_to_asterisks(p_val_y), ha='left',
+    va='center', color='k', rotation=90)
+ 
+# Marginal axis: density only
+max_y = np.max(density_y)
+ax_marg_y.set_xlim(0, max_y*(1+head_room))
+ax_marg_y.set_axis_off()
+ 
+# x-axis parameters (no x axis: there is a single condition)
+ax_strip.set_xlim(-strip_panel_width/2, strip_panel_width/2)
+ax_strip.set_xticks([])
+ax_strip.spines['bottom'].set_visible(False)
+ 
+# y-axis parameters. bbox_inches='tight' ignores the vertical extent of axis
+# labels, so a label longer than the y axis gets cut. Annotations are kept
+# whole, so the label is an annotation placed where set_ylabel would put it:
+# left of the tick labels, centered on the axis.
+ylabel = f'Univariate response\n({tw_all})'
+ax_strip.annotate(ylabel, xy=(0, .5),
+    xycoords=(lambda renderer: ax_strip.yaxis.get_tightbbox(renderer),
+        'axes fraction'),
+    xytext=(-plt.rcParams['axes.labelpad'], 0), textcoords='offset points',
+    rotation=90, ha='right', va='center', multialignment='center',
+    fontsize=fontsize, annotation_clip=False)
+yticks = [-1, -0.5, 0, 0.5, 1]
+ylabels = [-1, -0.5, 0, 0.5, 1]
+# ax_strip.set_yticks(ticks=yticks, labels=ylabels)
+bottom_lim = -(max(resp_y.flatten()) / 2)
+ax_strip.set_ylim(bottom=bottom_lim)
 
 # Save the figure
-file_name = (f'neural_control_roi-{args.roi}_'
-   f'time_window_pair-{args.time_window_pair}_imageset-{args.imageset}.svg')
+file_name = (f'neural_control_roi-{args.roi}_time_window_pair-'
+   f'{args.time_window_pair}_imageset-{args.imageset}.svg')
 fig.savefig(os.path.join(save_dir, file_name), bbox_inches='tight',
    transparent=True, format='svg')
 plt.close()
@@ -318,11 +343,13 @@ resp_x_avg = [np.mean(resp_tw_1_h1l2, 1), np.mean(resp_tw_1_l1h2, 1)]
 resp_y_avg = [np.mean(resp_tw_2_h1l2, 1), np.mean(resp_tw_2_l1h2, 1)]
 base_resp_x_avg = np.mean(base_resp_1)
 base_resp_y_avg = np.mean(base_resp_2)
-p_val_x = rnc_between_subj_pval_tw_1
-p_val_y = rnc_between_subj_pval_tw_2
+p_val_x_h1l2 = rnc_between_subj_pval_h1l2_tw_1
+p_val_x_l1h2 = rnc_between_subj_pval_l1h2_tw_1
+p_val_y_h1l2 = rnc_between_subj_pval_h1l2_tw_2
+p_val_y_l1h2 = rnc_between_subj_pval_l1h2_tw_2
 
 # Create the figure
-fig = plt.figure(figsize=(5, 5))
+fig = plt.figure(figsize=(4, 4))
 gs = fig.add_gridspec(2, 2, width_ratios=(5, 1), height_ratios=(1, 5),
    left=.1, right=.9, bottom=.1, top=.9, wspace=.04, hspace=.04)
 ax_joint = fig.add_subplot(gs[1, 0])
@@ -369,48 +396,41 @@ pos_x, tip_x = anchor_positions(density_x, grid_x, resp_x, bar_anchor)
 pos_y, tip_y = anchor_positions(density_y, grid_y, resp_y, bar_anchor)
 
 # Plot the significance
-max_x = np.max(density_x)
-bar_level_x = max_x * (1 + bar_height)
-ax_marg_x.plot([pos_x[0], pos_x[0], pos_x[1], pos_x[1]],
-   [tip_x[0]+bar_gap*max_x, bar_level_x, bar_level_x, tip_x[1]+bar_gap*max_x],
-   color='k', linewidth=bar_linewidth, solid_capstyle='butt',
-   label='_nolegend_')
-ax_marg_x.text(np.mean(pos_x), bar_level_x+text_offset*max_x,
-   p_to_asterisks(p_val_x), ha='center', va='bottom', color='k')
-max_y = np.max(density_y)
-bar_level_y = max_y * (1 + bar_height)
-ax_marg_y.plot(
-   [tip_y[0]+bar_gap*max_y, bar_level_y, bar_level_y, tip_y[1]+bar_gap*max_y],
-   [pos_y[0], pos_y[0], pos_y[1], pos_y[1]], color='k',
-   linewidth=bar_linewidth, solid_capstyle='butt', label='_nolegend_')
-ax_marg_y.text(bar_level_y+text_offset*max_y, np.mean(pos_y),
-   p_to_asterisks(p_val_y), ha='left', va='center', rotation=-90,
-   rotation_mode='anchor', color='k')
+ax_marg_x.text(pos_x[0], tip_x[0], p_to_asterisks(p_val_x_h1l2), ha='center',
+   va='bottom', color='k')
+ax_marg_x.text(pos_x[1], tip_x[1], p_to_asterisks(p_val_x_l1h2), ha='center',
+   va='bottom', color='k')
+ax_marg_y.text(tip_y[0], pos_y[0], p_to_asterisks(p_val_y_h1l2), ha='left',
+   va='center', color='k', rotation=90)
+ax_marg_y.text(tip_y[1], pos_y[1], p_to_asterisks(p_val_y_l1h2), ha='left',
+   va='center', color='k', rotation=90)
 
 # Drop the spine shared with the joint axis, keep the density axis
+max_x = np.max(density_x)
 ax_marg_x.tick_params(labelbottom=False, bottom=False)
 ax_marg_x.spines['bottom'].set_visible(False)
-ax_marg_x.set_ylim(0, max_x*(1+bar_height+head_room))
+ax_marg_x.set_ylim(0, max_x*(1+head_room))
+max_y = np.max(density_y)
 ax_marg_y.tick_params(labelleft=False, left=False)
 ax_marg_y.spines['left'].set_visible(False)
-ax_marg_y.set_xlim(0, max_y*(1+bar_height+head_room))
+ax_marg_y.set_xlim(0, max_y*(1+head_room))
 for ax_marg in [ax_marg_x, ax_marg_y]:
    ax_marg.set_axis_off()
 
 # x-axis parameters
 xlabel = f'Univariate response\n({tw_1})'
 ax_joint.set_xlabel(xlabel, fontsize=fontsize)
-xticks = [1, -0.5, 0, 0.5, 1]
-xlabels = [1, -0.5, 0, 0.5, 1]
-# plt.xticks(ticks=xticks, labels=xlabels)
+xticks = [-2, 0, 2]
+xlabels = [-2, 0, 2]
+ax_joint.set_xticks(ticks=xticks, labels=xlabels)
 # plt.xlim(left=-.75, right=.75)
 
 # y-axis parameters
 ylabel = f'Univariate response\n({tw_2})'
 ax_joint.set_ylabel(ylabel, fontsize=fontsize)
-yticks = [1, -0.5, 0, 0.5, 1]
-ylabels = [1, -0.5, 0, 0.5, 1]
-# plt.yticks(ticks=yticks, labels=ylabels)
+yticks = [-2, 0, 2]
+ylabels = [-2, 0, 2]
+ax_joint.set_yticks(ticks=yticks, labels=ylabels)
 # plt.ylim(bottom=-1, top=.75)
 
 # Save the figure

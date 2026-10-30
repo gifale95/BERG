@@ -80,9 +80,9 @@ labels['PPA'] = ['Scenes\n(big)', 'Objects\n(big)', 'Scenes\n(small)',
 
 # Significance types
 sig_types_ffa = ['FFA_Faces>Objects', 'FFA_Faces-Small>Objects',
-    'FFA_Faces-Small>Objects-Small']
+    'FFA_Faces-Small>Objects-Small', 'FFA_Faces>Faces-Small']
 sig_types_ppa = ['PPA_Scenes>Objects', 'PPA_Scenes-Small>Objects',
-    'PPA_Scenes-Small>Objects-Small']
+    'PPA_Scenes-Small>Objects-Small', 'PPA_Scenes>Scenes-Small']
 
 # Plot parameters
 n_sub = 8
@@ -129,19 +129,23 @@ for r, roi in enumerate(['FFA', 'PPA']):
             elif pval_diff[sig_type] < 0.01:
                 sig = '*'
             else:
-                sig = ''
-            if sig_type == 'FFA_Faces>Objects' and sig != '':
+                sig = 'n.s.'
+            if sig_type == 'FFA_Faces>Objects':
                 x = [0, 1]
                 y = [np.mean(vertex_mean_resp[roi]['Faces']),
                     np.mean(vertex_mean_resp[roi]['Objects'])]
-            if sig_type == 'FFA_Faces-Small>Objects' and sig != '':
+            elif sig_type == 'FFA_Faces-Small>Objects':
                 x = [1, 2]
                 y = [np.mean(vertex_mean_resp[roi]['Objects']),
                     np.mean(vertex_mean_resp[roi]['Faces-Small'])]
-            if sig_type == 'FFA_Faces-Small>Objects-Small' and sig != '':
+            elif sig_type == 'FFA_Faces-Small>Objects-Small':
                 x = [2, 3]
                 y = [np.mean(vertex_mean_resp[roi]['Faces-Small']),
                     np.mean(vertex_mean_resp[roi]['Objects-Small'])]
+            elif sig_type == 'FFA_Faces>Faces-Small':
+                x = [0, 2]
+                y = [np.mean(vertex_mean_resp[roi]['Faces']),
+                    np.mean(vertex_mean_resp[roi]['Faces-Small'])]
             axs[r].plot(x, y, color='k', linewidth=2, alpha=0.5)
             axs[r].text(np.mean(x), np.mean(y), sig, fontsize=fontsize,
                 ha='center', va='bottom', rotation_mode='anchor',
@@ -158,19 +162,23 @@ for r, roi in enumerate(['FFA', 'PPA']):
             elif pval_diff[sig_type] < 0.01:
                 sig = '*'
             else:
-                sig = ''
-            if sig_type == 'PPA_Scenes>Objects' and sig != '':
+                sig = 'n.s.'
+            if sig_type == 'PPA_Scenes>Objects':
                 x = [0, 1]
                 y = [np.mean(vertex_mean_resp[roi]['Scenes']),
                     np.mean(vertex_mean_resp[roi]['Objects'])]
-            if sig_type == 'PPA_Scenes-Small>Objects' and sig != '':
+            elif sig_type == 'PPA_Scenes-Small>Objects':
                 x = [1, 2]
                 y = [np.mean(vertex_mean_resp[roi]['Objects']),
                     np.mean(vertex_mean_resp[roi]['Scenes-Small'])]
-            if sig_type == 'PPA_Scenes-Small>Objects-Small' and sig != '':
+            elif sig_type == 'PPA_Scenes-Small>Objects-Small':
                 x = [2, 3]
                 y = [np.mean(vertex_mean_resp[roi]['Scenes-Small']),
                     np.mean(vertex_mean_resp[roi]['Objects-Small'])]
+            elif sig_type == 'PPA_Scenes>Scenes-Small':
+                x = [0, 2]
+                y = [np.mean(vertex_mean_resp[roi]['Scenes']),
+                    np.mean(vertex_mean_resp[roi]['Scenes-Small'])]
             axs[r].plot(x, y, color='k', linewidth=2, alpha=0.5)
             axs[r].text(np.mean(x), np.mean(y), sig, fontsize=fontsize,
                 ha='center', va='bottom', rotation_mode='anchor',

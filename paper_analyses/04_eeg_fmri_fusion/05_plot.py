@@ -145,7 +145,12 @@ plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 
 # Define the ROIs to plot
-rois = ['V1', 'V2', 'V3', 'hV4', 'FFA']
+rois = ['V1', 'V2', 'V3', 'hV4', 'FFA', 'PPA']
+
+# Print the peak time point of each ROI
+for roi in rois:
+    peak = times[np.argmax(np.mean(corr_tfmri_fmri_roi[roi], 0))]
+    print(f'Peak time point of {roi}: {np.round(peak*1000)} ms')
 
 # Get the plot colors
 def sample_cmap(N):
@@ -155,22 +160,40 @@ def sample_cmap(N):
     return colors
 colors = sample_cmap(len(rois))
 
-# Format the significance for plotting
+# Format the significance for plotting. The time axis is upsampled with the
+# midpoints between consecutive time points: the curves and CIs then change
+# color halfway between time points, and isolated significant time points
+# still get a line segment (a lone non-NaN point between NaNs is not drawn)
+p_threshold = 0.01
+times_up = np.sort(np.concatenate((times, (times[:-1] + times[1:]) / 2)))
+# Shape: (2*n_times-1)
 sig = {}
-for r, roi in enumerate(rois):
-    sig[roi] = np.zeros((len(times)))
-    sig[roi] = np.nan
-    y_val = -0.05 - 0.01 * r
-    sig[roi][between_subj_pval[roi] < 0.05] = y_val
-
-# Print the peak time point of each ROI
+corr_sig = {}
+corr_nonsig = {}
+ci_sig = {}
+ci_nonsig = {}
 for roi in rois:
-    peak = times[np.argmax(np.mean(corr_tfmri_fmri_roi[roi], 0))]
-    print(f'Peak time point of {roi}: {np.round(peak*1000)} ms')
-
-# Select time points between 0 and 400 ms
-t_idx = np.intersect1d(np.where(times >= 0)[0], np.where(times <= 0.4)[0])
-times_plot = times[t_idx]
+    sig[roi] = between_subj_pval[roi] < p_threshold
+    corr_interp = np.interp(times_up, times,
+        np.mean(corr_tfmri_fmri_roi[roi], 0))
+    # Shape: (2*n_times-1)
+    ci_interp = np.array([np.interp(times_up, times, ci)
+        for ci in ci_corr_tfmri_fmri_roi[roi]])
+    # Shape: (2, 2*n_times-1)
+    # Significance of the time points on either side of each upsampled point
+    # (for original time points, both sides are the time point itself)
+    sig_rep = np.repeat(sig[roi], 2)
+    sig_left = sig_rep[:-1]
+    sig_right = sig_rep[1:]
+    # Midpoints between a significant and a non-significant time point belong
+    # to both parts, so that the significant and non-significant parts join
+    # without gaps
+    mask_sig = sig_left | sig_right
+    mask_nonsig = ~sig_left | ~sig_right
+    corr_sig[roi] = np.where(mask_sig, corr_interp, np.nan)
+    corr_nonsig[roi] = np.where(mask_nonsig, corr_interp, np.nan)
+    ci_sig[roi] = np.where(mask_sig, ci_interp, np.nan)
+    ci_nonsig[roi] = np.where(mask_nonsig, ci_interp, np.nan)
 
 # Create the figure
 fig = plt.figure(figsize=(25, 3))
@@ -181,17 +204,26 @@ plt.plot([-10, 10], [0, 0], 'k--', linewidth=3, alpha=.25, label='_nolegend_')
 # Loop across ROIs
 for r, roi in enumerate(rois):
 
-    # Plot the correlation
-    plt.plot(times_plot, np.mean(corr_tfmri_fmri_roi[roi][:,t_idx], 0),
-        color=colors[r], linewidth=3, label=roi)
+    # Plot the correlation: gray for non-significant time points, ROI color
+    # for significant ones. zorder=2.5 draws the colored segments above the
+    # gray segments of all ROIs (default zorder=2), but below the peak
+    # markers (zorder=3)
+    plt.plot(times_up, corr_nonsig[roi], color=colors[r], linewidth=3,
+        alpha=0.25, label='_nolegend_')
+    plt.plot(times_up, corr_sig[roi], color=colors[r], linewidth=3,
+        zorder=2.5, label=roi)
 
-    # Plot the CIs
-    plt.fill_between(times_plot, ci_corr_tfmri_fmri_roi[roi][1,t_idx],
-        ci_corr_tfmri_fmri_roi[roi][0,t_idx], color=colors[r], alpha=.2)
+    # Plot the CIs: gray for non-significant time points, ROI color for
+    # significant ones (linewidth=0 removes the band outlines, which would
+    # otherwise draw a vertical line at every significance transition)
+    plt.fill_between(times_up, ci_nonsig[roi][1], ci_nonsig[roi][0],
+        color=colors[r], alpha=.1, linewidth=0)
+    plt.fill_between(times_up, ci_sig[roi][1], ci_sig[roi][0],
+        color=colors[r], alpha=.2, linewidth=0)
 
     # Plot the peak time point
-    peak = times_plot[np.argmax(np.mean(corr_tfmri_fmri_roi[roi][:,t_idx], 0))]
-    max_corr = max(np.mean(corr_tfmri_fmri_roi[roi][:,t_idx], 0))
+    peak = times[np.argmax(np.mean(corr_tfmri_fmri_roi[roi], 0))]
+    max_corr = max(np.mean(corr_tfmri_fmri_roi[roi], 0))
     plt.scatter(peak, max_corr, color=colors[r], s=400, marker='o',
         edgecolors='k', linewidths=1, zorder=3, label='_nolegend_')
     ci_low = peak - ci_corr_tfmri_fmri_roi_peak_lat[roi][0]
@@ -200,9 +232,6 @@ for r, roi in enumerate(rois):
     # plt.errorbar(peak, max_corr, xerr=conf_int, fmt="none",
     #     ecolor='k', elinewidth=1, capsize=3)
 
-    # Plot the significance
-    plt.scatter(times, sig[roi], s=100, color=colors[r])
-
 # x-axis parameters
 plt.xlabel('Time (ms)', fontsize=fontsize)
 # xticks = [0, .1, .2, .3, .4]
@@ -210,7 +239,7 @@ plt.xlabel('Time (ms)', fontsize=fontsize)
 xticks = [0, .05, .1, .15, .2, .25, .3, .35, .4]
 xlabels = [0, 50, 100, 150, 200, 250, 300, 350, 400]
 plt.xticks(ticks=xticks, labels=xlabels)
-plt.xlim(left=min(times_plot), right=max(times_plot))
+plt.xlim(left=min(times), right=max(times))
 
 # y-axis parameters
 plt.ylabel("Pearson's $r$", fontsize=fontsize)

@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-01_prediction_accuracy_and_noise_analysis-fmri-03_stats
 #SBATCH --mail-type=end
-#SBATCH --mem=1500
-#SBATCH --time=00:05:00
+#SBATCH --mem=5000
+#SBATCH --time=10:00:00
 #SBATCH --qos=extended
 
 # Activate the Anaconda environment
