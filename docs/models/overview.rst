@@ -56,7 +56,7 @@ You can get detailed information about any model using:
 
 Available models
 ----------------------
-Following is a list of all available models, grouped by ``modality``. The ✅ icon indicates the best model for each ``dataset``.
+Following is a list of all available models, grouped by ``modality``. The 🏆 icon indicates the best model for each ``dataset``.
 
 modality-fmri
 ~~~~~~~~~~~~~
@@ -74,7 +74,7 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Species
      - Stimuli
      - Encoding accuracy
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/fmri-nsd_fsaverage-huze`
      - Mapping of vision transformer image features onto fMRI responses.
      - Natural Scenes Dataset (surface space)
@@ -102,35 +102,35 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd_fsaverage/model-alexnet_untrained/encoding_models_accuracy/>`_
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/fmri-nsd-fwrf`
      - Feature-weighted receptive fields, convolutional neural networks trained end-to-end to predict fMRI responses from input images.
      - Natural Scenes Dataset (volume space)
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-nsd/model-fwrf/encoding_models_accuracy/>`_
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/fmri-bmd-s3d`
      - Linear mapping of 3D CNN video features onto fMRI responses.
      - BOLD Moments Dataset (MNI152 volume space)
      - Human
      - Videos
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-bmd/model-s3d/encoding_models_accuracy/>`_
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/fmri-things_fmri_1-vit_b_32`
      - Linear mapping of vision transformer image features onto whole-brain fMRI responses.
      - THINGS fMRI1
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-things_fmri_1/model-vit_b_32/encoding_models_accuracy/>`_
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual`
      - CNN predicting visual cortex responses (7,831 vertices) for 93 subjects across 8 datasets.
      - MOSAIC (all datasets)
      - Human
      - Images
      - `Accuracy plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-mosaic/model-CNN8_multihead_subAll_verticesVisual/encoding_models_accuracy/>`_
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll`
      - CNN predicting whole-cortex responses (57,051 vertices) for 8 NSD subjects.
      - MOSAIC (NSD)
@@ -151,28 +151,28 @@ Encoding models trained on neural responses recorded with functional Magnetic Re
      - Human
      - Text
      - `Hugging Face Collection <https://huggingface.co/collections/ShreyDixit/text2fmri>`_
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/fmri-cneuromod_algo2025-vibe`
      - Multimodal fMRI encoding model fusing video, audio, and text features via a two-stage Transformer architecture
      - `Algonauts 2025 Challenge <https://algonautsproject.com/2025/braindata.html>`_
      - Human
      - Video + Audio + Text
      - `Accuracy Plots <https://brain-encoding-response-generator.s3.us-west-2.amazonaws.com/index.html#encoding_models/modality-fmri/train_dataset-cneuromod_algo2025/model-vibe/encoding_models_accuracy>`_
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/brainscore_language`
      - Gateway to 10+ GPT-family language models from BrainScore, mapped to human fMRI responses (9 subjects, 384 sentences) via PLS regression. Model weights hosted by BrainScore — not BERG.
      - `Pereira et al., 2018 <https://doi.org/10.1038/s41467-018-03068-4>`_
      - Human
      - Text
      - `BrainScore leaderboard <https://www.brain-score.org>`_
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/fmri-dascoli_2026-tribe_v2`
      - Tri-modal (video, audio, language) Transformer encoding model predicting whole-brain fMRI (20,484 vertices). First place in Algonauts 2025 (263 teams).
      - `Multi-study naturalistic fMRI <https://github.com/facebookresearch/tribev2>`_
      - Human
      - Video + Audio + Text
      - `TRIBE v2 paper <https://ai.meta.com/research/publications/a-foundation-model-of-vision-audition-and-language-for-in-silico-neuroscience/>`_
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/fmri-lebel2023-opt_1_3b`
      - OPT-1.3B–based linear encoding model (contextual LLM embeddings + ridge regression) predicting brain responses to spoken narratives, following `Antonello et al., 2023 <https://arxiv.org/abs/2305.11863>`_.
      - `LeBel et al., 2023 <https://doi.org/10.1038/s41597-023-02437-z>`_
@@ -197,7 +197,7 @@ Encoding models trained on neural responses recorded with Electroencephalography
      - Species
      - Stimuli
      - Encoding accuracy
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/eeg-things_eeg_2-vit_b_32`
      - Linear mapping of vision transformer image features onto EEG responses.
      - THINGS EEG2
@@ -235,7 +235,7 @@ Encoding models trained on neural responses recorded with Magnetoencephalography
      - Species
      - Stimuli
      - Encoding accuracy
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/meg-things_meg_1-vit_b_32`
      - Linear mapping of vision transformer image features onto time-resolved whole-brain MEG responses.
      - THINGS MEG1
@@ -259,7 +259,7 @@ Encoding models trained on neural responses recorded with Utah arrays (intracort
      - Species
      - Stimuli
      - Encoding accuracy
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/utah_array-tvsd-vit_b_32`
      - Linear mapping of vision transformer image features onto time-resolved intracortical spiking activity.
      - THINGS Ventral Stream Spiking Dataset (TVSD)
@@ -283,7 +283,7 @@ Encoding models trained on neural responses recorded with two-photon calcium ima
      - Species
      - Stimuli
      - Encoding accuracy
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/calcium_2p-wang_2025-3DCNN`
      - Foundation model of mouse visual cortex, based on a spatiotemporal convolutional neural network (3D CNN + ConvLSTM).
      - `Wang et al., 2025 <https://doi.org/10.1038/s41586-025-08829-y>`_
@@ -307,7 +307,7 @@ Encoding models trained on extracellular electrophysiology recordings from macaq
      - Species
      - Stimuli
      - Encoding accuracy
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/brainscore_vision`
      - Gateway to 440+ vision models from BrainScore, mapped to macaque electrophysiology recordings (V1, V2, V4, IT) via PLS regression. Model weights hosted by BrainScore — not BERG.
      - `Freeman et al., 2013 <https://doi.org/10.1038/nn.3402>`_ (V1, V2); `Majaj et al., 2015 <https://doi.org/10.1152/jn.00262.2014>`_ (V4, IT)
@@ -331,7 +331,7 @@ Encoding models trained on neural responses recorded with electrocorticography (
      - Species
      - Stimuli
      - Encoding accuracy
-   * - ✅
+   * - 🏆
      - :doc:`model_cards/ecog-zada2025-gpt2_xl`
      - Linear mapping of GPT-2 XL contextual word embeddings onto time-resolved high-gamma ECoG activity during natural speech comprehension.
      - `Zada et al., 2025 <https://doi.org/10.1038/s41597-025-05462-2>`_
