@@ -1,4 +1,4 @@
-// Mobile menu and copy buttons. Everything here responds to the visitor; nothing runs on its own.
+// Colour theme switch, mobile menu and copy buttons. Everything here responds to the visitor; nothing runs on its own.
 (function () {
   "use strict";
 
@@ -25,6 +25,35 @@
         toggle.focus();
       }
     });
+  }
+
+  // ----------------------------------------------------------- colour theme
+  // Cycles auto → light → dark, like alegifford.com. "auto" follows the system setting.
+  // The saved choice is applied by the inline script in the page head before the page is drawn.
+  var THEMES = ["auto", "light", "dark"];
+  var THEME_ICONS = { auto: "◐", light: "○", dark: "●" };
+
+  function initTheme() {
+    var toggle = document.querySelector(".theme-toggle");
+    if (!toggle) return;
+    var root = document.documentElement;
+    var current = root.getAttribute("data-theme") || "auto";
+    if (THEMES.indexOf(current) === -1) current = "auto";
+
+    function show(theme) {
+      toggle.querySelector(".theme-icon").textContent = THEME_ICONS[theme];
+      toggle.querySelector(".theme-label").textContent = theme;
+      var next = THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length];
+      toggle.setAttribute("aria-label", "Colour theme: " + theme + ". Switch to " + next + ".");
+    }
+    toggle.addEventListener("click", function () {
+      current = THEMES[(THEMES.indexOf(current) + 1) % THEMES.length];
+      root.setAttribute("data-theme", current);
+      try { localStorage.setItem("berg-theme", current); } catch (e) { /* not saved, still applied */ }
+      show(current);
+    });
+    show(current);
+    toggle.hidden = false;
   }
 
   // ----------------------------------------------------------- copy buttons
@@ -86,6 +115,7 @@
   };
 
   document.addEventListener("DOMContentLoaded", function () {
+    initTheme();
     initMenu();
     window.BERG.addCopyButtons(document);
   });

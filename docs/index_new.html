@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="auto">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -16,7 +16,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&display=swap">
   <link rel="stylesheet" href="assets/css/berg.css">
-  <script>document.documentElement.classList.add("js");</script>
+  <script>
+    document.documentElement.classList.add("js");
+    try {
+      var savedTheme = localStorage.getItem("berg-theme");
+      if (savedTheme === "light" || savedTheme === "dark") document.documentElement.setAttribute("data-theme", savedTheme);
+    } catch (e) {}
+  </script>
   <script src="assets/js/site.js" defer></script>
   <script src="assets/js/explorer.js" defer></script>
   <script src="assets/js/overview.js" defer></script>
@@ -29,6 +35,9 @@
       <a class="brand" href="#top">
         <img src="img/berg_logo_small.png" alt="BERG home" width="1085" height="343">
       </a>
+      <button class="theme-toggle" type="button" hidden>
+        <span class="theme-icon" aria-hidden="true">◐</span><span class="theme-label">auto</span>
+      </button>
       <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" hidden>Menu</button>
       <nav class="site-nav" id="site-nav" aria-label="Main">
         <ul role="list">
@@ -37,6 +46,8 @@
           <li><a href="#resources">Resources</a></li>
           <li><a href="#contribute">Contribute</a></li>
           <li><a href="#team">Team</a></li>
+          <li><a href="#contact">Contact</a></li>
+          <li><a href="#citation">Citation</a></li>
         </ul>
       </nav>
     </div>
@@ -57,12 +68,10 @@
           </p>
           <div class="intro-actions">
             <a class="button button-primary" href="#models">Browse models</a>
+            <a class="button button-secondary" href="https://drive.google.com/file/d/1W9n0hWZ08oOZQ48SJMgLCSfaiI6b_aRn/view">Read paper</a>
             <a class="button button-secondary" href="https://brain-encoding-response-generator.readthedocs.io/en/latest/">Read docs</a>
+            <a class="button button-secondary" href="https://github.com/gifale95/BERG">GitHub</a>
           </div>
-          <p class="intro-links">
-            <a href="https://drive.google.com/file/d/1W9n0hWZ08oOZQ48SJMgLCSfaiI6b_aRn/view">Paper</a>
-            <a href="https://github.com/gifale95/BERG">GitHub</a>
-          </p>
         </div>
 
         <!-- Images and values come from scripts/website/make_overview_figure.py; overview.js draws the chart. -->
@@ -590,39 +599,47 @@
         <h2 id="team-title">Team</h2>
         <ul class="team-grid" role="list">
           <li class="person">
-            <img src="img/ale.png" alt="" width="425" height="425" loading="lazy" decoding="async">
-            <h3><a href="https://www.alegifford.com/">Alessandro Gifford</a></h3>
-            <p>Postdoc</p>
-            <p>Freie Universität Berlin</p>
+            <a href="https://www.alegifford.com/">
+              <img src="img/ale.png" alt="" width="425" height="425" loading="lazy" decoding="async">
+              <h3>Alessandro Gifford</h3>
+              <p>Postdoc</p>
+              <p>Freie Universität Berlin</p>
+            </a>
           </li>
           <li class="person">
-            <img src="img/Dom.png" alt="" width="786" height="808" loading="lazy" decoding="async">
-            <h3><a href="https://toastydom.github.io/">Domenic Bersch</a></h3>
-            <p>Lead Developer · PhD Student</p>
-            <p>Goethe University Frankfurt</p>
+            <a href="https://toastydom.github.io/">
+              <img src="img/Dom.png" alt="" width="786" height="808" loading="lazy" decoding="async">
+              <h3>Domenic Bersch</h3>
+              <p>Lead Developer · PhD Student</p>
+              <p>Goethe University Frankfurt</p>
+            </a>
           </li>
           <li class="person">
-            <img src="img/gemma_new.png" alt="" width="418" height="430" loading="lazy" decoding="async">
-            <h3><a href="http://www.cvai.cs.uni-frankfurt.de/">Gemma Roig</a></h3>
-            <p>Professor, Computer Vision &amp; AI</p>
-            <p>Goethe University Frankfurt</p>
+            <a href="http://www.cvai.cs.uni-frankfurt.de/">
+              <img src="img/gemma_new.png" alt="" width="418" height="430" loading="lazy" decoding="async">
+              <h3>Gemma Roig</h3>
+              <p>Professor, Computer Vision &amp; AI</p>
+              <p>Goethe University Frankfurt</p>
+            </a>
           </li>
           <li class="person">
-            <img src="img/radek.png" alt="" width="300" height="299" loading="lazy" decoding="async">
-            <h3><a href="https://www.ewi-psy.fu-berlin.de/en/einrichtungen/arbeitsbereiche/neural_dyn_of_vis_cog/index.html">Radoslaw Cichy</a></h3>
-            <p>Professor, Neural Dynamics of Visual Cognition</p>
-            <p>Freie Universität Berlin</p>
+            <a href="https://www.ewi-psy.fu-berlin.de/en/einrichtungen/arbeitsbereiche/neural_dyn_of_vis_cog/index.html">
+              <img src="img/radek.png" alt="" width="300" height="299" loading="lazy" decoding="async">
+              <h3>Radoslaw Cichy</h3>
+              <p>Professor, Neural Dynamics of Visual Cognition</p>
+              <p>Freie Universität Berlin</p>
+            </a>
           </li>
         </ul>
 
         <div class="contact-cite">
           <div class="contact" id="contact">
-            <h3>Contact</h3>
+            <h2>Contact</h2>
             <p>For inquiries, contact us at
               <a href="mailto:brain.berg.info@gmail.com">brain.berg.info@gmail.com</a>.</p>
           </div>
-          <div class="cite">
-            <h3>Citation</h3>
+          <div class="cite" id="citation">
+            <h2>Citation</h2>
             <p>If you use BERG, please cite:</p>
             <p class="reference">
               Gifford AT, Bersch D, Janini D, Roig G, Cichy RM. 2026. A resource of encoding models for in silico
@@ -652,11 +669,6 @@
   <footer class="site-footer">
     <div class="container footer-inner">
       <img class="footer-logo" src="img/berg_logo_small.png" alt="BERG" width="1085" height="343" loading="lazy">
-      <ul class="footer-links" role="list">
-        <li><a href="mailto:brain.berg.info@gmail.com">Contact</a></li>
-        <li><a href="https://github.com/gifale95/BERG">GitHub</a></li>
-        <li><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/">Documentation</a></li>
-      </ul>
       <p>&copy; 2026 The BERG Project. All rights reserved.</p>
     </div>
   </footer>

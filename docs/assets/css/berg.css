@@ -17,6 +17,9 @@
   --brand: #A64D79;          /* sampled from the logo: fills, borders, the logo itself */
   --brand-hover: #B85A88;
   --link: #E58AB5;           /* the logo purple, lightened for text on dark */
+  --header-bg: rgba(22, 22, 24, 0.92);
+  --bar: #A64D79;            /* chart bars; the area matching the image is highlighted */
+  --bar-match: #E58AB5;
 
   --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
@@ -27,6 +30,45 @@
   --section-gap: 4rem;
   --radius: 6px;
   --header-h: 3.75rem;
+}
+/* Light theme: chosen with the header toggle, or by the system setting when the toggle is on "auto" */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #FAF9F7;
+  --surface: #F1EFEB;
+  --surface-2: #E7E4DE;
+  --bg-alt: #E7E4DE;
+  --code-bg: #F1EFEB;
+  --line: #E2DED8;
+  --line-strong: #CBC6BE;
+  --ink: #1C1A18;
+  --ink-2: #46423D;
+  --ink-3: #6B665F;
+  --brand-hover: #8C3A63;
+  --link: #8C3A63;           /* the logo purple, darkened for text on light */
+  --header-bg: rgba(250, 249, 247, 0.92);
+  --bar: #A64D79;
+  --bar-match: #6E2348;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #FAF9F7;
+    --surface: #F1EFEB;
+    --surface-2: #E7E4DE;
+    --bg-alt: #E7E4DE;
+    --code-bg: #F1EFEB;
+    --line: #E2DED8;
+    --line-strong: #CBC6BE;
+    --ink: #1C1A18;
+    --ink-2: #46423D;
+    --ink-3: #6B665F;
+    --brand-hover: #8C3A63;
+    --link: #8C3A63;           /* the logo purple, darkened for text on light */
+    --header-bg: rgba(250, 249, 247, 0.92);
+    --bar: #A64D79;
+    --bar-match: #6E2348;
+  }
 }
 @media (min-width: 48rem) {
   :root { --text: 1.125rem; --gutter: 2rem; --section-gap: 5.5rem; }
@@ -117,7 +159,7 @@ code { font-size: 0.875em; }
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(22, 22, 24, 0.92);
+  background: var(--header-bg);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
@@ -151,7 +193,25 @@ code { font-size: 0.875em; }
   .js .site-nav ul { flex-direction: column; gap: 0; }
   .js .site-nav a { display: block; padding: 0.7rem 0; border-top: 1px solid var(--line); }
 }
-@media (min-width: 48rem) { .nav-toggle { display: none; } }
+@media (min-width: 48rem) {
+  .nav-toggle { display: none; }
+  .site-nav { order: 1; }
+  .theme-toggle { order: 2; }
+}
+
+/* Theme switch: auto, light, dark (as on alegifford.com) */
+.theme-toggle {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-family: var(--font-mono); font-size: 0.75rem;
+  color: var(--ink-3);
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  cursor: pointer;
+}
+.theme-toggle:hover { color: var(--ink); border-color: var(--brand); }
+.theme-icon { font-size: 0.85rem; line-height: 1; }
 
 /* ---------------------------------------------------------------- buttons */
 
@@ -187,7 +247,6 @@ code { font-size: 0.875em; }
 .intro-tagline { margin-top: 1rem; font-size: 1.3em; line-height: 1.4; color: var(--ink); }
 .intro .lede { margin-top: 1rem; }
 .intro-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
-.intro-links { display: flex; gap: 1.5rem; margin-top: 1.1rem; font-size: 0.975rem; }
 @media (min-width: 60rem) { .intro { padding-top: 4.5rem; } }
 
 /* Overview figure: stimulus, model, predicted response */
@@ -277,8 +336,8 @@ code { font-size: 0.875em; }
 .response-chart .area-sub { font-size: 11px; }
 .chart-grid { stroke: var(--line); }
 .chart-zero { stroke: var(--ink-3); }
-.bar { fill: var(--brand); transition: fill 0.3s; }
-.bar.is-match { fill: var(--link); }
+.bar { fill: var(--bar); transition: fill 0.3s; }
+.bar.is-match { fill: var(--bar-match); }
 .dot { fill: var(--ink-2); stroke: var(--surface); stroke-width: 1.5; }
 .chart-tip {
   position: absolute;
@@ -601,6 +660,8 @@ code { font-size: 0.875em; }
 }
 @media (min-width: 30rem) { .team-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (min-width: 60rem) { .team-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2rem; } }
+/* The whole entry links to the personal page */
+.person a { display: block; text-align: center; text-decoration: none; color: inherit; }
 .person img {
   width: 100%;
   max-width: 12rem;
@@ -608,13 +669,14 @@ code { font-size: 0.875em; }
   object-fit: cover;
   border-radius: 50%;
   background: var(--surface-2);
-  margin-bottom: 1.1rem;
+  margin: 0 auto 1.1rem;
+  transition: opacity 0.15s;
 }
-.person h3 { font-size: 1.2rem; margin-bottom: 0.35rem; }
-.person h3 a { color: var(--ink); text-decoration: none; }
-.person h3 a:hover { color: var(--link); text-decoration: underline; }
+.person h3 { font-size: 1.2rem; margin-bottom: 0.35rem; color: var(--ink); }
 .person p { font-size: 0.95rem; color: var(--ink-2); line-height: 1.45; }
 .person p + p { margin-top: 0.15rem; color: var(--ink-3); }
+.person a:hover img { opacity: 0.85; }
+.person a:hover h3 { color: var(--link); text-decoration: underline; text-underline-offset: 0.2em; }
 
 .contact-cite {
   display: grid;
@@ -625,9 +687,8 @@ code { font-size: 0.875em; }
 }
 @media (min-width: 60rem) { .contact-cite { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 4rem; } }
 .contact-cite > * { min-width: 0; }
-.contact-cite h3 { margin-bottom: 0.6rem; }
-.contact p { color: var(--ink-2); font-size: 1rem; }
-.cite .reference { color: var(--ink-2); font-size: 1rem; }
+.contact-cite h2 { margin-bottom: 1rem; }
+.contact-cite p { color: var(--ink-2); }
 .bibtex { margin-top: 0.75rem; }
 .bibtex summary { cursor: pointer; font-size: 0.95rem; color: var(--link); width: max-content; }
 .bibtex summary:hover { color: var(--ink); }
@@ -643,9 +704,6 @@ code { font-size: 0.875em; }
 }
 .footer-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 2rem; }
 .footer-logo { width: 4.5rem; }
-.footer-links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; }
-.footer-links a { color: var(--ink-2); text-decoration: none; }
-.footer-links a:hover { color: var(--link); }
 .footer-inner > p { margin-left: auto; }
 @media (max-width: 47.99rem) { .footer-inner > p { margin-left: 0; width: 100%; } }
 
