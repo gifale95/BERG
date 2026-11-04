@@ -1,0 +1,296 @@
+{
+  "_readme": "Hand-edited fields for the website catalog. Facts (modality, species, stimuli, dataset, architecture) come from berg/models/model_cards/*.yaml; this file holds readable titles, short labels, grouping and snippets. Run scripts/website/build_catalog.py after editing. snippet_verified is false or a hash written by scripts/website/verify_snippets.py --write; never edit it by hand.",
+
+  "docs_base": "https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/",
+
+  "vocabulary": {
+    "modality": [
+      {"key": "fmri", "label": "fMRI", "aliases": ["fMRI"]},
+      {"key": "eeg", "label": "EEG", "aliases": ["EEG"]},
+      {"key": "meg", "label": "MEG", "aliases": ["MEG"]},
+      {"key": "ecog", "label": "ECoG", "aliases": ["ECoG"]},
+      {"key": "utah_array", "label": "Utah array", "aliases": ["Utah arrays"]},
+      {"key": "ephys", "label": "Electrophysiology", "inline_label": "electrophysiology", "aliases": ["ephys"]},
+      {"key": "calcium_2p", "label": "Two-photon calcium imaging", "inline_label": "two-photon calcium imaging", "aliases": ["Two-photon calcium imaging"]}
+    ],
+    "species": [
+      {"key": "human", "label": "Human", "aliases": ["Human"]},
+      {"key": "macaque", "label": "Macaque", "inline_label": "macaque", "aliases": ["Macaque"]},
+      {"key": "mouse", "label": "Mouse", "inline_label": "mouse", "aliases": ["Mouse"]}
+    ],
+    "stimulus_types": [
+      {"key": "images", "label": "Images"},
+      {"key": "videos", "label": "Videos", "inline_label": "videos"},
+      {"key": "audio", "label": "Audio", "inline_label": "audio"},
+      {"key": "text", "label": "Text", "inline_label": "text"}
+    ],
+    "stimuli_aliases": {
+      "Images": {"types": ["images"], "label": "Images"},
+      "Videos": {"types": ["videos"], "label": "Videos"},
+      "3 second videos": {"types": ["videos"], "label": "Videos (about 3 s)"},
+      "Text": {"types": ["text"], "label": "Text"},
+      "Text (natural speech transcript)": {"types": ["text"], "label": "Text (speech transcripts)"},
+      "Text (spoken narrative stories with word onset times)": {"types": ["text"], "label": "Text (narratives with word onsets)"},
+      "Video + Audio + Text": {"types": ["videos", "audio", "text"], "label": "Video + audio + text, combined"},
+      "Video, Audio, Text": {"types": ["videos", "audio", "text"], "label": "Video, audio or text"}
+    }
+  },
+
+  "groups": [
+    {"key": "nsd_fsaverage", "label": "Natural Scenes Dataset, fsaverage surface space"},
+    {"key": "nsd_native", "label": "Natural Scenes Dataset, subject-native volume space"},
+    {"key": "things_fmri_1", "label": "THINGS fMRI1"},
+    {"key": "mosaic", "label": "MOSAIC"},
+    {"key": "bmd", "label": "BOLD Moments Dataset"},
+    {"key": "cneuromod", "label": "CNeuroMod, Algonauts 2025"},
+    {"key": "tribe_v2", "label": "TRIBE v2, multi-study naturalistic fMRI"},
+    {"key": "lebel2023", "label": "LeBel et al. (2023)"},
+    {"key": "tuckute2024", "label": "Tuckute et al. (2024)"},
+    {"key": "brainscore_language", "label": "BrainScore language"},
+    {"key": "things_eeg_2", "label": "THINGS EEG2"},
+    {"key": "things_meg_1", "label": "THINGS MEG1"},
+    {"key": "zada2025", "label": "Zada et al. (2025)"},
+    {"key": "tvsd", "label": "THINGS Ventral Stream Spiking Dataset (TVSD)"},
+    {"key": "brainscore_vision", "label": "BrainScore vision"},
+    {"key": "wang2025", "label": "Wang et al. (2025)"}
+  ],
+
+  "models": {
+    "fmri-nsd_fsaverage-huze": {
+      "title": "Human fMRI responses to images",
+      "dataset": "NSD, fsaverage surface",
+      "architecture": "DINOv2 vision transformer",
+      "group": "nsd_fsaverage",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"fmri-nsd_fsaverage-huze\", subject=1)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "fmri-nsd_fsaverage-vit_b_32": {
+      "title": "Human fMRI responses to images",
+      "dataset": "NSD, fsaverage surface",
+      "architecture": "ViT-B/32",
+      "group": "nsd_fsaverage",
+      "order": 2,
+      "snippet": "model = berg.get_encoding_model(\"fmri-nsd_fsaverage-vit_b_32\", subject=1)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "fmri-nsd_fsaverage-alexnet": {
+      "title": "Human fMRI responses to images",
+      "dataset": "NSD, fsaverage surface",
+      "architecture": "AlexNet",
+      "group": "nsd_fsaverage",
+      "order": 3,
+      "snippet": "model = berg.get_encoding_model(\"fmri-nsd_fsaverage-alexnet\", subject=1)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "fmri-nsd_fsaverage-alexnet_untrained": {
+      "title": "Human fMRI responses to images",
+      "dataset": "NSD, fsaverage surface",
+      "architecture": "AlexNet, untrained",
+      "variant_note": "Untrained control",
+      "group": "nsd_fsaverage",
+      "order": 4,
+      "snippet": "model = berg.get_encoding_model(\"fmri-nsd_fsaverage-alexnet_untrained\", subject=1)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "fmri-nsd-fwrf": {
+      "title": "Human fMRI responses to images",
+      "dataset": "NSD, subject-native volume",
+      "architecture": "Feature-weighted receptive field (fwRF)",
+      "group": "nsd_native",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"fmri-nsd-fwrf\", subject=1, selection={\"roi\": \"V1\"})\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "fmri-things_fmri_1-vit_b_32": {
+      "title": "Human fMRI responses to images",
+      "dataset": "THINGS fMRI1",
+      "architecture": "ViT-B/32",
+      "group": "things_fmri_1",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\n    \"fmri-things_fmri_1-vit_b_32\",\n    subject=1,\n    selection={\"roi\": [\"V1\", \"V2\", \"IT\"]},\n)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "fmri-mosaic-CNN8_multihead_subAll_verticesVisual": {
+      "title": "Human fMRI responses to images, visual cortex",
+      "dataset": "MOSAIC, 8 datasets, visual cortex",
+      "architecture": "CNN8, multi-head",
+      "group": "mosaic",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"fmri-mosaic-CNN8_multihead_subAll_verticesVisual\", subject=\"NSD-01\")\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "fmri-mosaic-CNN8_multihead_subNSD_verticesAll": {
+      "title": "Human fMRI responses to images, whole cortex",
+      "dataset": "MOSAIC, NSD subjects, whole cortex",
+      "architecture": "CNN8, multi-head",
+      "group": "mosaic",
+      "order": 2,
+      "snippet": "model = berg.get_encoding_model(\"fmri-mosaic-CNN8_multihead_subNSD_verticesAll\", subject=1)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "fmri-bmd-s3d": {
+      "title": "Human fMRI responses to videos",
+      "dataset": "BOLD Moments Dataset, MNI152 volume",
+      "architecture": "S3D (3D CNN)",
+      "group": "bmd",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"fmri-bmd-s3d\", subject=1)\nresponses = berg.encode(model, videos)  # videos: uint8 array [n, frames, 3, H, W]",
+      "snippet_inputs": {"videos": "rgb_videos"},
+      "snippet_verified": false
+    },
+    "fmri-cneuromod_algo2025-vibe": {
+      "title": "Human fMRI responses to movies",
+      "dataset": "CNeuroMod, Algonauts 2025",
+      "architecture": "VIBE multimodal transformer",
+      "group": "cneuromod",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"fmri-cneuromod_algo2025-vibe\", subject=1)\nresponses = berg.encode(model, transcripts, video_path=\"movie.mp4\")  # one transcript string per TR",
+      "snippet_inputs": {"transcripts": "tr_transcripts"},
+      "snippet_files": {"movie.mp4": "video"},
+      "snippet_verified": false
+    },
+    "fmri-cneuromod_algo2025-text2fmri": {
+      "title": "Human fMRI responses to text",
+      "dataset": "CNeuroMod, Algonauts 2025",
+      "architecture": "Text2fMRI language model",
+      "group": "cneuromod",
+      "order": 2,
+      "snippet": "model = berg.get_encoding_model(\"fmri-cneuromod_algo2025-text2fmri\", subject=1)\nresponses = berg.encode(model, transcripts)  # one transcript string per TR",
+      "snippet_inputs": {"transcripts": "tr_transcripts"},
+      "snippet_verified": false
+    },
+    "fmri-dascoli_2026-tribe_v2": {
+      "title": "Human whole-brain fMRI responses to video, audio or text",
+      "dataset": "d'Ascoli et al. (2026): CNeuroMod, BOLD Moments, LeBel 2023, Wen 2017",
+      "architecture": "TRIBE v2 multimodal transformer",
+      "group": "tribe_v2",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"fmri-dascoli_2026-tribe_v2\")\nresponses = berg.encode(model, \"movie.mp4\")  # path to a video, audio or text file",
+      "snippet_inputs": {},
+      "snippet_files": {"movie.mp4": "video"},
+      "snippet_verified": false
+    },
+    "fmri-lebel2023-opt_1_3b": {
+      "title": "Human fMRI responses to narrative text",
+      "dataset": "LeBel et al. (2023)",
+      "architecture": "OPT-1.3B with ridge regression",
+      "group": "lebel2023",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"fmri-lebel2023-opt_1_3b\", subject=\"UTS03\")\nstory = {\n    \"words\": [\"I\", \"reached\", \"over\", \"and\", \"slowly\", \"undid\", \"my\", \"seatbelt\"],\n    \"word_onsets\": [0.0, 0.3, 0.6, 0.85, 1.1, 1.5, 1.8, 2.0],\n}\nresponses = berg.encode(model, story)",
+      "snippet_inputs": {},
+      "snippet_verified": false
+    },
+    "fmri-tuckute_2024-GPT2_XL": {
+      "title": "Human fMRI responses to sentences",
+      "dataset": "Tuckute et al. (2024)",
+      "architecture": "GPT2-XL with ridge regression",
+      "group": "tuckute2024",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"fmri-tuckute_2024-GPT2_XL\")\nresponses = berg.encode(model, [\"Taste that fowl and those fish.\", \"I'm progressive and you fall right.\"])",
+      "snippet_inputs": {},
+      "snippet_verified": false
+    },
+    "brainscore_language": {
+      "title": "Human fMRI responses to sentences",
+      "dataset": "Pereira et al. (2018), via BrainScore",
+      "architecture": "Hundreds of BrainScore language models",
+      "group": "brainscore_language",
+      "order": 1,
+      "provenance": "brainscore",
+      "snippet": "model = berg.get_encoding_model(\"brainscore_language-gpt2\", subject=\"018\")\nresponses = berg.encode(model, [\"The cat sat on the mat.\"])",
+      "snippet_inputs": {},
+      "snippet_verified": false
+    },
+    "eeg-things_eeg_2-vit_b_32": {
+      "title": "Human EEG responses to images",
+      "dataset": "THINGS EEG2",
+      "architecture": "ViT-B/32",
+      "group": "things_eeg_2",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"eeg-things_eeg_2-vit_b_32\", subject=1)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "eeg-things_eeg_2-alexnet": {
+      "title": "Human EEG responses to images",
+      "dataset": "THINGS EEG2",
+      "architecture": "AlexNet",
+      "group": "things_eeg_2",
+      "order": 2,
+      "snippet": "model = berg.get_encoding_model(\"eeg-things_eeg_2-alexnet\", subject=1)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "eeg-things_eeg_2-alexnet_untrained": {
+      "title": "Human EEG responses to images",
+      "dataset": "THINGS EEG2",
+      "architecture": "AlexNet, untrained",
+      "variant_note": "Untrained control",
+      "group": "things_eeg_2",
+      "order": 3,
+      "snippet": "model = berg.get_encoding_model(\"eeg-things_eeg_2-alexnet_untrained\", subject=1)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "meg-things_meg_1-vit_b_32": {
+      "title": "Human MEG responses to images",
+      "dataset": "THINGS MEG1",
+      "architecture": "ViT-B/32",
+      "group": "things_meg_1",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"meg-things_meg_1-vit_b_32\", subject=1)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "ecog-zada2025-gpt2_xl": {
+      "title": "Human ECoG responses to speech transcripts",
+      "dataset": "Zada et al. (2025)",
+      "architecture": "GPT2-XL",
+      "group": "zada2025",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"ecog-zada2025-gpt2_xl\", subject=\"03\")\nresponses = berg.encode(model, [\"The\", \"quick\", \"brown\", \"fox\", \"jumped\"])",
+      "snippet_inputs": {},
+      "snippet_verified": false
+    },
+    "utah_array-tvsd-vit_b_32": {
+      "title": "Macaque spiking responses to images",
+      "dataset": "TVSD",
+      "architecture": "ViT-B/32",
+      "group": "tvsd",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\n    \"utah_array-tvsd-vit_b_32\",\n    subject=\"N\",\n    selection={\"roi\": [\"IT\"]},\n)\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "brainscore_vision": {
+      "title": "Macaque V1, V2, V4 and IT responses to images",
+      "dataset": "Freeman et al. (2013), Majaj et al. (2015), via BrainScore",
+      "architecture": "Hundreds of BrainScore vision models",
+      "group": "brainscore_vision",
+      "order": 1,
+      "provenance": "brainscore",
+      "snippet": "model = berg.get_encoding_model(\"brainscore_vision-alexnet\", selection={\"roi\": \"IT\"})\nresponses = berg.encode(model, images)  # images: uint8 array [n, 3, H, W]",
+      "snippet_inputs": {"images": "rgb_images"},
+      "snippet_verified": false
+    },
+    "calcium_2p-wang_2025-3DCNN": {
+      "title": "Mouse visual cortex responses to videos",
+      "dataset": "Wang et al. (2025)",
+      "architecture": "3D CNN with ConvLSTM",
+      "group": "wang2025",
+      "order": 1,
+      "snippet": "model = berg.get_encoding_model(\"calcium_2p-wang_2025-3DCNN\", train_session=\"session-4_scan-7\")\nresponses = berg.encode(model, videos)  # videos: grayscale uint8 [n, frames, H, W]",
+      "snippet_inputs": {"videos": "gray_videos"},
+      "snippet_verified": false
+    }
+  }
+}

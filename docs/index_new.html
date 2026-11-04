@@ -1,0 +1,664 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BERG – Brain Encoding Response Generator</title>
+  <meta name="description" content="A resource consisting of multiple pre-trained encoding models of the brain and an accompanying Python package to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.">
+  <meta name="theme-color" content="#161618">
+  <link rel="canonical" href="https://www.alegifford.com/BERG/">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="BERG – Brain Encoding Response Generator">
+  <meta property="og:description" content="Promoting in silico neuroscience with a resource of pre-trained encoding models of the brain.">
+  <meta property="og:url" content="https://www.alegifford.com/BERG/">
+  <link rel="icon" type="image/png" href="img/berg_logo_small.png" sizes="32x32">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&display=swap">
+  <link rel="stylesheet" href="assets/css/berg.css">
+  <script>document.documentElement.classList.add("js");</script>
+  <script src="assets/js/site.js" defer></script>
+  <script src="assets/js/explorer.js" defer></script>
+  <script src="assets/js/overview.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="#top">
+        <img src="img/berg_logo_small.png" alt="BERG home" width="1085" height="343">
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" hidden>Menu</button>
+      <nav class="site-nav" id="site-nav" aria-label="Main">
+        <ul role="list">
+          <li><a href="#about">About</a></li>
+          <li><a href="#models">Models</a></li>
+          <li><a href="#resources">Resources</a></li>
+          <li><a href="#contribute">Contribute</a></li>
+          <li><a href="#team">Team</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- Introduction and overview figure -->
+    <section class="intro" id="top" aria-labelledby="intro-title">
+      <div class="container">
+        <div class="intro-text">
+          <img class="intro-logo" src="img/berg_logo_small.png" alt="" width="1085" height="343">
+          <h1 id="intro-title">Brain Encoding Response Generator</h1>
+          <p class="intro-tagline">Promoting in silico neuroscience with a resource of pre-trained encoding models of the brain.</p>
+          <p class="lede">
+            BERG consists of multiple pre-trained encoding models of the brain and an accompanying Python package
+            to generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.
+          </p>
+          <div class="intro-actions">
+            <a class="button button-primary" href="#models">Browse models</a>
+            <a class="button button-secondary" href="https://brain-encoding-response-generator.readthedocs.io/en/latest/">Read docs</a>
+          </div>
+          <p class="intro-links">
+            <a href="https://drive.google.com/file/d/1W9n0hWZ08oOZQ48SJMgLCSfaiI6b_aRn/view">Paper</a>
+            <a href="https://github.com/gifale95/BERG">GitHub</a>
+          </p>
+        </div>
+
+        <!-- Images and values come from scripts/website/make_overview_figure.py; overview.js draws the chart. -->
+        <figure class="overview" aria-labelledby="overview-caption">
+          <ol class="overview-flow" role="list">
+            <li class="overview-step overview-stimulus">
+              <p class="overview-label">Stimulus</p>
+              <div class="stimulus-stage"></div>
+              <div class="stimulus-picker" role="group" aria-label="Example images"></div>
+            </li>
+            <li class="overview-step overview-model">
+              <p class="overview-label">BERG encoding model</p>
+              <div class="overview-model-box">
+                <code>fmri-things_fmri_1-vit_b_32</code>
+                <p>Trained on THINGS fMRI1: fMRI responses of three human subjects to THINGS images</p>
+              </div>
+            </li>
+            <li class="overview-step overview-response">
+              <p class="overview-label">In silico fMRI responses</p>
+              <div class="response-chart"></div>
+            </li>
+          </ol>
+          <noscript><p class="overview-label">The interactive figure needs JavaScript.</p></noscript>
+          <p class="overview-controls">
+            <span class="visually-hidden overview-status" aria-live="polite"></span>
+            <button class="overview-toggle" type="button" aria-pressed="false" hidden>
+              <span class="icon" aria-hidden="true"></span><span class="label">Pause</span>
+            </button>
+          </p>
+          <!-- overview:data:start -->
+          <script type="application/json" id="overview-data">{"model":"fmri-things_fmri_1-vit_b_32","subjects":[1,2,3],"units":"In silico response (z)","areas":[{"key":"V1","name":"Primary visual cortex","category":null,"voxels":[1049,1104,839]},{"key":"V2","name":"Visual area 2","category":null,"voxels":[774,988,660]},{"key":"V3","name":"Visual area 3","category":null,"voxels":[762,830,663]},{"key":"hV4","name":"Human visual area 4","category":null,"voxels":[613,577,472]},{"key":"LOC","name":"Lateral occipital complex","category":"object","voxels":[2700,1175,423]},{"key":"EBA","name":"Extrastriate body area","category":"body","voxels":[1203,711,1614]},{"key":"PPA","name":"Parahippocampal place area","category":"scene","voxels":[809,1196,633]},{"key":"FFA","name":"Fusiform face area","category":"face","voxels":[553,400,247]}],"images":[{"key":"object","label":"Object","src":"img/orange.jpg","alt":"A ripe orange hanging among dark green leaves","fit":"cover","values":[0.041,0.002,0.005,0.037,0.028,-0.05,-0.037,0.011],"subjects":[[0.018,-0.035,-0.026,0.021,-0.022,-0.088,-0.045,0.013],[0.039,0.001,0.03,0.074,0.08,-0.018,-0.012,0.017],[0.067,0.042,0.01,0.015,0.026,-0.043,-0.056,0.004]]},{"key":"body","label":"Body","src":"img/tennis.jpg","alt":"A tennis player in a blue shirt reaching up to serve","fit":"contain","values":[-0.09,-0.069,-0.087,0.004,0.052,0.167,0.006,0.131],"subjects":[[-0.138,-0.11,-0.12,-0.053,0.032,0.132,-0.001,0.1],[-0.126,-0.091,-0.104,0.024,0.109,0.263,0.025,0.231],[-0.006,-0.007,-0.037,0.041,0.016,0.105,-0.006,0.062]]},{"key":"scene","label":"Scene","src":"img/couch.jpg","alt":"A living room with a red sofa, a wooden coffee table and bookshelves","fit":"cover","values":[0.019,0.004,0.023,-0.038,-0.086,-0.033,0.096,-0.026],"subjects":[[0.048,0.027,0.072,0.01,-0.047,-0.0,0.122,-0.016],[-0.031,-0.02,-0.022,-0.081,-0.098,-0.052,0.056,-0.058],[0.041,0.004,0.02,-0.043,-0.114,-0.048,0.111,-0.003]]},{"key":"face","label":"Face","src":"img/face.jpg","alt":"Close-up of a person's face, chin resting on one hand","fit":"cover","values":[-0.055,-0.015,-0.019,0.148,0.091,0.135,-0.026,0.352],"subjects":[[-0.061,0.028,0.02,0.046,0.013,0.096,-0.013,0.25],[-0.165,-0.134,-0.12,0.111,0.184,0.169,-0.071,0.451],[0.062,0.062,0.045,0.287,0.076,0.139,0.007,0.357]]}]}</script>
+          <!-- overview:data:end -->
+          <figcaption id="overview-caption">
+            In silico fMRI responses to four example images, generated with the <code>fmri-things_fmri_1-vit_b_32</code>
+            encoding model and averaged across the voxels of each brain area and across the three subjects (dots
+            indicate individual subjects). For each image, the strongest response among the category-selective areas
+            is in the area selective for that image's category: EBA for the body, PPA for the scene, FFA for the
+            face, and, by a small margin, LOC for the object. The responses are z-scored, so 0 corresponds to a
+            voxel's average response to the THINGS images; this is why the object image results in responses close
+            to 0. Beyond images, BERG's encoding models also cover videos, audio, text, and multimodal stimuli.
+            Photos from <a href="https://cocodataset.org">COCO</a> and <a href="https://osf.io/jum2f">THINGS</a>.
+            <!-- Written for the images and values from the 2026-11-04 run of make_overview_figure.py; check it after a new run. -->
+          </figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- About -->
+    <section class="section" id="about" aria-labelledby="about-title">
+      <div class="container section-split">
+        <h2 id="about-title">About</h2>
+        <div class="prose">
+          <p>
+            The functioning of the brain largely remains unsolved, partly because collecting in vivo neural data is
+            slow and expensive, creating a bottleneck for brain experimentation and discovery. The emerging paradigm
+            of <em>in silico neuroscience</em> addresses this limitation by leveraging encoding models of the brain,
+            algorithms that predict neural responses to massive amounts of sensory stimuli in a fast and economical
+            fashion. The scalability of in silico neural responses – which are used as stand-ins for in vivo neural
+            responses during experimentation and data analysis – allows researchers to test more scientific hypotheses
+            and to upscale exploratory research. Crucially, novel findings from large-scale in silico experimentation
+            are eventually validated in vivo, but with targeted small-scale data collection, therefore optimizing
+            research resources and allowing for faster neuroscientific discovery.
+          </p>
+          <p>
+            To catalyze this emerging research paradigm, we introduce the Brain Encoding Response Generator (BERG),
+            a resource consisting of deep-learning-based encoding models of the brain and a Python package to easily
+            generate accurate in silico neural responses to stimuli. BERG includes a growing, well documented library
+            of encoding models spanning different neural recording modalities (e.g., fMRI, M/EEG, ECoG, animal
+            electrophysiology), species (e.g., human, macaque, mouse), datasets, subjects, brain areas, and sensory
+            stimulation (e.g., visual, auditory, linguistic), thus enabling researchers to address a wide range of
+            research questions through in silico neuroscience.
+          </p>
+          <p>
+            Beyond BERG's native models, BERG is also integrated with <a href="https://www.brain-score.org">BrainScore</a>,
+            giving you access to hundreds of vision models scored against macaque neural recordings (V1, V2, V4, IT),
+            as well as GPT-family language models scored against human fMRI data.
+          </p>
+          <p>
+            We envision that BERG will empower in silico neuroscience, ultimately accelerating scientific discovery.
+            We warmly welcome models, ideas, and collaboration from the neuroscience community.
+          </p>
+          <p class="sidenote">
+            <strong>Note:</strong> In silico neural responses are only as accurate as the encoding models that generate
+            them. For each model's encoding accuracy, refer to its model card in the documentation.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Models -->
+    <section class="section" id="models" aria-labelledby="models-title">
+      <div class="container">
+        <div class="section-intro">
+          <h2 id="models-title">Encoding models</h2>
+          <p>
+            The following list shows all encoding models available in BERG. You can search the list, or filter it by
+            neural recording modality, stimulus type, and species. For more details on each model, refer to its model
+            card in the documentation.
+          </p>
+        </div>
+
+        <div class="explorer">
+          <div class="explorer-controls" hidden>
+            <div class="explorer-search">
+              <label class="visually-hidden" for="model-search">Search models</label>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+              <input id="model-search" type="search" placeholder="Search, for example NSD, THINGS or ViT" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="filter" role="group" aria-labelledby="filter-modality">
+              <span class="filter-name" id="filter-modality">Modality</span>
+              <div class="filter-options" data-filter="modality"></div>
+            </div>
+            <div class="filter" role="group" aria-labelledby="filter-stimulus">
+              <span class="filter-name" id="filter-stimulus">Stimuli</span>
+              <div class="filter-options" data-filter="stimulus"></div>
+            </div>
+            <div class="filter" role="group" aria-labelledby="filter-species">
+              <span class="filter-name" id="filter-species">Species</span>
+              <div class="filter-options" data-filter="species"></div>
+            </div>
+          </div>
+
+          <p class="explorer-count" aria-live="polite"></p>
+
+          <!-- catalog:json:start -->
+          <script type="application/json" id="catalog-data">{"source":"berg/models/model_cards + scripts/website/models_overlay.json","vocabulary":{"modality":[{"key":"fmri","label":"fMRI"},{"key":"eeg","label":"EEG"},{"key":"meg","label":"MEG"},{"key":"ecog","label":"ECoG"},{"key":"utah_array","label":"Utah array"},{"key":"ephys","label":"Electrophysiology"},{"key":"calcium_2p","label":"Two-photon calcium imaging"}],"species":[{"key":"human","label":"Human"},{"key":"macaque","label":"Macaque"},{"key":"mouse","label":"Mouse"}],"stimulus_types":[{"key":"images","label":"Images"},{"key":"videos","label":"Videos"},{"key":"audio","label":"Audio"},{"key":"text","label":"Text"}]},"groups":[{"key":"nsd_fsaverage","label":"Natural Scenes Dataset, fsaverage surface space"},{"key":"nsd_native","label":"Natural Scenes Dataset, subject-native volume space"},{"key":"things_fmri_1","label":"THINGS fMRI1"},{"key":"mosaic","label":"MOSAIC"},{"key":"bmd","label":"BOLD Moments Dataset"},{"key":"cneuromod","label":"CNeuroMod, Algonauts 2025"},{"key":"tribe_v2","label":"TRIBE v2, multi-study naturalistic fMRI"},{"key":"lebel2023","label":"LeBel et al. (2023)"},{"key":"tuckute2024","label":"Tuckute et al. (2024)"},{"key":"brainscore_language","label":"BrainScore language"},{"key":"things_eeg_2","label":"THINGS EEG2"},{"key":"things_meg_1","label":"THINGS MEG1"},{"key":"zada2025","label":"Zada et al. (2025)"},{"key":"tvsd","label":"THINGS Ventral Stream Spiking Dataset (TVSD)"},{"key":"brainscore_vision","label":"BrainScore vision"},{"key":"wang2025","label":"Wang et al. (2025)"}],"models":[{"id":"fmri-nsd_fsaverage-huze","title":"Human fMRI responses to images","dataset":"NSD, fsaverage surface","architecture":"DINOv2 vision transformer","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"nsd_fsaverage","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-huze.html","snippet":null,"snippet_verified":false,"dataset_full":"Natural Scenes Dataset (NSD) (fsaverage surface space)","architecture_full":"Vision transformer (DINOv2)"},{"id":"fmri-nsd_fsaverage-vit_b_32","title":"Human fMRI responses to images","dataset":"NSD, fsaverage surface","architecture":"ViT-B/32","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"nsd_fsaverage","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-vit_b_32.html","snippet":null,"snippet_verified":false,"dataset_full":"Natural Scenes Dataset (NSD) (fsaverage surface space)","architecture_full":"Vision transformer (ViT-B/32)"},{"id":"fmri-nsd_fsaverage-alexnet","title":"Human fMRI responses to images","dataset":"NSD, fsaverage surface","architecture":"AlexNet","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"nsd_fsaverage","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-alexnet.html","snippet":null,"snippet_verified":false,"dataset_full":"Natural Scenes Dataset (NSD) (fsaverage surface space)","architecture_full":"AlexNet"},{"id":"fmri-nsd_fsaverage-alexnet_untrained","title":"Human fMRI responses to images","dataset":"NSD, fsaverage surface","architecture":"AlexNet, untrained","variant_note":"Untrained control","modality":"fmri","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"nsd_fsaverage","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-alexnet_untrained.html","snippet":null,"snippet_verified":false,"dataset_full":"Natural Scenes Dataset (NSD) (fsaverage surface space)","architecture_full":"AlexNet (untrained)"},{"id":"fmri-nsd-fwrf","title":"Human fMRI responses to images","dataset":"NSD, subject-native volume","architecture":"Feature-weighted receptive field (fwRF)","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"nsd_native","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd-fwrf.html","snippet":null,"snippet_verified":false,"dataset_full":"Natural Scenes Dataset (NSD) (subject-native volume space)","architecture_full":"Feature-weighted receptive field (fwRF)"},{"id":"fmri-things_fmri_1-vit_b_32","title":"Human fMRI responses to images","dataset":"THINGS fMRI1","architecture":"ViT-B/32","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"things_fmri_1","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-things_fmri_1-vit_b_32.html","snippet":null,"snippet_verified":false,"dataset_full":"THINGS fMRI1","architecture_full":"Vision transformer (ViT-B/32)"},{"id":"fmri-mosaic-CNN8_multihead_subAll_verticesVisual","title":"Human fMRI responses to images, visual cortex","dataset":"MOSAIC, 8 datasets, visual cortex","architecture":"CNN8, multi-head","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"mosaic","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual.html","snippet":null,"snippet_verified":false,"dataset_full":"MOSAIC (8 datasets, visual cortical vertices)","architecture_full":"CNN8 (8-layer convolutional network)"},{"id":"fmri-mosaic-CNN8_multihead_subNSD_verticesAll","title":"Human fMRI responses to images, whole cortex","dataset":"MOSAIC, NSD subjects, whole cortex","architecture":"CNN8, multi-head","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"mosaic","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll.html","snippet":null,"snippet_verified":false,"dataset_full":"MOSAIC (NSD subjects, all cortical vertices)","architecture_full":"CNN8 (8-layer convolutional network)"},{"id":"fmri-bmd-s3d","title":"Human fMRI responses to videos","dataset":"BOLD Moments Dataset, MNI152 volume","architecture":"S3D (3D CNN)","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["videos"],"stimulus_label":"Videos (about 3 s)","group":"bmd","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-bmd-s3d.html","snippet":null,"snippet_verified":false,"dataset_full":"BOLD Moments Dataset (BMD) (MNI152 volume space)","architecture_full":"3D CNN model (s3d)"},{"id":"fmri-cneuromod_algo2025-vibe","title":"Human fMRI responses to movies","dataset":"CNeuroMod, Algonauts 2025","architecture":"VIBE multimodal transformer","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["videos","audio","text"],"stimulus_label":"Video + audio + text, combined","group":"cneuromod","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod_algo2025-vibe.html","snippet":null,"snippet_verified":false,"dataset_full":"CNeuroMod (Algonauts 2025 challenge preparation)","architecture_full":"Transformers"},{"id":"fmri-cneuromod_algo2025-text2fmri","title":"Human fMRI responses to text","dataset":"CNeuroMod, Algonauts 2025","architecture":"Text2fMRI language model","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["text"],"stimulus_label":"Text","group":"cneuromod","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod_algo2025-text2fmri.html","snippet":null,"snippet_verified":false,"dataset_full":"CNeuroMod (Algonauts 2025 challenge preparation)","architecture_full":"Transformers"},{"id":"fmri-dascoli_2026-tribe_v2","title":"Human whole-brain fMRI responses to video, audio or text","dataset":"d'Ascoli et al. (2026): CNeuroMod, BOLD Moments, LeBel 2023, Wen 2017","architecture":"TRIBE v2 multimodal transformer","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["videos","audio","text"],"stimulus_label":"Video, audio or text","group":"tribe_v2","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-dascoli_2026-tribe_v2.html","snippet":null,"snippet_verified":false,"dataset_full":"d'Ascoli et al. (2026) (CNeuroMod, BoldMoments, Lebel2023, Wen2017)","architecture_full":"Multimodal Transformer (TRIBE v2)"},{"id":"fmri-lebel2023-opt_1_3b","title":"Human fMRI responses to narrative text","dataset":"LeBel et al. (2023)","architecture":"OPT-1.3B with ridge regression","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["text"],"stimulus_label":"Text (narratives with word onsets)","group":"lebel2023","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-lebel2023-opt_1_3b.html","snippet":null,"snippet_verified":false,"dataset_full":"LeBel et al. (2023)","architecture_full":"OPT-1.3B–based linear encoding model (contextual LLM embeddings + ridge regression)"},{"id":"fmri-tuckute_2024-GPT2_XL","title":"Human fMRI responses to sentences","dataset":"Tuckute et al. (2024)","architecture":"GPT2-XL with ridge regression","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["text"],"stimulus_label":"Text","group":"tuckute2024","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-tuckute_2024-GPT2_XL.html","snippet":null,"snippet_verified":false,"dataset_full":"Tuckute et. al (2024)","architecture_full":"GPT2-XL–based linear encoding model (LLM embeddings + ridge regression)"},{"id":"brainscore_language","title":"Human fMRI responses to sentences","dataset":"Pereira et al. (2018), via BrainScore","architecture":"Hundreds of BrainScore language models","variant_note":null,"modality":"fmri","species":"human","stimulus_types":["text"],"stimulus_label":"Text","group":"brainscore_language","provenance":"brainscore","provenance_note":"Weights hosted by BrainScore","docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_language.html","snippet":null,"snippet_verified":false,"dataset_full":"BrainScore","architecture_full":"BrainScore Language Models (External)"},{"id":"eeg-things_eeg_2-vit_b_32","title":"Human EEG responses to images","dataset":"THINGS EEG2","architecture":"ViT-B/32","variant_note":null,"modality":"eeg","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"things_eeg_2","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-vit_b_32.html","snippet":null,"snippet_verified":false,"dataset_full":"THINGS EEG2","architecture_full":"Vision transformer (ViT-B/32)"},{"id":"eeg-things_eeg_2-alexnet","title":"Human EEG responses to images","dataset":"THINGS EEG2","architecture":"AlexNet","variant_note":null,"modality":"eeg","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"things_eeg_2","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-alexnet.html","snippet":null,"snippet_verified":false,"dataset_full":"THINGS EEG2","architecture_full":"AlexNet"},{"id":"eeg-things_eeg_2-alexnet_untrained","title":"Human EEG responses to images","dataset":"THINGS EEG2","architecture":"AlexNet, untrained","variant_note":"Untrained control","modality":"eeg","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"things_eeg_2","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-alexnet_untrained.html","snippet":null,"snippet_verified":false,"dataset_full":"THINGS EEG2","architecture_full":"AlexNet (untrained)"},{"id":"meg-things_meg_1-vit_b_32","title":"Human MEG responses to images","dataset":"THINGS MEG1","architecture":"ViT-B/32","variant_note":null,"modality":"meg","species":"human","stimulus_types":["images"],"stimulus_label":"Images","group":"things_meg_1","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/meg-things_meg_1-vit_b_32.html","snippet":null,"snippet_verified":false,"dataset_full":"THINGS MEG1","architecture_full":"Vision transformer (ViT-B/32)"},{"id":"ecog-zada2025-gpt2_xl","title":"Human ECoG responses to speech transcripts","dataset":"Zada et al. (2025)","architecture":"GPT2-XL","variant_note":null,"modality":"ecog","species":"human","stimulus_types":["text"],"stimulus_label":"Text (speech transcripts)","group":"zada2025","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/ecog-zada2025-gpt2_xl.html","snippet":null,"snippet_verified":false,"dataset_full":"Zada et al. (2025)","architecture_full":"GPT2-XL"},{"id":"utah_array-tvsd-vit_b_32","title":"Macaque spiking responses to images","dataset":"TVSD","architecture":"ViT-B/32","variant_note":null,"modality":"utah_array","species":"macaque","stimulus_types":["images"],"stimulus_label":"Images","group":"tvsd","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/utah_array-tvsd-vit_b_32.html","snippet":null,"snippet_verified":false,"dataset_full":"THINGS Ventral Stream Spiking Dataset (TVSD)","architecture_full":"Vision transformer (ViT-B/32)"},{"id":"brainscore_vision","title":"Macaque V1, V2, V4 and IT responses to images","dataset":"Freeman et al. (2013), Majaj et al. (2015), via BrainScore","architecture":"Hundreds of BrainScore vision models","variant_note":null,"modality":"ephys","species":"macaque","stimulus_types":["images"],"stimulus_label":"Images","group":"brainscore_vision","provenance":"brainscore","provenance_note":"Weights hosted by BrainScore","docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_vision.html","snippet":null,"snippet_verified":false,"dataset_full":"BrainScore","architecture_full":"BrainScore Vision Models (External)"},{"id":"calcium_2p-wang_2025-3DCNN","title":"Mouse visual cortex responses to videos","dataset":"Wang et al. (2025)","architecture":"3D CNN with ConvLSTM","variant_note":null,"modality":"calcium_2p","species":"mouse","stimulus_types":["videos"],"stimulus_label":"Videos","group":"wang2025","provenance":"berg","provenance_note":null,"docs_url":"https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/calcium_2p-wang_2025-3DCNN.html","snippet":null,"snippet_verified":false,"dataset_full":"Wang et al., 2025","architecture_full":"Spatiotemporal convolutional neural network (3D CNN + ConvLSTM)"}]}</script>
+          <!-- catalog:json:end -->
+
+          <div class="explorer-results">
+            <!-- catalog:list:start -->
+            <div class="directory-section" data-provenance="berg">
+              <h3>BERG&#x27;s native models</h3>
+              <p class="directory-intro">Encoding models that are part of BERG, each documented with a model card in the documentation.</p>
+              <table class="model-table">
+                <thead>
+                  <tr><th scope="col">Training dataset and model</th><th scope="col">Recording modality</th><th scope="col">Species</th><th scope="col">Stimuli</th><th scope="col"><span class="visually-hidden">Documentation</span></th></tr>
+                </thead>
+                <tbody>
+                  <tr class="model" id="model-fmri-nsd_fsaverage-huze">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">NSD, fsaverage surface</span>
+                      <span class="model-arch">DINOv2 vision transformer</span>
+                      <code class="model-id">fmri-nsd_fsaverage-huze</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-huze.html">Model card<span class="visually-hidden"> for fmri-nsd_fsaverage-huze</span></a></td>
+                  </tr>
+                  <tr class="model" id="model-fmri-nsd_fsaverage-vit_b_32">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">NSD, fsaverage surface</span>
+                      <span class="model-arch">ViT-B/32</span>
+                      <code class="model-id">fmri-nsd_fsaverage-vit_b_32</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-vit_b_32.html">Model card<span class="visually-hidden"> for fmri-nsd_fsaverage-vit_b_32</span></a></td>
+                  </tr>
+                  <tr class="model" id="model-fmri-nsd_fsaverage-alexnet">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">NSD, fsaverage surface</span>
+                      <span class="model-arch">AlexNet</span>
+                      <code class="model-id">fmri-nsd_fsaverage-alexnet</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-alexnet.html">Model card<span class="visually-hidden"> for fmri-nsd_fsaverage-alexnet</span></a></td>
+                  </tr>
+                  <tr class="model" id="model-fmri-nsd_fsaverage-alexnet_untrained">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">NSD, fsaverage surface</span>
+                      <span class="model-arch">AlexNet, untrained<span class="model-note">Untrained control</span></span>
+                      <code class="model-id">fmri-nsd_fsaverage-alexnet_untrained</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd_fsaverage-alexnet_untrained.html">Model card<span class="visually-hidden"> for fmri-nsd_fsaverage-alexnet_untrained</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-fmri-nsd-fwrf">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">NSD, subject-native volume</span>
+                      <span class="model-arch">Feature-weighted receptive field (fwRF)</span>
+                      <code class="model-id">fmri-nsd-fwrf</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-nsd-fwrf.html">Model card<span class="visually-hidden"> for fmri-nsd-fwrf</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-fmri-things_fmri_1-vit_b_32">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">THINGS fMRI1</span>
+                      <span class="model-arch">ViT-B/32</span>
+                      <code class="model-id">fmri-things_fmri_1-vit_b_32</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-things_fmri_1-vit_b_32.html">Model card<span class="visually-hidden"> for fmri-things_fmri_1-vit_b_32</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-fmri-mosaic-CNN8_multihead_subAll_verticesVisual">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">MOSAIC, 8 datasets, visual cortex</span>
+                      <span class="model-arch">CNN8, multi-head</span>
+                      <code class="model-id">fmri-mosaic-CNN8_multihead_subAll_verticesVisual</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-mosaic-CNN8_multihead_subAll_verticesVisual.html">Model card<span class="visually-hidden"> for fmri-mosaic-CNN8_multihead_subAll_verticesVisual</span></a></td>
+                  </tr>
+                  <tr class="model" id="model-fmri-mosaic-CNN8_multihead_subNSD_verticesAll">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">MOSAIC, NSD subjects, whole cortex</span>
+                      <span class="model-arch">CNN8, multi-head</span>
+                      <code class="model-id">fmri-mosaic-CNN8_multihead_subNSD_verticesAll</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-mosaic-CNN8_multihead_subNSD_verticesAll.html">Model card<span class="visually-hidden"> for fmri-mosaic-CNN8_multihead_subNSD_verticesAll</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-fmri-bmd-s3d">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">BOLD Moments Dataset, MNI152 volume</span>
+                      <span class="model-arch">S3D (3D CNN)</span>
+                      <code class="model-id">fmri-bmd-s3d</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Videos (about 3 s)</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-bmd-s3d.html">Model card<span class="visually-hidden"> for fmri-bmd-s3d</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-fmri-cneuromod_algo2025-vibe">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">CNeuroMod, Algonauts 2025</span>
+                      <span class="model-arch">VIBE multimodal transformer</span>
+                      <code class="model-id">fmri-cneuromod_algo2025-vibe</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Video + audio + text, combined</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod_algo2025-vibe.html">Model card<span class="visually-hidden"> for fmri-cneuromod_algo2025-vibe</span></a></td>
+                  </tr>
+                  <tr class="model" id="model-fmri-cneuromod_algo2025-text2fmri">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">CNeuroMod, Algonauts 2025</span>
+                      <span class="model-arch">Text2fMRI language model</span>
+                      <code class="model-id">fmri-cneuromod_algo2025-text2fmri</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Text</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-cneuromod_algo2025-text2fmri.html">Model card<span class="visually-hidden"> for fmri-cneuromod_algo2025-text2fmri</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-fmri-dascoli_2026-tribe_v2">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">d&#x27;Ascoli et al. (2026): CNeuroMod, BOLD Moments, LeBel 2023, Wen 2017</span>
+                      <span class="model-arch">TRIBE v2 multimodal transformer</span>
+                      <code class="model-id">fmri-dascoli_2026-tribe_v2</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Video, audio or text</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-dascoli_2026-tribe_v2.html">Model card<span class="visually-hidden"> for fmri-dascoli_2026-tribe_v2</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-fmri-lebel2023-opt_1_3b">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">LeBel et al. (2023)</span>
+                      <span class="model-arch">OPT-1.3B with ridge regression</span>
+                      <code class="model-id">fmri-lebel2023-opt_1_3b</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Text (narratives with word onsets)</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-lebel2023-opt_1_3b.html">Model card<span class="visually-hidden"> for fmri-lebel2023-opt_1_3b</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-fmri-tuckute_2024-GPT2_XL">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">Tuckute et al. (2024)</span>
+                      <span class="model-arch">GPT2-XL with ridge regression</span>
+                      <code class="model-id">fmri-tuckute_2024-GPT2_XL</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Text</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/fmri-tuckute_2024-GPT2_XL.html">Model card<span class="visually-hidden"> for fmri-tuckute_2024-GPT2_XL</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-eeg-things_eeg_2-vit_b_32">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">THINGS EEG2</span>
+                      <span class="model-arch">ViT-B/32</span>
+                      <code class="model-id">eeg-things_eeg_2-vit_b_32</code>
+                    </th>
+                    <td data-label="Modality">EEG</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-vit_b_32.html">Model card<span class="visually-hidden"> for eeg-things_eeg_2-vit_b_32</span></a></td>
+                  </tr>
+                  <tr class="model" id="model-eeg-things_eeg_2-alexnet">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">THINGS EEG2</span>
+                      <span class="model-arch">AlexNet</span>
+                      <code class="model-id">eeg-things_eeg_2-alexnet</code>
+                    </th>
+                    <td data-label="Modality">EEG</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-alexnet.html">Model card<span class="visually-hidden"> for eeg-things_eeg_2-alexnet</span></a></td>
+                  </tr>
+                  <tr class="model" id="model-eeg-things_eeg_2-alexnet_untrained">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">THINGS EEG2</span>
+                      <span class="model-arch">AlexNet, untrained<span class="model-note">Untrained control</span></span>
+                      <code class="model-id">eeg-things_eeg_2-alexnet_untrained</code>
+                    </th>
+                    <td data-label="Modality">EEG</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/eeg-things_eeg_2-alexnet_untrained.html">Model card<span class="visually-hidden"> for eeg-things_eeg_2-alexnet_untrained</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-meg-things_meg_1-vit_b_32">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">THINGS MEG1</span>
+                      <span class="model-arch">ViT-B/32</span>
+                      <code class="model-id">meg-things_meg_1-vit_b_32</code>
+                    </th>
+                    <td data-label="Modality">MEG</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/meg-things_meg_1-vit_b_32.html">Model card<span class="visually-hidden"> for meg-things_meg_1-vit_b_32</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-ecog-zada2025-gpt2_xl">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">Zada et al. (2025)</span>
+                      <span class="model-arch">GPT2-XL</span>
+                      <code class="model-id">ecog-zada2025-gpt2_xl</code>
+                    </th>
+                    <td data-label="Modality">ECoG</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Text (speech transcripts)</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/ecog-zada2025-gpt2_xl.html">Model card<span class="visually-hidden"> for ecog-zada2025-gpt2_xl</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-utah_array-tvsd-vit_b_32">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">TVSD</span>
+                      <span class="model-arch">ViT-B/32</span>
+                      <code class="model-id">utah_array-tvsd-vit_b_32</code>
+                    </th>
+                    <td data-label="Modality">Utah array</td>
+                    <td data-label="Species">Macaque</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/utah_array-tvsd-vit_b_32.html">Model card<span class="visually-hidden"> for utah_array-tvsd-vit_b_32</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-calcium_2p-wang_2025-3DCNN">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">Wang et al. (2025)</span>
+                      <span class="model-arch">3D CNN with ConvLSTM</span>
+                      <code class="model-id">calcium_2p-wang_2025-3DCNN</code>
+                    </th>
+                    <td data-label="Modality">Two-photon calcium imaging</td>
+                    <td data-label="Species">Mouse</td>
+                    <td data-label="Stimuli">Videos</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/calcium_2p-wang_2025-3DCNN.html">Model card<span class="visually-hidden"> for calcium_2p-wang_2025-3DCNN</span></a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="directory-section" data-provenance="brainscore">
+              <h3>BrainScore models</h3>
+              <p class="directory-intro">Beyond BERG&#x27;s native models, BERG is also integrated with BrainScore, giving you access to hundreds of vision models scored against macaque neural recordings (V1, V2, V4, IT), as well as GPT-family language models scored against human fMRI data. These models are hosted by BrainScore.</p>
+              <table class="model-table">
+                <thead>
+                  <tr><th scope="col">Training dataset and model</th><th scope="col">Recording modality</th><th scope="col">Species</th><th scope="col">Stimuli</th><th scope="col"><span class="visually-hidden">Documentation</span></th></tr>
+                </thead>
+                <tbody>
+                  <tr class="model" id="model-brainscore_language">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">Pereira et al. (2018), via BrainScore</span>
+                      <span class="model-arch">Hundreds of BrainScore language models</span>
+                      <code class="model-id">brainscore_language</code>
+                    </th>
+                    <td data-label="Modality">fMRI</td>
+                    <td data-label="Species">Human</td>
+                    <td data-label="Stimuli">Text</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_language.html">Model card<span class="visually-hidden"> for brainscore_language</span></a></td>
+                  </tr>
+                  <tr class="model group-start" id="model-brainscore_vision">
+                    <th scope="row" class="model-name">
+                      <span class="model-dataset">Freeman et al. (2013), Majaj et al. (2015), via BrainScore</span>
+                      <span class="model-arch">Hundreds of BrainScore vision models</span>
+                      <code class="model-id">brainscore_vision</code>
+                    </th>
+                    <td data-label="Modality">Electrophysiology</td>
+                    <td data-label="Species">Macaque</td>
+                    <td data-label="Stimuli">Images</td>
+                    <td class="model-links"><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/model_cards/brainscore_vision.html">Model card<span class="visually-hidden"> for brainscore_vision</span></a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- catalog:list:end -->
+          </div>
+
+          <div class="explorer-empty" hidden>
+            <p>No model matches these filters yet.</p>
+            <p>
+              <button class="link-button" type="button" data-action="reset">Clear filters</button>
+              or find out how to <a href="#contribute">contribute a model</a>.
+            </p>
+          </div>
+        </div>
+
+        <p class="models-footnote">
+          For the encoding accuracy plots of each model, refer to the
+          <a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/models/overview.html">model overview in the documentation</a>.
+        </p>
+      </div>
+    </section>
+
+    <!-- Resources -->
+    <section class="section" id="resources" aria-labelledby="resources-title">
+      <div class="container">
+        <h2 id="resources-title">Resources</h2>
+        <ul class="resource-grid" role="list">
+          <li class="resource-card">
+            <div class="card-visual"><svg class="card-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 4h10l6 6v18H9zM19 4v6h6M13 15h8M13 19h8M13 23h5"/></svg></div>
+            <h3>Paper</h3>
+            <p>A resource of encoding models for in silico neuroscience (CCN 2026).</p>
+            <a class="card-action" href="https://drive.google.com/file/d/1W9n0hWZ08oOZQ48SJMgLCSfaiI6b_aRn/view">Read paper</a>
+          </li>
+          <li class="resource-card">
+            <div class="card-visual"><svg class="card-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M11 10l-6 6 6 6M21 10l6 6-6 6M18 7l-4 18"/></svg></div>
+            <h3>Python toolbox</h3>
+            <p>Generate accurate in silico neural responses to arbitrary stimuli with just a few lines of code.</p>
+            <a class="card-action" href="https://github.com/gifale95/BERG">View on GitHub</a>
+          </li>
+          <li class="resource-card">
+            <div class="card-visual"><svg class="card-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 5v15M10 14l6 6 6-6M6 21v5h20v-5"/></svg></div>
+            <h3>Encoding models</h3>
+            <p>BERG is hosted as a public AWS S3 bucket via the AWS Open Data Program.</p>
+            <a class="card-action" href="https://registry.opendata.aws/brain-encoding-response-generator/">Browse data</a>
+          </li>
+          <li class="resource-card">
+            <div class="card-visual"><svg class="card-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M16 9c-3-2-7-3-11-3v18c4 0 8 1 11 3 3-2 7-3 11-3V6c-4 0-8 1-11 3zM16 9v18"/></svg></div>
+            <h3>Documentation</h3>
+            <p>Installation, data access, tutorials, and a model card for each encoding model.</p>
+            <a class="card-action" href="https://brain-encoding-response-generator.readthedocs.io/en/latest/">Read docs</a>
+          </li>
+          <li class="resource-card">
+            <div class="card-visual"><svg class="card-icon" viewBox="0 0 32 32" aria-hidden="true"><path d="M9 5h16v22H9zM5 10h6M5 16h6M5 22h6M14 11h7M14 15h7"/></svg></div>
+            <h3>Tutorials</h3>
+            <p>Tutorials to help you get started with BERG, on Colab or locally as Jupyter Notebooks.</p>
+            <a class="card-action" href="https://brain-encoding-response-generator.readthedocs.io/en/latest/tutorials/Quickstart.html">Quickstart tutorial</a>
+          </li>
+        </ul>
+
+        <div class="resource-notes">
+          <div>
+            <h3>Installation</h3>
+            <p>BERG requires Python ≥ 3.11.</p>
+            <div class="code-block">
+              <pre data-copy><code class="language-bash">pip install -U git+https://github.com/gifale95/BERG.git</code></pre>
+            </div>
+            <p>
+              <strong>Note:</strong> TRIBEv2 and BrainScore cannot be installed together due to a NumPy version
+              conflict. Choose one depending on your use case, as described in the
+              <a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/installation.html">installation guide</a>. You can also run the
+              <a href="https://colab.research.google.com/drive/1JS4um1eS4Ml983lUNQgEw4544_Lc5Qn0">Quickstart Tutorial on Colab</a>.
+            </p>
+          </div>
+          <div>
+            <h3>Download BERG</h3>
+            <p>You do not need an AWS account to browse or download the data. To download the full BERG dataset, use the AWS CLI:</p>
+            <div class="code-block">
+              <pre data-copy><code class="language-bash">aws s3 sync --no-sign-request s3://brain-encoding-response-generator ./brain-encoding-response-generator</code></pre>
+            </div>
+            <p>
+              For downloading specific folders or files, and for BERG's folder structure, see the
+              <a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/data_storage.html">documentation</a>. By downloading the data you agree to BERG's
+              <a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/about/terms_and_conditions.html">Terms and Conditions</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contribute -->
+    <section class="section" id="contribute" aria-labelledby="contribute-title">
+      <div class="container section-split">
+        <h2 id="contribute-title">Contribute</h2>
+        <div class="prose">
+          <p>
+            Would you like to make the encoding models from your projects easily accessible and usable with minimal,
+            intuitive, and scalable code? Or would you like to contribute to BERG with new toolbox features or ideas?
+            Then get in touch!
+          </p>
+          <p>We warmly welcome contributions to improve and expand BERG, including:</p>
+          <ul>
+            <li>Encoding models with higher prediction accuracies.</li>
+            <li>Encoding models for new neural data recording modalities (e.g., MEG, ECoG, animal recordings).</li>
+            <li>Encoding models from new neural datasets.</li>
+            <li>Encoding models of neural responses for new stimulus types (e.g., videos, audio, language, multimodal).</li>
+            <li>Suggestions to improve BERG.</li>
+          </ul>
+          <p>
+            For more information on how to contribute, please refer to our
+            <a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/contribution.html">documentation</a> and the
+            <a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/tutorials/Adding_New_Models_to_Berg.html">tutorial on adding new models</a>. If you have
+            questions or would like to discuss your contribution before submitting, you can contact us at
+            <a href="mailto:brain.berg.info@gmail.com">brain.berg.info@gmail.com</a>. All feedback and help is
+            strongly appreciated!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Team, contact and citation -->
+    <section class="section team" id="team" aria-labelledby="team-title">
+      <div class="container">
+        <h2 id="team-title">Team</h2>
+        <ul class="team-grid" role="list">
+          <li class="person">
+            <img src="img/ale.png" alt="" width="425" height="425" loading="lazy" decoding="async">
+            <h3><a href="https://www.alegifford.com/">Alessandro Gifford</a></h3>
+            <p>Postdoc</p>
+            <p>Freie Universität Berlin</p>
+          </li>
+          <li class="person">
+            <img src="img/Dom.png" alt="" width="786" height="808" loading="lazy" decoding="async">
+            <h3><a href="https://toastydom.github.io/">Domenic Bersch</a></h3>
+            <p>Lead Developer · PhD Student</p>
+            <p>Goethe University Frankfurt</p>
+          </li>
+          <li class="person">
+            <img src="img/gemma_new.png" alt="" width="418" height="430" loading="lazy" decoding="async">
+            <h3><a href="http://www.cvai.cs.uni-frankfurt.de/">Gemma Roig</a></h3>
+            <p>Professor, Computer Vision &amp; AI</p>
+            <p>Goethe University Frankfurt</p>
+          </li>
+          <li class="person">
+            <img src="img/radek.png" alt="" width="300" height="299" loading="lazy" decoding="async">
+            <h3><a href="https://www.ewi-psy.fu-berlin.de/en/einrichtungen/arbeitsbereiche/neural_dyn_of_vis_cog/index.html">Radoslaw Cichy</a></h3>
+            <p>Professor, Neural Dynamics of Visual Cognition</p>
+            <p>Freie Universität Berlin</p>
+          </li>
+        </ul>
+
+        <div class="contact-cite">
+          <div class="contact" id="contact">
+            <h3>Contact</h3>
+            <p>For inquiries, contact us at
+              <a href="mailto:brain.berg.info@gmail.com">brain.berg.info@gmail.com</a>.</p>
+          </div>
+          <div class="cite">
+            <h3>Citation</h3>
+            <p>If you use BERG, please cite:</p>
+            <p class="reference">
+              Gifford AT, Bersch D, Janini D, Roig G, Cichy RM. 2026. A resource of encoding models for in silico
+              neuroscience. Conference on Cognitive Computational Neuroscience, New York.
+            </p>
+            <!-- Draft from the paper's first page (CCN 2026 extended abstract); confirm before publishing. -->
+            <details class="bibtex">
+              <summary>BibTeX</summary>
+              <div class="code-block">
+                <pre data-copy><code class="language-bibtex">@inproceedings{gifford2026berg,
+  title     = {A resource of encoding models for in silico neuroscience},
+  author    = {Gifford, Alessandro Thomas and Bersch, Domenic and Janini, Daniel
+               and Roig, Gemma and Cichy, Radoslaw Martin},
+  booktitle = {9th Conference on Cognitive Computational Neuroscience (CCN)},
+  address   = {New York, NY, USA},
+  year      = {2026}
+}</code></pre>
+              </div>
+            </details>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <img class="footer-logo" src="img/berg_logo_small.png" alt="BERG" width="1085" height="343" loading="lazy">
+      <ul class="footer-links" role="list">
+        <li><a href="mailto:brain.berg.info@gmail.com">Contact</a></li>
+        <li><a href="https://github.com/gifale95/BERG">GitHub</a></li>
+        <li><a href="https://brain-encoding-response-generator.readthedocs.io/en/latest/">Documentation</a></li>
+      </ul>
+      <p>&copy; 2026 The BERG Project. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>
