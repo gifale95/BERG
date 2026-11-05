@@ -217,7 +217,7 @@
     if (reset) reset.addEventListener("click", function () { self.reset(); });
   };
 
-  // The catalog embedded by build_catalog.py works everywhere, including index_new.html opened from disk.
+  // The catalog embedded by build_catalog.py works everywhere, including index.html opened from disk.
   function embeddedCatalog() {
     var node = document.getElementById("catalog-data");
     if (!node) return null;

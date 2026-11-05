@@ -12,7 +12,7 @@ scanning session, so 0 is a voxel's average response to the THINGS images.
 
 Output
 ------
-docs/index_new.html: the predicted values and image paths, embedded between
+docs/index.html: the predicted values and image paths, embedded between
 <!-- overview:data:start/end --> and drawn by docs/assets/js/overview.js.
 
 The images must be inside docs/ (e.g. docs/img/) and ones we may publish. The page shows
@@ -28,7 +28,7 @@ Usage
         --body-alt "Torso and arms of a person in a T-shirt" ...
 
 Check the printed table before publishing, and update the figure caption in
-docs/index_new.html if the pattern changes.
+docs/index.html if the pattern changes.
 
 Note: THINGS fMRI1 shows only object photos and its responses are z-scored, so a typical
 object image predicts roughly average (near 0) responses everywhere, LOC included.
@@ -47,7 +47,7 @@ from PIL import Image
 
 REPO = Path(__file__).resolve().parents[2]
 DOCS = REPO / "docs"
-INDEX_HTML = DOCS / "index_new.html"   # the redesigned page; becomes index.html when it replaces the old site
+INDEX_HTML = DOCS / "index.html"
 MODEL_ID = "fmri-things_fmri_1-vit_b_32"
 
 # key, model ROIs pooled into the area, full name, image category the area prefers
@@ -75,7 +75,7 @@ def parse_args():
     p.add_argument("--subjects", nargs="+", type=int, default=[1, 2, 3])
     p.add_argument("--device", default="auto")
     p.add_argument("--model-size", type=int, default=224, help="side length of the image passed to the model")
-    p.add_argument("--no-page", action="store_true", help="don't write into docs/index_new.html")
+    p.add_argument("--no-page", action="store_true", help="don't write into docs/index.html")
     p.add_argument("--json-out", help="also write the figure data to this file")
     args = p.parse_args()
     args.categories = [(key, label) for key, label in CATEGORIES if getattr(args, key)]
@@ -195,7 +195,7 @@ def main():
         embed_in_page(data, INDEX_HTML)
         print(f"\nWrote the data into {INDEX_HTML.relative_to(REPO)}")
     if any(getattr(args, f"{key}_alt") is None for key, _ in args.categories):
-        print("Some images have no alt text yet; pass --body-alt etc. or edit the data in docs/index_new.html.")
+        print("Some images have no alt text yet; pass --body-alt etc. or edit the data in docs/index.html.")
 
 
 if __name__ == "__main__":

@@ -29,7 +29,7 @@
   --gutter: 1rem;
   --section-gap: 4rem;
   --radius: 6px;
-  --header-h: 3.75rem;
+  --header-h: 3.5rem;
 }
 /* Light theme: chosen with the header toggle, or by the system setting when the toggle is on "auto" */
 :root[data-theme="light"] {
@@ -155,20 +155,20 @@ code { font-size: 0.875em; }
 
 /* ---------------------------------------------------------------- header */
 
+/* Fixed to the top of the screen, as on alegifford.com, so the menu is always one tap away */
 .site-header {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  top: 0; left: 0; right: 0;
   z-index: 20;
-  background: var(--header-bg);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
+body { padding-top: var(--header-h); }
 .header-inner {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  min-height: var(--header-h);
+  height: var(--header-h);
 }
 .brand { margin-right: auto; }
 .brand img { width: 5.5rem; }
@@ -176,28 +176,43 @@ code { font-size: 0.875em; }
 .site-nav a { color: var(--ink-2); text-decoration: none; font-size: 0.975rem; }
 .site-nav a:hover { color: var(--link); }
 
+/* Phone menu: three-line icon that turns into a cross, and a menu dropping down below the bar */
 .nav-toggle {
-  font: inherit; font-size: 0.95rem;
-  color: var(--ink);
-  background: transparent;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  padding: 0.3rem 0.85rem;
+  flex-direction: column; justify-content: center; gap: 4px;
+  width: 2.25rem; height: 2.25rem;
+  margin-right: -0.4rem;
+  background: none; border: 0; padding: 0 0.4rem;
   cursor: pointer;
 }
+.nav-toggle span {
+  display: block; width: 20px; height: 1.5px;
+  background: var(--ink-2);
+  transition: transform 0.25s, opacity 0.25s;
+}
+.nav-toggle[aria-expanded="true"] span:nth-child(1) { transform: translateY(5.5px) rotate(45deg); }
+.nav-toggle[aria-expanded="true"] span:nth-child(2) { opacity: 0; }
+.nav-toggle[aria-expanded="true"] span:nth-child(3) { transform: translateY(-5.5px) rotate(-45deg); }
 @media (max-width: 47.99rem) {
-  .js .nav-toggle { display: block; }
-  .js .header-inner { flex-wrap: wrap; }
-  .js .site-nav { display: none; width: 100%; padding-bottom: 0.75rem; }
+  .js .nav-toggle { display: flex; }
+  .js .site-nav {
+    display: none;
+    position: fixed; top: var(--header-h); left: 0; right: 0;
+    max-height: calc(100vh - var(--header-h)); overflow-y: auto;
+    padding: 0.5rem var(--gutter) 1rem;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
   .js .site-nav.is-open { display: block; }
   .js .site-nav ul { flex-direction: column; gap: 0; }
-  .js .site-nav a { display: block; padding: 0.7rem 0; border-top: 1px solid var(--line); }
+  .js .site-nav a { display: block; padding: 0.85rem 0; font-size: 1rem; border-bottom: 1px solid var(--line); }
+  .js .site-nav li:last-child a { border-bottom: 0; }
 }
 @media (min-width: 48rem) {
   .nav-toggle { display: none; }
   .site-nav { order: 1; }
   .theme-toggle { order: 2; }
 }
+@media (prefers-reduced-motion: reduce) { .nav-toggle span { transition: none; } }
 
 /* Theme switch: auto, light, dark (as on alegifford.com) */
 .theme-toggle {

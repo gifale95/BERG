@@ -11,7 +11,7 @@ Sources
 Outputs
 -------
 - the static model directory and an embedded copy of the catalog inside
-  docs/index_new.html, between <!-- catalog:list|json:start/end --> markers,
+  docs/index.html, between <!-- catalog:list|json:start/end --> markers,
   so the page shows every model without JavaScript.
 
 The script stops with a list of problems if the cards, the overlay, the vocabulary
@@ -39,7 +39,7 @@ CARDS_DIR = REPO / "berg" / "models" / "model_cards"
 OVERLAY = REPO / "scripts" / "website" / "models_overlay.json"
 OVERVIEW_RST = REPO / "docs" / "models" / "overview.rst"
 DOCS_CARDS_DIR = REPO / "docs" / "models" / "model_cards"
-INDEX_HTML = REPO / "docs" / "index_new.html"   # the redesigned page; becomes index.html when it replaces the old site
+INDEX_HTML = REPO / "docs" / "index.html"
 
 REQUIRED_OVERLAY_FIELDS = ("title", "dataset", "architecture", "group", "order")
 CONTROL_NOTE = "Untrained control"
@@ -253,7 +253,7 @@ def replace_between(text, name, content, problems):
         rf"(<!-- catalog:{name}:start -->)(.*?)(\n[ \t]*<!-- catalog:{name}:end -->)", re.S
     )
     if not pattern.search(text):
-        problems.append(f"docs/index_new.html: markers catalog:{name}:start/end not found")
+        problems.append(f"docs/index.html: markers catalog:{name}:start/end not found")
         return text
     return pattern.sub(lambda m: m.group(1) + "\n" + content + m.group(3), text, count=1)
 

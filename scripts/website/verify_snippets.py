@@ -37,7 +37,7 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[2]
 OVERLAY = REPO / "scripts" / "website" / "models_overlay.json"
-INDEX_HTML = REPO / "docs" / "index_new.html"   # the redesigned page; becomes index.html when it replaces the old site
+INDEX_HTML = REPO / "docs" / "index.html"
 QUICKSTART_PATH = "/path/to/brain-encoding-response-generator"
 
 
