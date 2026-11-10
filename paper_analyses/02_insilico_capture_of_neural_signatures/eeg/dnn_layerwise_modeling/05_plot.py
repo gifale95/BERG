@@ -67,6 +67,7 @@ ci_rsa_peak_latency = results['ci_rsa_peak_latency']
 decoding = results['decoding']
 ci_decoding = results['ci_decoding']
 times = results['times']
+best_dnn_layer_all_times = results['best_dnn_layer_all_times']
 best_dnn_layer = results['best_dnn_layer']
 ci_best_dnn_layer = results['ci_best_dnn_layer']
 times_new = results['times_new']
@@ -224,7 +225,7 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 # Plot the best DNN layer as a function of time
 # =============================================================================
 # Plot color
-color = (139/255, 0/255, 0/255)
+color = (0/255, 0/255, 0/255)
 
 # Create the figure
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
@@ -232,11 +233,11 @@ fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
 axs = np.reshape(axs, (-1))
 
 # Plot the best DNN layer for each t-fMRI time point
-axs[0].plot(times_new, np.mean(best_dnn_layer, 0), color=color, linewidth=2,
-    alpha=1, label='_nolegend_')
+axs[0].plot(times, np.mean(best_dnn_layer_all_times, 0), color=color,
+    linewidth=2, alpha=1, label='_nolegend_')
 
 # Plot the confidence intervals
-axs[0].fill_between(times_new, ci_best_dnn_layer[0], ci_best_dnn_layer[1],
+axs[0].fill_between(times, ci_best_dnn_layer[0], ci_best_dnn_layer[1],
     color=color, alpha=.2)
 
 # Plot the correlation between best DNN layers and t-fMRI time points
@@ -254,16 +255,16 @@ axs[0].text(0.4, y, s, color='k', fontsize=fontsize, ha='left')
 # Plot the regression line between DNN layers and t-fMRI time points
 slope = reg_best_dnn_layer_eeg_times_sub_avg.slope
 intercept = reg_best_dnn_layer_eeg_times_sub_avg.intercept
-x_fit = np.array([min(times), max(times)])
+x_fit = np.array([min(times_new), max(times_new)])
 y_fit = intercept + slope * x_fit
 axs[0].plot(x_fit, y_fit, color='k', linewidth=2, linestyle='--', alpha=0.5)
 
 # x-axis parameters
 axs[0].set_xlabel('Time (ms)', fontsize=fontsize)
-xticks = [0.2, 0.4, 0.595]
-xlabels = [200, 400, 600]
+xticks = [0, .2, .4, .595]
+xlabels = [0, 200, 400, 600]
 axs[0].set_xticks(ticks=xticks, labels=xlabels)
-axs[0].set_xlim(left=min(times_new), right=max(times_new))
+axs[0].set_xlim(left=min(times), right=max(times))
 
 # y-axis parameters
 axs[0].set_ylabel('Most similar layer', fontsize=fontsize)
@@ -288,7 +289,7 @@ p_val = ttest_1samp(rsa_peak_latency_dnn_layer_corr, 0,
 print((f'RSA peak latency - DNN layer correlation (subject average): '),
     (f'{np.mean(rsa_peak_latency_dnn_layer_corr):.3f} p = {p_val}'))
 
-
+# Create the figure
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
     figsize=(7, 7))
 axs = np.reshape(axs, (-1))

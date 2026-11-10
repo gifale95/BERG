@@ -185,7 +185,7 @@ decoding_peaks = np.argmax(np.stack((decoding_exemplars, decoding_objects,
 decoding_peaks_times = times[decoding_peaks] * 1000
 
 # Subtract the peak decoding times of animacy and exemplar, and of object
-# category and exemplar, and of animacy and object
+# category and exemplar
 decoding_peaks_diff = np.zeros((2, len(args.subjects)))
 decoding_peaks_diff[0] = decoding_peaks_times[2] - decoding_peaks_times[0]
 decoding_peaks_diff[1] = decoding_peaks_times[1] - decoding_peaks_times[0]

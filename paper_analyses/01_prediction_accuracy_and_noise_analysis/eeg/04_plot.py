@@ -85,9 +85,9 @@ plt.rcParams['svg.fonttype'] = 'none'
 # =============================================================================
 # Plot colors
 colors = [
-    (139/255, 0/255, 0/255),
+    (0/255, 0/255, 0/255),
     (150/255, 150/255, 150/255),
-    (0/255, 0/255, 0/255)
+    (139/255, 0/255, 0/255)
     ]
 
 # Create the figure
@@ -100,6 +100,7 @@ axs[0].plot([-10, 10], [0, 0], 'k--', [0, 0], [100, -100], 'k--',
     linewidth=2, alpha=.25, label='_nolegend_')
 
 # Plot the prediction accuracy of each encoding model
+models = ['alexnet_untrained', 'alexnet', 'vit_b_32']
 for m, (key, val) in enumerate(correlation.items()):
     axs[0].plot(times, np.mean(val, 0), color=colors[m], linewidth=2, label=key)
     # Plot the confidence intervals
@@ -155,63 +156,56 @@ for model in correlation_avg.keys():
 # Plot the noise analysis results
 # =============================================================================
 # Plot colors
-colors_silico = [
-    (139/255, 0/255, 0/255),
-    (150/255, 150/255, 150/255),
-    (0/255, 0/255, 0/255)
-    ]
 color_vivo = (70/255, 130/255, 180/255)
 
-# Loop across models
-for m, model in enumerate(corr_iv_iv.keys()):
+# Plot the noise analysis results
+model = 'vit_b_32'
+fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
+    figsize=(7, 5))
+axs = np.reshape(axs, (-1))
 
-    # Plot the noise analysis results
-    fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
-        figsize=(7, 5))
-    axs = np.reshape(axs, (-1))
+# Plot the in vivo vs. in silico correlations and CIs
+x = np.arange(corr_iv_iv[model].shape[1])
+y = np.repeat(np.mean(corr_iv_is[model]), len(x))
+axs[0].plot(x, y, color='k', linewidth=2,
+    label='In silico vs. in vivo target')
+axs[0].fill_between(x, ci_corr_iv_is[model][1], ci_corr_iv_is[model][0],
+    color='k', alpha=.2)
 
-    # Plot the in vivo vs. in silico correlations and CIs
-    x = np.arange(corr_iv_iv[model].shape[1])
-    y = np.repeat(np.mean(corr_iv_is[model]), len(x))
-    axs[0].plot(x, y, color=colors_silico[m], linewidth=2,
-        label='In silico vs. in vivo target')
-    axs[0].fill_between(x, ci_corr_iv_is[model][1], ci_corr_iv_is[model][0],
-        color=colors_silico[m], alpha=.2)
+# Plot the in vivo vs. in vivo correlations and CIs
+axs[0].plot(x, np.mean(corr_iv_iv[model], 0), color=color_vivo,
+    linewidth=2, label='In vivo vs. in vivo target')
+axs[0].fill_between(x, ci_corr_iv_iv[model][1], ci_corr_iv_iv[model][0],
+    color=color_vivo, alpha=.2)
 
-    # Plot the in vivo vs. in vivo correlations and CIs
-    axs[0].plot(x, np.mean(corr_iv_iv[model], 0), color=color_vivo,
-        linewidth=2, label='In vivo vs. in vivo target')
-    axs[0].fill_between(x, ci_corr_iv_iv[model][1], ci_corr_iv_iv[model][0],
-        color=color_vivo, alpha=.2)
+# Plot the significance
+sig_l = np.empty(len(sig_less[model]))
+sig_g = np.empty(len(sig_greater[model]))
+sig_l[:] = np.nan
+sig_g[:] = np.nan
+sig_l[sig_less[model]] = 0.37
+sig_g[sig_greater[model]] = 0.37
+plt.scatter(x, sig_l, s=50, color='k')
+plt.scatter(x, sig_g, s=50, color=color_vivo)
 
-    # Plot the significance
-    sig_l = np.empty(len(sig_less[model]))
-    sig_g = np.empty(len(sig_greater[model]))
-    sig_l[:] = np.nan
-    sig_g[:] = np.nan
-    sig_l[sig_less[model]] = 0.37
-    sig_g[sig_greater[model]] = 0.37
-    plt.scatter(x, sig_l, s=50, color=colors_silico[m])
-    plt.scatter(x, sig_g, s=50, color=color_vivo)
+# x-axis parameters
+axs[0].set_xlabel('In vivo trials', fontsize=fontsize)
+xticks = [9, 19, 29, 39, 49, 59]
+xlabels = [10, 20, 30, 40, 50, 60]
+plt.xticks(ticks=xticks, labels=xlabels)
+axs[0].set_xlim(left=min(x), right=max(x))
 
-    # x-axis parameters
-    axs[0].set_xlabel('In vivo trials', fontsize=fontsize)
-    xticks = [9, 19, 29, 39, 49, 59]
-    xlabels = [10, 20, 30, 40, 50, 60]
-    plt.xticks(ticks=xticks, labels=xlabels)
-    axs[0].set_xlim(left=min(x), right=max(x))
+# y-axis parameters
+axs[0].set_ylabel("Pearson's $r$", fontsize=fontsize)
+yticks = [0, 0.1, 0.2, 0.3, 0.4]
+ylabels = [0, 0.1, 0.2, 0.3, 0.4]
+plt.yticks(ticks=yticks, labels=ylabels)
+axs[0].set_ylim(bottom=0, top=0.4)
 
-    # y-axis parameters
-    axs[0].set_ylabel("Pearson's $r$", fontsize=fontsize)
-    yticks = [0, 0.1, 0.2, 0.3, 0.4]
-    ylabels = [0, 0.1, 0.2, 0.3, 0.4]
-    plt.yticks(ticks=yticks, labels=ylabels)
-    axs[0].set_ylim(bottom=0, top=0.4)
+# Legend
+plt.legend(ncol=1, fontsize=fontsize, loc=0, frameon=False)
 
-    # Legend
-    plt.legend(ncol=1, fontsize=fontsize, loc=0, frameon=False)
-
-    # Save the figure
-    file_name = os.path.join(save_dir, f'noise_analysis_model-{model}.svg')
-    fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
-    plt.close()
+# Save the figure
+file_name = os.path.join(save_dir, f'noise_analysis_model-{model}.svg')
+fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
+plt.close()

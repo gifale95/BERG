@@ -162,8 +162,18 @@ rsa_formatted = np.array(rsa_formatted)
 # Get the best DNN layer for each EEG time point
 best_dnn_layer = np.argmax(rsa_formatted, 0)
 
+# Best DNN layer CIs
+ci_best_dnn_layer = np.zeros((2, len(times)))
+best_dnn_layer_dist = np.zeros((args.n_iter, len(times)))
+for i in tqdm(range(args.n_iter)):
+    idx = resample(np.arange(len(args.subjects)))
+    best_dnn_layer_dist[i] = np.mean(best_dnn_layer[idx], 0)
+ci_best_dnn_layer[0] = np.percentile(best_dnn_layer_dist, 2.5, axis=0)
+ci_best_dnn_layer[1] = np.percentile(best_dnn_layer_dist, 97.5, axis=0)
+
 # Only select time points from 60 ms
 idx_times = np.where(times >= .06)[0]
+best_dnn_layer_all_times = best_dnn_layer
 best_dnn_layer = best_dnn_layer[:,idx_times]
 times_new = times[idx_times]
 
@@ -174,15 +184,6 @@ for s in range(len(args.subjects)):
 corr_dnn_layer_eeg_times = np.array(corr_dnn_layer_eeg_times)
 corr_dnn_layer_eeg_times_sub_avg = spearmanr(times_new,
     np.mean(best_dnn_layer, 0))
-
-# Best DNN layer CIs
-ci_best_dnn_layer = np.zeros((2, len(times_new)))
-best_dnn_layer_dist = np.zeros((args.n_iter, len(times_new)))
-for i in tqdm(range(args.n_iter)):
-    idx = resample(np.arange(len(args.subjects)))
-    best_dnn_layer_dist[i] = np.mean(best_dnn_layer[idx], 0)
-ci_best_dnn_layer[0] = np.percentile(best_dnn_layer_dist, 2.5, axis=0)
-ci_best_dnn_layer[1] = np.percentile(best_dnn_layer_dist, 97.5, axis=0)
 
 # Fit a regression line between best DNN layers and the EEG time points
 reg_best_dnn_layer_eeg_times_sub_avg = linregress(times_new,
@@ -233,6 +234,7 @@ results = {
     'corr_dnn_layer_eeg_times': corr_dnn_layer_eeg_times,
     'times': times,
     'times_new': times_new,
+    'best_dnn_layer_all_times': best_dnn_layer_all_times,
     'best_dnn_layer': best_dnn_layer,
     'ci_best_dnn_layer': ci_best_dnn_layer,
     'corr_dnn_layer_eeg_times': corr_dnn_layer_eeg_times,

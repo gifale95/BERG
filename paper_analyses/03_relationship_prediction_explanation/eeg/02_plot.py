@@ -77,9 +77,9 @@ matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 colors = [
-    (0/255, 0/255, 0/255),
+    (139/255, 0/255, 0/255),
     (150/255, 150/255, 150/255),
-    (139/255, 0/255, 0/255)
+    (0/255, 0/255, 0/255)
     ]
 
 titles = [

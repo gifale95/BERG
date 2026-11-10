@@ -77,9 +77,9 @@ matplotlib.use("svg")
 plt.rcParams["text.usetex"] = False
 plt.rcParams['svg.fonttype'] = 'none'
 colors = [
-    (0/255, 0/255, 0/255),
+    (139/255, 0/255, 0/255),
     (150/255, 150/255, 150/255),
-    (139/255, 0/255, 0/255)
+    (0/255, 0/255, 0/255)
     ]
 
 titles = [
@@ -136,7 +136,7 @@ for i, key in enumerate(signatures):
     acc = np.empty(0)
     validation = np.empty(0)
     for m in range(len(encoding_models)):
-        axs[i].scatter(prediction_accuracy_nsdcore[m], val[m], s=200,
+        axs[i].scatter(prediction_accuracy_nsdcore[m], val[m], s=300,
             color=colors[m], label=f'{encoding_models[m][19:]}', alpha=0.75,
             zorder=2)
         acc = np.append(acc, prediction_accuracy_nsdcore[m])

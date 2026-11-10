@@ -138,7 +138,7 @@ fig.savefig(file_name, bbox_inches='tight', transparent=True, format='svg')
 # Plot the RSA results
 # =============================================================================
 # Plot color
-color = (139/255, 0/255, 0/255)
+color = (0/255, 0/255, 0/255)
 
 # Create the figure
 fig, axs = plt.subplots(nrows=1, ncols=1, sharex=True, sharey=True,
