@@ -209,8 +209,7 @@ corr_ci = []
 corr_ci.append(ci_corr_iv1tr_iv1tr[model])
 corr_ci.append(ci_corr_iv1tr_iv2tr[model])
 corr_ci.append(ci_corr_iv1tr_is[model])
-labels = ['In vivo\n(single trials)', 'In vivo\n(trial average)',
-    'In silico']
+labels = ['1', '2', '3']
 
 # Plot parameters
 n_sub = len(args.subjects)
@@ -219,16 +218,17 @@ alpha = 0.2
 marker = 'o'
 s_single = 500
 s_mean = 750
-color = 'k'
 dist = 0.15
 fontsize_sig = 20
 sig_offset = 0.02
 sig_bar_length = 0.005
 linewidth_sig_bar = 1
 sig_star_offset_top = 0.005
+colors = [(166/255, 77/255, 121/255), (134/255, 77/255, 144/255),
+    (90/255, 130/255, 200/255)]
 
 # Create the figure
-fig = plt.figure(figsize=(10, 10))
+fig = plt.figure(figsize=(7, 10))
 
 # Loop across comparisons
 for i in range(len(corr_avg)):
@@ -237,21 +237,21 @@ for i in range(len(corr_avg)):
     for s in range(n_sub):
         if i > 0:
             plt.plot([x_coord[i-1], x_coord[i]], [corr_avg[i-1][s],
-                corr_avg[i][s]], color=color, alpha=alpha, linewidth=1)
+                corr_avg[i][s]], color='k', alpha=alpha, linewidth=1)
 
-    # Correlation scores scores
+    # Correlation scores
     x = np.repeat(i, n_sub)
     y = corr_avg[i]
-    plt.scatter(x, y, s=s_single, color=color, alpha=alpha,
+    plt.scatter(x, y, s=s_single, color=colors[i], alpha=alpha,
         edgecolors='none')
-    plt.scatter(x[0], np.mean(y), s=s_mean, color=color, edgecolors='none')
+    plt.scatter(x[0], np.mean(y), s=s_mean, color=colors[i], edgecolors='none')
 
     # Confidence intervals
     ci = np.zeros(2)
     ci[0] = np.mean(y) - corr_ci[i][0]
     ci[1] = corr_ci[i][1] - np.mean(y)
     plt.errorbar(x[0], np.mean(y), yerr=np.reshape(ci, (-1,1)), fmt="none",
-        ecolor=color, elinewidth=5, capsize=0)
+        ecolor=colors[i], elinewidth=5, capsize=0)
 
 # Significance 1
 if p_val_1 < 0.0001:
@@ -301,6 +301,8 @@ plt.text(x_mean, y, s=s, fontsize=fontsize_sig, color='k',
 xticks = x_coord
 plt.xticks(ticks=xticks, labels=labels, rotation=0, ha='center')
 plt.xlim(left=-0.5, right=2.5)
+xlabel = "Predictor"
+plt.xlabel(xlabel, fontsize=fontsize)
 
 # y-axis parameters
 yticks = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
@@ -308,7 +310,7 @@ ylabels = [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
 plt.yticks(ticks=yticks, labels=ylabels)
 ylabel = "Pearson's $r$"
 plt.ylabel(ylabel, fontsize=fontsize)
-plt.ylim(bottom=0, top=0.4)
+plt.ylim(bottom=0, top=0.35)
 
 # Save the figure
 file_name = os.path.join(save_dir, f'noise_analysis_model-{model}.svg')
