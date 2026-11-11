@@ -237,14 +237,15 @@ for i in range(len(corr_avg)):
     for s in range(n_sub):
         if i > 0:
             plt.plot([x_coord[i-1], x_coord[i]], [corr_avg[i-1][s],
-                corr_avg[i][s]], color='k', alpha=alpha, linewidth=1)
+                corr_avg[i][s]], color='k', alpha=alpha, linewidth=1, zorder=1)
 
     # Correlation scores
     x = np.repeat(i, n_sub)
     y = corr_avg[i]
     plt.scatter(x, y, s=s_single, color=colors[i], alpha=alpha,
-        edgecolors='none')
-    plt.scatter(x[0], np.mean(y), s=s_mean, color=colors[i], edgecolors='none')
+        edgecolors='none', zorder=2)
+    plt.scatter(x[0], np.mean(y), s=s_mean, color=colors[i], edgecolors='none',
+        zorder=3)
 
     # Confidence intervals
     ci = np.zeros(2)
