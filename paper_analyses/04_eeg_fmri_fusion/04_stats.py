@@ -30,6 +30,7 @@ import os
 import numpy as np
 from tqdm import tqdm
 from berg import BERG
+import random
 from sklearn.utils import resample
 from statsmodels.stats.multitest import multipletests
 from scipy.stats import binom
@@ -47,6 +48,11 @@ print('>>> Stats <<<')
 print('Input arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
+
+# Set random seed for reproducible results
+seed = 20200220
+random.seed(seed)
+np.random.seed(seed)
 
 
 # =============================================================================

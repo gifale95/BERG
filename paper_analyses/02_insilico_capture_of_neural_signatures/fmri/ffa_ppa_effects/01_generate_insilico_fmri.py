@@ -138,20 +138,13 @@ for s, sub in enumerate(tqdm(args.subjects)):
             fmri_ppa, metadata_sub = berg.encode(model_ppa,
                 images[effect][itype], return_metadata=True)
 
-            # Average the in silico fMRI responses across images, and store
-            # them
-            lh_insilico_fmri_ffa1[effect][itype].append(
-                np.mean(fmri_ffa1[0], 0))
-            rh_insilico_fmri_ffa1[effect][itype].append(
-                np.mean(fmri_ffa1[1], 0))
-            lh_insilico_fmri_ffa2[effect][itype].append(
-                np.mean(fmri_ffa2[0], 0))
-            rh_insilico_fmri_ffa2[effect][itype].append(
-                np.mean(fmri_ffa2[1], 0))
-            lh_insilico_fmri_ppa[effect][itype].append(
-                np.mean(fmri_ppa[0], 0))
-            rh_insilico_fmri_ppa[effect][itype].append(
-                np.mean(fmri_ppa[1], 0))
+            # Store the in silico fMRI responses
+            lh_insilico_fmri_ffa1[effect][itype].append(fmri_ffa1[0])
+            rh_insilico_fmri_ffa1[effect][itype].append(fmri_ffa1[1])
+            lh_insilico_fmri_ffa2[effect][itype].append(fmri_ffa2[0])
+            rh_insilico_fmri_ffa2[effect][itype].append(fmri_ffa2[1])
+            lh_insilico_fmri_ppa[effect][itype].append(fmri_ppa[0])
+            rh_insilico_fmri_ppa[effect][itype].append(fmri_ppa[1])
 
             # Store the metadata
             if e == 0 and i == 0:

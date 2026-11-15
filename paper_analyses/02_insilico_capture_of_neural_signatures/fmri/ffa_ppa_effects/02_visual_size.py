@@ -11,8 +11,8 @@ ncsnr_threshold : float
     The threshold on the noise ceiling signal-to-noise ratio (NCSNR) for
     vertex selection.
 n_iter : int
-    Amount of iterations for creating the confidence intervals bootstrapped
-    distribution.
+    Amount of iterations for creating the null and confidence interval
+    distributions.
 berg_dir : str
     Directory of the BERG.
 
@@ -24,7 +24,7 @@ import numpy as np
 from tqdm import tqdm
 import random
 from sklearn.utils import resample
-from scipy.stats import ttest_rel
+from scipy.stats import binom
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--encoding_model', type=str, default='fmri-nsd_fsaverage-huze')
@@ -42,6 +42,7 @@ for key, val in vars(args).items():
 seed = 20200220
 random.seed(seed)
 np.random.seed(seed)
+rng = np.random.default_rng(seed=seed)
 
 
 # =============================================================================
@@ -68,14 +69,13 @@ del data
 
 
 # =============================================================================
-# NCSNR and prediction accuracy thresholding
+# Retain vertices that have above threshold NCSNR
 # =============================================================================
-# Retain vertices that have above threshold (i) NCSNR AND (ii) encoding
-# prediction accuracy.
-
 # Loop across ROIs and hemispheres
 rois = ['FFA-1', 'FFA-2', 'PPA']
 hemispheres = ['lh', 'rh']
+n_images = {}
+n_sub = len(metadata)
 for roi in rois:
     for hem in hemispheres:
 
@@ -91,7 +91,8 @@ for roi in rois:
 
             # Loop across image types and threshold vertices
             for key in insilico_fmri[roi][hem].keys():
-                insilico_fmri[roi][hem][key][s][idx_nan] = np.nan
+                insilico_fmri[roi][hem][key][s][:,idx_nan] = np.nan
+                n_images[key] = insilico_fmri[roi][hem][key][s].shape[0]
 
 
 # =============================================================================
@@ -104,100 +105,115 @@ vertex_mean_resp = {}
 rois = ['FFA', 'PPA']
 image_types = ['Faces','Faces-Small', 'Objects', 'Objects-Small', 'Scenes',
     'Scenes-Small']
-
 for roi in rois:
 
     vertex_mean_resp[roi] = {}
 
     for itype in image_types:
 
-        # Empty arrays of shape (n_subjects,)
-        vertex_mean_resp[roi][itype] = np.zeros((len(metadata)))
+        # Empty arrays of shape (n_subjects, n_images)
+        vertex_mean_resp[roi][itype] = np.zeros((n_sub, n_images[itype]),
+            dtype=np.float32)
 
         # Loop across subjects
         for s in range(len(metadata)):
 
-            # Empty subject response list
-            vertex_mean_resp_sub = []
-
             # Loop across hemispheres
-            for hem in hemispheres:
+            for h, hem in enumerate(hemispheres):
 
                 # Get the vertex responses for the chosen ROI
                 if roi == 'FFA':
                     # Get the vertex responses for both parts of the ROI
-                    vertex_mean_resp_sub.append(np.append(
-                        insilico_fmri['FFA-1'][hem][itype][s],
-                        insilico_fmri['FFA-2'][hem][itype][s]))
+                    if h == 0:
+                        vertex_mean_resp_sub = np.append(
+                            insilico_fmri['FFA-1'][hem][itype][s],
+                            insilico_fmri['FFA-2'][hem][itype][s], 1)
+                    else:
+                        vertex_mean_resp_sub = np.append(vertex_mean_resp_sub,
+                            np.append(insilico_fmri['FFA-1'][hem][itype][s],
+                            insilico_fmri['FFA-2'][hem][itype][s], 1), 1)
                 else:
                     # Get the vertex responses for the ROI
-                    vertex_mean_resp_sub.append(
-                        insilico_fmri[roi][hem][itype][s])
+                    if h == 0:
+                        vertex_mean_resp_sub = \
+                            insilico_fmri[roi][hem][itype][s]
+                    else:
+                        vertex_mean_resp_sub = np.append(vertex_mean_resp_sub,
+                            insilico_fmri[roi][hem][itype][s], 1)
 
             # Compute the mean ROI response across vertices
-            vertex_mean_resp[roi][itype][s] = np.nanmean(np.concatenate(
-                vertex_mean_resp_sub))
+            vertex_mean_resp[roi][itype][s] = np.nanmean(vertex_mean_resp_sub, 1)
+            del vertex_mean_resp_sub
 
 
 # =============================================================================
 # Compute significant difference between responses for different image types
 # =============================================================================
-# Empty results dictionary
+# Get the contrast conditions
+contrasts = {
+    'FFA_Faces>Objects': ['Faces', 'Objects'],
+    'FFA_Faces-Small>Objects': ['Faces-Small', 'Objects'],
+    'FFA_Faces-Small>Objects-Small': ['Faces-Small', 'Objects-Small'],
+    'PPA_Scenes>Objects': ['Scenes', 'Objects'],
+    'PPA_Scenes-Small>Objects': ['Scenes-Small', 'Objects'],
+    'PPA_Scenes-Small>Objects-Small': ['Scenes-Small', 'Objects-Small'],
+    }
+
+# Get the actual difference between the in silico fMRI responses of the
+# different conditions
+diff = {}
+for key in contrasts.keys():
+    roi = key.split('_')[0]
+    cond1 = contrasts[key][0]
+    cond2 = contrasts[key][1]
+    diff[key] = np.mean(vertex_mean_resp[roi][cond1], 1) - \
+        np.mean(vertex_mean_resp[roi][cond2], 1)
+
+# Define the permutation indices
+n_images = (n_images['Faces'] + n_images['Objects']) // 2
+idx_perm_1 = np.zeros((args.n_iter, n_images), dtype=np.int32)
+idx_perm_2 = np.zeros((args.n_iter, n_images), dtype=np.int32)
+for i in range(args.n_iter):
+    idx = rng.choice(n_images*2, size=n_images*2, replace=False)
+    idx_perm_1[i] = idx[:n_images]
+    idx_perm_2[i] = idx[n_images:]
+    del idx
+
+# Create the null distributions using permuted in silico fMRI responses
+diff_null_dist = {}
+for key in contrasts.keys():
+    roi = key.split('_')[0]
+    cond1 = contrasts[key][0]
+    cond2 = contrasts[key][1]
+    diff_null_dist[key] = np.zeros((n_sub, args.n_iter), dtype=np.float32)
+    data = np.append(vertex_mean_resp[roi][cond1],
+        vertex_mean_resp[roi][cond2], 1)
+    for i in range(args.n_iter):
+        diff_null_dist[key][:,i] = np.mean(data[:,idx_perm_1[i]], 1) - \
+            np.mean(data[:,idx_perm_2[i]], 1)
+
+# Compute the within-subject significance
+within_subj_sig = {}
+for key in contrasts.keys():
+    within_subj_sig[key] = np.zeros((n_sub))
+    for s in range(n_sub):
+        within_subj_pval = \
+            (np.sum(diff_null_dist[key][s] >= diff[key][s]) + 1) / \
+            (args.n_iter + 1)
+        within_subj_sig[key][s] = within_subj_pval < 0.01
+
+# Compute the population-level significance based on population
+# prevalence: this is the probability of observing k or more
+# significant results by chance, based on the CDF of the binomial
+# distribution of within-subject significances.
 pval_diff = {}
-
-# FFA
-# Faces > Objects
-pval_diff['FFA_Faces>Objects'] = ttest_rel(
-    vertex_mean_resp['FFA']['Faces'],
-    vertex_mean_resp['FFA']['Objects'],
-    alternative='greater')[1]
-# Faces > Objects-Small
-pval_diff['FFA_Faces>Objects-Small'] = ttest_rel(
-    vertex_mean_resp['FFA']['Faces'],
-    vertex_mean_resp['FFA']['Objects-Small'],
-    alternative='greater')[1]
-# Faces-Small > Objects
-pval_diff['FFA_Faces-Small>Objects'] = ttest_rel(
-    vertex_mean_resp['FFA']['Faces-Small'],
-    vertex_mean_resp['FFA']['Objects'],
-    alternative='greater')[1]
-# Faces-Small > Objects-Small
-pval_diff['FFA_Faces-Small>Objects-Small'] = ttest_rel(
-    vertex_mean_resp['FFA']['Faces-Small'],
-    vertex_mean_resp['FFA']['Objects-Small'],
-    alternative='greater')[1]
-# Faces > Faces-Small
-pval_diff['FFA_Faces>Faces-Small'] = ttest_rel(
-    vertex_mean_resp['FFA']['Faces'],
-    vertex_mean_resp['FFA']['Faces-Small'],
-    alternative='greater')[1]
-
-# PPA
-# Scenes > Objects
-pval_diff['PPA_Scenes>Objects'] = ttest_rel(
-    vertex_mean_resp['PPA']['Scenes'],
-    vertex_mean_resp['PPA']['Objects'],
-    alternative='greater')[1]
-# Scenes > Objects-Small
-pval_diff['PPA_Scenes>Objects-Small'] = ttest_rel(
-    vertex_mean_resp['PPA']['Scenes'],
-    vertex_mean_resp['PPA']['Objects-Small'],
-    alternative='greater')[1]
-# Scenes-Small > Objects
-pval_diff['PPA_Scenes-Small>Objects'] = ttest_rel(
-    vertex_mean_resp['PPA']['Scenes-Small'],
-    vertex_mean_resp['PPA']['Objects'],
-    alternative='greater')[1]
-# Scenes-Small > Objects-Small
-pval_diff['PPA_Scenes-Small>Objects-Small'] = ttest_rel(
-    vertex_mean_resp['PPA']['Scenes-Small'],
-    vertex_mean_resp['PPA']['Objects-Small'],
-    alternative='greater')[1]
-# Scenes > Scenes-Small
-pval_diff['PPA_Scenes>Scenes-Small'] = ttest_rel(
-    vertex_mean_resp['PPA']['Scenes'],
-    vertex_mean_resp['PPA']['Scenes-Small'],
-    alternative='greater')[1]
+for key in contrasts.keys():
+    n = n_sub # Total number of subjects
+    p = 0.05 # probability of success in each trial
+    k = sum(within_subj_sig[key]) # Number of significant subjects
+    # We use "k-1" because otherwise we would get the probability of observing
+    # k+1 or more significant results by chance
+    pval_diff[key] = 1 - binom.cdf(k-1, n, p)
 
 
 # =============================================================================

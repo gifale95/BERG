@@ -106,7 +106,7 @@ for r, roi in enumerate(['FFA', 'PPA']):
 
         # Univariate response scores
         x = np.repeat(i, n_sub)
-        y = vertex_mean_resp[roi][itype]
+        y = np.mean(vertex_mean_resp[roi][itype], 1)
         axs[r].scatter(x, y, s=s, color=color, alpha=alpha,
             edgecolors='none')
         axs[r].scatter(x[0], np.mean(y), s=s_mean, color=color,
@@ -254,7 +254,7 @@ for r, roi in enumerate(['FFA', 'PPA']):
 
         # Univariate response scores
         x = np.repeat(i, n_sub)
-        y = vertex_mean_resp[roi][itype]
+        y = np.mean(vertex_mean_resp[roi][itype], 1)
         axs[r].scatter(x, y, s=s, color=color, alpha=alpha, edgecolors='none')
         axs[r].scatter(x[0], np.mean(y), s=s_mean, color=color,
             edgecolors='none')
@@ -387,7 +387,7 @@ for i, itype in enumerate(image_types_sorted):
 
     # Univariate response scores
     x = np.repeat(i, n_sub)
-    y = vertex_mean_resp[itype]
+    y = np.mean(vertex_mean_resp[itype], 1)
     plt.scatter(x, y, s=s, color=color, alpha=alpha, edgecolors='none',
         zorder=2)
     plt.scatter(x[0], np.mean(y), s=s_mean, color=color, edgecolors='none',
@@ -481,7 +481,7 @@ for i, itype in enumerate(image_types_sorted):
 
     # Univariate response scores
     x = np.repeat(i, n_sub)
-    y = vertex_mean_resp[itype]
+    y = np.mean(vertex_mean_resp[itype], 1)
     plt.scatter(x, y, s=s, color=color, alpha=alpha, edgecolors='none')
     plt.scatter(x[0], np.mean(y), s=s_mean, color=color, edgecolors='none')
 
