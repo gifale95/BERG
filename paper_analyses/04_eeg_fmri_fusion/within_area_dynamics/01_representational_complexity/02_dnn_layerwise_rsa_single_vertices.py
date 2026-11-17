@@ -41,7 +41,7 @@ parser.add_argument('--images', default='things_eeg_2_vivo', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
-print('>>> DNN layerwise RSA <<<')
+print('>>> DNN layerwise RSA (single vertices) <<<')
 print('\nInput arguments:')
 for key, val in vars(args).items():
     print('{:16} {}'.format(key, val))
@@ -59,10 +59,10 @@ elif args.images == 'nsd_515_shared':
     file_name = f'dnn_rsms_dnn-{args.dnn}_images-nsd_515_shared.npy'
 
 # Load and convert the RSMs to RDMs (1 - RSM)
-dnn_rsms = 1 - np.load(os.path.join(data_dir, file_name))
-n_images = dnn_rsms.shape[0]
-n_layers = dnn_rsms.shape[2]
-idx_tril = np.tril_indices(len(dnn_rsms), k=-1)
+dnn_rdms = 1 - np.load(os.path.join(data_dir, file_name))
+n_images = dnn_rdms.shape[0]
+n_layers = dnn_rdms.shape[2]
+idx_tril = np.tril_indices(len(dnn_rdms), k=-1)
 
 
 # =============================================================================
@@ -105,7 +105,7 @@ for t in tqdm(range(n_times)):
 # =============================================================================
     for v in range(n_vertices):
         for l in range(n_layers):
-            dnn_layerwise_rsa[l,v,t] = pearsonr(dnn_rsms[:,:,l][idx_tril],
+            dnn_layerwise_rsa[l,v,t] = pearsonr(dnn_rdms[:,:,l][idx_tril],
                 tfmri_rdms[:,:,v][idx_tril])[0]
 
 

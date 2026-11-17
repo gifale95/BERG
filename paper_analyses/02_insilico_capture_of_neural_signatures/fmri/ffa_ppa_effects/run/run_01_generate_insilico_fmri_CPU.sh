@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=berg-02_insilico_capture_of_neural_signatures-fmri-ffa_ppa_effects-01_generate_insilico_fmri
 #SBATCH --mail-type=end
-#SBATCH --mem=10000
-#SBATCH --time=05:00:00
+#SBATCH --mem=20000
+#SBATCH --time=50:00:00
 #SBATCH --qos=extended
 
 # Create the parameters combinations

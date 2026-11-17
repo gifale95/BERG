@@ -3,8 +3,8 @@
 #SBATCH --job-name=berg-02_insilico_capture_of_neural_signatures-fmri-ffa_ppa_effects-01_generate_insilico_fmri_GPU
 #SBATCH --mail-type=end
 #SBATCH --mem=10000
-#SBATCH --time=02:00:00
-#SBATCH --qos=hiprio
+#SBATCH --time=20:00:00
+#SBATCH --qos=prio
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1 # number of GPUs
 

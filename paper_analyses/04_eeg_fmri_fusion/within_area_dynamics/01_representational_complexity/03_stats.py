@@ -1,6 +1,6 @@
-"""Compute the DNN layerwise RSA scores as a function of t-fMRI time points,
+"""Get the DNN layerwise RSA scores as a function of t-fMRI time points,
 the best DNN layer as a function of t-fMRI time points, and the corresponding
-confidence intervals.
+statistical significance and confidence intervals.
 
 Parameters
 ----------

@@ -1,5 +1,5 @@
-"""Perform RSA between t-fMRI time point RSMs, and the DNN layerwise
-activation RSMs.
+"""Perform RSA between t-fMRI time point RSMs, and the DNN layerwise activation
+RSMs.
 
 Parameters
 ----------
@@ -26,7 +26,6 @@ berg_dir : str
 import argparse
 import os
 import numpy as np
-from tqdm import tqdm
 from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()

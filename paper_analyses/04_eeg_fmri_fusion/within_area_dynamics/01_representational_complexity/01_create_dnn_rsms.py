@@ -34,7 +34,7 @@ from torchvision.models.feature_extraction import create_feature_extractor
 from enum import Enum
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dnn', default='alexnet', type=str)
+parser.add_argument('--dnn', default='dinov2l', type=str)
 parser.add_argument('--images', default='things_eeg_2', type=str)
 parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 parser.add_argument('--things_dir', default='/scratch/giffordale95/datasets/image_sets/things_database', type=str)
