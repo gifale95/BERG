@@ -80,9 +80,9 @@ labels['PPA'] = ['Scenes\n(big)', 'Objects\n(big)', 'Scenes\n(small)',
 
 # Significance types
 sig_types_ffa = ['FFA_Faces>Objects', 'FFA_Faces-Small>Objects',
-    'FFA_Faces-Small>Objects-Small', 'FFA_Faces>Faces-Small']
+    'FFA_Faces-Small>Objects-Small']
 sig_types_ppa = ['PPA_Scenes>Objects', 'PPA_Scenes-Small>Objects',
-    'PPA_Scenes-Small>Objects-Small', 'PPA_Scenes>Scenes-Small']
+    'PPA_Scenes-Small>Objects-Small']
 
 # Plot parameters
 n_sub = 8
@@ -142,10 +142,6 @@ for r, roi in enumerate(['FFA', 'PPA']):
                 x = [2, 3]
                 y = [np.mean(vertex_mean_resp[roi]['Faces-Small']),
                     np.mean(vertex_mean_resp[roi]['Objects-Small'])]
-            elif sig_type == 'FFA_Faces>Faces-Small':
-                x = [0, 2]
-                y = [np.mean(vertex_mean_resp[roi]['Faces']),
-                    np.mean(vertex_mean_resp[roi]['Faces-Small'])]
             axs[r].plot(x, y, color='k', linewidth=2, alpha=0.5)
             axs[r].text(np.mean(x), np.mean(y), sig, fontsize=fontsize,
                 ha='center', va='bottom', rotation_mode='anchor',
@@ -175,10 +171,6 @@ for r, roi in enumerate(['FFA', 'PPA']):
                 x = [2, 3]
                 y = [np.mean(vertex_mean_resp[roi]['Scenes-Small']),
                     np.mean(vertex_mean_resp[roi]['Objects-Small'])]
-            elif sig_type == 'PPA_Scenes>Scenes-Small':
-                x = [0, 2]
-                y = [np.mean(vertex_mean_resp[roi]['Scenes']),
-                    np.mean(vertex_mean_resp[roi]['Scenes-Small'])]
             axs[r].plot(x, y, color='k', linewidth=2, alpha=0.5)
             axs[r].text(np.mean(x), np.mean(y), sig, fontsize=fontsize,
                 ha='center', va='bottom', rotation_mode='anchor',

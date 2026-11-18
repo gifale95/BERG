@@ -111,10 +111,10 @@ for itype in image_types:
 
             # Get the vertex responses for PPA
             if h == 0:
-                vertex_mean_resp_sub = insilico_fmri[hem][itype][s]
+                vertex_mean_resp_sub = insilico_fmri['PPA'][hem][itype][s]
             else:
                 vertex_mean_resp_sub = np.append(vertex_mean_resp_sub,
-                    insilico_fmri[hem][itype][s], 1)
+                    insilico_fmri['PPA'][hem][itype][s], 1)
 
         # Compute the mean ROI response across vertices
         vertex_mean_resp[itype][s] = np.nanmean(vertex_mean_resp_sub, 1)
