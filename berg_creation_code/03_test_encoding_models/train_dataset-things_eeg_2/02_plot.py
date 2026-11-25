@@ -27,8 +27,9 @@ from matplotlib import pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('--subjects', type=list, default=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 parser.add_argument('--channels', type=str, default='O') # ['O', 'P', 'T', 'C', 'F', 'all']
-parser.add_argument('--model', type=str, default='vit_b_32')
-parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
+parser.add_argument('--model', type=str, default='dinov2')
+parser.add_argument('--pcs', type=int, default=250)
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
 
@@ -42,7 +43,7 @@ metadata_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
 	'train_dataset-things_eeg_2', 'model-'+args.model, 'metadata')
 
 for sub in args.subjects:
-	file_name = 'metadata_subject-' + format(sub, '02') + '.npy'
+	file_name = f'metadata_subject-{sub:02d}_pcs-{args.pcs:04d}.npy'
 	metadata = np.load(os.path.join(metadata_dir, file_name),
 		allow_pickle=True).item()
 	correlation_averaged_repetitions.append(
@@ -186,7 +187,7 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
 fig.savefig(os.path.join(save_dir, 'encoding_accuracy_channels-'+
-	args.channels+'.svg'), bbox_inches='tight', transparent=False, format='svg')
+	args.channels+f'_pcs-{args.pcs:04d}.svg'), bbox_inches='tight', transparent=False, format='svg')
 fig.savefig(os.path.join(save_dir, 'encoding_accuracy_channels-'+
-	args.channels+'.png'), dpi=300, bbox_inches='tight', transparent=False,
+	args.channels+f'_pcs-{args.pcs:04d}.png'), dpi=300, bbox_inches='tight', transparent=False,
 	format='png')

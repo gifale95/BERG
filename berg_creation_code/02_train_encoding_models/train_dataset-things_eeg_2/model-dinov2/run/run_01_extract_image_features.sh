@@ -2,8 +2,8 @@
 #SBATCH --mail-user=giffordale95@zedat.fu-berlin.de
 #SBATCH --job-name=things_eeg_2_dinov2_model-01_extract_image_features
 #SBATCH --mail-type=end
-#SBATCH --mem=90000
-#SBATCH --time=02:00:00
+#SBATCH --mem=30000
+#SBATCH --time=00:15:00
 #SBATCH --qos=hiprio
 #SBATCH --partition=agcichy
 #SBATCH --nodelist=g017

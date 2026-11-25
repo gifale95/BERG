@@ -33,8 +33,8 @@ from sklearn.linear_model import LinearRegression
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
 parser.add_argument('--model', type=str, default='dinov2')
-parser.add_argument('--pca', type=str, default='250pcs') # 250pcs, 95perc
-parser.add_argument('--berg_dir', default='/home/ale/aaa_stuff/science/projects/brain-encoding-response-generator', type=str)
+parser.add_argument('--pcs', type=int, default=250)
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, _ = parser.parse_known_args()
 
 print('>>> Train encoding models <<<')
@@ -46,19 +46,13 @@ for key, val in vars(args).items():
 # =============================================================================
 # Load the PCA weights and image features
 # =============================================================================
-# Load the PCA weights
-# data_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
-#     'train_dataset-things_eeg_2', 'model-'+args.model,
-#     'encoding_models_weights', 'weights.npy')
-# weights = np.load(data_dir, allow_pickle=True).item()
-
 # Load the image features
 data_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
     'train_dataset-things_eeg_2', 'model-'+args.model,
     'encoding_models_weights', 'image_features.npy')
 features = np.load(data_dir, allow_pickle=True).item()
-fmaps_train = features[f'feat_train_{args.pca}']
-fmaps_test = features[f'feat_test_{args.pca}']
+fmaps_train = features['feat_train'][:,:args.pcs]
+fmaps_test = features['feat_test'][:,:args.pcs]
 
 
 # =============================================================================
@@ -104,8 +98,8 @@ for r in range(eeg_train.shape[1]): # Loop over the 4 training EEG repeats
 
 # Save the in silico EEG responses for the test images
 save_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
-    'modality-eeg', 'train_dataset-things_eeg_2', f'model-{args.model}_{args.pca}')
-file_name = 'eeg_test_pred_subject-' + str(args.subject) + '.npy'
+    'modality-eeg', 'train_dataset-things_eeg_2', f'model-{args.model}')
+file_name = f'eeg_test_pred_subject-{args.subject:02d}_pcs-{args.pcs:04d}.npy'
 if not os.path.isdir(save_dir):
     os.makedirs(save_dir)
 np.save(os.path.join(save_dir, file_name), eeg_test_pred)
@@ -114,14 +108,12 @@ np.save(os.path.join(save_dir, file_name), eeg_test_pred)
 # =============================================================================
 # Save the trained encoding models weights
 # =============================================================================
-# weights['reg_param'] = reg_param
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
+    'train_dataset-things_eeg_2', f'model-{args.model}',
+    'encoding_models_weights')
+if os.path.isdir(save_dir) == False:
+    os.makedirs(save_dir)
 
-# save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
-#     'train_dataset-things_eeg_2', f'model-{args.model}',
-#     'encoding_models_weights')
-# if os.path.isdir(save_dir) == False:
-#     os.makedirs(save_dir)
+file_name = f'weights_subject-{args.subject:02d}.npy'
 
-# file_name = 'weights_subject-' + format(args.subject, '02') + '.npy'
-
-# np.save(os.path.join(save_dir, file_name), weights)
+np.save(os.path.join(save_dir, file_name), reg_param)

@@ -29,7 +29,7 @@ from enum import Enum
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='dinov2')
 parser.add_argument('--things_eeg_2_dir', default='/localscratch/giffordale95/things_eeg_2', type=str)
-parser.add_argument('--berg_dir', default='/localscratch/giffordale95/brain-encoding-response-generator', type=str)
+parser.add_argument('--berg_dir', default='/home/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, _ = parser.parse_known_args()
 
 print('>>> Extract image features <<<')
@@ -98,7 +98,7 @@ model.eval()
 n_blocks = len(model.blocks)
 n_features = model.embed_dim
 patch_size = model.patch_size
-# Only the even layers are used: layers 2, 4, ..., 24 (counting from 1), i.e.,
+# Only the odd layers are used: layers 2, 4, ..., 24 (counting from 1), i.e.,
 # the blocks with Python indices 1, 3, ..., 23
 blocks_to_take = list(range(1, n_blocks, 2))
 assert (n_blocks, n_features) == DINOv2Config['dinov2_vitl14'].value
@@ -232,19 +232,17 @@ features_test = features_test.reshape(len(features_test), -1)
 # z-scored training features Z, Z @ Z.T = U @ S**2 @ U.T, as
 # W = Z.T @ U @ S**-1 (i.e., sklearn's components_.T). Everything runs on the
 # GPU, where the features are stored, over chunks of feature columns, so no
-# float32 or z-scored copy of the full features is ever created.
+# float32 or z-scored copy of the full training features is ever created.
 del images_train, images_test, model
 
 # PCA parameters
-n_pcs_fixed = 250
-var_threshold = 0.95  # Fraction of variance explained by the retained PCs
+n_pcs = 250
 chunk_size = 2 ** 15  # Feature columns processed at once on the GPU
 n_train, n_feat = features_train.shape
-n_test = len(features_test)
 
-# Downsample the training features to (1) 250 PCs, or to (2) the number of PCs
-# explaining 95% of variance. First, the z-scoring parameters are computed and
-# the Gram matrix is accumulated, over chunks of feature columns.
+# Downsample the training features to 250 PCs. First, the z-scoring parameters
+# are computed and the Gram matrix is accumulated, over chunks of feature
+# columns.
 mean = torch.zeros(n_feat, device=device)
 sd = torch.zeros(n_feat, device=device)
 gram = torch.zeros((n_train, n_train), device=device)
@@ -263,87 +261,55 @@ del chunk_train
 eigval, eigvec = torch.linalg.eigh(gram.double())
 del gram
 eigval, eigvec = eigval.flip(0), eigvec.flip(1)
-
-# Number of PCs explaining 95% of variance (selected as in sklearn's PCA)
-explained_variance_ratio = (eigval / eigval.sum()).cpu().numpy()
-n_pcs_var = int(np.searchsorted(np.cumsum(explained_variance_ratio),
-    var_threshold, side='right')) + 1
-n_pcs = max(n_pcs_fixed, n_pcs_var)
+explained_variance_ratio = (eigval[:n_pcs] / eigval.sum()).cpu().numpy()
 
 # PC scores of the training images: U @ S, which equals Z @ W
 feat_train = (eigvec[:, :n_pcs] * eigval[:n_pcs].sqrt()).float().cpu().numpy()
-feat_train_250pcs = feat_train[:, :n_pcs_fixed]
-feat_train_95perc = feat_train[:, :n_pcs_var]
 # Shape: (n_train, n_pcs)
 
-# Use the PCA weights learned on the training features to downsample the
-# testing features to (1) 250 PCs, or to (2) the number of PCs explaining 95%
-# of variance. W can be very large (~12.6 GB every 1,000 PCs), so it is built
-# over chunks of feature rows (W[cols] = Z[:, cols].T @ U @ S**-1), which are
-# written straight to disk as two weight matrices: for 250 PCs, and for 95% of
-# variance. Each chunk of z-scored testing features is multiplied with the
-# matching chunk of W, and summing these products gives
-# ((features_test - mean) / sd) @ W.
-save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
-    'train_dataset-things_eeg_2', 'model-'+args.model,
-    'encoding_models_weights')
-os.makedirs(save_dir, exist_ok=True)
-pca_weights_250pcs = np.lib.format.open_memmap(os.path.join(save_dir,
-    'pca_weights_250pcs.npy'), mode='w+', dtype=np.float32,
-    shape=(n_feat, n_pcs_fixed))
-pca_weights_95perc = np.lib.format.open_memmap(os.path.join(save_dir,
-    'pca_weights_95perc.npy'), mode='w+', dtype=np.float32,
-    shape=(n_feat, n_pcs_var))
-# Shape: (n_feat, n_pcs)
+# PCA weight matrix W = Z.T @ U @ S**-1, built over chunks of feature rows
 eigvec_scaled = (eigvec[:, :n_pcs] / eigval[:n_pcs].sqrt()).float()
 del eigvec
-feat_test = torch.zeros((n_test, n_pcs), device=device)
+pca_weights = torch.zeros((n_feat, n_pcs), device=device)
 for j in tqdm(range(0, n_feat, chunk_size)):
     cols = slice(j, j+chunk_size)
     chunk_train = (features_train[:, cols].float() - mean[cols]) / sd[cols]
-    chunk_test = (features_test[:, cols].float() - mean[cols]) / sd[cols]
-    weights_chunk = chunk_train.T @ eigvec_scaled
-    feat_test.addmm_(chunk_test, weights_chunk)
-    weights_chunk = weights_chunk.cpu().numpy()
-    pca_weights_250pcs[cols] = weights_chunk[:, :n_pcs_fixed]
-    pca_weights_95perc[cols] = weights_chunk[:, :n_pcs_var]
-pca_weights_250pcs.flush()
-pca_weights_95perc.flush()
-del pca_weights_250pcs, pca_weights_95perc, weights_chunk, chunk_train, \
-    chunk_test
+    pca_weights[cols] = chunk_train.T @ eigvec_scaled
+del chunk_train, features_train
+# Shape: (n_feat, n_pcs)
+
+# Use the PCA weights learned on the training features to downsample the
+# testing features to 250 PCs
+feat_test = ((features_test.float() - mean) / sd) @ pca_weights
 feat_test = feat_test.cpu().numpy()
-feat_test_250pcs = feat_test[:, :n_pcs_fixed]
-feat_test_95perc = feat_test[:, :n_pcs_var]
 # Shape: (n_test, n_pcs)
 
 # Z-scoring parameters and PCA information
 scaler_param = {'mean_': mean.cpu().numpy(), 'scale_': sd.cpu().numpy()}
-pca_param = {
-    'n_components_250pcs': n_pcs_fixed,
-    'n_components_95perc': n_pcs_var,
-    'explained_variance_ratio_': explained_variance_ratio,
-    }
+pca_param = {'explained_variance_ratio_': explained_variance_ratio}
 
 
 # =============================================================================
 # Save
 # =============================================================================
-# Save the z-scoring parameters and PCA information. The PCA weight matrices
-# were already saved while being built ('pca_weights_250pcs.npy' and
-# 'pca_weights_95perc.npy'). Any new features are downsampled as:
+# Save the z-scoring parameters, PCA information and PCA weight matrix. Any new
+# features are downsampled to 250 PCs as:
 # pcs = ((features - mean_) / scale_) @ pca_weights
+save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
+    'train_dataset-things_eeg_2', 'model-'+args.model,
+    'encoding_models_weights')
+os.makedirs(save_dir, exist_ok=True)
 weights = {
     'scaler_param': scaler_param,
-    'pca_param': pca_param,
+    'pca_param': pca_weights.cpu().numpy(),
+    'pca_explained_variance_ratio_': explained_variance_ratio
     }
-file_name = 'weights.npy'
+file_name = 'pca_weights.npy'
 np.save(os.path.join(save_dir, file_name), weights)
 
 # Save the train/test features
 features = {
-    'feat_train_250pcs': feat_train_250pcs,
-    'feat_train_95perc': feat_train_95perc,
-    'feat_test_250pcs': feat_test_250pcs,
-    'feat_test_95perc': feat_test_95perc
+    'feat_train': feat_train,
+    'feat_test': feat_test
 }
 np.save(os.path.join(save_dir, 'image_features.npy'), features)

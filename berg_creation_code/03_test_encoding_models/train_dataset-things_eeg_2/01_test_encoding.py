@@ -21,8 +21,9 @@ from scipy.stats import pearsonr
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--subject', type=int, default=1)
-parser.add_argument('--model', type=str, default='vit_b_32')
-parser.add_argument('--berg_dir', default='../brain-encoding-response-generator', type=str)
+parser.add_argument('--model', type=str, default='dinov2')
+parser.add_argument('--pcs', type=int, default=250)
+parser.add_argument('--berg_dir', default='/scratch/giffordale95/projects/brain-encoding-response-generator', type=str)
 args, unknown = parser.parse_known_args()
 
 print('>>> Test encoding models <<<')
@@ -58,7 +59,7 @@ eeg_test = np.mean(eeg_test, 1)
 data_dir = os.path.join(args.berg_dir, 'results', 'test_encoding_models',
 	'modality-eeg', 'train_dataset-things_eeg_2', 'model-'+args.model)
 pred_dir = os.path.join(data_dir, 'eeg_test_pred_subject-'+
-	str(args.subject)+'.npy')
+	f'{args.subject:02d}_pcs-{args.pcs:04d}.npy')
 
 eeg_test_pred = np.load(pred_dir)
 
@@ -111,5 +112,5 @@ save_dir = os.path.join(args.berg_dir, 'encoding_models', 'modality-eeg',
 	'train_dataset-things_eeg_2', 'model-'+args.model, 'metadata')
 if os.path.isdir(save_dir) == False:
 	os.makedirs(save_dir)
-file_name = 'metadata_subject-' + format(args.subject, '02') + '.npy'
+file_name = f'metadata_subject-{args.subject:02d}_pcs-{args.pcs:04d}.npy'
 np.save(os.path.join(save_dir, file_name), metadata)
